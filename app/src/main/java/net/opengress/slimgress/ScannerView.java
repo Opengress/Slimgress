@@ -1048,7 +1048,7 @@ public class ScannerView extends WidgetMap {
             }
         }
         shouldShow = shouldShow || shouldShow2;
-        if (shouldShow) {
+        if (shouldShow && !requireActivity().getSupportFragmentManager().isStateSaved()) {
             requireActivity().getSupportFragmentManager().popBackStack(null, POP_BACK_STACK_INCLUSIVE);
         }
         int visibility = shouldShow ? View.VISIBLE : View.GONE;
