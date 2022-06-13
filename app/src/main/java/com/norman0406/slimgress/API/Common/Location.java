@@ -22,8 +22,8 @@ package com.norman0406.slimgress.API.Common;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.osmdroid.util.GeoPoint;
 
-import com.google.android.gms.maps.model.LatLng;
 import com.google.common.geometry.S2CellId;
 import com.google.common.geometry.S2LatLng;
 
@@ -71,9 +71,9 @@ public class Location
         return longitude;
     }
 
-    public LatLng getLatLng()
+    public GeoPoint getLatLng()
     {
         S2LatLng pos = S2LatLng.fromE6(latitude, longitude);
-        return new LatLng(pos.latDegrees(), pos.lngDegrees());
+        return new GeoPoint(pos.latDegrees(), pos.lngDegrees());
     }
 }

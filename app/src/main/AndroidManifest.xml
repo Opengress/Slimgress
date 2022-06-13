@@ -6,8 +6,8 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="14"
-        android:targetSdkVersion="33"
+        android:minSdkVersion="23"
+        android:targetSdkVersion="32"
         tools:ignore="GradleOverrides" />
 
     <uses-feature
@@ -34,11 +34,6 @@
         android:icon="@drawable/ic_launcher"
         android:theme="@android:style/Theme.Holo.NoActionBar" >
 
-        <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
-
-        <meta-data
-            android:name="com.google.android.maps.v2.API_KEY"
-            android:value="@string/mapskey" />
 
         <!-- start with splash activity to authenticate and get handshake data -->
         <activity
