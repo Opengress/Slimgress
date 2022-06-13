@@ -54,9 +54,12 @@ public class ActivityAuth extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_auth);
 
-        mAccountMgr = AccountManager.get(getApplicationContext());
-        ((TextView)findViewById(R.id.login)).setText(getString(R.string.auth_login));
-        authorize();
+//        mAccountMgr = AccountManager.get(getApplicationContext());
+//        ((TextView)findViewById(R.id.login)).setText(getString(R.string.auth_login));
+//        authorize();
+        Intent myIntent = getIntent();
+        setResult(RESULT_OK, myIntent);
+        finish();
     }
 
     @Override

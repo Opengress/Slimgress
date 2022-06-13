@@ -25,22 +25,12 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.zip.GZIPInputStream;
 
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.params.ClientPNames;
-import org.apache.http.cookie.Cookie;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,6 +39,14 @@ import com.norman0406.slimgress.API.Common.Location;
 
 import android.os.Build;
 import android.util.Log;
+
+import okhttp3.Cookie;
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class Interface
 {
@@ -59,7 +57,7 @@ public class Interface
         UnknownError
     }
 
-    private DefaultHttpClient mClient;
+    private OkHttpClient mClient;
     private String mCookie;
 
     // ingress api definitions
@@ -72,7 +70,11 @@ public class Interface
 
     public Interface()
     {
-        mClient = new DefaultHttpClient();
+        mClient = new OkHttpClient.Builder()
+                .addInterceptor(
+                        new DefaultRequestInterceptor("application/json"))
+                .followRedirects(false)
+                .build();
     }
 
     public AuthSuccess authenticate(final String token)
@@ -84,36 +86,37 @@ public class Interface
                 // also use ?continue= (?)
 
                 String login = mApiBaseURL + mApiLogin + token;
-                HttpGet get = new HttpGet(login);
+                Request get = new Request.Builder()
+                        .url(login)
+                        .build();
 
                 try {
-                    HttpResponse response = null;
+                    Response response = null;
                     synchronized(Interface.this) {
-                        mClient.getParams().setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, false);
+//                        mClient.getParams().setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, false);
                         Log.i("Interface", "executing authentication");
-                        response = mClient.execute(get);
+                        response = mClient.newCall(get).execute();
                     }
                     assert(response != null);
                     @SuppressWarnings("unused")
-                    String content = EntityUtils.toString(response.getEntity());
-                    response.getEntity().consumeContent();
+                    String content = response.body().string();
 
-                    if (response.getStatusLine().getStatusCode() == 401) {
+                    if (response.code() == 401) {
                         // the token has expired
                         Log.i("Interface", "401: authentication token has expired");
                         return AuthSuccess.TokenExpired;
                     }
-                    else if (response.getStatusLine().getStatusCode() != 302) {
+                    else if (response.code() != 302) {
                         // Response should be a redirect
-                        Log.i("Interface", "unknown error: " + response.getStatusLine().getReasonPhrase());
+                        Log.i("Interface", "unknown error: " + response.message());
                         return AuthSuccess.UnknownError;
                     }
                     else {
                         // get cookie
                         synchronized(Interface.this) {
-                            for(Cookie cookie : mClient.getCookieStore().getCookies()) {
-                                if(cookie.getName().equals("SACSID")) {	// secure cookie! (ACSID is non-secure http cookie)
-                                    mCookie = cookie.getValue();
+                            for(Cookie cookie : mClient.cookieJar().loadForRequest(HttpUrl.get(login))) {
+                                if(cookie.name().equals("SACSID")) {	// secure cookie! (ACSID is non-secure http cookie)
+                                    mCookie = cookie.value();
                                 }
                             }
                         }
@@ -127,15 +130,15 @@ public class Interface
                         return AuthSuccess.Successful;
                     }
                 }
-                catch (ClientProtocolException e) {
+                catch (Exception e) {
                     e.printStackTrace();
                 }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
+//                catch (IOException e) {
+//                    e.printStackTrace();
+//                }
                 finally {
                     synchronized(Interface.this) {
-                        mClient.getParams().setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, true);
+//                        mClient.getParams().setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, true);
                     }
                 }
                 return AuthSuccess.Successful;
@@ -178,27 +181,27 @@ public class Interface
                     paramString = URLEncoder.encode(paramString, "UTF-8");
 
                     String handshake = mApiBaseURL + mApiHandshake + paramString;
+                    System.err.println(handshake);
 
-                    HttpGet get = new HttpGet(handshake);
-                    get.setHeader("Accept-Charset", "utf-8");
-                    get.setHeader("Cache-Control", "max-age=0");
+                    Request get = new Request.Builder()
+                            .url(handshake)
+                            .header("Accept-Charset", "utf-8")
+                            .header("Cache-Control", "max-age=0")
+                            .build();
 
                     // do handshake
-                    HttpResponse response = null;
+                    Response response = null;
                     synchronized(Interface.this) {
                         Log.i("Interface", "executing handshake");
-                        response = mClient.execute(get);
+                        response = mClient.newCall(get).execute();
                     }
                     assert(response != null);
-                    HttpEntity entity = response.getEntity();
 
-                    if (entity != null) {
-                        String content = EntityUtils.toString(entity);
-                        Header contentType = entity.getContentType();
-                        entity.consumeContent();
+
+                        String content = response.body().string();
 
                         // check for content type json
-                        if (!contentType.getName().equals("Content-Type") || !contentType.getValue().contains("application/json"))
+                        if (!Objects.requireNonNull(response.header("Content-Type")).contains("application/json"))
                             throw new RuntimeException("content type is not json");
 
                         content = content.replace("while(1);", "");
@@ -207,17 +210,17 @@ public class Interface
                         callback.handle(new Handshake(new JSONObject(content)));
 
                         Log.i("Interface", "handshake finished");
-                    }
+
                 }
-                catch (ClientProtocolException e) {
+                catch (Exception e) {
                     e.printStackTrace();
                 }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-                catch (JSONException e) {
-                    e.printStackTrace();
-                }
+//                catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//                catch (JSONException e) {
+//                    e.printStackTrace();
+//                }
             }
         }).start();
     }
@@ -230,10 +233,6 @@ public class Interface
 
         new Thread(new Runnable() {
             public void run() {
-
-                // create post
-                String postString = mApiBaseURL + mApiRequest + requestString;
-                HttpPost post = new HttpPost(postString);
 
                 // set additional parameters
                 JSONObject params = new JSONObject();
@@ -272,49 +271,48 @@ public class Interface
                     }
                 }
 
-                try {
-                    StringEntity entity = new StringEntity(params.toString(), "UTF-8");
-                    entity.setContentType("application/json");
-                    post.setEntity(entity);
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
 
-                // set header
-                post.setHeader("Content-Type", "application/json;charset=UTF-8");
-                post.setHeader("Accept-Encoding", "gzip");
-                post.setHeader("User-Agent", "Nemesis (gzip)");
-                post.setHeader("X-XsrfToken", handshake.getXSRFToken());
-                post.setHeader("Host", mApiBase);
-                post.setHeader("Connection", "Keep-Alive");
-                post.setHeader("Cookie", "SACSID=" + mCookie);
+
+                // create post
+                String postString = mApiBaseURL + mApiRequest + requestString;
+                RequestBody body = RequestBody.create(params.toString(), MediaType.get("application/json"));
+                Request post = new Request.Builder()
+                        .post(body)
+                        .header("Content-Type", "application/json;charset=UTF-8")
+                        .header("Accept-Encoding", "gzip")
+                        .header("User-Agent", "Nemesis (gzip)")
+                        .header("X-XsrfToken", handshake.getXSRFToken())
+                        .header("Host", mApiBase)
+                        .header("Connection", "Keep-Alive")
+                        .header("Cookie", "SACSID=" + mCookie)
+                        .url(postString).build();
 
                 // execute and get the response.
                 try {
-                    HttpResponse response = null;
+                    Response response = null;
                     String content = null;
 
                     synchronized(Interface.this) {
-                        response = mClient.execute(post);
+                        response = mClient.newCall(post).execute();
                         assert(response != null);
 
-                        if (response.getStatusLine().getStatusCode() == 401) {
+                        if (response.code() == 401) {
                             // token expired or similar
                             //isAuthenticated = false;
-                            response.getEntity().consumeContent();
+//                            response.getEntity().consumeContent();
                         }
                         else {
-                            HttpEntity entity = response.getEntity();
-
-                            // decompress gzip if necessary
-                            Header contentEncoding = entity.getContentEncoding();
-                            if (contentEncoding != null && contentEncoding.getValue().equalsIgnoreCase("gzip"))
-                                content = decompressGZIP(entity);
-                            else
-                                content = EntityUtils.toString(entity);
-
-                            entity.consumeContent();
+//                            HttpEntity entity = response.getEntity();
+//
+//                            // decompress gzip if necessary
+//                            Header contentEncoding = entity.getContentEncoding();
+//                            if (contentEncoding != null && contentEncoding.getValue().equalsIgnoreCase("gzip"))
+//                                content = decompressGZIP(entity);
+//                            else
+//                                content = EntityUtils.toString(entity);
+//
+//                            entity.consumeContent();
+                            content = response.body().string();
                         }
                     }
 
@@ -324,33 +322,33 @@ public class Interface
                         RequestResult.handleRequest(json, result);
                     }
                 }
-                catch (ClientProtocolException e) {
+                catch (Exception e) {
                     e.printStackTrace();
                 }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-                catch (JSONException e) {
-                    e.printStackTrace();
-                }
+//                catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//                catch (JSONException e) {
+//                    e.printStackTrace();
+//                }
             }
         }).start();
     }
 
-    private static String decompressGZIP(HttpEntity compressedEntity) throws IOException {
-        final int bufferSize = 8192;
-        InputStream input = compressedEntity.getContent();
-        GZIPInputStream gzipStream = new GZIPInputStream(input, bufferSize);
-        StringBuilder string = new StringBuilder();
-        byte[] data = new byte[bufferSize];
-        int bytesRead;
-        while ((bytesRead = gzipStream.read(data)) != -1) {
-            string.append(new String(data, 0, bytesRead));
-        }
-        gzipStream.close();
-        input.close();
-        return string.toString();
-    }
+//    private static String decompressGZIP(HttpEntity compressedEntity) throws IOException {
+//        final int bufferSize = 8192;
+//        InputStream input = compressedEntity.getContent();
+//        GZIPInputStream gzipStream = new GZIPInputStream(input, bufferSize);
+//        StringBuilder string = new StringBuilder();
+//        byte[] data = new byte[bufferSize];
+//        int bytesRead;
+//        while ((bytesRead = gzipStream.read(data)) != -1) {
+//            string.append(new String(data, 0, bytesRead));
+//        }
+//        gzipStream.close();
+//        input.close();
+//        return string.toString();
+//    }
 
     private long getCurrentTimestamp()
     {
