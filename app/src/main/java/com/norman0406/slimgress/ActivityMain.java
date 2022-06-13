@@ -20,7 +20,7 @@
 
 package com.norman0406.slimgress;
 
-import android.support.v4.app.FragmentActivity;
+import androidx.fragment.app.FragmentActivity;
 
 import com.norman0406.slimgress.API.Common.Location;
 import com.norman0406.slimgress.API.Common.Team;
@@ -30,8 +30,6 @@ import com.norman0406.slimgress.API.Player.Agent;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;

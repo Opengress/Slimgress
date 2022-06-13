@@ -23,7 +23,6 @@ package com.norman0406.slimgress;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import com.norman0406.slimgress.API.Game.GameState;
 import com.norman0406.slimgress.API.Game.Inventory;
@@ -32,19 +31,14 @@ import com.norman0406.slimgress.API.Item.ItemBase.Rarity;
 import com.norman0406.slimgress.API.Item.ItemFlipCard;
 import com.norman0406.slimgress.API.Item.ItemMod;
 import com.norman0406.slimgress.API.Item.ItemPortalKey;
-import com.norman0406.slimgress.API.Item.ItemPowerCube;
-import com.norman0406.slimgress.API.Item.ItemResonator;
-import com.norman0406.slimgress.API.Item.ItemWeaponUltraStrike;
 import com.norman0406.slimgress.API.Item.ItemBase.ItemType;
 import com.norman0406.slimgress.API.Item.ItemFlipCard.FlipCardType;
 import com.norman0406.slimgress.API.Item.ItemMedia;
-import com.norman0406.slimgress.API.Item.ItemWeaponXMP;
 
-import android.opengl.Visibility;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
