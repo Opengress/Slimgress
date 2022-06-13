@@ -41,9 +41,10 @@ public class PortalModSharedKnobs extends Knobs
     {
         super(json);
 
-        mMultiTurretFreqDiminishingValues = getIntArray(json, "multiTurretFreqDiminishingValues");
-        mMultiForceAmpDiminishingValues = getIntArray(json, "multiForceAmpDiminishingValues");
-        mMultiLinkAmpDiminishingValues = getIntArray(json, "multiLinkAmpDiminishingValues");
+        // ???
+//        mMultiTurretFreqDiminishingValues = getIntArray(json, "multiTurretFreqDiminishingValues");
+//        mMultiForceAmpDiminishingValues = getIntArray(json, "multiForceAmpDiminishingValues");
+//        mMultiLinkAmpDiminishingValues = getIntArray(json, "multiLinkAmpDiminishingValues");
 
         mDiminishingValues = new HashMap<String, List<Integer>>();
         JSONObject diminishingValues = json.getJSONObject("diminishingValues");

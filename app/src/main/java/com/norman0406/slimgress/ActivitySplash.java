@@ -44,15 +44,15 @@ public class ActivitySplash extends Activity
         setContentView(R.layout.activity_splash);
 
         // authenticate if necessary
-//        if (!mApp.isLoggedIn()) {
-//            Intent myIntent = new Intent(getApplicationContext(), ActivityAuth.class);
-//            startActivityForResult(myIntent, 0);
-//        }
-//        else {
+        if (!mApp.isLoggedIn()) {
+            Intent myIntent = new Intent(getApplicationContext(), ActivityAuth.class);
+            startActivityForResult(myIntent, 0);
+        }
+        else {
             // start main activity
             finish();
             startActivity(new Intent(getApplicationContext(), ActivityMain.class));
-//        }
+        }
     }
 
     @Override
