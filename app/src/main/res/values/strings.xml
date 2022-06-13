@@ -4,7 +4,6 @@
     <string name="appname">Slimgress</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
-    <string name="mapskey">REDACTED</string>
 
      <!-- activity strings -->
     <string name="auth_login">Logging in&#8230;</string>

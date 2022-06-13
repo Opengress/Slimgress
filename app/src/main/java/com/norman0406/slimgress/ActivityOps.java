@@ -27,6 +27,8 @@ import android.app.ActionBar.Tab;
 import android.app.ActionBar.TabListener;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
@@ -107,6 +109,7 @@ public class ActivityOps extends FragmentActivity implements TabListener
             super(fm);
         }
 
+        @NonNull
         @Override
         public Fragment getItem(int position)
         {
@@ -127,6 +130,7 @@ public class ActivityOps extends FragmentActivity implements TabListener
             args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
             fragment.setArguments(args);*/
 
+            assert fragment != null;
             return fragment;
         }
 
