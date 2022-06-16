@@ -20,33 +20,53 @@
 
 package com.norman0406.slimgress;
 
-import java.io.IOException;
-
 import com.norman0406.slimgress.API.Game.GameState;
 import com.norman0406.slimgress.API.Interface.Interface;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.accounts.AccountManagerCallback;
-import android.accounts.AccountManagerFuture;
-import android.accounts.AuthenticatorException;
-import android.accounts.OperationCanceledException;
+import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
+import android.os.Message;
+import android.util.Log;
+import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.TextView;
+
+import org.json.JSONObject;
 
 public class ActivityAuth extends Activity
 {
     private IngressApplication mApp = IngressApplication.getInstance();
     private GameState mGame = mApp.getGame();
-    private AccountManager mAccountMgr;
     private int mNumAttempts = 0;
     private static final int mMaxNumAttempts = 2;
+    private String id = null;
+    private String cookieName = null;
+
+
+    class MyJavaScriptInterface {
+
+        @JavascriptInterface
+        public void claim(String claimed) {
+            try {
+                JSONObject params = new JSONObject(claimed);
+                cookieName = params.getString("name");
+                id = params.getString("value");
+            } catch (Exception e) {
+                e.printStackTrace();
+                authFailed();
+                return;
+            }
+            authFinished(cookieName, id);
+        }
+
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -54,12 +74,12 @@ public class ActivityAuth extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_auth);
 
-//        mAccountMgr = AccountManager.get(getApplicationContext());
-//        ((TextView)findViewById(R.id.login)).setText(getString(R.string.auth_login));
-//        authorize();
-        Intent myIntent = getIntent();
-        setResult(RESULT_OK, myIntent);
-        finish();
+        ((TextView)findViewById(R.id.login)).setText(getString(R.string.auth_login));
+        authorize();
+
+//        Intent myIntent = getIntent();
+//        setResult(RESULT_OK, myIntent);
+//        finish();
     }
 
     @Override
@@ -71,154 +91,171 @@ public class ActivityAuth extends Activity
 
     private void authorize()
     {
-        final Account[] accounts = mAccountMgr.getAccountsByType("com.google");
-
+        System.err.println("authorize");
         // check first if user is already logged in
 
         if (isLoggedIn()) {
             // user is already logged in, get login data
             SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName,  0);
-            final String accountName = prefs.getString("account_name", null);
-            final String accountToken = prefs.getString("account_token", null);
+            final String sessionName = prefs.getString("session_name", null);
+            final String sessionId = prefs.getString("session_id", null);
 
             // update username string
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    ((TextView)findViewById(R.id.username)).setText(accountName);
-                }
-            });
+            runOnUiThread(() -> ((TextView)findViewById(R.id.username)).setText(sessionName));
 
-            // check if there is a matching account available
-            boolean found = false;
-            for (Account account : accounts) {
-                if (account.name.equals(accountName)) {
-                    authFinished(account, accountToken);
-                    found = true;
-                }
-            }
+            authFinished(sessionName, sessionId);
 
-            // specified account not found, simply select an existing one
-            if (!found)
-                selectAccount(accounts);
         }
         else {
-            selectAccount(accounts);
+            selectAccount();
         }
     }
 
-    private void selectAccount(final Account[] accounts)
+    private void selectAccount()
     {
-        if (accounts.length > 1) {	// let user choose account
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setTitle(R.string.auth_identity);
-
-            String[] ids = new String[accounts.length];
-            for (int i = 0; i < accounts.length; i++)
-                ids[i] = accounts[i].name;
-
-            builder.setItems(ids, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    authenticateUser(accounts[which]);
-                    dialog.dismiss();
-                }
-            });
-
-            builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                @Override
-                public void onCancel(DialogInterface dialog) {
-                    authCancelled();
-                    dialog.dismiss();
-                }
-            });
-
-            AlertDialog dialog = builder.create();
-            dialog.show();
-        }
-        else if (accounts.length == 1)	// choose the one and only account
-            authenticateUser(accounts[0]);
-        else	// no account available
-            authFailed();
+        System.err.println("selectAccount");
+            authenticateUser();
     }
 
     private boolean isLoggedIn()
     {
+        System.err.println("isLoggedIn");
         // check if login data exists
         SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName,  0);
-        String accountName = prefs.getString("account_name", null);
-        String accountToken = prefs.getString("account_token", null);
+        String accountName = prefs.getString("session_name", null);
+        String accountToken = prefs.getString("session_id", null);
 
-        if (accountName != null && accountToken != null)
-            return true;
-
-        return false;
+        return accountName != null && accountToken != null;
     }
 
-    private void authenticateUser(final Account accToUse)
+    @SuppressLint("SetJavaScriptEnabled")
+    private void authenticateUser()
     {
-        // authorize user
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                // get account name (email)
-                final String name = accToUse.name;	// account e-mail
 
-                // update username string
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        ((TextView)findViewById(R.id.username)).setText(name);
+        System.err.println("authenticateUser");
+
+            WebView myWebView = new WebView(getLayoutInflater().getContext());
+            myWebView.getSettings().setJavaScriptEnabled(true);
+            myWebView.getSettings().setJavaScriptCanOpenWindowsAutomatically(false);
+            myWebView.getSettings().setSupportMultipleWindows(false);
+            CookieManager.getInstance().setAcceptCookie(true);
+            CookieManager.getInstance().setAcceptThirdPartyCookies(myWebView, true);
+            myWebView.addJavascriptInterface(new MyJavaScriptInterface(), "textClaimer");
+
+            myWebView.setWebViewClient(new WebViewClient() {
+                @Override
+                public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                    return !request.getUrl().getPath().startsWith("/embed") && !request.getUrl().getPath().startsWith("/login") && !request.getUrl().getPath().startsWith("/auth");
+                }
+
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    super.onPageFinished(view, url);
+
+                    if (!url.contains("opengress.net/login?id=")) {
+
+                        String js = "window.doAuthInWebview = function(user) {\n" +
+                                "        var u = user.auth_data;\n" +
+                                "        var authUrl = 'https://opengress.net/login';\n" +
+                                "        authUrl += (authUrl.indexOf('?') >= 0) ? '&' : '?';\n" +
+                                "        var params = [];\n" +
+                                "        for (var key in u) {\n" +
+                                "            params.push(key + '=' + encodeURIComponent(u[key]));\n" +
+                                "        }\n" +
+                                "        authUrl += params.join('&') + '&webView';\n" +
+                                "        console.log(authUrl);\n" +
+                                // inject here
+                                "        location.href = authUrl;\n" +
+                                "    }\n" +
+                                "\n" +
+                                "    ;if (document.location.href == 'https://opengress.net/login') {\n" +
+                                "        location.assign(document.getElementById('telegram-login-OPRIESTbot').src);\n" +
+                                "    } else if (document.getElementsByClassName('widget_frame_base')[0]) {\n" +
+                                "        origin = 'https://opengress.net';\n" +
+//                        "        //postMessage = window.doAuthInWebview;\n" +
+//                        "        // window.parent = window;\n" +
+                                "    }\n" +
+//                        "    //\n" +
+                                "\n" +
+                                "    var auth = function() {\n" +
+//                        "        //alert('**************TRYING AUTH***************');\n" +
+                                "        var theUrl ='https://oauth.telegram.org/auth?bot_id=' + TWidgetLogin.botId + (TWidgetLogin.paramsEncoded ? '&' + TWidgetLogin.paramsEncoded : '');\n" +
+                                "        var xhr = new XMLHttpRequest();\n" +
+                                "        xhr.onload = function(response) {\n" +
+                                "           ; if(this.responseXML.title) {\n" +
+//                        "                //alert('**************HAVE TITLE***************');\n" +
+                                "                location.href = theUrl;\n" +
+                                "            } else {\n" +
+//                        "                //alert('**************NO HAVE TITLE***************');\n" +
+                                "                TWidgetLogin.getAuth();\n" +
+                                "            }\n" +
+                                "        }\n" +
+                                "        xhr.open('GET', theUrl);\n" +
+                                "        xhr.responseType = 'document';\n" +
+                                "        xhr.send();\n" +
+                                "\n" +
+                                "    }\n" +
+                                "\n" +
+                                "    var onAuth = function(origin, authData, init) {\n" +
+                                "        ;if (authData) {\n" +
+                                "            var data = {event: 'auth_user', auth_data: authData};\n" +
+                                "        } else {\n" +
+                                "            var data = {event: 'unauthorized'};\n" +
+                                "        }\n" +
+                                "       ; if (init) {\n" +
+                                "            data.init = true;\n" +
+                                "        }\n" +
+//                        "        //alert(data);\n" +
+                                "        window.doAuthInWebview(data);\n" +
+                                "    };\n" +
+                                "\n" +
+                                "\n" +
+                                "\n" +
+                                "    ;if (typeof TWidgetLogin == 'object') {\n" +
+                                "        window.TWidgetLogin.auth = auth;\n" +
+                                "        window.TWidgetLogin.onAuth = onAuth;\n" +
+                                "    }\n" +
+                                "\n" +
+                                "\n" +
+//                        "    //window.addEventListener('message', doAuthInWebview, false);\n" +
+                                "\n" +
+                                "\n" +
+                                "    function checkAuth() {\n" +
+//                        "        //alert('**************CHECKING AUTH***************');\n" +
+                                "        clearTimeout(window.authTimeout);\n" +
+                                "        window.authTimeout = setTimeout(function doCheckAuth() {\n" +
+                                "            ajax('/auth/login?bot_id=392271520&origin=https%3A%2F%2Fopengress.net&request_access=write', {}, function(result) {\n" +
+                                "               ; if (result) {\n" +
+//                        "                    //location.reload();\n" +
+//                        "                    //alert('**************LOOKS GOOD NOW WHAT***************');\n" +
+                                "                    window.history.back();\n" +
+                                "                } else {\n" +
+                                "                    checkAuth();\n" +
+                                "                }\n" +
+                                "            }, function (xhr) {\n" +
+                                "                cancelConfirmation();\n" +
+                                "                showLoginError(xhr.responseText);\n" +
+                                "            });\n" +
+                                "        }, 700);\n" +
+                                "    }console.log(location.href);";
+
+                        view.evaluateJavascript(js, s -> {
+                            // log s string etc
+                        });
                     }
-                });
+                }
 
-                Intent myIntent = getIntent();
-                myIntent.putExtra("User", name);
+            });
 
-                // get authentication token from account manager and return it to the main activity
-                mAccountMgr.getAuthToken(accToUse, "ah", null, getActivity(), new AccountManagerCallback<Bundle>() {
-                    public void run(AccountManagerFuture<Bundle> future) {
-                        try {
-                            if (future.getResult().containsKey(AccountManager.KEY_AUTHTOKEN)) {
-                                // everything is ok, token obtained
-                                authFinished(accToUse, future.getResult().getString(AccountManager.KEY_AUTHTOKEN));
-                            }
-                            else if (future.getResult().containsKey(AccountManager.KEY_INTENT)) {
-                                // the system need further user input, handle in onActivityResult
-                                Intent launch = (Intent)future.getResult().get(AccountManager.KEY_INTENT);
-                                if (launch != null) {
-                                    startActivityForResult(launch, 0);
-                                    return;
-                                }
-                            }
-                            else
-                                authFailed();
-                        } catch (OperationCanceledException e) {
-                            e.printStackTrace();
-                        } catch (AuthenticatorException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, null);
-            }
-        }).start();
-    }
+            setContentView(myWebView);
+            myWebView.loadUrl("https://opengress.net/login");
 
-    private void refreshToken(Account account, String token)
-    {
-        runOnUiThread(new Runnable() {
-            public void run() {
-                ((TextView)findViewById(R.id.login)).setText(getString(R.string.auth_refresh));
-            }
-        });
-
-        mAccountMgr.invalidateAuthToken("com.google", token);
-        authenticateUser(account);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
+        System.err.println("onActivityResult");
         if (requestCode == 0) {
             if (resultCode == RESULT_OK) {
                 // authorize again to obtain the code
@@ -231,53 +268,39 @@ public class ActivityAuth extends Activity
         }
     }
 
-    public Activity getActivity()
+    public void authFinished(final String session_name, final String session_id)
     {
-        return this;
-    }
-
-    public void authCancelled()
-    {
-        Intent myIntent = getIntent();
-        setResult(RESULT_FIRST_USER, myIntent);
-        finish();
-    }
-
-    public void authFinished(final Account account, final String token)
-    {
+        System.err.println("authFinished");
         mNumAttempts++;
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                // authenticate ingress
-                Interface.AuthSuccess success = mGame.intAuthenticate(token);
+        new Thread(() -> {
+            // authenticate ingress
+            Interface.AuthSuccess success = mGame.intAuthenticate(session_name, session_id);
 
-                if (success == Interface.AuthSuccess.Successful) {
+            if (success == Interface.AuthSuccess.Successful) {
 
-                    // save login data
-                    SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, 0);
-                    Editor editor = prefs.edit();
-                    editor.putString("account_name", account.name);
-                    editor.putString("account_token", token);
-                    editor.commit();
+                // save login data
+                SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, 0);
+                Editor editor = prefs.edit();
+                editor.putString("session_name", session_name);
+                editor.putString("session_id", session_id);
+                editor.apply();
 
-                    // switch to main activity and set token result
-                    Intent myIntent = getIntent();
-                    setResult(RESULT_OK, myIntent);
-                    finish();
-                }
-                else if (success == Interface.AuthSuccess.TokenExpired) {
-                    // token expired, refresh and get a new one
-                    if (mNumAttempts > mMaxNumAttempts)
-                        authFailed();
-                    else
-                        refreshToken(account, token);
-                }
-                else {
-                    // some error occurred
+                // switch to main activity and set token result
+                Intent myIntent = getIntent();
+                setResult(RESULT_OK, myIntent);
+                finish();
+            }
+            else if (success == Interface.AuthSuccess.TokenExpired) {
+                // token expired, refresh and get a new one
+                if (mNumAttempts > mMaxNumAttempts)
                     authFailed();
-                }
+                else
+                    authenticateUser();
+            }
+            else {
+                // some error occurred
+                authFailed();
             }
         }).start();
 
@@ -285,18 +308,19 @@ public class ActivityAuth extends Activity
 
     public void authFailed()
     {
+        System.err.println("authFailed");
         // clear login data
         SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName,  0);
-        String accountName = prefs.getString("account_name", null);
-        String accountToken = prefs.getString("account_token", null);
+        String sessionName = prefs.getString("session_name", null);
+        String sessionId = prefs.getString("session_id", null);
 
-        if (accountName == null || accountToken == null) {
+        if (sessionName == null || sessionId == null) {
             Editor editor = prefs.edit();
-            if (accountName == null)
-                editor.remove("account_name");
-            if (accountToken == null)
-                editor.remove("account_token");
-            editor.commit();
+            if (sessionName == null)
+                editor.remove("session_name");
+            if (sessionId == null)
+                editor.remove("session_id");
+            editor.apply();
         }
 
         // switch to main activity

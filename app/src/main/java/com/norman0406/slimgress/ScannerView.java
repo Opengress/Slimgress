@@ -31,9 +31,12 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
@@ -59,6 +62,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.common.geometry.S2LatLng;
 import com.google.common.geometry.S2LatLngRect;
@@ -120,25 +124,20 @@ public class ScannerView extends Fragment {
     // Fields
     // ===========================================================
     private SharedPreferences mPrefs;
-    private MapView mMapView;
-    private MyLocationNewOverlay mLocationOverlay;
-    private CompassOverlay mCompassOverlay = null;
     private MinimapOverlay mMinimapOverlay;
     private ScaleBarOverlay mScaleBarOverlay;
-    private RotationGestureOverlay mRotationGestureOverlay;
-    private CopyrightOverlay mCopyrightOverlay;
 
     // ===========================================================
     // Other (location)
     // ===========================================================
-    private LocationManager locationManager = null;
     private GeoPoint currentLocation = null;
-    private MyLocationListener locationListener = null;
+    private static final int RECORD_REQUEST_CODE = 101;
 
     public class MyLocationListener implements LocationListener {
 
         public void onLocationChanged(Location location) {
             currentLocation = new GeoPoint(location);
+            mGame.updateLocation(new com.norman0406.slimgress.API.Common.Location(currentLocation.getLatitude(), currentLocation.getLongitude()));
             displayMyCurrentLocationOverlay();
         }
 
@@ -153,7 +152,8 @@ public class ScannerView extends Fragment {
     }
 
     private void displayMyCurrentLocationOverlay() {
-
+        System.err.println("Got location!");
+        System.err.println(currentLocation);
     }
 
     @Override
@@ -161,6 +161,7 @@ public class ScannerView extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
@@ -170,13 +171,35 @@ public class ScannerView extends Fragment {
         mMap.setDestroyMode(false);
         mMap.setTag("mapView"); // needed for OpenStreetMapViewTest
 
-        locationListener = new MyLocationListener();
-//        locationManager = (LocationManager) mApp.getSystemService(Context.LOCATION_SERVICE);
-//        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-//        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-//        if( location != null ) {
-//            currentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
-//        }
+        int permission = ContextCompat.checkSelfPermission(inflater.getContext(),
+                android.Manifest.permission.ACCESS_FINE_LOCATION);
+
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(inflater.getContext());
+                builder.setMessage("Permission to access the device location is required for this app to function correctly.")
+                        .setTitle("Permission required");
+
+                builder.setPositiveButton("OK", (dialog, id) -> makeRequest());
+
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            } else {
+                makeRequest();
+            }
+        }
+
+        MyLocationListener locationListener = new MyLocationListener();
+        LocationManager locationManager = (LocationManager) mApp.getSystemService(Context.LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        if( location != null ) {
+            currentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
+        }
+
+        mMap.setOnTouchListener((v, event) -> true);
 
 
         loadAssets();
@@ -250,7 +273,7 @@ public class ScannerView extends Fragment {
 //            }
 //        });
 
-        //startWorldUpdate();
+//        startWorldUpdate();
 
         // deactivate standard map
 //        mMap.setMapType(GoogleMap.MAP_TYPE_NONE); // FIXME
@@ -259,6 +282,12 @@ public class ScannerView extends Fragment {
         addIngressTiles();
 
         return mMap;
+    }
+
+    protected void makeRequest() {
+        ActivityCompat.requestPermissions(getActivity(),
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                RECORD_REQUEST_CODE);
     }
 
     @Override
@@ -276,9 +305,10 @@ public class ScannerView extends Fragment {
 
         //My Location
         //note you have handle the permissions yourself, the overlay did not do it for you
-        mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(context), mMap);
+        MyLocationNewOverlay mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(context), mMap);
         mLocationOverlay.enableMyLocation();
-        mMap.getOverlays().add(this.mLocationOverlay);
+        mLocationOverlay.enableFollowLocation();
+        mMap.getOverlays().add(mLocationOverlay);
 
 
         //Mini map
@@ -289,17 +319,17 @@ public class ScannerView extends Fragment {
 
 
         //Copyright overlay
-        mCopyrightOverlay = new CopyrightOverlay(context);
+        CopyrightOverlay mCopyrightOverlay = new CopyrightOverlay(context);
         //i hate this very much, but it seems as if certain versions of android and/or
         //device types handle screen offsets differently
-        mMap.getOverlays().add(this.mCopyrightOverlay);
+        mMap.getOverlays().add(mCopyrightOverlay);
 
 
         //On screen compass
-        mCompassOverlay = new CompassOverlay(context, new InternalCompassOrientationProvider(context),
+        CompassOverlay mCompassOverlay = new CompassOverlay(context, new InternalCompassOrientationProvider(context),
                 mMap);
         mCompassOverlay.enableCompass();
-        mMap.getOverlays().add(this.mCompassOverlay);
+        mMap.getOverlays().add(mCompassOverlay);
 
 
         //map scale
@@ -310,9 +340,9 @@ public class ScannerView extends Fragment {
 
 
         //support for map rotation
-        mRotationGestureOverlay = new RotationGestureOverlay(mMap);
+        RotationGestureOverlay mRotationGestureOverlay = new RotationGestureOverlay(mMap);
         mRotationGestureOverlay.setEnabled(true);
-        mMap.getOverlays().add(this.mRotationGestureOverlay);
+        mMap.getOverlays().add(mRotationGestureOverlay);
 
 
         //needed for pinch zooms
@@ -372,6 +402,23 @@ public class ScannerView extends Fragment {
         }
 
         mMap.onResume();
+        final Handler uiHandler = new Handler();
+//        final Handler timerHandler = new Handler();
+        uiHandler.post(() -> {
+            // get map boundaries (on ui thread)
+            double east = mMap.getProjection().getBoundingBox().getLonEast();
+            double west = mMap.getProjection().getBoundingBox().getLonWest();
+            double north = mMap.getProjection().getBoundingBox().getLatNorth();
+            double south = mMap.getProjection().getBoundingBox().getLatSouth();
+            final S2LatLngRect region = S2LatLngRect.fromPointPair(S2LatLng.fromDegrees(north, west),
+                    S2LatLng.fromDegrees(south, east));
+
+            // update world (on timer thread)
+//            timerHandler.post(() -> {
+            if (mGame.getLocation() != null)
+                updateWorld(region, uiHandler);
+//            });
+        });
     }
 
     @Override
@@ -416,11 +463,11 @@ public class ScannerView extends Fragment {
     }
 
     public void zoomIn() {
-        mMap.getController().zoomIn();
+//        mMap.getController().zoomIn();
     }
 
     public void zoomOut() {
-        mMap.getController().zoomOut();
+//        mMap.getController().zoomOut();
     }
 
     // @Override
@@ -502,26 +549,18 @@ public class ScannerView extends Fragment {
             @Override
             public void run()
             {
-                uiHandler.post(new Runnable() {
-                    @Override
-                    public void run()
-                    {
-                        // get map boundaries (on ui thread)
-                        double northeast = mMap.getProjection().getBoundingBox().getLonEast();
-                        double southwest = mMap.getProjection().getBoundingBox().getLonWest();
-                        final S2LatLngRect region = S2LatLngRect.fromPointPair(S2LatLng.fromDegrees(southwest, southwest),
-                                S2LatLng.fromDegrees(northeast, northeast));
+                uiHandler.post(() -> {
+                    // get map boundaries (on ui thread)
+                    double northeast = mMap.getProjection().getBoundingBox().getLonEast();
+                    double southwest = mMap.getProjection().getBoundingBox().getLonWest();
+                    final S2LatLngRect region = S2LatLngRect.fromPointPair(S2LatLng.fromDegrees(southwest, southwest),
+                            S2LatLng.fromDegrees(northeast, northeast));
 
-                        // update world (on timer thread)
-                        timerHandler.post(new Runnable() {
-                            @Override
-                            public void run()
-                            {
-                                if (mGame.getLocation() != null)
-                                    updateWorld(region, uiHandler);
-                            }
-                        });
-                    }
+                    // update world (on timer thread)
+                    timerHandler.post(() -> {
+                        if (mGame.getLocation() != null)
+                            updateWorld(region, uiHandler);
+                    });
                 });
             }
         }, 0, updateInterval);
@@ -530,52 +569,37 @@ public class ScannerView extends Fragment {
     private synchronized void updateWorld(final S2LatLngRect region, final Handler uiHandler)
     {
         // handle interface result (on timer thread)
-        final Handler resultHandler = new Handler(new Handler.Callback() {
-            @Override
-            public boolean handleMessage(Message msg) {
-                // draw xm particles
-                drawXMParticles();
+        final Handler resultHandler = new Handler(msg -> {
+            // draw xm particles
+            drawXMParticles();
 
-                new Thread(new Runnable() {
-                    @Override
-                    public void run()
-                    {
-                        // draw game entities
-                        Map<String, GameEntityBase> entities = mGame.getWorld().getGameEntities();
-                        Set<String> keys = entities.keySet();
-                        for (String key : keys) {
-                            final GameEntityBase entity = entities.get(key);
+            new Thread(() -> {
+                // draw game entities
+                Map<String, GameEntityBase> entities = mGame.getWorld().getGameEntities();
+                Set<String> keys = entities.keySet();
+                System.err.println(keys);
+                for (String key : keys) {
+                    System.err.println(key);
+                    final GameEntityBase entity = entities.get(key);
 
-                            uiHandler.post(new Runnable() {
-                                @Override
-                                public void run()
-                                {
-                                    if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal)
-                                        drawPortal((GameEntityPortal)entity);
-                                    else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link)
-                                        drawLink((GameEntityLink)entity);
-                                    else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField)
-                                        drawField((GameEntityControlField)entity);
-                                }
-                            });
-                        }
+                    uiHandler.post(() -> {
+                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal)
+                            drawPortal((GameEntityPortal)entity);
+                        else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link)
+                            drawLink((GameEntityLink)entity);
+                        else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField)
+                            drawField((GameEntityControlField)entity);
+                    });
+                }
 
-                        Log.d("ScannerView", "world updated");
-                    }
-                }).start();
+                Log.d("ScannerView", "world updated");
+            }).start();
 
-                return true;
-            }
+            return true;
         });
 
         // get objects (on new thread)
-        new Thread(new Runnable() {
-            @Override
-            public void run()
-            {
-                mGame.intGetObjectsInCells(region, resultHandler);
-            }
-        }).start();
+        new Thread(() -> mGame.intGetObjectsInCells(region, resultHandler)).start();
     }
 
     private void drawXMParticles()
@@ -609,28 +633,25 @@ public class ScannerView extends Fragment {
             if (!mMarkers.containsKey(portal.getEntityGuid())) {
                 final com.norman0406.slimgress.API.Common.Location location = portal.getPortalLocation();
 
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Bitmap portalIcon = null;
-                        if (team.getTeamType() == Team.TeamType.Resistance)
-                            portalIcon = mPortalIconResistance;
-                        else if (team.getTeamType() == Team.TeamType.Enlightened)
-                            portalIcon = mPortalIconEnlightened;
-                        else
-                            portalIcon = mPortalIconNeutral;
+                getActivity().runOnUiThread(() -> {
+                    Bitmap portalIcon;
+                    if (team.getTeamType() == Team.TeamType.Resistance)
+                        portalIcon = mPortalIconResistance;
+                    else if (team.getTeamType() == Team.TeamType.Enlightened)
+                        portalIcon = mPortalIconEnlightened;
+                    else
+                        portalIcon = mPortalIconNeutral;
 
-                        Drawable icon = new BitmapDrawable(getResources(), portalIcon);
+                    Drawable icon = new BitmapDrawable(getResources(), portalIcon);
 
-                        Marker marker = new Marker(mMapView);
-                        marker.setPosition(location.getLatLng());
-                        marker.setTitle(portal.getPortalTitle());
-                        marker.setIcon(icon);
-                        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
+                    Marker marker = new Marker(mMap);
+                    marker.setPosition(location.getLatLng());
+                    marker.setTitle(portal.getPortalTitle());
+                    marker.setIcon(icon);
+                    marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
 
-                        mMap.getOverlays().add(marker);
-                        mMarkers.put(portal.getEntityGuid(), marker);
-                    }
+                    mMap.getOverlays().add(marker);
+                    mMarkers.put(portal.getEntityGuid(), marker);
                 });
             }
         }
@@ -644,24 +665,21 @@ public class ScannerView extends Fragment {
                 final com.norman0406.slimgress.API.Common.Location origin = link.getLinkOriginLocation();
                 final com.norman0406.slimgress.API.Common.Location dest = link.getLinkDestinationLocation();
 
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        int color = 0xff0000ff; // blue without alpha
-                        Team team = link.getLinkControllingTeam();
-                        if (team.getTeamType() == Team.TeamType.Enlightened)
-                            color = 0xff00ff00; // green without alpha
+                getActivity().runOnUiThread(() -> {
+                    int color = 0xff0000ff; // blue without alpha
+                    Team team = link.getLinkControllingTeam();
+                    if (team.getTeamType() == Team.TeamType.Enlightened)
+                        color = 0xff00ff00; // green without alpha
 
-                        Polyline line = new Polyline(mMapView);
-                        line.addPoint(origin.getLatLng());
-                        line.addPoint(dest.getLatLng());
-                        line.setColor(color);
-                        line.setWidth(2);
+                    Polyline line = new Polyline(mMap);
+                    line.addPoint(origin.getLatLng());
+                    line.addPoint(dest.getLatLng());
+                    line.setColor(color);
+                    line.setWidth(2);
 //                        line.zIndex(2);
 
-                        mMap.getOverlays().add(line);
-                        mLines.put(link.getEntityGuid(), line);
-                    }
+                    mMap.getOverlays().add(line);
+                    mLines.put(link.getEntityGuid(), line);
                 });
             }
         }
@@ -676,26 +694,23 @@ public class ScannerView extends Fragment {
                 final com.norman0406.slimgress.API.Common.Location vB = field.getFieldVertexB().getPortalLocation();
                 final com.norman0406.slimgress.API.Common.Location vC = field.getFieldVertexC().getPortalLocation();
 
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
+                getActivity().runOnUiThread(() -> {
 
-                        int color = 0x320000ff; // blue with alpha
-                        Team team = field.getFieldControllingTeam();
-                        if (team.getTeamType() == Team.TeamType.Enlightened)
-                            color = 0x3200ff00; // green with alpha
+                    int color = 0x320000ff; // blue with alpha
+                    Team team = field.getFieldControllingTeam();
+                    if (team.getTeamType() == Team.TeamType.Enlightened)
+                        color = 0x3200ff00; // green with alpha
 
-                        Polygon polygon = new Polygon(mMapView);
-                        polygon.addPoint(new GeoPoint(vA.getLatLng()));
-                        polygon.addPoint(new GeoPoint(vB.getLatLng()));
-                        polygon.addPoint(new GeoPoint(vC.getLatLng()));
-                        polygon.setFillColor(color);
-                        polygon.setStrokeWidth(0);
+                    Polygon polygon = new Polygon(mMap);
+                    polygon.addPoint(new GeoPoint(vA.getLatLng()));
+                    polygon.addPoint(new GeoPoint(vB.getLatLng()));
+                    polygon.addPoint(new GeoPoint(vC.getLatLng()));
+                    polygon.setFillColor(color);
+                    polygon.setStrokeWidth(0);
 //                        polygon.zIndex(1);
 
-                        mMap.getOverlays().add(polygon);
-                        mPolygons.put(field.getEntityGuid(), polygon);
-                    }
+                    mMap.getOverlays().add(polygon);
+                    mPolygons.put(field.getEntityGuid(), polygon);
                 });
             }
         }

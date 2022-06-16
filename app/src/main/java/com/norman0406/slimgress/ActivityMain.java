@@ -20,6 +20,8 @@
 
 package com.norman0406.slimgress;
 
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.norman0406.slimgress.API.Common.Location;
@@ -27,7 +29,11 @@ import com.norman0406.slimgress.API.Common.Team;
 import com.norman0406.slimgress.API.Game.GameState;
 import com.norman0406.slimgress.API.Player.Agent;
 
+import android.Manifest;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;

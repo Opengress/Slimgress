@@ -118,7 +118,8 @@ public class GameEntityPortal extends GameEntityBase
         }
 
         // get description
-        JSONObject descriptiveText = portalV2.getJSONObject("descriptiveText");
+//        JSONObject descriptiveText = portalV2.getJSONObject("descriptiveText");
+        JSONObject descriptiveText = item.getJSONObject("descriptiveText").getJSONObject("map");
         mPortalTitle = descriptiveText.getString("TITLE");
         mPortalAddress = descriptiveText.optString("ADDRESS");
         mPortalAttribution = descriptiveText.optString("ATTRIBUTION");

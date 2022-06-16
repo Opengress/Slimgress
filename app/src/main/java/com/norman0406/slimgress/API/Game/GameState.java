@@ -88,6 +88,8 @@ public class GameState
         if (gameBasket == null)
             Log.w("Game", "game basket is invalid");
         else {
+            Log.w("Game", "processing game basket");
+            System.err.println("processing game basket");
             mInventory.processGameBasket(gameBasket);
             mWorld.processGameBasket(gameBasket);
 
@@ -109,9 +111,9 @@ public class GameState
             mAgent = mHandshake.getAgent();
     }
 
-    public Interface.AuthSuccess intAuthenticate(String token)
+    public Interface.AuthSuccess intAuthenticate(String session_name, String session_id)
     {
-        return mInterface.authenticate(token);
+        return mInterface.authenticate(session_name, session_id);
     }
 
     public synchronized void intHandshake(final Handler handler)
@@ -175,12 +177,14 @@ public class GameState
             checkInterface();
 
             // get cell ids for surrounding area
-            String cellIds[] = Utils.getCellIdsFromRegion(region, 16, 16);
+            String[] cellIds = Utils.getCellIdsFromRegion(region, 16, 16);
 
             // create cells
             JSONArray cellsAsHex = new JSONArray();
-            for (int i = 0; i < cellIds.length; i++)
-                cellsAsHex.put(cellIds[i]);
+            for (String cellId : cellIds) {
+                cellsAsHex.put(cellId);
+                System.err.println(cellId);
+            }
 
             // create dates (timestamps?)
             JSONArray dates = new JSONArray();
