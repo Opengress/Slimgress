@@ -58,7 +58,7 @@ public class Team
             return TeamType.Resistance;
         else if (teamString.equals("ALIENS"))
             return TeamType.Enlightened;
-        else if (teamString.equals("NEUTRAL"))
+        else if (teamString.equals("NEUTRAL") || teamString.equals("system") || teamString.equals("neutral"))
             return TeamType.Neutral;
         else
             throw new RuntimeException("invalid team string: " + teamString);

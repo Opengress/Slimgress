@@ -22,15 +22,20 @@ package com.norman0406.slimgress;
 
 import com.norman0406.slimgress.API.Game.GameState;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 public class ActivitySplash extends Activity
 {
@@ -60,6 +65,9 @@ public class ActivitySplash extends Activity
     {
         final Context context = this;
 
+        System.err.println(requestCode);
+        System.err.println(resultCode);
+
         if (requestCode == 0) {
             if (resultCode == RESULT_OK) {
                 mApp.setLoggedIn(true);
@@ -71,7 +79,7 @@ public class ActivitySplash extends Activity
                     {
                         Bundle data = msg.getData();
 
-                        if (data.getBoolean("Successful") == true) {
+                        if (data.getBoolean("Successful")) {
                             // start main activity
                             ActivitySplash.this.finish();
                             ActivitySplash.this.startActivity(new Intent(ActivitySplash.this, ActivityMain.class));
