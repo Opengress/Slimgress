@@ -86,8 +86,9 @@ public class Interface
             JSONObject params = new JSONObject();
             try {
                 // set handshake parameters
-                params.put("nemesisSoftwareVersion", mApiVersion);
-                params.put("deviceSoftwareVersion", Build.VERSION.RELEASE);
+                params.put("adversarySoftwareVersion", mApiVersion);
+                params.put("deviceSoftwareVersion", Build.VERSION.SDK_INT);
+                params.put("deviceHardwareVersion", Build.MODEL);
 
                 // TODO:
                 /*params.put("activationCode", "");
@@ -139,7 +140,7 @@ public class Interface
     public void request(final Handshake handshake, final String requestString, final Location playerLocation,
             final JSONObject requestParams, final RequestResult result) throws InterruptedException
     {
-        if (!handshake.isValid() || handshake.getXSRFToken().length() == 0)
+        if (!handshake.isValid())
             throw new RuntimeException("handshake is not valid");
 
         new Thread(() -> {
@@ -189,7 +190,6 @@ public class Interface
                     .header("Content-Type", "application/json;charset=UTF-8")
                     .header("Accept-Encoding", "gzip")
                     .header("User-Agent", "Opengress/Slimgress (API dev)")
-                    .header("X-XsrfToken", handshake.getXSRFToken())
                     .header("Host", mApiBase)
                     .header("Connection", "Keep-Alive")
                     .addHeader("Cookie", mCookie)
