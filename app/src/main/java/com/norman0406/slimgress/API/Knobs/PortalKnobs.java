@@ -1,22 +1,22 @@
-/***********************************************************************
-*
-* Slimgress: Ingress API for Android
-* Copyright (C) 2013 Norman Link <norman.link@gmx.net>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-***********************************************************************/
+/**********************************************************************
+
+ Slimgress: Ingress API for Android
+ Copyright (C) 2013 Norman Link <norman.link@gmx.net>
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
 
 package com.norman0406.slimgress.API.Knobs;
 
@@ -37,9 +37,9 @@ public class PortalKnobs extends Knobs
         int remaining;
     }
 
-    private List<Band> mBands;
-    private boolean mCanPlayerRemoveMod;
-    private int mMaxModsPerPlayer;
+    private final List<Band> mBands;
+    private final boolean mCanPlayerRemoveMod;
+    private final int mMaxModsPerPlayer;
 
     public PortalKnobs(JSONObject json) throws JSONException
     {
@@ -47,7 +47,7 @@ public class PortalKnobs extends Knobs
 
         JSONObject resonatorLimits = json.getJSONObject("resonatorLimits");
         JSONArray bands = resonatorLimits.getJSONArray("bands");
-        mBands = new ArrayList<Band>();
+        mBands = new ArrayList<>();
         for (int i = 0; i < bands.length(); i++) {
             JSONObject band = bands.getJSONObject(i);
             Band newBand = new Band();

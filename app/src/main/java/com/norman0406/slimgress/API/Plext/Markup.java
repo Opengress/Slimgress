@@ -1,22 +1,22 @@
-/***********************************************************************
-*
-* Slimgress: Ingress API for Android
-* Copyright (C) 2013 Norman Link <norman.link@gmx.net>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-***********************************************************************/
+/**********************************************************************
+
+ Slimgress: Ingress API for Android
+ Copyright (C) 2013 Norman Link <norman.link@gmx.net>
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
 
 package com.norman0406.slimgress.API.Plext;
 
@@ -38,8 +38,8 @@ public abstract class Markup
         Text
     }
 
-    private MarkupType mType;
-    private String mPlain;
+    private final MarkupType mType;
+    private final String mPlain;
 
     public static Markup createByJSON(JSONArray json) throws JSONException
     {
@@ -53,20 +53,29 @@ public abstract class Markup
         Markup newMarkup = null;
 
         String markupString = json.getString(0);
-        if (markupString.equals("SECURE"))
-            newMarkup = new MarkupSecure(markupObj);
-        else if (markupString.equals("SENDER"))
-            newMarkup = new MarkupSender(markupObj);
-        else if (markupString.equals("PLAYER"))
-            newMarkup = new MarkupPlayer(markupObj);
-        else if (markupString.equals("AT_PLAYER"))
-            newMarkup = new MarkupATPlayer(markupObj);
-        else if (markupString.equals("PORTAL"))
-            newMarkup = new MarkupPortal(markupObj);
-        else if (markupString.equals("TEXT"))
-            newMarkup = new MarkupText(markupObj);
-        else
-            Log.w("Markup", "unknown markup type: " + markupString);
+        switch (markupString) {
+            case "SECURE":
+                newMarkup = new MarkupSecure(markupObj);
+                break;
+            case "SENDER":
+                newMarkup = new MarkupSender(markupObj);
+                break;
+            case "PLAYER":
+                newMarkup = new MarkupPlayer(markupObj);
+                break;
+            case "AT_PLAYER":
+                newMarkup = new MarkupATPlayer(markupObj);
+                break;
+            case "PORTAL":
+                newMarkup = new MarkupPortal(markupObj);
+                break;
+            case "TEXT":
+                newMarkup = new MarkupText(markupObj);
+                break;
+            default:
+                Log.w("Markup", "unknown markup type: " + markupString);
+                break;
+        }
 
         return newMarkup;
     }

@@ -1,22 +1,22 @@
-/***********************************************************************
-*
-* Slimgress: Ingress API for Android
-* Copyright (C) 2013 Norman Link <norman.link@gmx.net>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-***********************************************************************/
+/**********************************************************************
+
+ Slimgress: Ingress API for Android
+ Copyright (C) 2013 Norman Link <norman.link@gmx.net>
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
 
 package com.norman0406.slimgress.API.Item;
 
@@ -27,6 +27,8 @@ import org.json.JSONObject;
 import com.norman0406.slimgress.API.Common.EntityBase;
 
 import android.util.Log;
+
+import java.util.Objects;
 
 public abstract class ItemBase extends EntityBase
 {
@@ -61,8 +63,8 @@ public abstract class ItemBase extends EntityBase
     private int mItemAccessLevel = 0;
     private Rarity mItemRarity = Rarity.None;
     private final ItemType mItemType;
-    private String mItemPlayerId;
-    private String mItemAcquisitionTimestamp;
+    private final String mItemPlayerId;
+    private final String mItemAcquisitionTimestamp;
 
     public static ItemBase createByJSON(JSONArray json) throws JSONException
     {
@@ -84,7 +86,7 @@ public abstract class ItemBase extends EntityBase
         // create item
         ItemBase newItem = null;
 
-        String itemType = itemResource.getString("resourceType");
+        String itemType = Objects.requireNonNull(itemResource).getString("resourceType");
         if (itemType.equals(ItemPortalKey.getNameStatic()))
             newItem = new ItemPortalKey(json);
         else if (itemType.equals(ItemWeaponXMP.getNameStatic()))
@@ -125,7 +127,7 @@ public abstract class ItemBase extends EntityBase
         mItemType = type;
 
         JSONObject item = json.getJSONObject(2);
-        JSONObject itemResource = null;
+        JSONObject itemResource;
         if (item.has("resource"))
             itemResource = item.getJSONObject("resource");
         else if (item.has("resourceWithLevels"))
@@ -136,7 +138,7 @@ public abstract class ItemBase extends EntityBase
             throw new JSONException("resource not found");
 
         if (itemResource.has("resourceRarity") || itemResource.has("rarity")) {
-            String rarity = null;
+            String rarity;
             if (itemResource.has("resourceRarity"))
                 rarity = itemResource.getString("resourceRarity");
             else if (itemResource.has("rarity"))
@@ -145,24 +147,31 @@ public abstract class ItemBase extends EntityBase
                 throw new RuntimeException("unknown rarity string");
 
             if (mItemRarity != null) {
-                if (rarity.equals("VERY_COMMON"))
-                    mItemRarity = ItemBase.Rarity.VeryCommon;
-                else if (rarity.equals("COMMON"))
-                    mItemRarity = ItemBase.Rarity.Common;
-                else if (rarity.equals("LESS_COMMON"))
-                    mItemRarity = ItemBase.Rarity.LessCommon;
-                else if (rarity.equals("RARE"))
-                    mItemRarity = ItemBase.Rarity.Rare;
-                else if (rarity.equals("VERY_RARE"))
-                    mItemRarity = ItemBase.Rarity.VeryRare;
-                else if (rarity.equals("EXTREMELY_RARE"))
-                    mItemRarity = ItemBase.Rarity.ExtraRare;
+                switch (rarity) {
+                    case "VERY_COMMON":
+                        mItemRarity = Rarity.VeryCommon;
+                        break;
+                    case "COMMON":
+                        mItemRarity = Rarity.Common;
+                        break;
+                    case "LESS_COMMON":
+                        mItemRarity = Rarity.LessCommon;
+                        break;
+                    case "RARE":
+                        mItemRarity = Rarity.Rare;
+                        break;
+                    case "VERY_RARE":
+                        mItemRarity = Rarity.VeryRare;
+                        break;
+                    case "EXTREMELY_RARE":
+                        mItemRarity = Rarity.ExtraRare;
+                        break;
+                }
             }
         }
 
         if (itemResource.has("level")) {
-            int level = itemResource.getInt("level");
-            mItemAccessLevel = level;
+            mItemAccessLevel = itemResource.getInt("level");
         }
 
         JSONObject itemInInventory = item.getJSONObject("inInventory");

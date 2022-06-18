@@ -1,22 +1,22 @@
-/***********************************************************************
-*
-* Slimgress: Ingress API for Android
-* Copyright (C) 2013 Norman Link <norman.link@gmx.net>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-***********************************************************************/
+/**********************************************************************
+
+ Slimgress: Ingress API for Android
+ Copyright (C) 2013 Norman Link <norman.link@gmx.net>
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
 
 package com.norman0406.slimgress.API.Interface;
 
@@ -37,22 +37,22 @@ import android.util.Log;
 public class GameBasket
 {
     private PlayerEntity mPlayerEntity;
-    private List<GameEntityBase> mGameEntities;
-    private List<ItemBase> mInventory;
-    private List<String> mDeletedEntityGuids;
-    private List<XMParticle> mEnergyGlobGuids;
-    private List<PlayerDamage> mPlayerDamages;
-    private List<APGain> mAPGains;
+    private final List<GameEntityBase> mGameEntities;
+    private final List<ItemBase> mInventory;
+    private final List<String> mDeletedEntityGuids;
+    private final List<XMParticle> mEnergyGlobGuids;
+    private final List<PlayerDamage> mPlayerDamages;
+    private final List<APGain> mAPGains;
 
     public GameBasket(JSONObject json) throws JSONException
     {
         mPlayerEntity = null;
-        mGameEntities = new LinkedList<GameEntityBase>();
-        mInventory = new LinkedList<ItemBase>();
-        mDeletedEntityGuids = new LinkedList<String>();
-        mEnergyGlobGuids = new LinkedList<XMParticle>();
-        mPlayerDamages = new LinkedList<PlayerDamage>();
-        mAPGains = new LinkedList<APGain>();
+        mGameEntities = new LinkedList<>();
+        mInventory = new LinkedList<>();
+        mDeletedEntityGuids = new LinkedList<>();
+        mEnergyGlobGuids = new LinkedList<>();
+        mPlayerDamages = new LinkedList<>();
+        mAPGains = new LinkedList<>();
 
         processPlayerDamages(json.optJSONArray("playerDamages"));
         processPlayerEntity(json.optJSONArray("playerEntity"));
@@ -111,7 +111,7 @@ public class GameBasket
     {
         // TODO: UNDONE
         if (levelUp != null) {
-            Log.d("GameBasket", "level up: " + levelUp.toString());
+            Log.d("GameBasket", "level up: " + levelUp);
         }
     }
 
