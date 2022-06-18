@@ -1,22 +1,22 @@
-/***********************************************************************
-*
-* Slimgress: Ingress API for Android
-* Copyright (C) 2013 Norman Link <norman.link@gmx.net>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-***********************************************************************/
+/**********************************************************************
+
+ Slimgress: Ingress API for Android
+ Copyright (C) 2013 Norman Link <norman.link@gmx.net>
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
 
 package com.norman0406.slimgress.API.Interface;
 
@@ -31,9 +31,9 @@ import android.util.Log;
 
 public class RequestResult
 {
-    private Handler mResultHandler;
+    private final Handler mResultHandler;
     private Bundle mBundle;
-    private Message mMessage;
+    private final Message mMessage;
 
     public RequestResult(Handler handler)
     {
@@ -45,23 +45,23 @@ public class RequestResult
     {
         Log.e("RequestResult.Callback", exception);
         mBundle.putString("Exception", exception);
-    };
+    }
 
     public void handleError(String error)
     {
         Log.e("RequestResult.Callback", error);
         mBundle.putString("Error", error);
-    };
+    }
 
     public void handleGameBasket(GameBasket gameBasket)
     {
         // not implemented
-    };
+    }
 
     public void handleResult(JSONObject result)
     {
         // not implemented
-    };
+    }
 
     public void handleResult(JSONArray result)
     {
@@ -115,10 +115,7 @@ public class RequestResult
                 result.handleResult(resultObj);
             else if (resultArr != null)
                 result.handleResult(resultArr);
-            else if (resultStr != null)
-                result.handleResult(resultStr);
-            else if (json.has("result"))
-                Log.w("RequestResult", "request contains an unknown result type");
+            else result.handleResult(resultStr);
 
             result.finished();
         }

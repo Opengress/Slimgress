@@ -1,24 +1,26 @@
-/***********************************************************************
-*
-* Slimgress: Ingress API for Android
-* Copyright (C) 2013 Norman Link <norman.link@gmx.net>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-***********************************************************************/
+/**********************************************************************
+
+ Slimgress: Ingress API for Android
+ Copyright (C) 2013 Norman Link <norman.link@gmx.net>
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
 
 package com.norman0406.slimgress.API.Common;
+
+import androidx.annotation.NonNull;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,7 +34,7 @@ public class Team
         Neutral
     }
 
-    private TeamType mTeam;
+    private final TeamType mTeam;
 
     public Team(JSONObject json) throws JSONException
     {
@@ -54,14 +56,18 @@ public class Team
 
     private TeamType fromString(String teamString)
     {
-        if (teamString.equals("RESISTANCE"))
-            return TeamType.Resistance;
-        else if (teamString.equals("ALIENS"))
-            return TeamType.Enlightened;
-        else if (teamString.equals("NEUTRAL") || teamString.equals("system") || teamString.equals("neutral"))
-            return TeamType.Neutral;
-        else
-            throw new RuntimeException("invalid team string: " + teamString);
+        switch (teamString) {
+            case "RESISTANCE":
+                return TeamType.Resistance;
+            case "ALIENS":
+                return TeamType.Enlightened;
+            case "NEUTRAL":
+            case "system":
+            case "neutral":
+                return TeamType.Neutral;
+            default:
+                throw new RuntimeException("invalid team string: " + teamString);
+        }
     }
 
     public TeamType getTeamType()
@@ -69,6 +75,7 @@ public class Team
         return mTeam;
     }
 
+    @NonNull
     public String toString()
     {
         if (mTeam == TeamType.Resistance)

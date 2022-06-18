@@ -1,22 +1,22 @@
-/***********************************************************************
-*
-* Slimgress: Ingress API for Android
-* Copyright (C) 2013 Norman Link <norman.link@gmx.net>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-***********************************************************************/
+/**********************************************************************
+
+ Slimgress: Ingress API for Android
+ Copyright (C) 2013 Norman Link <norman.link@gmx.net>
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
 
 package com.norman0406.slimgress.API.Game;
 
@@ -31,11 +31,11 @@ import com.norman0406.slimgress.API.Item.ItemBase;
 
 public class Inventory
 {
-    private Map<String, ItemBase> mItems;
+    private final Map<String, ItemBase> mItems;
 
     public Inventory()
     {
-        mItems = new HashMap<String, ItemBase>();
+        mItems = new HashMap<>();
     }
 
     public void clear()
@@ -66,12 +66,12 @@ public class Inventory
 
     public final List<ItemBase> getItemsList()
     {
-        return new ArrayList<ItemBase>(mItems.values());
+        return new ArrayList<>(mItems.values());
     }
 
     public final List<ItemBase> getItems(ItemBase.ItemType type)
     {
-        List<ItemBase> items = new LinkedList<ItemBase>();
+        List<ItemBase> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> item : mItems.entrySet()) {
             if (item.getValue().getItemType() == type)
                 items.add(item.getValue());
@@ -82,7 +82,7 @@ public class Inventory
 
     public final List<ItemBase> getItems(ItemBase.ItemType type, ItemBase.Rarity rarity)
     {
-        List<ItemBase> items = new LinkedList<ItemBase>();
+        List<ItemBase> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
             ItemBase item = pair.getValue();
             if (item.getItemType() == type &&
@@ -95,7 +95,7 @@ public class Inventory
 
     public final List<ItemBase> getItems(ItemBase.ItemType type, int accessLevel)
     {
-        List<ItemBase> items = new LinkedList<ItemBase>();
+        List<ItemBase> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
             ItemBase item = pair.getValue();
             if (item.getItemType() == type &&
@@ -108,7 +108,7 @@ public class Inventory
 
     public final List<ItemBase> getItems(ItemBase.ItemType type, ItemBase.Rarity rarity, int accessLevel)
     {
-        List<ItemBase> items = new LinkedList<ItemBase>();
+        List<ItemBase> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
             ItemBase item = pair.getValue();
             if (item.getItemType() == type &&
@@ -123,7 +123,7 @@ public class Inventory
     public final ItemBase findItem(String guid)
     {
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
-            if (pair.getKey() == guid)
+            if (pair.getKey().equals(guid))
                 return pair.getValue();
         }
 

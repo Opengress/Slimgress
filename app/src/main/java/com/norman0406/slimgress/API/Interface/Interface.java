@@ -1,35 +1,28 @@
-/***********************************************************************
-*
-* Slimgress: Ingress API for Android
-* Copyright (C) 2013 Norman Link <norman.link@gmx.net>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-***********************************************************************/
+/**********************************************************************
+
+ Slimgress: Ingress API for Android
+ Copyright (C) 2013 Norman Link <norman.link@gmx.net>
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
 
 package com.norman0406.slimgress.API.Interface;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Date;
 import java.util.Objects;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
-import java.util.zip.GZIPInputStream;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -40,8 +33,6 @@ import com.norman0406.slimgress.API.Common.Location;
 import android.os.Build;
 import android.util.Log;
 
-import okhttp3.Cookie;
-import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -57,7 +48,7 @@ public class Interface
         UnknownError
     }
 
-    private OkHttpClient mClient;
+    private final OkHttpClient mClient;
     private String mCookie;
 
     private String sessionName;
@@ -198,7 +189,7 @@ public class Interface
                         .build();
 
                 // do handshake
-                Response response = null;
+                Response response;
                 synchronized(Interface.this) {
                     Log.i("Interface", "executing handshake");
                     response = mClient.newCall(get).execute();
@@ -339,21 +330,6 @@ public class Interface
 //                }
         }).start();
     }
-
-//    private static String decompressGZIP(HttpEntity compressedEntity) throws IOException {
-//        final int bufferSize = 8192;
-//        InputStream input = compressedEntity.getContent();
-//        GZIPInputStream gzipStream = new GZIPInputStream(input, bufferSize);
-//        StringBuilder string = new StringBuilder();
-//        byte[] data = new byte[bufferSize];
-//        int bytesRead;
-//        while ((bytesRead = gzipStream.read(data)) != -1) {
-//            string.append(new String(data, 0, bytesRead));
-//        }
-//        gzipStream.close();
-//        input.close();
-//        return string.toString();
-//    }
 
     private long getCurrentTimestamp()
     {

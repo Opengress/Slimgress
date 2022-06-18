@@ -1,22 +1,22 @@
-/***********************************************************************
-*
-* Slimgress: Ingress API for Android
-* Copyright (C) 2013 Norman Link <norman.link@gmx.net>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-***********************************************************************/
+/**********************************************************************
+
+ Slimgress: Ingress API for Android
+ Copyright (C) 2013 Norman Link <norman.link@gmx.net>
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
 
 package com.norman0406.slimgress;
 
@@ -29,8 +29,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
-import android.os.Message;
-import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
@@ -42,18 +40,18 @@ import org.json.JSONObject;
 
 public class ActivityAuth extends Activity
 {
-    private IngressApplication mApp = IngressApplication.getInstance();
-    private GameState mGame = mApp.getGame();
+    private final IngressApplication mApp = IngressApplication.getInstance();
+    private final GameState mGame = mApp.getGame();
     private int mNumAttempts = 0;
     private static final int mMaxNumAttempts = 2;
-    private String id = null;
-    private String cookieName = null;
 
 
     class MyJavaScriptInterface {
 
         @JavascriptInterface
         public void claim(String claimed) {
+            String cookieName = null;
+            String id = null;
             try {
                 JSONObject params = new JSONObject(claimed);
                 cookieName = params.getString("name");

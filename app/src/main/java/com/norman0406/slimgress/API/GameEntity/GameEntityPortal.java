@@ -1,22 +1,22 @@
-/***********************************************************************
-*
-* Slimgress: Ingress API for Android
-* Copyright (C) 2013 Norman Link <norman.link@gmx.net>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-***********************************************************************/
+/**********************************************************************
+
+ Slimgress: Ingress API for Android
+ Copyright (C) 2013 Norman Link <norman.link@gmx.net>
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
 
 package com.norman0406.slimgress.API.GameEntity;
 
@@ -57,16 +57,16 @@ public class GameEntityPortal extends GameEntityBase
         public int level;
     }
 
-    private Location mPortalLocation;
-    private Team mPortalTeam;
-    private String mPortalTitle;
-    private String mPortalAddress;
-    private String mPortalAttribution;
-    private String mPortalAttributionLink;
+    private final Location mPortalLocation;
+    private final Team mPortalTeam;
+    private final String mPortalTitle;
+    private final String mPortalAddress;
+    private final String mPortalAttribution;
+    private final String mPortalAttributionLink;
     private String mPortalImageUrl;
-    private List<LinkedEdge> mPortalEdges;
-    private List<LinkedMod> mPortalMods;
-    private List<LinkedResonator> mPortalResonators;
+    private final List<LinkedEdge> mPortalEdges;
+    private final List<LinkedMod> mPortalMods;
+    private final List<LinkedResonator> mPortalResonators;
 
     GameEntityPortal(JSONArray json) throws JSONException
     {
@@ -84,7 +84,7 @@ public class GameEntityPortal extends GameEntityBase
         JSONObject portalV2 = item.getJSONObject("portalV2");
 
         // get edges
-        mPortalEdges = new LinkedList<LinkedEdge>();
+        mPortalEdges = new LinkedList<>();
         JSONArray portalEdges = portalV2.getJSONArray("linkedEdges");
         for (int i = 0; i < portalEdges.length(); i++) {
             JSONObject edge = portalEdges.getJSONObject(i);
@@ -97,7 +97,7 @@ public class GameEntityPortal extends GameEntityBase
         }
 
         // get mods
-        mPortalMods = new LinkedList<LinkedMod>();
+        mPortalMods = new LinkedList<>();
         JSONArray portalMods = portalV2.getJSONArray("linkedModArray");
         for (int i = 0; i < portalMods.length(); i++) {
             JSONObject mod = portalMods.optJSONObject(i);
@@ -126,7 +126,7 @@ public class GameEntityPortal extends GameEntityBase
         mPortalAttributionLink = descriptiveText.optString("ATTRIBUTION_LINK");
 
         // get resonators
-        mPortalResonators = new LinkedList<LinkedResonator>();
+        mPortalResonators = new LinkedList<>();
         JSONObject resonatorArray = item.getJSONObject("resonatorArray");
         JSONArray resonators = resonatorArray.getJSONArray("resonators");
         for (int i = 0; i < resonators.length(); i++) {

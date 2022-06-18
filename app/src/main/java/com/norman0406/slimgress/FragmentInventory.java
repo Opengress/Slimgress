@@ -1,22 +1,22 @@
-/***********************************************************************
-*
-* Slimgress: Ingress API for Android
-* Copyright (C) 2013 Norman Link <norman.link@gmx.net>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-***********************************************************************/
+/**********************************************************************
+
+ Slimgress: Ingress API for Android
+ Copyright (C) 2013 Norman Link <norman.link@gmx.net>
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
 
 package com.norman0406.slimgress;
 
@@ -49,8 +49,8 @@ import android.widget.Toast;
 
 public class FragmentInventory extends Fragment implements OnChildClickListener
 {
-    private IngressApplication mApp = IngressApplication.getInstance();
-    private GameState mGame = mApp.getGame();
+    private final IngressApplication mApp = IngressApplication.getInstance();
+    private final GameState mGame = mApp.getGame();
 
     ArrayList<String> mGroupNames;
     ArrayList<Object> mGroups;
@@ -74,44 +74,31 @@ public class FragmentInventory extends Fragment implements OnChildClickListener
         progress.setVisibility(View.VISIBLE);
 
         // create group names
-        mGroupNames = new ArrayList<String>();
-        mGroups = new ArrayList<Object>();
+        mGroupNames = new ArrayList<>();
+        mGroups = new ArrayList<>();
 
-        mGroupMedia = new ArrayList<String>();
-        mGroupMods = new ArrayList<String>();
-        mGroupPortalKeys = new ArrayList<String>();
-        mGroupPowerCubes = new ArrayList<String>();
-        mGroupResonators = new ArrayList<String>();
-        mGroupWeapons = new ArrayList<String>();
+        mGroupMedia = new ArrayList<>();
+        mGroupMods = new ArrayList<>();
+        mGroupPortalKeys = new ArrayList<>();
+        mGroupPowerCubes = new ArrayList<>();
+        mGroupResonators = new ArrayList<>();
+        mGroupWeapons = new ArrayList<>();
 
         final FragmentInventory thisObject = this;
 
         final Handler handler = new Handler();
 
-        mGame.intGetInventory(new Handler(new Handler.Callback() {
-            @Override
-            public boolean handleMessage(Message msg) {
-                fillInventory(new Runnable() {
-                    @Override
-                    public void run()
-                    {
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run()
-                            {
-                                InventoryList inventoryList = new InventoryList(mGroupNames, mGroups);
-                                inventoryList.setInflater(inflater, thisObject.getActivity());
-                                list.setAdapter(inventoryList);
-                                list.setOnChildClickListener(thisObject);
+        mGame.intGetInventory(new Handler(msg -> {
+            fillInventory(() -> handler.post(() -> {
+                InventoryList inventoryList = new InventoryList(mGroupNames, mGroups);
+                inventoryList.setInflater(inflater, thisObject.getActivity());
+                list.setAdapter(inventoryList);
+                list.setOnChildClickListener(thisObject);
 
-                                list.setVisibility(View.VISIBLE);
-                                progress.setVisibility(View.INVISIBLE);
-                            }
-                        });
-                    }
-                });
-                return true;
-            }
+                list.setVisibility(View.VISIBLE);
+                progress.setVisibility(View.INVISIBLE);
+            }));
+            return true;
         }));
 
         return rootView;
@@ -119,19 +106,15 @@ public class FragmentInventory extends Fragment implements OnChildClickListener
 
     private void fillInventory(final Runnable callback)
     {
-        new Thread(new Runnable() {
-            @Override
-            public void run()
-            {
-                fillMedia();
-                fillMods();
-                fillResonators();
-                fillPortalKeys();
-                fillWeapons();
-                fillPowerCubes();
+        new Thread(() -> {
+            fillMedia();
+            fillMods();
+            fillResonators();
+            fillPortalKeys();
+            fillWeapons();
+            fillPowerCubes();
 
-                callback.run();
-            }
+            callback.run();
         }).start();
     }
 
@@ -144,7 +127,7 @@ public class FragmentInventory extends Fragment implements OnChildClickListener
             List<ItemBase> items = inv.getItems(ItemType.Media, level);
             count += items.size();
 
-            LinkedList<ItemMedia> skipItems = new LinkedList<ItemMedia>();
+            LinkedList<ItemMedia> skipItems = new LinkedList<>();
             for (ItemBase item1 : items) {
                 ItemMedia theItem1 = (ItemMedia)item1;
 
@@ -205,36 +188,36 @@ public class FragmentInventory extends Fragment implements OnChildClickListener
 
         int count = 0;
 
-        for (int i = 0; i < types.length; i++) {
-            for (int j = 0; j < rarities.length; j++) {
-                List<ItemBase> items = inv.getItems(types[i], rarities[j]);
+        for (ItemType type : types) {
+            for (Rarity rarity : rarities) {
+                List<ItemBase> items = inv.getItems(type, rarity);
                 count += items.size();
 
                 if (items.size() > 0) {
-                    ItemMod theFirstItem = (ItemMod)(items.get(0));
+                    ItemMod theFirstItem = (ItemMod) (items.get(0));
                     String descr = theFirstItem.getModDisplayName();
 
                     switch (theFirstItem.getItemRarity()) {
-                    case None:
-                        break;
-                    case LessCommon:
-                        descr += " - Less Common";
-                        break;
-                    case Common:
-                        descr += " - Common";
-                        break;
-                    case VeryCommon:
-                        descr += " - Very Common";
-                        break;
-                    case Rare:
-                        descr += " - Rare";
-                        break;
-                    case VeryRare:
-                        descr += " - VeryRare";
-                        break;
-                    case ExtraRare:
-                        descr += " - Extra Rare";
-                        break;
+                        case None:
+                            break;
+                        case LessCommon:
+                            descr += " - Less Common";
+                            break;
+                        case Common:
+                            descr += " - Common";
+                            break;
+                        case VeryCommon:
+                            descr += " - Very Common";
+                            break;
+                        case Rare:
+                            descr += " - Rare";
+                            break;
+                        case VeryRare:
+                            descr += " - VeryRare";
+                            break;
+                        case ExtraRare:
+                            descr += " - Extra Rare";
+                            break;
                     }
 
                     if (items.size() > 0) {
@@ -361,7 +344,7 @@ public class FragmentInventory extends Fragment implements OnChildClickListener
         List<ItemBase> items = inv.getItems(ItemType.PortalKey);
         count += items.size();
 
-        LinkedList<ItemPortalKey> skipItems = new LinkedList<ItemPortalKey>();
+        LinkedList<ItemPortalKey> skipItems = new LinkedList<>();
         for (ItemBase item1 : items) {
             ItemPortalKey theItem1 = (ItemPortalKey)item1;
 

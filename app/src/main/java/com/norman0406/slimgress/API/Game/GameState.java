@@ -1,22 +1,22 @@
-/***********************************************************************
-*
-* Slimgress: Ingress API for Android
-* Copyright (C) 2013 Norman Link <norman.link@gmx.net>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-***********************************************************************/
+/**********************************************************************
+
+ Slimgress: Ingress API for Android
+ Copyright (C) 2013 Norman Link <norman.link@gmx.net>
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
 
 package com.norman0406.slimgress.API.Game;
 
@@ -46,13 +46,13 @@ import com.norman0406.slimgress.API.Player.*;
 
 public class GameState
 {
-    private Interface mInterface;
+    private final Interface mInterface;
     private Handshake mHandshake;
     private KnobsBundle mKnobs;
-    private Inventory mInventory;
-    private World mWorld;
+    private final Inventory mInventory;
+    private final World mWorld;
     private Agent mAgent;
-    private List<PlextBase> mPlexts;
+    private final List<PlextBase> mPlexts;
     private String mLastSyncTimestamp;
     private Location mLocation;
 
@@ -61,7 +61,7 @@ public class GameState
         mInterface = new Interface();
         mInventory = new Inventory();
         mWorld = new World();
-        mPlexts = new LinkedList<PlextBase>();
+        mPlexts = new LinkedList<>();
         mLastSyncTimestamp = "0";
     }
 
@@ -118,31 +118,28 @@ public class GameState
 
     public synchronized void intHandshake(final Handler handler)
     {
-        mInterface.handshake(new Handshake.Callback() {
-            @Override
-            public void handle(Handshake handshake) {
-                mHandshake = handshake;
-                mKnobs = mHandshake.getKnobs();
+        mInterface.handshake(handshake -> {
+            mHandshake = handshake;
+            mKnobs = mHandshake.getKnobs();
 
-                Message msg = new Message();
-                Bundle bundle = new Bundle();
-                bundle.putBoolean("Successful", mHandshake.isValid());
+            Message msg = new Message();
+            Bundle bundle = new Bundle();
+            bundle.putBoolean("Successful", mHandshake.isValid());
 
-                if (!mHandshake.isValid()) {
-                    String errString;
-                    if (mHandshake.getPregameStatus() == Handshake.PregameStatus.ClientMustUpgrade)
-                        errString = "Client must upgrade";
-                    else if (mHandshake.getAgent() == null)
-                        errString = "Invalid agent data";
-                    else
-                        errString = "Unknown error";
+            if (!mHandshake.isValid()) {
+                String errString;
+                if (mHandshake.getPregameStatus() == Handshake.PregameStatus.ClientMustUpgrade)
+                    errString = "Client must upgrade";
+                else if (mHandshake.getAgent() == null)
+                    errString = "Invalid agent data";
+                else
+                    errString = "Unknown error";
 
-                    bundle.putString("Error", errString);
-                }
-
-                msg.setData(bundle);
-                handler.sendMessage(msg);
+                bundle.putString("Error", errString);
             }
+
+            msg.setData(bundle);
+            handler.sendMessage(msg);
         });
     }
 
@@ -163,10 +160,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -203,10 +197,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -227,8 +218,7 @@ public class GameState
 
             // create cells
             JSONArray cellsAsHex = new JSONArray();
-            for (int i = 0; i < cellIds.length; i++)
-                cellsAsHex.put(cellIds[i]);
+            for (String cellId : cellIds) cellsAsHex.put(cellId);
 
             // create params
             JSONObject params = new JSONObject();
@@ -255,10 +245,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -274,10 +261,7 @@ public class GameState
 
             mInterface.request(mHandshake, "player/say", mLocation, params, new RequestResult(handler));
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -318,14 +302,20 @@ public class GameState
             mInterface.request(mHandshake, "playerUndecorated/redeemReward", null, params, new RequestResult(handler) {
                 @Override
                 public void handleError(String error) {
-                    if (error.equals("INVALID_PASSCODE"))
-                        super.handleError("Passcode invalid");
-                    else if (error.equals("ALREADY_REDEEMED"))
-                        super.handleError("Passcode already redemmed");
-                    else if (error.equals("ALREADY_REDEEMED_BY_PLAYER"))
-                        super.handleError("Passcode already redemmed by you");
-                    else
-                        super.handleError("Unknown error: " + error);
+                    switch (error) {
+                        case "INVALID_PASSCODE":
+                            super.handleError("Passcode invalid");
+                            break;
+                        case "ALREADY_REDEEMED":
+                            super.handleError("Passcode already redemmed");
+                            break;
+                        case "ALREADY_REDEEMED_BY_PLAYER":
+                            super.handleError("Passcode already redemmed by you");
+                            break;
+                        default:
+                            super.handleError("Unknown error: " + error);
+                            break;
+                    }
 
                     super.handleError(error);
                 }
@@ -337,10 +327,7 @@ public class GameState
             });
 
         }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        catch (JSONException e) {
+        catch (InterruptedException | JSONException e) {
             e.printStackTrace();
         }
     }
@@ -392,10 +379,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -413,25 +397,30 @@ public class GameState
             mInterface.request(mHandshake, "playerUndecorated/validateNickname", null, params, new RequestResult(handler) {
                 @Override
                 public void handleError(String error) {
-                    if (error.equals("INVALID_CHARACTERS"))
-                        super.handleError("Nickname contains invalid characters");
-                    else if (error.equals("TOO_SHORT"))
-                        super.handleError("Nickname is too short");
-                    else if (error.equals("BAD_WORDS"))
-                        super.handleError("Nickname contains bad words");
-                    else if (error.equals("NOT_UNIQUE"))
-                        super.handleError("Nickname is already in use");
-                    else if (error.equals("CANNOT_EDIT"))
-                        super.handleError("Cannot edit nickname");
-                    else
-                        super.handleError("Unknown error: " + error);
+                    switch (error) {
+                        case "INVALID_CHARACTERS":
+                            super.handleError("Nickname contains invalid characters");
+                            break;
+                        case "TOO_SHORT":
+                            super.handleError("Nickname is too short");
+                            break;
+                        case "BAD_WORDS":
+                            super.handleError("Nickname contains bad words");
+                            break;
+                        case "NOT_UNIQUE":
+                            super.handleError("Nickname is already in use");
+                            break;
+                        case "CANNOT_EDIT":
+                            super.handleError("Cannot edit nickname");
+                            break;
+                        default:
+                            super.handleError("Unknown error: " + error);
+                            break;
+                    }
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -448,10 +437,7 @@ public class GameState
 
             mInterface.request(mHandshake, "playerUndecorated/persistNickname", null, params, new RequestResult(handler));
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -468,10 +454,7 @@ public class GameState
 
             mInterface.request(mHandshake, "playerUndecorated/chooseFaction", null, params, new RequestResult(handler));
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -516,10 +499,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -545,10 +525,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -574,10 +551,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -608,10 +582,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -639,10 +610,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -670,10 +638,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -700,10 +665,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -723,10 +685,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -752,10 +711,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -786,10 +742,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -814,10 +767,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -843,10 +793,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -872,10 +819,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -899,10 +843,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -924,10 +865,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -958,10 +896,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -1013,10 +948,7 @@ public class GameState
                 }
             });
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        catch (JSONException | InterruptedException e) {
             e.printStackTrace();
         }
     }
