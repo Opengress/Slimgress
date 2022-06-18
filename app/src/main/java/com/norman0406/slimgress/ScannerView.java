@@ -22,26 +22,23 @@ package com.norman0406.slimgress;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -49,10 +46,8 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.InputDevice;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -61,6 +56,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -73,19 +69,18 @@ import com.norman0406.slimgress.API.GameEntity.GameEntityControlField;
 import com.norman0406.slimgress.API.GameEntity.GameEntityLink;
 import com.norman0406.slimgress.API.GameEntity.GameEntityPortal;
 
-import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.config.Configuration;
+import org.osmdroid.tileprovider.MapTileProviderBasic;
 import org.osmdroid.tileprovider.tilesource.ITileSource;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.CopyrightOverlay;
 import org.osmdroid.views.overlay.Marker;
-import org.osmdroid.views.overlay.MinimapOverlay;
-import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.Polyline;
-import org.osmdroid.views.overlay.ScaleBarOverlay;
+import org.osmdroid.views.overlay.TilesOverlay;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
@@ -93,11 +88,11 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 public class ScannerView extends Fragment {
-    private IngressApplication mApp = IngressApplication.getInstance();
-    private GameState mGame = mApp.getGame();
+    private final IngressApplication mApp = IngressApplication.getInstance();
+    private final GameState mGame = mApp.getGame();
     private MapView mMap = null;
 
-    private Bitmap mXMParticleIcon = null;
+//    private Bitmap mXMParticleIcon = null;
     private Bitmap mPortalIconResistance = null;
     private Bitmap mPortalIconEnlightened = null;
     private Bitmap mPortalIconNeutral = null;
@@ -111,34 +106,37 @@ public class ScannerView extends Fragment {
     // ===========================================================
 
     private static final String PREFS_NAME = "org.andnav.osm.prefs";
-    private static final String PREFS_TILE_SOURCE = "tilesource";
     private static final String PREFS_LATITUDE_STRING = "latitudeString";
     private static final String PREFS_LONGITUDE_STRING = "longitudeString";
-    private static final String PREFS_ORIENTATION = "orientation";
     private static final String PREFS_ZOOM_LEVEL_DOUBLE = "zoomLevelDouble";
 
     private static final int MENU_ABOUT = Menu.FIRST + 1;
     private static final int MENU_LAST_ID = MENU_ABOUT + 1; // Always set to last unused id
 
     // ===========================================================
-    // Fields
+    // Fields and permissions
     // ===========================================================
     private SharedPreferences mPrefs;
-    private MinimapOverlay mMinimapOverlay;
-    private ScaleBarOverlay mScaleBarOverlay;
 
     // ===========================================================
     // Other (location)
     // ===========================================================
-    private GeoPoint currentLocation = null;
+    private MyLocationListener locationListener = null;
+    private LocationManager locationManager = null;
+    private MyLocationNewOverlay mLocationOverlay = null;
+    private GeoPoint mCurrentLocation = null;
     private static final int RECORD_REQUEST_CODE = 101;
+    private Date mLastScan = null;
+    private Date mLastLocation = null;
+    private Polygon mActionRadius = null;
 
     public class MyLocationListener implements LocationListener {
 
         public void onLocationChanged(Location location) {
-            currentLocation = new GeoPoint(location);
-            mGame.updateLocation(new com.norman0406.slimgress.API.Common.Location(currentLocation.getLatitude(), currentLocation.getLongitude()));
-            displayMyCurrentLocationOverlay();
+            mCurrentLocation = new GeoPoint(location);
+            mGame.updateLocation(new com.norman0406.slimgress.API.Common.Location(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()));
+            mLastLocation = new Date();
+            displayMyCurrentLocationOverlay(mCurrentLocation);
         }
 
         public void onProviderDisabled(String provider) {
@@ -151,9 +149,36 @@ public class ScannerView extends Fragment {
         }
     }
 
-    private void displayMyCurrentLocationOverlay() {
-        System.err.println("Got location!");
-        System.err.println(currentLocation);
+    private void displayMyCurrentLocationOverlay(GeoPoint currentLocation) {
+        // TODO: draw player and action radius
+        List<GeoPoint> circle = Polygon.pointsAsCircle(currentLocation, 40);
+        mMap.getOverlayManager().remove(mActionRadius);
+        mActionRadius.setPoints(circle);
+        mMap.getOverlayManager().add(mActionRadius);
+        mMap.invalidate();
+
+        if (mLastScan == null || (new Date().getTime() - mLastScan.getTime() >= mGame.getKnobs().getScannerKnobs().getUpdateIntervalMS())) {
+            if (mGame.getLocation() != null) {
+                final Handler uiHandler = new Handler();
+                uiHandler.post(() -> {
+                    // get map boundaries (on ui thread)
+                    double east = mMap.getProjection().getBoundingBox().getLonEast();
+                    double west = mMap.getProjection().getBoundingBox().getLonWest();
+                    double north = mMap.getProjection().getBoundingBox().getLatNorth();
+                    double south = mMap.getProjection().getBoundingBox().getLatSouth();
+                    final S2LatLngRect region = S2LatLngRect.fromPointPair(S2LatLng.fromDegrees(north, west),
+                            S2LatLng.fromDegrees(south, east));
+
+                    updateWorld(region, uiHandler);
+                });
+
+            }
+        }
+        mLastLocation = new Date();
+
+        // TODO test this: lock scroll/pan so that user can't pan/zoom away
+//        mMap.setScrollableAreaLimitDouble(mMap.getBoundingBox());
+
     }
 
     @Override
@@ -167,119 +192,30 @@ public class ScannerView extends Fragment {
 
         //Note! we are programmatically construction the map view
         //be sure to handle application lifecycle correct (see note in on pause)
-        mMap = new MapView(inflater.getContext());
+        mMap = new MapView(inflater.getContext()) {
+        };
         mMap.setDestroyMode(false);
         mMap.setTag("mapView"); // needed for OpenStreetMapViewTest
+        mMap.setMinZoomLevel(16d);
+        mMap.setMaxZoomLevel(22d);
+        mMap.setFlingEnabled(false);
+        mMap.setMultiTouchControls(true);
 
-        int permission = ContextCompat.checkSelfPermission(inflater.getContext(),
-                android.Manifest.permission.ACCESS_FINE_LOCATION);
-
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-
-            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
-                    Manifest.permission.ACCESS_FINE_LOCATION)) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(inflater.getContext());
-                builder.setMessage("Permission to access the device location is required for this app to function correctly.")
-                        .setTitle("Permission required");
-
-                builder.setPositiveButton("OK", (dialog, id) -> makeRequest());
-
-                AlertDialog dialog = builder.create();
-                dialog.show();
-            } else {
-                makeRequest();
-            }
-        }
-
-        MyLocationListener locationListener = new MyLocationListener();
-        LocationManager locationManager = (LocationManager) mApp.getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        if( location != null ) {
-            currentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
-        }
-
-        mMap.setOnTouchListener((v, event) -> true);
-
-
-        loadAssets();
-
-        mMarkers = new HashMap<String, Marker>();
-        mLines = new HashMap<String, Polyline>();
-        mPolygons = new HashMap<String, Polygon>();
-
-        // disable most ui elements // FIXME
-//        UiSettings ui = mMap.getUiSettings();
-//        ui.setAllGesturesEnabled(false);
-//        ui.setCompassEnabled(false);
-//        ui.setScrollGesturesEnabled(true);
-//        ui.setRotateGesturesEnabled(true);
-//        ui.setZoomControlsEnabled(false);
-//        ui.setMyLocationButtonEnabled(false);
-//
-//        mMap.setMyLocationEnabled(true);
-
-        mMap.setOnGenericMotionListener(new View.OnGenericMotionListener() {
-            /**
-             * mouse wheel zooming ftw
-             * http://stackoverflow.com/questions/11024809/how-can-my-view-respond-to-a-mousewheel
-             * @param v
-             * @param event
-             * @return
-             */
-            @Override
-            public boolean onGenericMotion(View v, MotionEvent event) {
-                if (0 != (event.getSource() & InputDevice.SOURCE_CLASS_POINTER)) {
-                    switch (event.getAction()) {
-                        case MotionEvent.ACTION_SCROLL:
-                            if (event.getAxisValue(MotionEvent.AXIS_VSCROLL) < 0.0f)
-                                mMap.getController().zoomOut();
-                            else {
-                                //this part just centers the map on the current mouse location before the zoom action occurs
-                                IGeoPoint iGeoPoint = mMap.getProjection().fromPixels((int) event.getX(), (int) event.getY());
-                                mMap.getController().animateTo(iGeoPoint);
-                                mMap.getController().zoomIn();
-                            }
-                            return true;
-                    }
-                }
-                return false;
-            }
-        });
-
-// FIXME
-        //
-//        mMap.setOnMyLocationChangeListener(new GoogleMap.OnMyLocationChangeListener() {
-//            boolean firstLocation = true;
-//
-//            @Override
-//            public void onMyLocationChange(Location myLocation)
-//            {
-//                // update camera position
-//                CameraPosition pos = mMap.getCameraPosition();
-//                CameraPosition newPos = new CameraPosition.Builder(pos)
-//                        .target(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
-//                        .zoom(16)
-//                        .tilt(40)
-//                        .build();
-//                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(newPos));
-//
-//                // update game position
-//                mGame.updateLocation(new com.norman0406.slimgress.API.Common.Location(myLocation.getLatitude(), myLocation.getLongitude()));
-//
-//                if (firstLocation) {
-//                    firstLocation = false;
-//                }
-//            }
-//        });
-
-//        startWorldUpdate();
+        mActionRadius = new Polygon(mMap);
+        mActionRadius.getOutlinePaint().setColor(0x32ffff00);
+        mActionRadius.getOutlinePaint().setStrokeWidth(4);
 
         // deactivate standard map
 //        mMap.setMapType(GoogleMap.MAP_TYPE_NONE); // FIXME
 
         // add custom map tiles
         addIngressTiles();
+
+        loadAssets();
+
+        mMarkers = new HashMap<>();
+        mLines = new HashMap<>();
+        mPolygons = new HashMap<>();
 
         return mMap;
     }
@@ -300,23 +236,17 @@ public class ScannerView extends Fragment {
         mPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
 
-
         Configuration.getInstance().setUserAgentValue("Slimgress/Openflux (OSMDroid)");
 
         //My Location
         //note you have handle the permissions yourself, the overlay did not do it for you
-        MyLocationNewOverlay mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(context), mMap);
+        mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(context), mMap);
         mLocationOverlay.enableMyLocation();
         mLocationOverlay.enableFollowLocation();
+        mLocationOverlay.setEnableAutoStop(false);
         mMap.getOverlays().add(mLocationOverlay);
 
-
-        //Mini map
-//        mMinimapOverlay = new MinimapOverlay(context, mMap.getTileRequestCompleteHandler());
-//        mMinimapOverlay.setWidth(dm.widthPixels / 5);
-//        mMinimapOverlay.setHeight(dm.heightPixels / 5);
-//        mMap.getOverlays().add(this.mMinimapOverlay);
-
+        mMap.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
 
         //Copyright overlay
         CopyrightOverlay mCopyrightOverlay = new CopyrightOverlay(context);
@@ -327,16 +257,16 @@ public class ScannerView extends Fragment {
 
         //On screen compass
         CompassOverlay mCompassOverlay = new CompassOverlay(context, new InternalCompassOrientationProvider(context),
-                mMap);
+                mMap) {
+            @Override
+            public boolean onSingleTapConfirmed(final MotionEvent e, final MapView mapView) {
+                // FIXME set auto/manual rotation (may need to reset to north)
+                return true;
+            }
+        };
         mCompassOverlay.enableCompass();
+        mCompassOverlay.setCompassCenter(30, 85);
         mMap.getOverlays().add(mCompassOverlay);
-
-
-        //map scale
-//        mScaleBarOverlay = new ScaleBarOverlay(mMap);
-//        mScaleBarOverlay.setCentred(true);
-//        mScaleBarOverlay.setScaleBarOffset(dm.widthPixels / 2, 10);
-//        mMap.getOverlays().add(this.mScaleBarOverlay);
 
 
         //support for map rotation
@@ -352,25 +282,22 @@ public class ScannerView extends Fragment {
         mMap.setTilesScaledToDpi(true);
 
         //the rest of this is restoring the last map location the user looked at
-        final float zoomLevel = mPrefs.getFloat(PREFS_ZOOM_LEVEL_DOUBLE, 1);
+        final float zoomLevel = mPrefs.getFloat(PREFS_ZOOM_LEVEL_DOUBLE, 18);
         mMap.getController().setZoom(zoomLevel);
-        final float orientation = mPrefs.getFloat(PREFS_ORIENTATION, 0);
-        mMap.setMapOrientation(orientation, false);
+        mMap.setMapOrientation(0, false);
         final String latitudeString = mPrefs.getString(PREFS_LATITUDE_STRING, "1.0");
         final String longitudeString = mPrefs.getString(PREFS_LONGITUDE_STRING, "1.0");
         final double latitude = Double.parseDouble(latitudeString);
         final double longitude = Double.parseDouble(longitudeString);
         mMap.setExpectedCenter(new GeoPoint(latitude, longitude));
 
-        setHasOptionsMenu(true);
+        setHasOptionsMenu(false);
     }
 
     @Override
     public void onPause() {
         //save the current location
         final SharedPreferences.Editor edit = mPrefs.edit();
-        edit.putString(PREFS_TILE_SOURCE, mMap.getTileProvider().getTileSource().name());
-        edit.putFloat(PREFS_ORIENTATION, mMap.getMapOrientation());
         edit.putString(PREFS_LATITUDE_STRING, String.valueOf(mMap.getMapCenter().getLatitude()));
         edit.putString(PREFS_LONGITUDE_STRING, String.valueOf(mMap.getMapCenter().getLongitude()));
         edit.putFloat(PREFS_ZOOM_LEVEL_DOUBLE, (float) mMap.getZoomLevelDouble());
@@ -392,90 +319,36 @@ public class ScannerView extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        final String tileSourceName = mPrefs.getString(PREFS_TILE_SOURCE,
-                TileSourceFactory.DEFAULT_TILE_SOURCE.name());
-        try {
-            final ITileSource tileSource = TileSourceFactory.getTileSource(tileSourceName);
-            mMap.setTileSource(tileSource);
-        } catch (final IllegalArgumentException e) {
-            mMap.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
-        }
-
         mMap.onResume();
-        final Handler uiHandler = new Handler();
-//        final Handler timerHandler = new Handler();
-        uiHandler.post(() -> {
-            // get map boundaries (on ui thread)
-            double east = mMap.getProjection().getBoundingBox().getLonEast();
-            double west = mMap.getProjection().getBoundingBox().getLonWest();
-            double north = mMap.getProjection().getBoundingBox().getLatNorth();
-            double south = mMap.getProjection().getBoundingBox().getLatSouth();
-            final S2LatLngRect region = S2LatLngRect.fromPointPair(S2LatLng.fromDegrees(north, west),
-                    S2LatLng.fromDegrees(south, east));
 
-            // update world (on timer thread)
-//            timerHandler.post(() -> {
-            if (mGame.getLocation() != null)
-                updateWorld(region, uiHandler);
-//            });
-        });
-    }
+        locationListener = new MyLocationListener();
+        locationManager = (LocationManager) mApp.getSystemService(Context.LOCATION_SERVICE);
+        int permission = ContextCompat.checkSelfPermission(getContext(),
+                android.Manifest.permission.ACCESS_FINE_LOCATION);
 
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        // Put overlay items first
-        mMap.getOverlayManager().onCreateOptionsMenu(menu, MENU_LAST_ID, mMap);
+        if (permission != PackageManager.PERMISSION_GRANTED) {
 
-        // Put "About" menu item last
-//        menu.add(0, MENU_ABOUT, Menu.CATEGORY_SECONDARY, org.osmdroid.R.string.about).setIcon(
-//                android.R.drawable.ic_menu_info_details);
+            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                builder.setMessage("Permission to access the device location is required for this app to function correctly.")
+                        .setTitle("Permission required");
 
-        super.onCreateOptionsMenu(menu, inflater);
-    }
+                builder.setPositiveButton("OK", (dialog, id) -> makeRequest());
 
-    @Override
-    public void onPrepareOptionsMenu(final Menu pMenu) {
-        mMap.getOverlayManager().onPrepareOptionsMenu(pMenu, MENU_LAST_ID, mMap);
-        super.onPrepareOptionsMenu(pMenu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (mMap.getOverlayManager().onOptionsItemSelected(item, MENU_LAST_ID, mMap)) {
-            return true;
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            } else {
+                makeRequest();
+            }
+        } else {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if( location != null ) {
+                mCurrentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
+            }
         }
 
-//        switch (item.getItemId()) {
-//            case MENU_ABOUT:
-//                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
-//                        .setTitle(org.osmdroid.R.string.app_name).setMessage(org.osmdroid.R.string.about_message)
-//                        .setIcon(org.osmdroid.R.drawable.icon)
-//                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-//                                    public void onClick(DialogInterface dialog, int whichButton) {
-//                                        //
-//                                    }
-//                                }
-//                        );
-//                builder.create().show();
-//                return true;
-//        }
-        return super.onOptionsItemSelected(item);
-    }
 
-    public void zoomIn() {
-//        mMap.getController().zoomIn();
-    }
-
-    public void zoomOut() {
-//        mMap.getController().zoomOut();
-    }
-
-    // @Override
-    // public boolean onTrackballEvent(final MotionEvent event) {
-    // return this.mMap.onTrackballEvent(event);
-    // }
-    public void invalidateMapView() {
-        mMap.invalidate();
     }
 
     private void loadAssets()
@@ -484,7 +357,7 @@ public class ScannerView extends Fragment {
         mPortalIconResistance = Bitmap.createScaledBitmap(getBitmapFromAsset("portalTexture_RESISTANCE.png"), portalSize, portalSize, true);
         mPortalIconEnlightened = Bitmap.createScaledBitmap(getBitmapFromAsset("portalTexture_ALIENS.png"), portalSize, portalSize, true);
         mPortalIconNeutral = Bitmap.createScaledBitmap(getBitmapFromAsset("portalTexture_NEUTRAL.png"), portalSize, portalSize, true);
-        mXMParticleIcon = Bitmap.createScaledBitmap(getBitmapFromAsset("particle.png"), 10, 10, true);
+//        mXMParticleIcon = Bitmap.createScaledBitmap(getBitmapFromAsset("particle.png"), 10, 10, true);
     }
 
     private Bitmap getBitmapFromAsset(String name)
@@ -505,65 +378,15 @@ public class ScannerView extends Fragment {
 
     private void addIngressTiles()
     {
-        // FIXME
-//        // create a custom tile provider with an ingress-like map
-//        TileProvider tiles = new UrlTileProvider(256, 256) {
-//            @Override
-//            public synchronized URL getTileUrl(int x, int y, int zoom) {
-//                final String apistyle = "s.e%3Al%7Cp.v%3Aoff%2Cs.e%3Ag%7Cp.c%3A%23ff000000%2Cs.t%3A3%7Cs.e%3Ag%7Cp.c%3A%23ff5e9391";
-//                final String style = "59,37%7Csmartmaps";
-//
-//                final String format = "http://mt1.googleapis.com/vt?lyrs=m&src=apiv3&hl=de-DE&x=%d&s=&y=%d&z=%d&s=Galileo";
-//                String mapUrl = String.format(Locale.US, format, x, y, zoom);
-//
-//                mapUrl += "&apistyle=" + apistyle + "&style=" + style;
-//
-//                URL url = null;
-//                try {
-//                    url = new URL(mapUrl);
-//                } catch (MalformedURLException e) {
-//                    throw new AssertionError(e);
-//                }
-//                return url;
-//            }
-//        };
-//
-//        TileOverlayOptions tileOverlay = new TileOverlayOptions();
-//        tileOverlay.tileProvider(tiles);
-//
-//        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(tiles));
-    }
-
-    private void startWorldUpdate()
-    {
-        // TODO: problems blocking execution and causing out-of-memory exception
-
-        final Handler uiHandler = new Handler();
-
-        long updateInterval = mGame.getKnobs().getScannerKnobs().getUpdateIntervalMS();
-
-        Timer updateTimer = new Timer();
-        updateTimer.scheduleAtFixedRate(new TimerTask() {
-            final Handler timerHandler = new Handler();
-
-            @Override
-            public void run()
-            {
-                uiHandler.post(() -> {
-                    // get map boundaries (on ui thread)
-                    double northeast = mMap.getProjection().getBoundingBox().getLonEast();
-                    double southwest = mMap.getProjection().getBoundingBox().getLonWest();
-                    final S2LatLngRect region = S2LatLngRect.fromPointPair(S2LatLng.fromDegrees(southwest, southwest),
-                            S2LatLng.fromDegrees(northeast, northeast));
-
-                    // update world (on timer thread)
-                    timerHandler.post(() -> {
-                        if (mGame.getLocation() != null)
-                            updateWorld(region, uiHandler);
-                    });
-                });
-            }
-        }, 0, updateInterval);
+        // Add tiles layer with custom tile source
+        final MapTileProviderBasic tileProvider = new MapTileProviderBasic(mApp.getApplicationContext());
+        final ITileSource tileSource = new XYTileSource("CartoDB Dark Matter", 3, 18, 256, ".png",
+                new String[]{"https://c.basemaps.cartocdn.com/dark_all/"});
+        tileProvider.setTileSource(tileSource);
+        tileProvider.getTileRequestCompleteHandlers().add(mMap.getTileRequestCompleteHandler());
+        final TilesOverlay tilesOverlay = new TilesOverlay(tileProvider, this.getContext());
+        tilesOverlay.setLoadingBackgroundColor(Color.BLACK);
+        mMap.getOverlays().add(tilesOverlay);
     }
 
     private synchronized void updateWorld(final S2LatLngRect region, final Handler uiHandler)
@@ -577,12 +400,11 @@ public class ScannerView extends Fragment {
                 // draw game entities
                 Map<String, GameEntityBase> entities = mGame.getWorld().getGameEntities();
                 Set<String> keys = entities.keySet();
-                System.err.println(keys);
                 for (String key : keys) {
-                    System.err.println(key);
                     final GameEntityBase entity = entities.get(key);
 
                     uiHandler.post(() -> {
+                        assert entity != null;
                         if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal)
                             drawPortal((GameEntityPortal)entity);
                         else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link)
@@ -592,6 +414,7 @@ public class ScannerView extends Fragment {
                     });
                 }
 
+                mLastScan = new Date();
                 Log.d("ScannerView", "world updated");
             }).start();
 
@@ -625,7 +448,7 @@ public class ScannerView extends Fragment {
         }*/
     }
 
-    private void drawPortal(final GameEntityPortal portal)
+    private void drawPortal(@NonNull final GameEntityPortal portal)
     {
         final Team team = portal.getPortalTeam();
         if (mMap != null) {
@@ -649,6 +472,7 @@ public class ScannerView extends Fragment {
                     marker.setTitle(portal.getPortalTitle());
                     marker.setIcon(icon);
                     marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
+                    marker.setOnMarkerClickListener((marker1, mapView) -> true);
 
                     mMap.getOverlays().add(marker);
                     mMarkers.put(portal.getEntityGuid(), marker);
@@ -715,4 +539,5 @@ public class ScannerView extends Fragment {
             }
         }
     }
+
 }

@@ -183,7 +183,6 @@ public class GameState
             JSONArray cellsAsHex = new JSONArray();
             for (String cellId : cellIds) {
                 cellsAsHex.put(cellId);
-                System.err.println(cellId);
             }
 
             // create dates (timestamps?)
