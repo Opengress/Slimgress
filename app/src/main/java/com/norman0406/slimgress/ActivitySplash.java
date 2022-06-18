@@ -73,35 +73,31 @@ public class ActivitySplash extends Activity
                 mApp.setLoggedIn(true);
 
                 // perform handshake
-                mGame.intHandshake(new Handler(new Handler.Callback() {
-                    @Override
-                    public boolean handleMessage(Message msg)
-                    {
-                        Bundle data = msg.getData();
+                mGame.intHandshake(new Handler(msg -> {
+                    Bundle data1 = msg.getData();
 
-                        if (data.getBoolean("Successful")) {
-                            // start main activity
-                            ActivitySplash.this.finish();
-                            ActivitySplash.this.startActivity(new Intent(ActivitySplash.this, ActivityMain.class));
-                        }
-                        else {
-                            mApp.setLoggedIn(false);
-
-                            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                            builder.setTitle("Handshake error");
-                            builder.setMessage(data.getString("Error"));
-                            builder.setNegativeButton("OK", new Dialog.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    finish();
-                                }
-                            });
-                            Dialog dialog = builder.create();
-                            dialog.show();
-                        }
-
-                        return true;
+                    if (data1.getBoolean("Successful")) {
+                        // start main activity
+                        ActivitySplash.this.finish();
+                        ActivitySplash.this.startActivity(new Intent(ActivitySplash.this, ActivityMain.class));
                     }
+                    else {
+                        mApp.setLoggedIn(false);
+
+                        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                        builder.setTitle("Handshake error");
+                        builder.setMessage(data1.getString("Error"));
+                        builder.setNegativeButton("OK", new Dialog.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                finish();
+                            }
+                        });
+                        Dialog dialog = builder.create();
+                        dialog.show();
+                    }
+
+                    return true;
                 }));
             }
             else if (resultCode == RESULT_FIRST_USER) {

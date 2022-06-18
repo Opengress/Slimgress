@@ -20,8 +20,6 @@
 
 package com.norman0406.slimgress;
 
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.norman0406.slimgress.API.Common.Location;
@@ -29,26 +27,22 @@ import com.norman0406.slimgress.API.Common.Team;
 import com.norman0406.slimgress.API.Game.GameState;
 import com.norman0406.slimgress.API.Player.Agent;
 
-import android.Manifest;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 public class ActivityMain extends FragmentActivity
 {
-    private IngressApplication mApp = IngressApplication.getInstance();
-    private GameState mGame = mApp.getGame();
+    private final IngressApplication mApp = IngressApplication.getInstance();
+    private final GameState mGame = mApp.getGame();
 
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -57,21 +51,15 @@ public class ActivityMain extends FragmentActivity
 
         // create ops button callback
         final Button buttonOps = (Button)findViewById(R.id.buttonOps);
-        buttonOps.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // Perform action on click
-                Intent myIntent = new Intent(getApplicationContext(), ActivityOps.class);
-                startActivity(myIntent);
-            }
+        buttonOps.setOnClickListener(v -> {
+            // Perform action on click
+            Intent myIntent = new Intent(getApplicationContext(), ActivityOps.class);
+            startActivity(myIntent);
         });
 
         // create comm button callback
         final Button buttonComm = (Button)findViewById(R.id.buttonComm);
-        buttonComm.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                showInfoBox("Info");
-            }
-        });
+        buttonComm.setOnClickListener(v -> showInfoBox("Info"));
     }
 
     @Override
@@ -99,7 +87,7 @@ public class ActivityMain extends FragmentActivity
         Agent agent = mGame.getAgent();
 
         if (agent != null) {
-            int textColor = Color.BLUE;
+            int textColor;
             Team team = agent.getTeam();
             if (team.getTeamType() == Team.TeamType.Resistance)
                 textColor = Color.BLUE;
@@ -109,7 +97,7 @@ public class ActivityMain extends FragmentActivity
             ((TextView)findViewById(R.id.agentname)).setText(agent.getNickname());
             ((TextView)findViewById(R.id.agentname)).setTextColor(textColor);
 
-            String agentlevel = "L" + Integer.toString(agent.getLevel());
+            String agentlevel = "L" + agent.getLevel();
             ((TextView)findViewById(R.id.agentlevel)).setText(agentlevel);
             ((TextView)findViewById(R.id.agentlevel)).setTextColor(textColor);
 
