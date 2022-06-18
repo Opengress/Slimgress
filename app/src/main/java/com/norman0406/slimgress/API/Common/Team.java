@@ -57,8 +57,10 @@ public class Team
     private TeamType fromString(String teamString)
     {
         switch (teamString) {
+            case "human":
             case "RESISTANCE":
                 return TeamType.Resistance;
+            case "nothuman":
             case "ALIENS":
                 return TeamType.Enlightened;
             case "NEUTRAL":

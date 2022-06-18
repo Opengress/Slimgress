@@ -39,7 +39,7 @@ public class PlayerEntity extends EntityBase
     private int mAP;
     private int mEnergy;
     private EnergyState mEnergyState;
-    private int mClientLevel;
+    private int mVerifiedLevel;
     private boolean mAllowNicknameEdit;
     private boolean mAllowFactionChoice;
 
@@ -63,7 +63,7 @@ public class PlayerEntity extends EntityBase
             else
                 throw new RuntimeException("unknown energy state");
 
-            mClientLevel = playerPersonal.getInt("clientLevel");
+            mVerifiedLevel = playerPersonal.getInt("verifiedLevel");
             mAllowNicknameEdit = playerPersonal.getBoolean("allowNicknameEdit");
             mAllowFactionChoice = playerPersonal.getBoolean("allowFactionChoice");
         }
@@ -75,7 +75,7 @@ public class PlayerEntity extends EntityBase
         mAP = entity.mAP;
         mEnergy = entity.mEnergy;
         mEnergyState = entity.mEnergyState;
-        mClientLevel = entity.mClientLevel;
+        mVerifiedLevel = entity.mVerifiedLevel;
         mAllowNicknameEdit = entity.mAllowNicknameEdit;
         mAllowFactionChoice = entity.mAllowFactionChoice;
     }
@@ -102,7 +102,7 @@ public class PlayerEntity extends EntityBase
 
     public int getClientLevel()
     {
-        return mClientLevel;
+        return mVerifiedLevel;
     }
 
     public boolean isAllowNicknameEdit()

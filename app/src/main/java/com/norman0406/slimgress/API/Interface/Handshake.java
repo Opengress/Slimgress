@@ -43,7 +43,6 @@ public class Handshake
     private final PregameStatus mPregameStatus;
     private final String mServerVersion;
     private final String mNickname;
-    private final String mXSRFToken;
     private Agent mAgent = null;
     private KnobsBundle mKnobs = null;
 
@@ -67,8 +66,6 @@ public class Handshake
         if (playerEntity != null)
             mAgent = new Agent(playerEntity, mNickname);
 
-        mXSRFToken = result.optString("xsrfToken");
-
         // get knobs
         JSONObject knobs = result.optJSONObject("initialKnobs");
         if (knobs != null)
@@ -78,7 +75,6 @@ public class Handshake
     public boolean isValid()
     {
         return mAgent != null &&
-                mXSRFToken.length() > 0 &&
                 mPregameStatus == PregameStatus.NoActionsRequired;
     }
 
@@ -95,11 +91,6 @@ public class Handshake
     public String getNickname()
     {
         return mNickname;
-    }
-
-    public String getXSRFToken()
-    {
-        return mXSRFToken;
     }
 
     public Agent getAgent()
