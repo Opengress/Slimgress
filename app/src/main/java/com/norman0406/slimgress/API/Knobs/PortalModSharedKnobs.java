@@ -32,20 +32,11 @@ import android.util.Log;
 
 public class PortalModSharedKnobs extends Knobs
 {
-    private List<Integer> mMultiTurretFreqDiminishingValues;
-    private List<Integer> mMultiForceAmpDiminishingValues;
-    private List<Integer> mMultiLinkAmpDiminishingValues;
     private final Map<String, List<Integer>> mDiminishingValues;
 
     public PortalModSharedKnobs(JSONObject json) throws JSONException
     {
         super(json);
-
-        // ???
-//        mMultiTurretFreqDiminishingValues = getIntArray(json, "multiTurretFreqDiminishingValues");
-//        mMultiForceAmpDiminishingValues = getIntArray(json, "multiForceAmpDiminishingValues");
-//        mMultiLinkAmpDiminishingValues = getIntArray(json, "multiLinkAmpDiminishingValues");
-
         mDiminishingValues = new HashMap<>();
         JSONObject diminishingValues = json.getJSONObject("diminishingValues");
         Iterator<?> it = diminishingValues.keys();
@@ -53,21 +44,6 @@ public class PortalModSharedKnobs extends Knobs
             String key = (String)it.next();
             mDiminishingValues.put(key, getIntArray(diminishingValues, key));
         }
-    }
-
-    public List<Integer> getMultiTurretFreqDiminishingValues()
-    {
-        return mMultiTurretFreqDiminishingValues;
-    }
-
-    public List<Integer> getMultiForceAmpDiminishingValues()
-    {
-        return mMultiForceAmpDiminishingValues;
-    }
-
-    public List<Integer> getMultiLinkAmpDiminishingValues()
-    {
-        return mMultiLinkAmpDiminishingValues;
     }
 
     public List<Integer> getDiminishingValues(String key)
