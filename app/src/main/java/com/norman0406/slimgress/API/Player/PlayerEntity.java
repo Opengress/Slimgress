@@ -100,7 +100,7 @@ public class PlayerEntity extends EntityBase
         return mEnergyState;
     }
 
-    public int getClientLevel()
+    public int getVerifiedLevel()
     {
         return mVerifiedLevel;
     }

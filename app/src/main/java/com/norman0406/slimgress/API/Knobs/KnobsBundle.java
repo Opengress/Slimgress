@@ -28,13 +28,14 @@ public class KnobsBundle
     private final long mSyncTimestamp;
     private final ClientFeatureKnobs mClientFeatureKnobs;
     private final InventoryKnobs mInventoryKnobs;
-    private final NearbyPortalKnobs mNearbyPortalKnobs;
     private final PortalKnobs mPortalKnobs;
-    private final PortalModSharedKnobs mPortalModSharedKnobs;
     private final RecycleKnobs mRecycleKnobs;
-    private final ScannerKnobs mScannerKnobs;
     private final WeaponRangeKnobs mWeaponRangeKnobs;
     private final XMCostKnobs mXMCostKnobs;
+    private final ScannerKnobs mScannerKnobs;
+    private final PortalModSharedKnobs mPortalModSharedKnobs;
+    private final NearbyPortalKnobs mNearbyPortalKnobs;
+    private final PlayerLevelKnobs mPlayerLevelKnobs;
 
     public KnobsBundle(JSONObject json) throws JSONException
     {
@@ -43,14 +44,18 @@ public class KnobsBundle
         JSONObject bundleMap = json.getJSONObject("bundleMap");
 
         mClientFeatureKnobs = new ClientFeatureKnobs(bundleMap.getJSONObject("ClientFeatureKnobs"));
+        // smartnotificationclient knobs
+        // glyphcommandclient knobs
         mInventoryKnobs = new InventoryKnobs(bundleMap.getJSONObject("InventoryKnobs"));
-        mNearbyPortalKnobs = new NearbyPortalKnobs(bundleMap.getJSONObject("NearbyPortalKnobs"));
         mPortalKnobs = new PortalKnobs(bundleMap.getJSONObject("PortalKnobs"));
-        mPortalModSharedKnobs = new PortalModSharedKnobs(bundleMap.getJSONObject("PortalModSharedKnobs"));
         mRecycleKnobs = new RecycleKnobs(bundleMap.getJSONObject("recycleKnobs"));
-        mScannerKnobs = new ScannerKnobs(bundleMap.getJSONObject("ScannerKnobs"));
         mWeaponRangeKnobs = new WeaponRangeKnobs(bundleMap.getJSONObject("WeaponRangeKnobs"));
         mXMCostKnobs = new XMCostKnobs(bundleMap.getJSONObject("XmCostKnobs"));
+        mScannerKnobs = new ScannerKnobs(bundleMap.getJSONObject("ScannerKnobs"));
+        mPortalModSharedKnobs = new PortalModSharedKnobs(bundleMap.getJSONObject("PortalModSharedKnobs"));
+        mNearbyPortalKnobs = new NearbyPortalKnobs(bundleMap.getJSONObject("NearbyPortalKnobs"));
+        mPlayerLevelKnobs = new PlayerLevelKnobs(bundleMap.getJSONObject("PlayerLevelKnobs"));
+
     }
 
     public long getSyncTimestamp()
@@ -68,29 +73,14 @@ public class KnobsBundle
         return mInventoryKnobs;
     }
 
-    public NearbyPortalKnobs getNearbyPortalKnobs()
-    {
-        return mNearbyPortalKnobs;
-    }
-
     public PortalKnobs getPortalKnobs()
     {
         return mPortalKnobs;
     }
 
-    public PortalModSharedKnobs getPortalModSharedKnobs()
-    {
-        return mPortalModSharedKnobs;
-    }
-
     public RecycleKnobs getRecycleKnobs()
     {
         return mRecycleKnobs;
-    }
-
-    public ScannerKnobs getScannerKnobs()
-    {
-        return mScannerKnobs;
     }
 
     public WeaponRangeKnobs getWeaponRangeKnobs()
@@ -101,5 +91,25 @@ public class KnobsBundle
     public XMCostKnobs getXMCostKnobs()
     {
         return mXMCostKnobs;
+    }
+
+    public ScannerKnobs getScannerKnobs()
+    {
+        return mScannerKnobs;
+    }
+
+    public PortalModSharedKnobs getPortalModSharedKnobs()
+    {
+        return mPortalModSharedKnobs;
+    }
+
+    public NearbyPortalKnobs getNearbyPortalKnobs()
+    {
+        return mNearbyPortalKnobs;
+    }
+
+    public PlayerLevelKnobs getPlayerLevelKnobs()
+    {
+        return mPlayerLevelKnobs;
     }
 }

@@ -60,6 +60,8 @@ public class Handshake
 
         mServerVersion = result.getString("serverVersion");
 
+        // storage
+
         // get player entity
         mNickname = result.optString("nickname");
         JSONArray playerEntity = result.optJSONArray("playerEntity");

@@ -463,6 +463,7 @@ public class ScannerView extends Fragment {
                     else
                         portalIcon = mPortalIconNeutral;
 
+                    // TODO: make portal marker display portal health/deployment info
                     Drawable icon = new BitmapDrawable(getResources(), portalIcon);
 
                     Marker marker = new Marker(mMap);
@@ -487,6 +488,7 @@ public class ScannerView extends Fragment {
                 final com.norman0406.slimgress.API.Common.Location origin = link.getLinkOriginLocation();
                 final com.norman0406.slimgress.API.Common.Location dest = link.getLinkDestinationLocation();
 
+                // TODO: decay link per portal health
                 getActivity().runOnUiThread(() -> {
                     int color = 0xff0000ff; // blue without alpha
                     Team team = link.getLinkControllingTeam();
@@ -518,6 +520,7 @@ public class ScannerView extends Fragment {
 
                 getActivity().runOnUiThread(() -> {
 
+                    // todo: decay field per portal health
                     int color = 0x320000ff; // blue with alpha
                     Team team = field.getFieldControllingTeam();
                     if (team.getTeamType() == Team.TeamType.Enlightened)
