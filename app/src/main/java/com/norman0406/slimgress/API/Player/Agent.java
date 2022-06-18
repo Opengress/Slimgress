@@ -20,23 +20,18 @@
 
 package com.norman0406.slimgress.API.Player;
 
+import com.norman0406.slimgress.API.Knobs.PlayerLevelKnobs;
+import com.norman0406.slimgress.IngressApplication;
+
 import org.json.JSONArray;
 import org.json.JSONException;
+
+import java.util.Map;
+import java.util.Objects;
 
 public class Agent extends PlayerEntity
 {
     private final String mNickname;
-
-    private static final int[] mLevelAP = {
-            0,
-            10000,
-            30000,
-            70000,
-            150000,
-            300000,
-            600000,
-            1200000
-    };
 
     public Agent(JSONArray json, String nickname) throws JSONException
     {
@@ -52,10 +47,13 @@ public class Agent extends PlayerEntity
     public int getLevel()
     {
         // TODO: more efficient?
+        // also TODO: badges and stuff
 
-        for (int i = mLevelAP.length - 1; i >= 0; i--) {
-            if (this.getAp() >= mLevelAP[i])
-                return i + 1;
+        Map<String, PlayerLevelKnobs.PlayerLevel> playerLevels = IngressApplication.getInstance().getGame().getKnobs().getPlayerLevelKnobs().getPlayerLevelsMap();
+
+        for (int i = playerLevels.size() - 1; i >= 0; i--) {
+            if (this.getAp() >= Objects.requireNonNull(playerLevels.get(String.valueOf(i))).getApRequired())
+                return i;
         }
 
         throw new IndexOutOfBoundsException("agent level could not be retrieved");
@@ -63,6 +61,6 @@ public class Agent extends PlayerEntity
 
     public int getEnergyMax()
     {
-        return 2000 + (getLevel() * 1000);
+        return IngressApplication.getInstance().getGame().getKnobs().getPlayerLevelKnobs().getXmCapacityForLevel(getLevel());
     }
 }
