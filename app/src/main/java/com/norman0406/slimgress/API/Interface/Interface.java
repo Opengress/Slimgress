@@ -51,14 +51,10 @@ public class Interface
     private final OkHttpClient mClient;
     private String mCookie;
 
-    private String sessionName;
-    private String sessionId;
-
     // ingress api definitions
     private static final String mApiVersion = "2013-08-07T00:06:39Z a52083df5202 opt";
     private static final String mApiBase = "opengress.net";
     private static final String mApiBaseURL = "https://" + mApiBase + "/";
-    private static final String mApiLogin = "_ah/login?continue=http://localhost/&auth=";
     private static final String mApiHandshake = "handshake?json=";
     private static final String mApiRequest = "rpc/";
 
@@ -70,7 +66,7 @@ public class Interface
                 .addInterceptor(chain -> {
                     final Request original = chain.request();
                     final Request fixed = original.newBuilder()
-                            .addHeader("Cookie", String.join("=", sessionName, sessionId))
+                            .addHeader("Cookie", mCookie)
                             .build();
                     return chain.proceed(fixed);
                 })
@@ -80,84 +76,7 @@ public class Interface
 
     public AuthSuccess authenticate(String session_name, String session_id)
     {
-//        FutureTask<AuthSuccess> future = new FutureTask<AuthSuccess>(() -> {
-//            // see http://blog.notdot.net/2010/05/Authenticating-against-App-Engine-from-an-Android-app
-//            // also use ?continue= (?)
-//
-//            String login = mApiBaseURL + mApiLogin + token;
-//            Request get = new Request.Builder()
-//                    .url(login)
-//                    .build();
-//
-//            try {
-//                Response response;
-//                synchronized(Interface.this) {
-////                        mClient.getParams().setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, false);
-//                    Log.i("Interface", "executing authentication");
-//                    response = mClient.newCall(get).execute();
-//                }
-//                @SuppressWarnings("unused")
-//                String content = response.body().string();
-//
-//                if (response.code() == 401) {
-//                    // the token has expired
-//                    Log.i("Interface", "401: authentication token has expired");
-//                    return AuthSuccess.TokenExpired;
-//                }
-//                else if (response.code() != 302) {
-//                    // Response should be a redirect
-//                    Log.i("Interface", "unknown error: " + response.message());
-//                    return AuthSuccess.UnknownError;
-//                }
-//                else {
-//                    // get cookie
-//                    synchronized(Interface.this) {
-//                        for(Cookie cookie : mClient.cookieJar().loadForRequest(HttpUrl.get(login))) {
-//                            if(cookie.name().equals("SACSID")) {	// secure cookie! (ACSID is non-secure http cookie)
-//                                mCookie = cookie.value();
-//                            }
-//                        }
-//                    }
-//
-//                    if (mCookie == null) {
-//                        Log.i("Interface", "authentication token has expired");
-//                        return AuthSuccess.TokenExpired;
-//                    }
-//
-//                    Log.i("Interface", "authentication successful");
-//                    return AuthSuccess.Successful;
-//                }
-//            }
-//            catch (Exception e) {
-//                e.printStackTrace();
-//            }
-////                catch (IOException e) {
-////                    e.printStackTrace();
-////                }
-//            finally {
-//                synchronized(Interface.this) {
-////                        mClient.getParams().setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, true);
-//                }
-//            }
-//            return AuthSuccess.Successful;
-//        });
-//
-//        // start thread
-//        new Thread(future).start();
-//
-//        // obtain authentication return value
-//        AuthSuccess retVal = AuthSuccess.UnknownError;
-//        try {
-//            retVal = future.get();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        } catch (ExecutionException e) {
-//            e.printStackTrace();
-//        }
-//
-//        return retVal;
-        sessionName = session_name;
-        sessionId = session_id;
+        mCookie = String.join("=", session_name, session_id);
         return AuthSuccess.Successful;
     }
 
@@ -185,7 +104,7 @@ public class Interface
                         .url(handshake)
                         .header("Accept-Charset", "utf-8")
                         .header("Cache-Control", "max-age=0")
-                        .addHeader("Cookie", String.join("=", sessionName, sessionId))
+                        .addHeader("Cookie", mCookie)
                         .build();
 
                 // do handshake
@@ -214,12 +133,6 @@ public class Interface
             catch (Exception e) {
                 e.printStackTrace();
             }
-//                catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//                catch (JSONException e) {
-//                    e.printStackTrace();
-//                }
         }).start();
     }
 
@@ -268,8 +181,6 @@ public class Interface
                 }
             }
 
-
-
             // create post
             String postString = mApiBaseURL + mApiRequest + requestString;
             RequestBody body = RequestBody.create(params.toString(), MediaType.get("application/json"));
@@ -277,11 +188,11 @@ public class Interface
                     .post(body)
                     .header("Content-Type", "application/json;charset=UTF-8")
                     .header("Accept-Encoding", "gzip")
-                    .header("User-Agent", "Nemesis (gzip)")
+                    .header("User-Agent", "Opengress/Slimgress (API dev)")
                     .header("X-XsrfToken", handshake.getXSRFToken())
                     .header("Host", mApiBase)
                     .header("Connection", "Keep-Alive")
-                    .addHeader("Cookie", String.join("=", sessionName, sessionId))
+                    .addHeader("Cookie", mCookie)
                     .url(postString).build();
 
             // execute and get the response.
@@ -293,21 +204,11 @@ public class Interface
                     response = mClient.newCall(post).execute();
 
                     if (response.code() == 401) {
+                        // TODO: work out what to do...
                         // token expired or similar
                         //isAuthenticated = false;
-//                            response.getEntity().consumeContent();
                     }
                     else {
-//                            HttpEntity entity = response.getEntity();
-//
-//                            // decompress gzip if necessary
-//                            Header contentEncoding = entity.getContentEncoding();
-//                            if (contentEncoding != null && contentEncoding.getValue().equalsIgnoreCase("gzip"))
-//                                content = decompressGZIP(entity);
-//                            else
-//                                content = EntityUtils.toString(entity);
-//
-//                            entity.consumeContent();
                         content = response.body().string();
                     }
                 }
@@ -322,12 +223,6 @@ public class Interface
             catch (Exception e) {
                 e.printStackTrace();
             }
-//                catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//                catch (JSONException e) {
-//                    e.printStackTrace();
-//                }
         }).start();
     }
 
