@@ -20,6 +20,9 @@
 
 package com.norman0406.slimgress.API.Common;
 
+import com.norman0406.slimgress.API.Knobs.TeamKnobs;
+import com.norman0406.slimgress.IngressApplication;
+
 import androidx.annotation.NonNull;
 
 import org.json.JSONException;
@@ -27,52 +30,41 @@ import org.json.JSONObject;
 
 public class Team
 {
-    public enum TeamType
+
+    private final TeamKnobs.TeamType mTeam;
+
+    public Team(JSONObject json, TeamKnobs teamKnobs) throws JSONException
     {
-        Resistance,
-        Enlightened,
-        Neutral
+        if (!json.has("team"))
+            throw new RuntimeException("invalid json object");
+
+        mTeam = teamKnobs.fromString(json.getString("team"));
     }
 
-    private final TeamType mTeam;
+    public Team(String teamString, TeamKnobs teamKnobs)
+    {
+        mTeam = teamKnobs.fromString(teamString);
+    }
 
     public Team(JSONObject json) throws JSONException
     {
         if (!json.has("team"))
             throw new RuntimeException("invalid json object");
 
-        mTeam = fromString(json.getString("team"));
+        mTeam = IngressApplication.getInstance().getGame().getKnobs().getTeamKnobs().fromString(json.getString("team"));
     }
 
     public Team(String teamString)
     {
-        mTeam = fromString(teamString);
+        mTeam = IngressApplication.getInstance().getGame().getKnobs().getTeamKnobs().fromString(teamString);
     }
 
-    public Team(TeamType teamType)
+    public Team(TeamKnobs.TeamType teamType)
     {
         mTeam = teamType;
     }
 
-    private TeamType fromString(String teamString)
-    {
-        switch (teamString) {
-            case "human":
-            case "RESISTANCE":
-                return TeamType.Resistance;
-            case "nothuman":
-            case "ALIENS":
-                return TeamType.Enlightened;
-            case "NEUTRAL":
-            case "system":
-            case "neutral":
-                return TeamType.Neutral;
-            default:
-                throw new RuntimeException("invalid team string: " + teamString);
-        }
-    }
-
-    public TeamType getTeamType()
+    public TeamKnobs.TeamType getTeamType()
     {
         return mTeam;
     }
@@ -80,11 +72,12 @@ public class Team
     @NonNull
     public String toString()
     {
-        if (mTeam == TeamType.Resistance)
-            return "RESISTANCE";
-        else if (mTeam == TeamType.Enlightened)
-            return "ALIENS";
+        return mTeam.getName();
+    }
 
-        return "NEUTRAL";
+    @NonNull
+    public Integer getColour()
+    {
+        return mTeam.getColour();
     }
 }

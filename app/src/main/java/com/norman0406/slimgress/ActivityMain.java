@@ -30,6 +30,7 @@ import com.norman0406.slimgress.API.Player.Agent;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -89,10 +90,7 @@ public class ActivityMain extends FragmentActivity
         if (agent != null) {
             int textColor;
             Team team = agent.getTeam();
-            if (team.getTeamType() == Team.TeamType.Resistance)
-                textColor = Color.BLUE;
-            else
-                textColor = Color.GREEN;
+            textColor = 0xff000000 + team.getColour();
 
             ((TextView)findViewById(R.id.agentname)).setText(agent.getNickname());
             ((TextView)findViewById(R.id.agentname)).setTextColor(textColor);

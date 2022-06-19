@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import android.Manifest;
@@ -38,7 +39,11 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -66,6 +71,7 @@ import com.norman0406.slimgress.API.GameEntity.GameEntityBase;
 import com.norman0406.slimgress.API.GameEntity.GameEntityControlField;
 import com.norman0406.slimgress.API.GameEntity.GameEntityLink;
 import com.norman0406.slimgress.API.GameEntity.GameEntityPortal;
+import com.norman0406.slimgress.API.Knobs.TeamKnobs;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.MapTileProviderBasic;
@@ -95,6 +101,7 @@ public class ScannerView extends Fragment {
     private Bitmap mPortalIconEnlightened = null;
     private Bitmap mPortalIconNeutral = null;
 
+    private HashMap<String, Bitmap> mIcons = new HashMap<>();
     private HashMap<String, Marker> mMarkers = null;
     private HashMap<String, Polyline> mLines = null;
     private HashMap<String, Polygon> mPolygons = null;
@@ -352,10 +359,21 @@ public class ScannerView extends Fragment {
     private void loadAssets()
     {
         int portalSize = 80;
-        mPortalIconResistance = Bitmap.createScaledBitmap(getBitmapFromAsset("portalTexture_RESISTANCE.png"), portalSize, portalSize, true);
-        mPortalIconEnlightened = Bitmap.createScaledBitmap(getBitmapFromAsset("portalTexture_ALIENS.png"), portalSize, portalSize, true);
-        mPortalIconNeutral = Bitmap.createScaledBitmap(getBitmapFromAsset("portalTexture_NEUTRAL.png"), portalSize, portalSize, true);
+        Map<String, TeamKnobs.TeamType> teams = mGame.getKnobs().getTeamKnobs().getTeams();
+        for (String team: teams.keySet()) {
+            mIcons.put(team, getTintedImage("portalTexture_NEUTRAL.png", 0xff000000 + Objects.requireNonNull(teams.get(team)).getColour(), portalSize));
+        }
 //        mXMParticleIcon = Bitmap.createScaledBitmap(getBitmapFromAsset("particle.png"), 10, 10, true);
+    }
+
+    public Bitmap getTintedImage(String image, int color, int size) {
+        Bitmap bitmap = Bitmap.createScaledBitmap(getBitmapFromAsset(image), size, size, true);
+        Paint paint = new Paint();
+        paint.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
+        Bitmap bitmapResult = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmapResult);
+        canvas.drawBitmap(bitmap, 0, 0, paint);
+        return bitmapResult;
     }
 
     private Bitmap getBitmapFromAsset(String name)
@@ -456,12 +474,7 @@ public class ScannerView extends Fragment {
 
                 getActivity().runOnUiThread(() -> {
                     Bitmap portalIcon;
-                    if (team.getTeamType() == Team.TeamType.Resistance)
-                        portalIcon = mPortalIconResistance;
-                    else if (team.getTeamType() == Team.TeamType.Enlightened)
-                        portalIcon = mPortalIconEnlightened;
-                    else
-                        portalIcon = mPortalIconNeutral;
+                    portalIcon = mIcons.get(team.toString());
 
                     // TODO: make portal marker display portal health/deployment info
                     Drawable icon = new BitmapDrawable(getResources(), portalIcon);
@@ -490,10 +503,8 @@ public class ScannerView extends Fragment {
 
                 // TODO: decay link per portal health
                 getActivity().runOnUiThread(() -> {
-                    int color = 0xff0000ff; // blue without alpha
                     Team team = link.getLinkControllingTeam();
-                    if (team.getTeamType() == Team.TeamType.Enlightened)
-                        color = 0xff00ff00; // green without alpha
+                    int color = 0xff000000 + team.getColour(); // adding opacity
 
                     Polyline line = new Polyline(mMap);
                     line.addPoint(origin.getLatLng());
@@ -521,10 +532,8 @@ public class ScannerView extends Fragment {
                 getActivity().runOnUiThread(() -> {
 
                     // todo: decay field per portal health
-                    int color = 0x320000ff; // blue with alpha
                     Team team = field.getFieldControllingTeam();
-                    if (team.getTeamType() == Team.TeamType.Enlightened)
-                        color = 0x3200ff00; // green with alpha
+                    int color = 0x32000000 + team.getColour(); // adding alpha
 
                     Polygon polygon = new Polygon(mMap);
                     polygon.addPoint(new GeoPoint(vA.getLatLng()));

@@ -20,6 +20,8 @@
 
 package com.norman0406.slimgress.API.Knobs;
 
+import com.norman0406.slimgress.API.Common.Team;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -36,6 +38,7 @@ public class KnobsBundle
     private final PortalModSharedKnobs mPortalModSharedKnobs;
     private final NearbyPortalKnobs mNearbyPortalKnobs;
     private final PlayerLevelKnobs mPlayerLevelKnobs;
+    private final TeamKnobs mTeamKnobs;
 
     public KnobsBundle(JSONObject json) throws JSONException
     {
@@ -55,6 +58,7 @@ public class KnobsBundle
         mPortalModSharedKnobs = new PortalModSharedKnobs(bundleMap.getJSONObject("PortalModSharedKnobs"));
         mNearbyPortalKnobs = new NearbyPortalKnobs(bundleMap.getJSONObject("NearbyPortalKnobs"));
         mPlayerLevelKnobs = new PlayerLevelKnobs(bundleMap.getJSONObject("PlayerLevelKnobs"));
+        mTeamKnobs = new TeamKnobs(bundleMap.getJSONObject("TeamKnobs"));
 
     }
 
@@ -111,5 +115,10 @@ public class KnobsBundle
     public PlayerLevelKnobs getPlayerLevelKnobs()
     {
         return mPlayerLevelKnobs;
+    }
+
+    public TeamKnobs getTeamKnobs()
+    {
+        return mTeamKnobs;
     }
 }

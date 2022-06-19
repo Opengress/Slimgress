@@ -99,7 +99,6 @@ public class Interface
                 paramString = URLEncoder.encode(paramString, "UTF-8");
 
                 String handshake = mApiBaseURL + mApiHandshake + paramString;
-                System.err.println(handshake);
 
                 Request get = new Request.Builder()
                         .url(handshake)

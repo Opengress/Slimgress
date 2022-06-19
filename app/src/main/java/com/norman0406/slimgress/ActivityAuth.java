@@ -89,7 +89,6 @@ public class ActivityAuth extends Activity
 
     private void authorize()
     {
-        System.err.println("authorize");
         // check first if user is already logged in
 
         if (isLoggedIn()) {
@@ -111,13 +110,11 @@ public class ActivityAuth extends Activity
 
     private void selectAccount()
     {
-        System.err.println("selectAccount");
             authenticateUser();
     }
 
     private boolean isLoggedIn()
     {
-        System.err.println("isLoggedIn");
         // check if login data exists
         SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName,  0);
         String accountName = prefs.getString("session_name", null);
@@ -129,8 +126,6 @@ public class ActivityAuth extends Activity
     @SuppressLint("SetJavaScriptEnabled")
     private void authenticateUser()
     {
-
-        System.err.println("authenticateUser");
 
             WebView myWebView = new WebView(getLayoutInflater().getContext());
             myWebView.getSettings().setJavaScriptEnabled(true);
@@ -253,7 +248,6 @@ public class ActivityAuth extends Activity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
-        System.err.println("onActivityResult");
         if (requestCode == 0) {
             if (resultCode == RESULT_OK) {
                 // authorize again to obtain the code
@@ -268,7 +262,6 @@ public class ActivityAuth extends Activity
 
     public void authFinished(final String session_name, final String session_id)
     {
-        System.err.println("authFinished");
         mNumAttempts++;
 
         new Thread(() -> {
@@ -306,7 +299,6 @@ public class ActivityAuth extends Activity
 
     public void authFailed()
     {
-        System.err.println("authFailed");
         // clear login data
         SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName,  0);
         String sessionName = prefs.getString("session_name", null);

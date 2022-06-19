@@ -44,7 +44,7 @@ public class PlextPlayer extends PlextBase
         if (controllingTeam != null)
             mTeam = new Team(controllingTeam);
         else
-            mTeam = new Team(Team.TeamType.Neutral);
+            mTeam = new Team("neutral");
     }
 
     public boolean isSecure()

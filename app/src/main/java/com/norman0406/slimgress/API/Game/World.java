@@ -47,12 +47,9 @@ public class World
 
     public void processGameBasket(GameBasket basket)
     {
-        System.err.println("entities size:");
-        System.err.println(basket.getGameEntities().size());
         // only add non-existing game entities
         List<GameEntityBase> entities = basket.getGameEntities();
         for (GameEntityBase entity : entities) {
-            System.err.println(entity.getEntityGuid());
             if (!mGameEntities.containsKey(entity.getEntityGuid()))
                 mGameEntities.put(entity.getEntityGuid(), entity);
         }

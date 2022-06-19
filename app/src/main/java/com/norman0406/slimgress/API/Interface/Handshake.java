@@ -20,6 +20,8 @@
 
 package com.norman0406.slimgress.API.Interface;
 
+import android.util.Log;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -62,16 +64,18 @@ public class Handshake
 
         // storage
 
+        // get knobs
+        JSONObject knobs = result.optJSONObject("initialKnobs");
+        if (knobs != null) {
+            mKnobs = new KnobsBundle(knobs);
+        }
+
         // get player entity
         mNickname = result.optString("nickname");
         JSONArray playerEntity = result.optJSONArray("playerEntity");
-        if (playerEntity != null)
-            mAgent = new Agent(playerEntity, mNickname);
-
-        // get knobs
-        JSONObject knobs = result.optJSONObject("initialKnobs");
-        if (knobs != null)
-            mKnobs = new KnobsBundle(knobs);
+        if (playerEntity != null) {
+            mAgent = new Agent(playerEntity, mNickname, mKnobs.getTeamKnobs());
+        }
     }
 
     public boolean isValid()

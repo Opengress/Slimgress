@@ -21,6 +21,7 @@
 package com.norman0406.slimgress.API.Player;
 
 import com.norman0406.slimgress.API.Knobs.PlayerLevelKnobs;
+import com.norman0406.slimgress.API.Knobs.TeamKnobs;
 import com.norman0406.slimgress.IngressApplication;
 
 import org.json.JSONArray;
@@ -36,6 +37,12 @@ public class Agent extends PlayerEntity
     public Agent(JSONArray json, String nickname) throws JSONException
     {
         super(json);
+        mNickname = nickname;
+    }
+
+    public Agent(JSONArray json, String nickname, TeamKnobs teamKnobs) throws JSONException
+    {
+        super(json, teamKnobs);
         mNickname = nickname;
     }
 
