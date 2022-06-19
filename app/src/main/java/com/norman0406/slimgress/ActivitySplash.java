@@ -59,9 +59,6 @@ public class ActivitySplash extends Activity
     {
         final Context context = this;
 
-        System.err.println(requestCode);
-        System.err.println(resultCode);
-
         if (requestCode == 0) {
             if (resultCode == RESULT_OK) {
                 mApp.setLoggedIn(true);

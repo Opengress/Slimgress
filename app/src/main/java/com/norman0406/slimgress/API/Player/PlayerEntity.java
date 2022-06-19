@@ -26,6 +26,7 @@ import org.json.JSONObject;
 
 import com.norman0406.slimgress.API.Common.EntityBase;
 import com.norman0406.slimgress.API.Common.Team;
+import com.norman0406.slimgress.API.Knobs.TeamKnobs;
 
 public class PlayerEntity extends EntityBase
 {
@@ -49,6 +50,32 @@ public class PlayerEntity extends EntityBase
 
         JSONObject playerEntity = json.getJSONObject(2);
         mTeam = new Team(playerEntity.getJSONObject("controllingTeam"));
+
+        JSONObject playerPersonal = playerEntity.optJSONObject("playerPersonal");
+        if (playerPersonal != null) {
+            mAP = Integer.parseInt(playerPersonal.getString("ap"));
+            mEnergy = playerPersonal.getInt("energy");
+
+            String energyStateString = playerPersonal.getString("energyState");
+            if (energyStateString.equals("XM_OK"))
+                mEnergyState = EnergyState.OK;
+            else if (energyStateString.equals("XM_DEPLETED"))
+                mEnergyState = EnergyState.Depleted;
+            else
+                throw new RuntimeException("unknown energy state");
+
+            mVerifiedLevel = playerPersonal.getInt("verifiedLevel");
+            mAllowNicknameEdit = playerPersonal.getBoolean("allowNicknameEdit");
+            mAllowFactionChoice = playerPersonal.getBoolean("allowFactionChoice");
+        }
+    }
+
+    public PlayerEntity(JSONArray json, TeamKnobs teamKnobs) throws JSONException
+    {
+        super(json);
+
+        JSONObject playerEntity = json.getJSONObject(2);
+        mTeam = new Team(playerEntity.getJSONObject("controllingTeam"), teamKnobs);
 
         JSONObject playerPersonal = playerEntity.optJSONObject("playerPersonal");
         if (playerPersonal != null) {

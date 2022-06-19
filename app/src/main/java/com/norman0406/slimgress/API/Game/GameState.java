@@ -89,7 +89,6 @@ public class GameState
             Log.w("Game", "game basket is invalid");
         else {
             Log.w("Game", "processing game basket");
-            System.err.println("processing game basket");
             mInventory.processGameBasket(gameBasket);
             mWorld.processGameBasket(gameBasket);
 
