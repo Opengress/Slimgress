@@ -1,4 +1,4 @@
-/**********************************************************************
+/*
 
  Slimgress: Ingress API for Android
  Copyright (C) 2013 Norman Link <norman.link@gmx.net>
@@ -34,6 +34,7 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
@@ -71,6 +72,7 @@ import com.norman0406.slimgress.API.GameEntity.GameEntityBase;
 import com.norman0406.slimgress.API.GameEntity.GameEntityControlField;
 import com.norman0406.slimgress.API.GameEntity.GameEntityLink;
 import com.norman0406.slimgress.API.GameEntity.GameEntityPortal;
+import com.norman0406.slimgress.API.Knobs.ScannerKnobs;
 import com.norman0406.slimgress.API.Knobs.TeamKnobs;
 
 import org.osmdroid.config.Configuration;
@@ -97,11 +99,8 @@ public class ScannerView extends Fragment {
     private MapView mMap = null;
 
 //    private Bitmap mXMParticleIcon = null;
-    private Bitmap mPortalIconResistance = null;
-    private Bitmap mPortalIconEnlightened = null;
-    private Bitmap mPortalIconNeutral = null;
 
-    private HashMap<String, Bitmap> mIcons = new HashMap<>();
+    private final HashMap<String, Bitmap> mIcons = new HashMap<>();
     private HashMap<String, Marker> mMarkers = null;
     private HashMap<String, Polyline> mLines = null;
     private HashMap<String, Polygon> mPolygons = null;
@@ -132,7 +131,8 @@ public class ScannerView extends Fragment {
     private GeoPoint mCurrentLocation = null;
     private static final int RECORD_REQUEST_CODE = 101;
     private Date mLastScan = null;
-    private Date mLastLocation = null;
+    private Date mLastLocationAcquired = null;
+    private GeoPoint mLastLocation = null;
     private Polygon mActionRadius = null;
 
     public class MyLocationListener implements LocationListener {
@@ -140,7 +140,7 @@ public class ScannerView extends Fragment {
         public void onLocationChanged(Location location) {
             mCurrentLocation = new GeoPoint(location);
             mGame.updateLocation(new com.norman0406.slimgress.API.Common.Location(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()));
-            mLastLocation = new Date();
+            mLastLocationAcquired = new Date();
             displayMyCurrentLocationOverlay(mCurrentLocation);
         }
 
@@ -155,14 +155,21 @@ public class ScannerView extends Fragment {
     }
 
     private void displayMyCurrentLocationOverlay(GeoPoint currentLocation) {
-        // TODO: draw player and action radius
+        // TODO: draw player (manually)
         List<GeoPoint> circle = Polygon.pointsAsCircle(currentLocation, 40);
         mMap.getOverlayManager().remove(mActionRadius);
         mActionRadius.setPoints(circle);
         mMap.getOverlayManager().add(mActionRadius);
         mMap.invalidate();
 
-        if (mLastScan == null || (new Date().getTime() - mLastScan.getTime() >= mGame.getKnobs().getScannerKnobs().getUpdateIntervalMS())) {
+        long now = new Date().getTime();
+        ScannerKnobs knobs = mGame.getKnobs().getScannerKnobs();
+
+        if (mLastScan == null ||
+                mLastLocation == null ||
+                (now - mLastScan.getTime() >= knobs.getUpdateIntervalMS()) ||
+                (now - mLastScan.getTime() >= knobs.getMinUpdateIntervalMS() && mLastLocation.distanceToAsDouble(currentLocation) >= knobs.getUpdateDistanceM())
+        ) {
             if (mGame.getLocation() != null) {
                 final Handler uiHandler = new Handler();
                 uiHandler.post(() -> {
@@ -179,7 +186,8 @@ public class ScannerView extends Fragment {
 
             }
         }
-        mLastLocation = new Date();
+        mLastLocationAcquired = new Date();
+        mLastLocation = currentLocation;
 
         // TODO test this: lock scroll/pan so that user can't pan/zoom away
 //        mMap.setScrollableAreaLimitDouble(mMap.getBoundingBox());
@@ -208,7 +216,8 @@ public class ScannerView extends Fragment {
 
         mActionRadius = new Polygon(mMap);
         mActionRadius.getOutlinePaint().setColor(0x32ffff00);
-        mActionRadius.getOutlinePaint().setStrokeWidth(4);
+        mActionRadius.getOutlinePaint().setStrokeWidth(10);
+        mActionRadius.setOnClickListener((polygon, mapView, eventPos) -> false);
 
         // deactivate standard map
 //        mMap.setMapType(GoogleMap.MAP_TYPE_NONE); // FIXME
@@ -376,6 +385,7 @@ public class ScannerView extends Fragment {
         return bitmapResult;
     }
 
+    // FIXME duplicated in ActivityPortal
     private Bitmap getBitmapFromAsset(String name)
     {
         AssetManager assetManager = getActivity().getAssets();
@@ -476,7 +486,9 @@ public class ScannerView extends Fragment {
                     Bitmap portalIcon;
                     portalIcon = mIcons.get(team.toString());
 
-                    // TODO: make portal marker display portal health/deployment info
+                    // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
+                    // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
+                    // ... maybe i can at least write the portal level on the portal, like in iitc
                     Drawable icon = new BitmapDrawable(getResources(), portalIcon);
 
                     Marker marker = new Marker(mMap);
@@ -484,7 +496,12 @@ public class ScannerView extends Fragment {
                     marker.setTitle(portal.getPortalTitle());
                     marker.setIcon(icon);
                     marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
-                    marker.setOnMarkerClickListener((marker1, mapView) -> true);
+                    marker.setOnMarkerClickListener((marker12, mapView) -> {
+                        Intent myIntent = new Intent(getContext(), ActivityPortal.class);
+                        mGame.setCurrentPortal(portal);
+                        startActivity(myIntent);
+                        return true;
+                    });
 
                     mMap.getOverlays().add(marker);
                     mMarkers.put(portal.getEntityGuid(), marker);
@@ -512,6 +529,7 @@ public class ScannerView extends Fragment {
                     line.setColor(color);
                     line.setWidth(2);
 //                        line.zIndex(2);
+                    line.setOnClickListener((poly, mapView, eventPos) -> false);
 
                     mMap.getOverlays().add(line);
                     mLines.put(link.getEntityGuid(), line);
@@ -542,6 +560,7 @@ public class ScannerView extends Fragment {
                     polygon.setFillColor(color);
                     polygon.setStrokeWidth(0);
 //                        polygon.zIndex(1);
+                    polygon.setOnClickListener((poly, mapView, eventPos) -> false);
 
                     mMap.getOverlays().add(polygon);
                     mPolygons.put(field.getEntityGuid(), polygon);

@@ -1,4 +1,4 @@
-/**********************************************************************
+/*
 
  Slimgress: Ingress API for Android
  Copyright (C) 2013 Norman Link <norman.link@gmx.net>
@@ -61,6 +61,7 @@ public abstract class ItemBase extends EntityBase
     }
 
     private int mItemAccessLevel = 0;
+    private int mItemLevel = 0;
     private Rarity mItemRarity = Rarity.None;
     private final ItemType mItemType;
     private final String mItemPlayerId;
@@ -128,14 +129,23 @@ public abstract class ItemBase extends EntityBase
 
         JSONObject item = json.getJSONObject(2);
         JSONObject itemResource;
-        if (item.has("resource"))
+        if (item.has("resource")) {
             itemResource = item.getJSONObject("resource");
-        else if (item.has("resourceWithLevels"))
+        }
+        else if (item.has("resourceWithLevels")) {
             itemResource = item.getJSONObject("resourceWithLevels");
-        else if (item.has("modResource"))
+            JSONObject accessLevel = item.getJSONObject("accessLevel");
+            // accessLevel/failure/{isAllowed,requiredLevel}
+            Log.d("MAKING ITEM", item.toString());
+            mItemAccessLevel = accessLevel.getInt("requiredLevel");
+            mItemLevel = itemResource.getInt("level");
+        }
+        else if (item.has("modResource")) {
             itemResource = item.getJSONObject("modResource");
-        else
+        }
+        else {
             throw new JSONException("resource not found");
+        }
 
         if (itemResource.has("resourceRarity") || itemResource.has("rarity")) {
             String rarity;
@@ -170,10 +180,6 @@ public abstract class ItemBase extends EntityBase
             }
         }
 
-        if (itemResource.has("level")) {
-            mItemAccessLevel = itemResource.getInt("level");
-        }
-
         JSONObject itemInInventory = item.getJSONObject("inInventory");
         mItemPlayerId = itemInInventory.getString("playerId");
         mItemAcquisitionTimestamp = itemInInventory.getString("acquisitionTimestampMs");
@@ -189,6 +195,11 @@ public abstract class ItemBase extends EntityBase
     public int getItemAccessLevel()
     {
         return mItemAccessLevel;
+    }
+
+    public int getItemLevel()
+    {
+        return mItemLevel;
     }
 
     public Rarity getItemRarity()

@@ -1,4 +1,4 @@
-/**********************************************************************
+/*
 
  Slimgress: Ingress API for Android
  Copyright (C) 2013 Norman Link <norman.link@gmx.net>
@@ -106,6 +106,7 @@ public class Inventory
         return items;
     }
 
+    // probably not applicable at this point
     public final List<ItemBase> getItems(ItemBase.ItemType type, ItemBase.Rarity rarity, int accessLevel)
     {
         List<ItemBase> items = new LinkedList<>();

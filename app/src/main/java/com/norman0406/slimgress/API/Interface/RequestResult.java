@@ -1,4 +1,4 @@
-/**********************************************************************
+/*
 
  Slimgress: Ingress API for Android
  Copyright (C) 2013 Norman Link <norman.link@gmx.net>
@@ -71,6 +71,12 @@ public class RequestResult
     public void handleResult(String result)
     {
         // not implemented
+    }
+
+    public void initBundle() {
+        if (mBundle == null) {
+            mBundle = new Bundle();
+        }
     }
 
     public Bundle getData()

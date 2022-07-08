@@ -1,4 +1,4 @@
-/**********************************************************************
+/*
 
  Slimgress: Ingress API for Android
  Copyright (C) 2013 Norman Link <norman.link@gmx.net>
@@ -20,6 +20,8 @@
 
 package com.norman0406.slimgress.API.Game;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -55,6 +57,7 @@ public class GameState
     private final List<PlextBase> mPlexts;
     private String mLastSyncTimestamp;
     private Location mLocation;
+    private GameEntityPortal mPortal;
 
     public GameState()
     {
@@ -540,14 +543,47 @@ public class GameState
             mInterface.request(mHandshake, "gameplay/collectItemsFromPortal", mLocation, params, new RequestResult(handler) {
                 @Override
                 public void handleError(String error) {
+                    // TODO: send this information back to portal screen or wherever
                     // TOO_SOON_BIG, TOO_SOON_(x), TOO_OFTEN, OUT_OF_RANGE, NEED_MORE_ENERGY, SERVER_ERROR
                     super.handleError(error);
                 }
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
+                    // TODO: consider, maybe updating the bundle using inventory info from this basket
                     processGameBasket(gameBasket);
+                    initBundle();
+                    Log.d("HACKING (size of inventory)", String.valueOf(gameBasket.getInventory().size()));
+                    HashMap<String, ItemBase> items = new HashMap<>();
+                    for (ItemBase item: gameBasket.getInventory()) {
+                        Log.d("HACKING", item.getName());
+                        items.put(item.getEntityGuid(), item);
+                        getData().putSerializable("items", items);
+                    }
                 }
+
+                @Override
+                public void handleResult(JSONObject result) {
+                    // TODO: send information to handler for display
+                    // {"items":{"addedGuids":[]},"baseHackMultiplier":"1"}
+                    // list of hacked Guids is sent as result.
+                    // items pointed to by Guids are sent with gameBasket as inventory.
+                    // so on other screen, look up the inventory items by GUID and display them in hack result
+                    // NB you *could* show the inventory contents as-is, couldn't you?
+                    Log.d("HACKING", result.toString());
+                    try {
+                        initBundle();
+                        ArrayList<String> items = new ArrayList<>();
+                        JSONArray guids = result.getJSONObject("items").getJSONArray("addedGuids");
+                        for (int x=0; x < guids.length(); x++) {
+                            items.add(guids.getString(x));
+                        }
+                        getData().putStringArrayList("guids", items);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
             });
         }
         catch (JSONException | InterruptedException e) {
@@ -981,5 +1017,13 @@ public class GameState
     public synchronized List<PlextBase> getPlexts()
     {
         return mPlexts;
+    }
+
+    public void setCurrentPortal(GameEntityPortal portal) {
+        mPortal = portal;
+    }
+
+    public GameEntityPortal getCurrentPortal() {
+        return mPortal;
     }
 }

@@ -1,4 +1,4 @@
-/**********************************************************************
+/*
 
  Slimgress: Ingress API for Android
  Copyright (C) 2013 Norman Link <norman.link@gmx.net>
@@ -25,6 +25,10 @@ import org.json.JSONException;
 
 public class ItemWeapon extends ItemBase
 {
+
+    protected int mLevel = 1;
+    protected int mAmmo = 1;
+
     public ItemWeapon(ItemType type, JSONArray json) throws JSONException
     {
         super(type, json);
@@ -39,4 +43,11 @@ public class ItemWeapon extends ItemBase
     {
         return getNameStatic();
     }
+
+    public int getLevel () {
+        return mLevel;
+    }
+
+    public int getAmmo() { return mAmmo; }
+
 }

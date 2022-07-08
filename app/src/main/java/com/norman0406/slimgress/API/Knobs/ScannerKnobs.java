@@ -1,4 +1,4 @@
-/**********************************************************************
+/*
 
  Slimgress: Ingress API for Android
  Copyright (C) 2013 Norman Link <norman.link@gmx.net>
@@ -28,6 +28,7 @@ public class ScannerKnobs extends Knobs
     private final int mRangeM;
     private final int mUpdateDistanceM;
     private final int mUpdateIntervalMS;
+    private final int mMinUpdateIntervalMS;
 
     public ScannerKnobs(JSONObject json) throws JSONException
     {
@@ -36,6 +37,7 @@ public class ScannerKnobs extends Knobs
         mRangeM = json.getInt("rangeM");
         mUpdateDistanceM = json.getInt("updateDistanceM");
         mUpdateIntervalMS = json.getInt("updateIntervalMs");
+        mMinUpdateIntervalMS = json.getInt("minUpdateIntervalMs");
     }
 
     public int getRangeM()
@@ -51,5 +53,10 @@ public class ScannerKnobs extends Knobs
     public int getUpdateIntervalMS()
     {
         return mUpdateIntervalMS;
+    }
+
+    public int getMinUpdateIntervalMS()
+    {
+        return mMinUpdateIntervalMS;
     }
 }
