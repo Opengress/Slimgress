@@ -1,4 +1,4 @@
-/**********************************************************************
+/*
 
  Slimgress: Ingress API for Android
  Copyright (C) 2013 Norman Link <norman.link@gmx.net>
@@ -22,14 +22,19 @@ package com.norman0406.slimgress.API.Item;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 public class ItemWeaponXMP extends ItemWeapon
 {
+
     public ItemWeaponXMP(JSONArray json) throws JSONException
     {
         super(ItemType.WeaponXMP, json);
 
-        // TODO: which information is needed from the JSONObject?
+        JSONObject item = json.getJSONObject(2);
+        JSONObject useInfo = item.getJSONObject("empWeapon");
+        mLevel = useInfo.getInt("level");
+        mAmmo = useInfo.getInt("ammo");
     }
 
     public static String getNameStatic()
@@ -41,4 +46,5 @@ public class ItemWeaponXMP extends ItemWeapon
     {
         return getNameStatic();
     }
+
 }

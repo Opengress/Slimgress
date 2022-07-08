@@ -1,4 +1,4 @@
-/**********************************************************************
+/*
 
  Slimgress: Ingress API for Android
  Copyright (C) 2013 Norman Link <norman.link@gmx.net>

@@ -1,4 +1,4 @@
-/**********************************************************************
+/*
 
  Slimgress: Ingress API for Android
  Copyright (C) 2013 Norman Link <norman.link@gmx.net>
@@ -20,7 +20,17 @@
 
 package com.norman0406.slimgress.API.Common;
 
+import android.app.Activity;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Log;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import com.google.common.geometry.S2Cap;
 import com.google.common.geometry.S2CellId;
@@ -29,8 +39,15 @@ import com.google.common.geometry.S2LatLngRect;
 import com.google.common.geometry.S2Region;
 import com.google.common.geometry.S2RegionCoverer;
 
+import okhttp3.Cache;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 public class Utils
 {
+    private static OkHttpClient mCachedClient;
+
     public static String[] getCellIdsFromLocationArea(Location location, double areaM2, int minLevel, int maxLevel)
     {
         final double radius_m2 = 6371 * 1000;
@@ -81,4 +98,34 @@ public class Utils
 
         return cellIdsHex;
     }
+
+    public static OkHttpClient getCachedClient(File cacheDir) {
+        if (mCachedClient == null) {
+            int cacheSize = 75 * 1024 * 1024; // 75 MiB
+            Cache cache = new Cache(new File(cacheDir, "http-cache"), cacheSize);
+
+            mCachedClient = new OkHttpClient.Builder()
+                    .cache(cache)
+                    .build();
+        }
+        return mCachedClient;
+    }
+
+    public static Bitmap getImageBitmap(String url, File cacheDir) {
+        Bitmap bm = null;
+        try {
+            Request get = new Request.Builder()
+                    .url(url)
+                    .header("User-Agent", "Opengress/Slimgress (API dev)")
+                    .build();
+            Response response = getCachedClient(cacheDir).newCall(get).execute();
+            InputStream content = Objects.requireNonNull(response.body()).byteStream();
+            bm = BitmapFactory.decodeStream(content);
+            content.close();
+        } catch (IOException e) {
+            Log.e("Utils.getImageBitmap", "Error getting bitmap", e);
+        }
+        return bm;
+    }
+
 }

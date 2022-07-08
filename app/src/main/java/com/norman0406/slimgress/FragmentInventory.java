@@ -1,4 +1,4 @@
-/**********************************************************************
+/*
 
  Slimgress: Ingress API for Android
  Copyright (C) 2013 Norman Link <norman.link@gmx.net>
@@ -38,6 +38,8 @@ import com.norman0406.slimgress.API.Item.ItemMedia;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -88,17 +90,28 @@ public class FragmentInventory extends Fragment implements OnChildClickListener
 
         final Handler handler = new Handler();
 
-        mGame.intGetInventory(new Handler(msg -> {
-            fillInventory(() -> handler.post(() -> {
-                InventoryList inventoryList = new InventoryList(mGroupNames, mGroups);
-                inventoryList.setInflater(inflater, thisObject.getActivity());
-                list.setAdapter(inventoryList);
-                list.setOnChildClickListener(thisObject);
+        mGame.intGetInventory(new Handler(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(@NonNull Message msg) {
+                FragmentInventory.this.fillInventory(new Runnable() {
+                    @Override
+                    public void run() {
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                InventoryList inventoryList = new InventoryList(mGroupNames, mGroups);
+                                inventoryList.setInflater(inflater, thisObject.getActivity());
+                                list.setAdapter(inventoryList);
+                                list.setOnChildClickListener(thisObject);
 
-                list.setVisibility(View.VISIBLE);
-                progress.setVisibility(View.INVISIBLE);
-            }));
-            return true;
+                                list.setVisibility(View.VISIBLE);
+                                progress.setVisibility(View.INVISIBLE);
+                            }
+                        });
+                    }
+                });
+                return true;
+            }
         }));
 
         return rootView;

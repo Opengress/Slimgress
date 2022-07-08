@@ -21,6 +21,7 @@
     <string name="ops_inventory">Inventory</string>
     <string name="ops_user">User</string>
     <string name="ops_device">Device</string>
+    <string name="portal_energy">Energy: %1$d</string>
 
     <!-- other -->
     <string name="dummy">Dummy</string>

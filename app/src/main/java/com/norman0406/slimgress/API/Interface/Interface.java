@@ -1,4 +1,4 @@
-/**********************************************************************
+/*
 
  Slimgress: Ingress API for Android
  Copyright (C) 2013 Norman Link <norman.link@gmx.net>
@@ -29,6 +29,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.norman0406.slimgress.API.Common.Location;
+import com.norman0406.slimgress.BuildConfig;
 
 import android.os.Build;
 import android.util.Log;
@@ -205,7 +206,7 @@ public class Interface
                     if (response.code() == 401) {
                         // TODO: work out what to do...
                         // token expired or similar
-                        //isAuthenticated = false;
+//                        isAuthenticated = false;
                     }
                     else {
                         content = response.body().string();
@@ -214,7 +215,7 @@ public class Interface
 
                 // handle request result
                 if (content != null) {
-                    System.out.println(content);
+                    Log.d("Interface.request", content);
                     JSONObject json = new JSONObject(content);
                     RequestResult.handleRequest(json, result);
                 }
