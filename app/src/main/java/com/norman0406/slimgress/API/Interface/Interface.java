@@ -52,7 +52,7 @@ public class Interface
     private String mCookie;
 
     // ingress api definitions
-    private static final String mApiVersion = "2013-08-07T00:06:39Z a52083df5202 opt";
+    private static final String mApiVersion = String.valueOf(BuildConfig.VERSION_CODE);
     private static final String mApiBase = "opengress.net";
     private static final String mApiBaseURL = "https://" + mApiBase + "/";
     private static final String mApiHandshake = "handshake?json=";
