@@ -2,8 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.norman0406.slimgress"
-    android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionCode="0000000030"
+    android:versionName="0.0.30" >
+<!--    1112223333-->
 
     <uses-sdk
         android:minSdkVersion="23"
@@ -32,14 +33,15 @@
         android:allowBackup="true"
         android:name="com.norman0406.slimgress.IngressApplication"
         android:icon="@drawable/ic_launcher"
-        android:theme="@android:style/Theme.Holo.NoActionBar" >
+        android:theme="@android:style/Theme.Holo.NoActionBar"
+        android:label="@string/appname"
+        android:usesCleartextTraffic="true">
 
 
         <!-- start with splash activity to authenticate and get handshake data -->
         <activity
             android:exported="true"
-            android:name="com.norman0406.slimgress.ActivitySplash"
-            android:label="@string/appname" >
+            android:name="com.norman0406.slimgress.ActivitySplash">
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
                 <action android:name="android.intent.action.MAIN" />
@@ -60,6 +62,11 @@
         <activity
             android:name="com.norman0406.slimgress.ActivityOps"
             android:theme="@android:style/Theme.Holo" >
+        </activity>
+
+        <!-- portal view activity with additional information -->
+        <activity
+            android:name="com.norman0406.slimgress.ActivityPortal">
         </activity>
     </application>
 
