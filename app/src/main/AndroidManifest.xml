@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.norman0406.slimgress"
+    package="net.opengress.slimgress"
     android:versionCode="0000000030"
     android:versionName="0.0.30" >
 <!--    1112223333-->
@@ -16,7 +16,7 @@
         android:required="true"/>
 
     <permission
-        android:name="com.norman0406.slimgress.permission.MAPS_RECEIVE"
+        android:name="net.opengress.slimgress.permission.MAPS_RECEIVE"
         android:protectionLevel="signature" />
 
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
@@ -27,11 +27,11 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
-    <uses-permission android:name="com.norman0406.slimgress.permission.MAPS_RECEIVE"/>
+    <uses-permission android:name="net.opengress.slimgress.permission.MAPS_RECEIVE"/>
 
     <application
         android:allowBackup="true"
-        android:name="com.norman0406.slimgress.IngressApplication"
+        android:name="net.opengress.slimgress.IngressApplication"
         android:icon="@drawable/ic_launcher"
         android:theme="@android:style/Theme.Holo.NoActionBar"
         android:label="@string/appname"
@@ -41,7 +41,7 @@
         <!-- start with splash activity to authenticate and get handshake data -->
         <activity
             android:exported="true"
-            android:name="com.norman0406.slimgress.ActivitySplash">
+            android:name="net.opengress.slimgress.ActivitySplash">
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
                 <action android:name="android.intent.action.MAIN" />
@@ -50,23 +50,23 @@
 
         <!-- if necessary continue with authentication -->
         <activity
-            android:name="com.norman0406.slimgress.ActivityAuth" >
+            android:name="net.opengress.slimgress.ActivityAuth" >
         </activity>
 
         <!-- start main activity and display map -->
         <activity
-            android:name="com.norman0406.slimgress.ActivityMain" >
+            android:name="net.opengress.slimgress.ActivityMain" >
         </activity>
 
         <!-- ops activity with additional information -->
         <activity
-            android:name="com.norman0406.slimgress.ActivityOps"
+            android:name="net.opengress.slimgress.ActivityOps"
             android:theme="@android:style/Theme.Holo" >
         </activity>
 
         <!-- portal view activity with additional information -->
         <activity
-            android:name="com.norman0406.slimgress.ActivityPortal">
+            android:name="net.opengress.slimgress.ActivityPortal">
         </activity>
     </application>
 
