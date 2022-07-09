@@ -11,7 +11,7 @@
     <string name="auth_identity">Select identity</string>
     <string name="auth_username">User-Name</string>
     <string name="splash_failure_title">Authentication failed</string>
-    <string name="splash_failure_msg">Authentication failed. This can have several reasons, e.g. you are not authorized to use your google account with Ingress.</string>
+    <string name="splash_failure_msg">Authentication failed. This can have several reasons, e.g. you are not authorized to use your account.</string>
     <string name="splash_loading">Loading game&#8230;</string>
     <string name="main_level">L1</string>
     <string name="main_agent">Agent</string>
