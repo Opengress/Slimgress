@@ -31,8 +31,6 @@ import android.widget.CheckedTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import opengress.slimgress.R;
-
 public class InventoryList extends BaseExpandableListAdapter
 {
     public ArrayList<String> mGroupItem, mTempChild;

@@ -31,8 +31,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 
-import opengress.slimgress.R;
-
 // FIXME: if a portal enters/exits range, enable/disable the hack button etc
 public class ActivityPortal extends Activity {
 
