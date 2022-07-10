@@ -25,24 +25,25 @@ import java.util.ArrayList;
 import android.app.Activity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.CheckedTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import opengress.slimgress.R;
+
 public class InventoryList extends BaseExpandableListAdapter
 {
     public ArrayList<String> mGroupItem, mTempChild;
-    public ArrayList<Object> mChildtem;
+    public ArrayList<Object> mChildItem;
     public LayoutInflater mInflater;
     public Activity mActivity;
 
     public InventoryList(ArrayList<String> grList, ArrayList<Object> childItem)
     {
         mGroupItem = grList;
-        mChildtem = childItem;
+        mChildItem = childItem;
     }
 
     public void setInflater(LayoutInflater inflater, Activity act)
@@ -66,7 +67,7 @@ public class InventoryList extends BaseExpandableListAdapter
     @Override
     public View getChildView(int groupPosition, final int childPosition, boolean isLastChild, View convertView, ViewGroup parent)
     {
-        mTempChild = (ArrayList<String>)mChildtem.get(groupPosition);
+        mTempChild = (ArrayList<String>) mChildItem.get(groupPosition);
         TextView text;
         if (convertView == null) {
             convertView = mInflater.inflate(R.layout.inventory_childrow, null);
@@ -80,7 +81,7 @@ public class InventoryList extends BaseExpandableListAdapter
     @Override
     public int getChildrenCount(int groupPosition)
     {
-        return ((ArrayList<String>)mChildtem.get(groupPosition)).size();
+        return ((ArrayList<String>) mChildItem.get(groupPosition)).size();
     }
 
     @Override
