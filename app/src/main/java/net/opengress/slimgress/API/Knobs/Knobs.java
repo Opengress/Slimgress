@@ -29,8 +29,7 @@ import org.json.JSONObject;
 
 public abstract class Knobs
 {
-    public Knobs(JSONObject json) throws JSONException
-    {
+    public Knobs(JSONObject json) {
     }
 
     protected static List<Integer> getIntArray(JSONObject json, String key) throws JSONException

@@ -46,20 +46,20 @@ public class DialogInfo extends Dialog
         lp.dimAmount = 0.0f;
         getWindow().setAttributes(lp);
 
-        ((TextView)findViewById(R.id.message)).setVisibility(View.INVISIBLE);
-        ((TextView)findViewById(R.id.title)).setVisibility(View.INVISIBLE);
+        findViewById(R.id.message).setVisibility(View.INVISIBLE);
+        findViewById(R.id.title).setVisibility(View.INVISIBLE);
     }
 
     public void setMessage(String msg)
     {
         ((TextView)findViewById(R.id.message)).setText(msg);
-        ((TextView)findViewById(R.id.message)).setVisibility(View.VISIBLE);
+        findViewById(R.id.message).setVisibility(View.VISIBLE);
     }
 
     public DialogInfo setTitle(String title)
     {
         ((TextView)findViewById(R.id.title)).setText(title);
-        ((TextView)findViewById(R.id.title)).setVisibility(View.VISIBLE);
+        findViewById(R.id.title).setVisibility(View.VISIBLE);
         return this;
     }
 

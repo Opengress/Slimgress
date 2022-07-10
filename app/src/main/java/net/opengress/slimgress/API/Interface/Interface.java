@@ -117,7 +117,7 @@ public class Interface
                 assert(response != null);
 
 
-                    String content = response.body().string();
+                    String content = Objects.requireNonNull(response.body()).string();
 
                     // check for content type json
                     if (!Objects.requireNonNull(response.header("Content-Type")).contains("application/json"))
@@ -209,7 +209,7 @@ public class Interface
 //                        isAuthenticated = false;
                     }
                     else {
-                        content = response.body().string();
+                        content = Objects.requireNonNull(response.body()).string();
                     }
                 }
 

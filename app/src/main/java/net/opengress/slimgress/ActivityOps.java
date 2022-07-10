@@ -1,4 +1,4 @@
-/*********************************************************************
+/*
 
  Slimgress: Ingress API for Android
  Copyright (C) 2013 Norman Link <norman.link@gmx.net>
@@ -20,6 +20,8 @@
 
 package net.opengress.slimgress;
 
+import static androidx.fragment.app.FragmentStatePagerAdapter.BEHAVIOR_SET_USER_VISIBLE_HINT;
+
 import java.util.Locale;
 
 import android.app.ActionBar;
@@ -35,6 +37,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+@SuppressWarnings("deprecation")
 public class ActivityOps extends FragmentActivity implements TabListener
 {
     SectionsPagerAdapter mSectionsPagerAdapter;
@@ -55,17 +58,17 @@ public class ActivityOps extends FragmentActivity implements TabListener
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the app.
         mSectionsPagerAdapter = new SectionsPagerAdapter(
-                getSupportFragmentManager());
+                getSupportFragmentManager(), BEHAVIOR_SET_USER_VISIBLE_HINT);
 
         // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager)findViewById(R.id.pager);
+        mViewPager = findViewById(R.id.pager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
         // When swiping between different sections, select the corresponding
         // tab. We can also use ActionBar.Tab#select() to do this if we have
         // a reference to the Tab.
         mViewPager
-                .setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                .addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
                     @Override
                     public void onPageSelected(int position) {
                         actionBar.setSelectedNavigationItem(position);
@@ -104,9 +107,9 @@ public class ActivityOps extends FragmentActivity implements TabListener
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter
     {
-        public SectionsPagerAdapter(FragmentManager fm)
+        public SectionsPagerAdapter(FragmentManager fm, int behavior)
         {
-            super(fm);
+            super(fm, behavior);
         }
 
         @NonNull

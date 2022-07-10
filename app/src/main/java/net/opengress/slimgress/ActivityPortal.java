@@ -4,21 +4,16 @@ import static net.opengress.slimgress.API.Common.Utils.getImageBitmap;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.NonNull;
 
 import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
@@ -43,7 +38,7 @@ public class ActivityPortal extends Activity {
 
         private final WeakReference<ActivityPortal> activityReference;
         Bitmap mBitmap;
-        GameEntityPortal mPortal;
+        final GameEntityPortal mPortal;
 
         // only retain a weak reference to the activity
         MyTask(ActivityPortal context, GameEntityPortal thePortal) {
@@ -122,9 +117,7 @@ public class ActivityPortal extends Activity {
 
         // FIXME only do it for portals in radius (see earlier todo)
         findViewById(R.id.hackButton).setEnabled(true);
-        findViewById(R.id.hackButton).setOnClickListener(v -> {
-            mGame.intHackPortal(portal, handler);
-        });
+        findViewById(R.id.hackButton).setOnClickListener(v -> mGame.intHackPortal(portal, handler));
         findViewById(R.id.hackButton).setOnLongClickListener(v -> {
             // TODO: upgrade to glyph hacking stuff
             mGame.intHackPortal(portal, handler);

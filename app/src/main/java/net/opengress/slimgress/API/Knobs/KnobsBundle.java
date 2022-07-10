@@ -20,8 +20,6 @@
 
 package net.opengress.slimgress.API.Knobs;
 
-import net.opengress.slimgress.API.Common.Team;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
