@@ -33,8 +33,9 @@ import android.widget.Toast;
 
 public class InventoryList extends BaseExpandableListAdapter
 {
-    public ArrayList<String> mGroupItem, mTempChild;
-    public ArrayList<Object> mChildItem;
+    public final ArrayList<String> mGroupItem;
+    public ArrayList<String> mTempChild;
+    public final ArrayList<Object> mChildItem;
     public LayoutInflater mInflater;
     public Activity mActivity;
 
@@ -70,7 +71,7 @@ public class InventoryList extends BaseExpandableListAdapter
         if (convertView == null) {
             convertView = mInflater.inflate(R.layout.inventory_childrow, null);
         }
-        text = (TextView)convertView.findViewById(R.id.agentlevel);
+        text = convertView.findViewById(R.id.agentlevel);
         text.setText(mTempChild.get(childPosition));
         convertView.setOnClickListener(v -> Toast.makeText(mActivity, mTempChild.get(childPosition), Toast.LENGTH_SHORT).show());
         return convertView;

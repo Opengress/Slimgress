@@ -49,7 +49,7 @@ public class ActivityMain extends FragmentActivity
         updateAgent();
 
         // create ops button callback
-        final Button buttonOps = (Button)findViewById(R.id.buttonOps);
+        final Button buttonOps = findViewById(R.id.buttonOps);
         buttonOps.setOnClickListener(v -> {
             // Perform action on click
             Intent myIntent = new Intent(getApplicationContext(), ActivityOps.class);
@@ -57,20 +57,8 @@ public class ActivityMain extends FragmentActivity
         });
 
         // create comm button callback
-        final Button buttonComm = (Button)findViewById(R.id.buttonComm);
+        final Button buttonComm = findViewById(R.id.buttonComm);
         buttonComm.setOnClickListener(v -> showInfoBox("Info"));
-    }
-
-    @Override
-    protected void onResume()
-    {
-        super.onResume();
-    }
-
-    @Override
-    protected void onPause()
-    {
-        super.onPause();
     }
 
     private void showInfoBox(String message)

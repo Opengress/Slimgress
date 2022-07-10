@@ -48,6 +48,7 @@ public class ActivityAuth extends Activity
 
     class MyJavaScriptInterface {
 
+        @SuppressWarnings({"UnusedAssignment", "unused"})
         @JavascriptInterface
         public void claim(String claimed) {
             String cookieName = null;
@@ -78,13 +79,6 @@ public class ActivityAuth extends Activity
 //        Intent myIntent = getIntent();
 //        setResult(RESULT_OK, myIntent);
 //        finish();
-    }
-
-    @Override
-    protected void onResume()
-    {
-        // The activity must call the GL surface view's onResume() on activity onResume().
-        super.onResume();
     }
 
     private void authorize()

@@ -69,8 +69,8 @@ public class FragmentInventory extends Fragment implements OnChildClickListener
         final View rootView = inflater.inflate(R.layout.fragment_inventory,
                 container, false);
 
-        final ExpandableListView list = (ExpandableListView)rootView.findViewById(R.id.listView);
-        final ProgressBar progress = (ProgressBar)rootView.findViewById(R.id.progressBar1);
+        final ExpandableListView list = rootView.findViewById(R.id.listView);
+        final ProgressBar progress = rootView.findViewById(R.id.progressBar1);
 
         list.setVisibility(View.INVISIBLE);
         progress.setVisibility(View.VISIBLE);
@@ -90,28 +90,17 @@ public class FragmentInventory extends Fragment implements OnChildClickListener
 
         final Handler handler = new Handler();
 
-        mGame.intGetInventory(new Handler(new Handler.Callback() {
-            @Override
-            public boolean handleMessage(@NonNull Message msg) {
-                FragmentInventory.this.fillInventory(new Runnable() {
-                    @Override
-                    public void run() {
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                InventoryList inventoryList = new InventoryList(mGroupNames, mGroups);
-                                inventoryList.setInflater(inflater, thisObject.getActivity());
-                                list.setAdapter(inventoryList);
-                                list.setOnChildClickListener(thisObject);
+        mGame.intGetInventory(new Handler(msg -> {
+            FragmentInventory.this.fillInventory(() -> handler.post(() -> {
+                InventoryList inventoryList = new InventoryList(mGroupNames, mGroups);
+                inventoryList.setInflater(inflater, thisObject.getActivity());
+                list.setAdapter(inventoryList);
+                list.setOnChildClickListener(thisObject);
 
-                                list.setVisibility(View.VISIBLE);
-                                progress.setVisibility(View.INVISIBLE);
-                            }
-                        });
-                    }
-                });
-                return true;
-            }
+                list.setVisibility(View.VISIBLE);
+                progress.setVisibility(View.INVISIBLE);
+            }));
+            return true;
         }));
 
         return rootView;

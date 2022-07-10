@@ -63,7 +63,7 @@ public class PortalKnobs extends Knobs
     public Band getBandForLevel(int level)
     {
         for (Band band : mBands) {
-            if (band.applicableLevels.contains((Integer)level))
+            if (band.applicableLevels.contains(level))
                 return band;
         }
 

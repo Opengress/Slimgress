@@ -30,7 +30,6 @@ public class TeamKnobs extends Knobs{
             return mName;
         }
 
-        @NonNull
         public int getColour() {
             return mColour;
         }
