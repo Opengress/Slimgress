@@ -66,6 +66,7 @@ public abstract class ItemBase extends EntityBase
     private final ItemType mItemType;
     private final String mItemPlayerId;
     private final String mItemAcquisitionTimestamp;
+    private final String mDisplayName;
 
     public static ItemBase createByJSON(JSONArray json) throws JSONException
     {
@@ -183,6 +184,13 @@ public abstract class ItemBase extends EntityBase
         JSONObject itemInInventory = item.getJSONObject("inInventory");
         mItemPlayerId = itemInInventory.getString("playerId");
         mItemAcquisitionTimestamp = itemInInventory.getString("acquisitionTimestampMs");
+
+        JSONObject displayName = item.optJSONObject("displayName");
+        if (displayName != null) {
+            mDisplayName = displayName.optString("displayName", mItemType.name());
+        } else {
+            mDisplayName = mItemType.name();
+        }
     }
 
     public static String getNameStatic() {
@@ -221,4 +229,6 @@ public abstract class ItemBase extends EntityBase
     {
         return mItemType;
     }
+
+    public String getDisplayName() { return mDisplayName; }
 }

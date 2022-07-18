@@ -44,12 +44,14 @@ public class RequestResult
     private void handleException(String exception)
     {
         Log.e("RequestResult.Callback", exception);
+        initBundle();
         mBundle.putString("Exception", exception);
     }
 
     public void handleError(String error)
     {
         Log.e("RequestResult.Callback", error);
+        initBundle();
         mBundle.putString("Error", error);
     }
 
