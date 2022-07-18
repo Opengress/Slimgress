@@ -22,6 +22,7 @@ package net.opengress.slimgress;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +35,7 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -50,15 +52,18 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -66,6 +71,7 @@ import androidx.core.content.ContextCompat;
 
 import com.google.common.geometry.S2LatLng;
 import com.google.common.geometry.S2LatLngRect;
+
 import net.opengress.slimgress.API.Common.Team;
 import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.GameEntity.GameEntityBase;
@@ -83,6 +89,7 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.CopyrightOverlay;
+import org.osmdroid.views.overlay.GroundOverlay;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.Polyline;
@@ -96,6 +103,7 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 public class ScannerView extends Fragment {
     private final IngressApplication mApp = IngressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
+    private final ScannerKnobs mScannerKnobs = mGame.getKnobs().getScannerKnobs();
     private MapView mMap = null;
 
 //    private Bitmap mXMParticleIcon = null;
@@ -117,6 +125,8 @@ public class ScannerView extends Fragment {
     private static final int MENU_ABOUT = Menu.FIRST + 1;
     private static final int MENU_LAST_ID = MENU_ABOUT + 1; // Always set to last unused id
 
+    private final int PORTAL_INTENT_CODE = 1;
+
     // ===========================================================
     // Fields and permissions
     // ===========================================================
@@ -135,6 +145,15 @@ public class ScannerView extends Fragment {
     private GeoPoint mLastLocation = null;
     private Polygon mActionRadius = null;
 
+
+    // ===========================================================
+    // Knobs quick reference
+    // ===========================================================
+    private final int mActionRadiusM = mScannerKnobs.getActionRadiusM();
+    private final int mUpdateIntervalMS = mScannerKnobs.getUpdateIntervalMS();
+    private final int mMinUpdateIntervalMS = mScannerKnobs.getMinUpdateIntervalMS();
+    private final int mUpdateDistanceM = mScannerKnobs.getUpdateDistanceM();
+
     public class MyLocationListener implements LocationListener {
 
         public void onLocationChanged(Location location) {
@@ -145,30 +164,42 @@ public class ScannerView extends Fragment {
         }
 
         public void onProviderDisabled(String provider) {
+            if (!Objects.equals(provider, "gps")) {
+                return;
+            }
+            setLocationInaccurate(true);
         }
 
         public void onProviderEnabled(String provider) {
+            // don't register location as no longer inaccurate until new location info arrives
         }
 
         public void onStatusChanged(String provider, int status, Bundle extras) {
+            // probably useless, might not be called above android Q
+            // could be interesting for checking that gps fix comes from satellites
+            Log.d("ScannerView/Location", provider + ": "+status);
+            Set<String> keys = extras.keySet();
+
+            for (String key : keys) {
+                        Log.d("ScannerView/Location", key + " " + extras.getInt(key));
+            }
         }
     }
 
     private void displayMyCurrentLocationOverlay(GeoPoint currentLocation) {
-        // TODO: draw player (manually)
-        List<GeoPoint> circle = Polygon.pointsAsCircle(currentLocation, 40);
+        // TODO: draw player (manually) and get action radius from knobs (when implemented)
+        List<GeoPoint> circle = Polygon.pointsAsCircle(currentLocation, mActionRadiusM);
         mMap.getOverlayManager().remove(mActionRadius);
         mActionRadius.setPoints(circle);
         mMap.getOverlayManager().add(mActionRadius);
         mMap.invalidate();
 
         long now = new Date().getTime();
-        ScannerKnobs knobs = mGame.getKnobs().getScannerKnobs();
 
         if (mLastScan == null ||
                 mLastLocation == null ||
-                (now - mLastScan.getTime() >= knobs.getUpdateIntervalMS()) ||
-                (now - mLastScan.getTime() >= knobs.getMinUpdateIntervalMS() && mLastLocation.distanceToAsDouble(currentLocation) >= knobs.getUpdateDistanceM())
+                (now - mLastScan.getTime() >= mUpdateIntervalMS) ||
+                (now - mLastScan.getTime() >= mMinUpdateIntervalMS && mLastLocation.distanceToAsDouble(currentLocation) >= mUpdateDistanceM)
         ) {
             if (mGame.getLocation() != null) {
                 final Handler uiHandler = new Handler();
@@ -191,6 +222,8 @@ public class ScannerView extends Fragment {
 
         // TODO test this: lock scroll/pan so that user can't pan/zoom away
 //        mMap.setScrollableAreaLimitDouble(mMap.getBoundingBox());
+
+        setLocationInaccurate(false);
 
     }
 
@@ -334,6 +367,7 @@ public class ScannerView extends Fragment {
     public void onResume() {
         super.onResume();
         mMap.onResume();
+        setLocationInaccurate(true);
 
         locationListener = new MyLocationListener();
         locationManager = (LocationManager) mApp.getSystemService(Context.LOCATION_SERVICE);
@@ -357,7 +391,7 @@ public class ScannerView extends Fragment {
         } else {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
             Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if( location != null ) {
+            if (location != null) {
                 mCurrentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
             }
         }
@@ -365,11 +399,33 @@ public class ScannerView extends Fragment {
 
     }
 
-    private void loadAssets()
-    {
+    private void setMapEnabled(boolean bool) {
+        // there's probably a better way
+        if (bool) {
+            mMap.setOnTouchListener(null);
+        } else {
+            mMap.setOnTouchListener((v, event) -> true);
+        }
+    }
+
+    private void setLocationInaccurate(boolean bool) {
+        if (bool) {
+            setMapEnabled(false);
+            ((TextView)getActivity().findViewById(R.id.quickMessage)).setText(R.string.location_inaccurate);
+            getActivity().findViewById(R.id.quickMessage).setVisibility(View.VISIBLE);
+            mMap.getOverlayManager().remove(mActionRadius);
+        } else {
+            setMapEnabled(true);
+            if (((TextView)getActivity().findViewById(R.id.quickMessage)).getText() == getContext().getResources().getText(R.string.location_inaccurate)) {
+                getActivity().findViewById(R.id.quickMessage).setVisibility(View.INVISIBLE);
+            }
+        }
+    }
+
+    private void loadAssets() {
         int portalSize = 80;
         Map<String, TeamKnobs.TeamType> teams = mGame.getKnobs().getTeamKnobs().getTeams();
-        for (String team: teams.keySet()) {
+        for (String team : teams.keySet()) {
             mIcons.put(team, getTintedImage("portalTexture_NEUTRAL.png", 0xff000000 + Objects.requireNonNull(teams.get(team)).getColour(), portalSize));
         }
 //        mXMParticleIcon = Bitmap.createScaledBitmap(getBitmapFromAsset("particle.png"), 10, 10, true);
@@ -386,8 +442,7 @@ public class ScannerView extends Fragment {
     }
 
     // FIXME duplicated in ActivityPortal
-    private Bitmap getBitmapFromAsset(String name)
-    {
+    private Bitmap getBitmapFromAsset(String name) {
         AssetManager assetManager = getActivity().getAssets();
 
         InputStream istr;
@@ -402,8 +457,7 @@ public class ScannerView extends Fragment {
         return bitmap;
     }
 
-    private void addIngressTiles()
-    {
+    private void addIngressTiles() {
         // Add tiles layer with custom tile source
         final MapTileProviderBasic tileProvider = new MapTileProviderBasic(mApp.getApplicationContext());
         final ITileSource tileSource = new XYTileSource("CartoDB Dark Matter", 3, 18, 256, ".png",
@@ -415,8 +469,7 @@ public class ScannerView extends Fragment {
         mMap.getOverlays().add(tilesOverlay);
     }
 
-    private synchronized void updateWorld(final S2LatLngRect region, final Handler uiHandler)
-    {
+    private synchronized void updateWorld(final S2LatLngRect region, final Handler uiHandler) {
         // handle interface result (on timer thread)
         final Handler resultHandler = new Handler(msg -> {
             // draw xm particles
@@ -432,11 +485,11 @@ public class ScannerView extends Fragment {
                     uiHandler.post(() -> {
                         assert entity != null;
                         if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal)
-                            drawPortal((GameEntityPortal)entity);
+                            drawPortal((GameEntityPortal) entity);
                         else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link)
-                            drawLink((GameEntityLink)entity);
+                            drawLink((GameEntityLink) entity);
                         else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField)
-                            drawField((GameEntityControlField)entity);
+                            drawField((GameEntityControlField) entity);
                     });
                 }
 
@@ -451,8 +504,7 @@ public class ScannerView extends Fragment {
         new Thread(() -> mGame.intGetObjectsInCells(region, resultHandler)).start();
     }
 
-    private void drawXMParticles()
-    {
+    private void drawXMParticles() {
         // draw xm particles
         /*World world = mGame.getWorld();
         Map<String, XMParticle> xmParticles = world.getXMParticles();
@@ -474,8 +526,7 @@ public class ScannerView extends Fragment {
         }*/
     }
 
-    private void drawPortal(@NonNull final GameEntityPortal portal)
-    {
+    private void drawPortal(@NonNull final GameEntityPortal portal) {
         final Team team = portal.getPortalTeam();
         if (mMap != null) {
             // only update if marker has not yet been added
@@ -489,6 +540,8 @@ public class ScannerView extends Fragment {
                     // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
                     // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
                     // ... maybe i can at least write the portal level on the portal, like in iitc
+                    // it's quite possible that resonators can live in a separate Hash of markers,
+                    //   as long as the guids are stored with the portal info
                     Drawable icon = new BitmapDrawable(getResources(), portalIcon);
 
                     Marker marker = new Marker(mMap);
@@ -499,7 +552,7 @@ public class ScannerView extends Fragment {
                     marker.setOnMarkerClickListener((marker12, mapView) -> {
                         Intent myIntent = new Intent(getContext(), ActivityPortal.class);
                         mGame.setCurrentPortal(portal);
-                        startActivity(myIntent);
+                        startActivityForResult(myIntent, PORTAL_INTENT_CODE);
                         return true;
                     });
 
@@ -510,8 +563,7 @@ public class ScannerView extends Fragment {
         }
     }
 
-    private void drawLink(final GameEntityLink link)
-    {
+    private void drawLink(final GameEntityLink link) {
         if (mMap != null) {
             // only update if line has not yet been added
             if (!mLines.containsKey(link.getEntityGuid())) {
@@ -538,8 +590,7 @@ public class ScannerView extends Fragment {
         }
     }
 
-    private void drawField(final GameEntityControlField field)
-    {
+    private void drawField(final GameEntityControlField field) {
         if (mMap != null) {
             // only update if line has not yet been added
             if (!mPolygons.containsKey(field.getEntityGuid())) {
@@ -569,4 +620,49 @@ public class ScannerView extends Fragment {
         }
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode != PORTAL_INTENT_CODE) {
+            Log.d("ScannerView", "Unknown intent code, I don't understand: " + requestCode);
+            return;
+        }
+        if (data == null) {
+            return;
+        }
+
+        Bundle hackResultBundle = data.getBundleExtra("result");
+        HashMap<String, Integer> items = (HashMap<String, Integer>) hackResultBundle.getSerializable("items");
+        HashMap<String, Integer> bonusItems = (HashMap<String, Integer>) hackResultBundle.getSerializable("bonusItems");
+        String error = hackResultBundle.getString("error");
+
+        if (error != null) {
+            DialogHackResult newDialog = new DialogHackResult(getContext());
+//                newDialog.setTitle("");
+            newDialog.setMessage(error);
+            newDialog.show();
+        } else {
+            if (items != null) {
+                DialogHackResult newDialog = new DialogHackResult(getContext());
+                newDialog.setTitle("Acquired items");
+                newDialog.setItems(items);
+                newDialog.show();
+
+                if (bonusItems != null) {
+                    newDialog.setOnDismissListener(dialog -> {
+                        DialogHackResult newDialog1 = new DialogHackResult(getContext());
+                        newDialog1.setTitle("Bonus items");
+                        newDialog1.setItems(bonusItems);
+                        newDialog1.show();
+                    });
+                }
+
+            } else if (bonusItems != null) {
+                DialogHackResult newDialog = new DialogHackResult(getContext());
+                newDialog.setTitle("Bonus items");
+                newDialog.setItems(bonusItems);
+                newDialog.show();
+            }
+
+        }
+    }
 }

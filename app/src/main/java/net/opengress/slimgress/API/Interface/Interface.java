@@ -156,7 +156,7 @@ public class Interface
 
                         // add persistent request parameters
                         if (playerLocation != null) {
-                            String loc = String.format("%08x,%08x", playerLocation.getLatitude(), playerLocation.getLongitude());
+                            String loc = playerLocation.getLatLng().toDoubleString();
                             params.getJSONObject("params").put("playerLocation", loc);
                             params.getJSONObject("params").put("location", loc);
                         }
@@ -204,7 +204,7 @@ public class Interface
                     response = mClient.newCall(post).execute();
 
                     if (response.code() == 401) {
-                        // TODO: work out what to do...
+                        // TODO: work out what to do... a simple, ugly idea: dialog and quit
                         // token expired or similar
 //                        isAuthenticated = false;
                     }

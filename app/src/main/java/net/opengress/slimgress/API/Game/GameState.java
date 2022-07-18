@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -363,10 +364,7 @@ public class GameState
             checkInterface();
 
             JSONObject params = new JSONObject();
-            if (customMessage == null)
-                params.put("customMessage", "");
-            else
-                params.put("customMessage", customMessage);
+            params.put("customMessage", Objects.requireNonNullElse(customMessage, ""));
             params.put("inviteeEmailAddress", email);
 
             mInterface.request(mHandshake, "playerUndecorated/inviteViaEmail", null, params, new RequestResult(handler) {
@@ -508,6 +506,7 @@ public class GameState
 
     public void intFireWeapon(ItemWeapon weapon, final Handler handler)
     {
+        // FIXME: need to specify weapon's firepower/boost now
         try {
             checkInterface();
 
@@ -543,9 +542,45 @@ public class GameState
             mInterface.request(mHandshake, "gameplay/collectItemsFromPortal", mLocation, params, new RequestResult(handler) {
                 @Override
                 public void handleError(String error) {
-                    // TODO: send this information back to portal screen or wherever
-                    // TOO_SOON_BIG, TOO_SOON_(x), TOO_OFTEN, OUT_OF_RANGE, NEED_MORE_ENERGY, SERVER_ERROR
-                    super.handleError(error);
+                    String pretty_error;
+                    switch (error.replaceAll("\\d", "")) {
+                        case "TOO_SOON_BIG":
+                            // issue: this only makes sense as a separate thing if it's a default.
+                            // it might not be such a default
+                            pretty_error = "Portal running hot! Unsafe to acquire items. Estimated time to cooldown: 300 seconds";
+                            break;
+                        case "TOO_SOON_":
+                            String seconds = error.substring(error.lastIndexOf("_")+1);
+                            pretty_error = "Portal running hot! Unsafe to acquire items. Estimated time to cooldown: "+seconds+" seconds";
+                            break;
+                        case "TOO_OFTEN":
+                            pretty_error = "Portal burned out! It may take significant time for the Portal to reset";
+                            break;
+                        case "OUT_OF_RANGE":
+                            pretty_error = "Portal is out of range";
+                            break;
+                        case "NEED_MORE_ENERGY":
+                            pretty_error = "You don't have enough XM";
+                            break;
+                        case "SERVER_ERROR":
+                            pretty_error = "Server error";
+                            break;
+                        case "SPEED_LOCKED": // new!
+                            pretty_error = "You are moving too fast";
+                            break;
+                        case "SPEED_LOCKED_": // new!
+                            String t = error.substring(error.lastIndexOf("_")+1);
+                            pretty_error = "You are moving too fast! You will be ready to play in "+t+"seconds";
+                            break;
+                        case "INVENTORY_FULL": // new!
+                            pretty_error = "Hack failed! Your inventory is already full";
+                            break;
+                        default:
+//                            pretty_error = "An unknown error occurred";
+                            pretty_error = "Hack acquired no items";
+                            break;
+                    }
+                    super.handleError(pretty_error);
                 }
 
                 @Override
@@ -553,10 +588,8 @@ public class GameState
                     // TODO: consider, maybe updating the bundle using inventory info from this basket
                     processGameBasket(gameBasket);
                     initBundle();
-                    Log.d("HACKING (size of inventory)", String.valueOf(gameBasket.getInventory().size()));
                     HashMap<String, ItemBase> items = new HashMap<>();
                     for (ItemBase item: gameBasket.getInventory()) {
-                        Log.d("HACKING", item.getName());
                         items.put(item.getEntityGuid(), item);
                         getData().putSerializable("items", items);
                     }
@@ -564,17 +597,20 @@ public class GameState
 
                 @Override
                 public void handleResult(JSONObject result) {
-                    // TODO: send information to handler for display
-                    // {"items":{"addedGuids":[]},"baseHackMultiplier":"1"}
-                    // list of hacked Guids is sent as result.
-                    // items pointed to by Guids are sent with gameBasket as inventory.
-                    // so on other screen, look up the inventory items by GUID and display them in hack result
-                    // NB you *could* show the inventory contents as-is, couldn't you?
-                    Log.d("HACKING", result.toString());
                     try {
                         initBundle();
                         ArrayList<String> items = new ArrayList<>();
+                        ArrayList<String> bonusItems = new ArrayList<>();
                         JSONArray guids = result.getJSONObject("items").getJSONArray("addedGuids");
+                        // glyphs aren't supported yet and this may need to be moved to another method
+                        JSONObject glyphResponse = result.optJSONObject("glyphResponse");
+                        if (glyphResponse != null) {
+                            JSONArray bonusGuids = glyphResponse.getJSONArray("bonusGuids");
+                            for (int x = 0; x < bonusGuids.length(); x++) {
+                                bonusItems.add(bonusGuids.getString(x));
+                            }
+                            getData().putStringArrayList("bonusGuids", bonusItems);
+                        }
                         for (int x=0; x < guids.length(); x++) {
                             items.add(guids.getString(x));
                         }

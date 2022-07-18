@@ -29,6 +29,7 @@ public class ScannerKnobs extends Knobs
     private final int mUpdateDistanceM;
     private final int mUpdateIntervalMS;
     private final int mMinUpdateIntervalMS;
+    private final int mActionRadiusM;
 
     public ScannerKnobs(JSONObject json) throws JSONException
     {
@@ -38,6 +39,7 @@ public class ScannerKnobs extends Knobs
         mUpdateDistanceM = json.getInt("updateDistanceM");
         mUpdateIntervalMS = json.getInt("updateIntervalMs");
         mMinUpdateIntervalMS = json.getInt("minUpdateIntervalMs");
+        mActionRadiusM = json.getInt("actionRadiusM");
     }
 
     public int getRangeM()
@@ -58,5 +60,10 @@ public class ScannerKnobs extends Knobs
     public int getMinUpdateIntervalMS()
     {
         return mMinUpdateIntervalMS;
+    }
+
+    public int getActionRadiusM()
+    {
+        return mActionRadiusM;
     }
 }

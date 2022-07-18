@@ -3,17 +3,15 @@ package net.opengress.slimgress;
 import static net.opengress.slimgress.API.Common.Utils.getImageBitmap;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
@@ -31,6 +29,7 @@ public class ActivityPortal extends Activity {
 
     private final IngressApplication mApp = IngressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
+    private final int mActionRadiusM = mGame.getKnobs().getScannerKnobs().getActionRadiusM();
 
     // TODO: maybe change this to a java executor,
     //  looks cleaner and could put a threadpool in Application class. Eg to display portal keys
@@ -60,7 +59,9 @@ public class ActivityPortal extends Activity {
             if (activity == null || activity.isFinishing()) return;
 
             // modify the activity's UI
-            ((ImageView)activity.findViewById(R.id.portalImage)).setImageBitmap(mBitmap);
+            if (mBitmap != null) {
+                ((ImageView) activity.findViewById(R.id.portalImage)).setImageBitmap(mBitmap);
+            }
         }
     }
 
@@ -93,30 +94,14 @@ public class ActivityPortal extends Activity {
         ((TextView)findViewById(R.id.portalOwner)).setTextColor(0xFF000000 + portal.getPortalTeam().getColour());
 
         Handler handler = new Handler(msg -> {
-            Log.d("HACKING", msg.getData().toString());
-            ArrayList<String> guids = msg.getData().getStringArrayList("guids");
-            if (guids.isEmpty()) {
-                Toast.makeText(getApplicationContext(),
-                                "Hack acquired no items",
-                                Toast.LENGTH_LONG)
-                        .show();
-            } else {
-                HashMap<String, ItemBase> items = (HashMap<String, ItemBase>) msg.getData().getSerializable("items");
-                ArrayList<String> descriptions = new ArrayList<>();
-                for (String guid: guids) {
-                    descriptions.add(Objects.requireNonNull(items.get(guid)).getName());
-                }
-                AlertDialog.Builder builder = new AlertDialog.Builder(getLayoutInflater().getContext());
-                builder.setItems(descriptions.toArray(new String[0]), (dialogInterface, i) -> {})
-                        .setTitle("Hack acquired the following items");
-                AlertDialog dialog = builder.create();
-                dialog.show();
-            }
+            Bundle hackresultBundle = generateHackResultBundle(msg.getData());
+            Intent myIntent = getIntent();
+            setResult(RESULT_OK, myIntent);
+            myIntent.putExtra("result", hackresultBundle);
+            finish();
             return false;
         });
 
-        // FIXME only do it for portals in radius (see earlier todo)
-        findViewById(R.id.hackButton).setEnabled(true);
         findViewById(R.id.hackButton).setOnClickListener(v -> mGame.intHackPortal(portal, handler));
         findViewById(R.id.hackButton).setOnLongClickListener(v -> {
             // TODO: upgrade to glyph hacking stuff
@@ -129,6 +114,114 @@ public class ActivityPortal extends Activity {
 //        String agentinfo = "AP: " + agent.getAp() + " / XM: " + (agent.getEnergy() * 100 / agent.getEnergyMax()) + " %";
 //        ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);
 //        ((TextView)findViewById(R.id.agentinfo)).setTextColor(textColor);
+
+        // FIXME there should be some kind of listener or observer I can use for this
+        Handler locationHandler = new Handler();
+        Runnable mRunnable = new Runnable(){
+            @Override
+            public void run() {
+                setButtonsEnabled(isPortalInRange());
+                locationHandler.postDelayed(this, 250);
+            }
+        };
+        mRunnable.run();
+    }
+
+    private void setButtonsEnabled(boolean bool) {
+        findViewById(R.id.hackButton).setEnabled(bool);
+    }
+
+    private boolean isPortalInRange() {
+        return mGame.getLocation().getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng()) <= mActionRadiusM;
+    }
+
+    private Bundle generateHackResultBundle(Bundle data) {
+        Bundle bundle = new Bundle();
+
+        ArrayList<String> guids = data.getStringArrayList("guids");
+        ArrayList<String> bonusGuids = data.getStringArrayList("bonusGuids");
+        String error = data.getString("Error");
+        String exception = data.getString("Exception");
+
+        if (error != null) {
+            bundle.putString("error", error);
+            return bundle;
+        }
+        if (exception != null) {
+            bundle.putString("error", exception);
+            return bundle;
+        }
+        if ((guids == null || guids.isEmpty()) && (bonusGuids == null || bonusGuids.isEmpty())) {
+            bundle.putString("error", "Hack acquired no items");
+            return bundle;
+        }
+
+
+        HashMap<String, ItemBase> rawItems = (HashMap<String, ItemBase>) data.getSerializable("items");
+
+        HashMap<String, Integer> items = new HashMap<>();
+        HashMap<String, Integer> bonusItems = new HashMap<>();
+        if (guids != null && !guids.isEmpty()) {
+            for (String guid : guids) {
+                ItemBase item = Objects.requireNonNull(rawItems.get(guid));
+                String name = getPrettyItemName(item);
+                putItemInMap(items, name);
+                bundle.putSerializable("items", items);
+            }
+        }
+        // this should always be false until I implement glyph hacking, then always false
+        if (bonusGuids != null && !bonusGuids.isEmpty()) {
+            for (String guid : bonusGuids) {
+                ItemBase item = Objects.requireNonNull(rawItems.get(guid));
+                String name = getPrettyItemName(item);
+                putItemInMap(bonusItems, name);
+                bundle.putSerializable("bonusItems", items);
+            }
+        }
+
+        return bundle;
+    }
+
+    private void putItemInMap(HashMap<String, Integer> items, String name) {
+        if (!items.containsKey(name)) {
+            items.put(name, 1);
+        } else {
+            items.put(name, Objects.requireNonNull(items.get(name)));
+        }
+    }
+
+    private String getPrettyItemName(ItemBase item) {
+        String level;
+        // rarity will maybe eventually expressed by colour, not text. that's why html
+        switch (item.getItemRarity()) {
+            case VeryCommon:
+                level = "VC ";
+                break;
+            case Common:
+                level = "";
+                break;
+            case LessCommon:
+                level = "LC ";
+                break;
+            case Rare:
+                level = "R ";
+                break;
+            case VeryRare:
+                level = "VR ";
+                break;
+            case ExtraRare:
+                level = "ER ";
+                break;
+            case None:
+            default:
+                if (item.getItemLevel() == 0) {
+                    level = "";
+                } else {
+                    level = "L"+item.getItemLevel()+" ";
+                }
+        }
+
+        return level + item.getDisplayName();
     }
 
     // FIXME duplicated in ScannerView

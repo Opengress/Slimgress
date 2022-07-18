@@ -25,4 +25,5 @@
 
     <!-- other -->
     <string name="dummy">Dummy</string>
+    <string name="location_inaccurate">Scanner disabled - location inaccurate</string>
 </resources>

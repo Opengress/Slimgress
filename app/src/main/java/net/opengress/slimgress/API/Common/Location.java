@@ -20,6 +20,8 @@
 
 package net.opengress.slimgress.API.Common;
 
+import android.util.Log;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osmdroid.util.GeoPoint;
