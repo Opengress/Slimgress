@@ -70,6 +70,7 @@ import com.google.common.geometry.S2LatLngRect;
 
 import net.opengress.slimgress.API.Common.Team;
 import net.opengress.slimgress.API.Game.GameState;
+import net.opengress.slimgress.API.Game.XMParticle;
 import net.opengress.slimgress.API.GameEntity.GameEntityBase;
 import net.opengress.slimgress.API.GameEntity.GameEntityControlField;
 import net.opengress.slimgress.API.GameEntity.GameEntityLink;
@@ -106,6 +107,7 @@ public class ScannerView extends Fragment {
 
     private final HashMap<String, Bitmap> mIcons = new HashMap<>();
     private HashMap<String, GroundOverlay> mMarkers = null;
+    private HashMap<String, GroundOverlay> mXMMarkers = null;
     private HashMap<String, Polyline> mLines = null;
     private HashMap<String, Polygon> mPolygons = null;
 
@@ -255,7 +257,8 @@ public class ScannerView extends Fragment {
 
         loadAssets();
 
-        mMarkers = new HashMap<String, GroundOverlay>();
+        mMarkers = new HashMap<>();
+        mXMMarkers = new HashMap<>();
         mLines = new HashMap<>();
         mPolygons = new HashMap<>();
 
@@ -423,6 +426,7 @@ public class ScannerView extends Fragment {
         for (String team : teams.keySet()) {
             mIcons.put(team, getTintedImage("portalTexture_NEUTRAL.png", 0xff000000 + Objects.requireNonNull(teams.get(team)).getColour(), portalSize));
         }
+        mIcons.put("particle", Bitmap.createScaledBitmap(getBitmapFromAsset("particle.png"), 10, 10, true));
 //        mXMParticleIcon = Bitmap.createScaledBitmap(getBitmapFromAsset("particle.png"), 10, 10, true);
     }
 
@@ -502,24 +506,36 @@ public class ScannerView extends Fragment {
 
     private void drawXMParticles() {
         // draw xm particles (as groundoverlays)
-        /*World world = mGame.getWorld();
-        Map<String, XMParticle> xmParticles = world.getXMParticles();
+        Map<String, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
         Set<String> keys = xmParticles.keySet();
         for (String key : keys) {
             XMParticle particle = xmParticles.get(key);
 
-            final Utils.LocationE6 location = particle.getCellLocation();
+            assert particle != null;
+            final net.opengress.slimgress.API.Common.Location location = particle.getCellLocation();
 
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(mXMParticleIcon);
-                    mMap.addMarker(new MarkerOptions()
-                    .position(location.getLatLng())
-                    .icon(icon));
+                    getActivity().runOnUiThread(() -> {
+                        Bitmap portalIcon;
+                        // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
+                        // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
+                        // ... maybe i can at least write the portal level on the portal, like in iitc
+                        // it's quite possible that resonators can live in a separate Hash of markers,
+                        //   as long as the guids are stored with the portal info
+                        portalIcon = mIcons.get("particle");
+
+                        GroundOverlay marker = new GroundOverlay();
+                        marker.setPosition(location.getLatLng().destinationPoint(25, 315), location.getLatLng().destinationPoint(25, 135));
+                        marker.setImage(portalIcon);
+
+                        mMap.getOverlays().add(marker);
+                        mXMMarkers.put(particle.getGuid(), marker);
+                    });
                 }
             });
-        }*/
+        }
     }
 
     private void drawPortal(@NonNull final GameEntityPortal portal) {
