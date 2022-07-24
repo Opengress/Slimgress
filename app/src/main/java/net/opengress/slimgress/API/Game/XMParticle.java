@@ -38,9 +38,10 @@ public class XMParticle
         mCellId = Long.parseLong(guid.substring(0, 16), 16);
         mCellLocation = new Location(mCellId);
 
-        // NOTE: not sure if correct
-        String amountStr = guid.substring(guid.length() - 4, guid.length() - 2);
+        // NOTE: API differs from ingress because our globs can be HUGE
+        String amountStr = guid.substring(16);
         mAmount = Integer.parseInt(amountStr, 16);
+
     }
 
     public String getGuid()
