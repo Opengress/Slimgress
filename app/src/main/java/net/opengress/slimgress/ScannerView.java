@@ -22,7 +22,6 @@ package net.opengress.slimgress;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +34,6 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -52,12 +50,10 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -86,11 +82,11 @@ import org.osmdroid.tileprovider.MapTileProviderBasic;
 import org.osmdroid.tileprovider.tilesource.ITileSource;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
+import org.osmdroid.util.RectL;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.CopyrightOverlay;
 import org.osmdroid.views.overlay.GroundOverlay;
-import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.TilesOverlay;
@@ -109,7 +105,7 @@ public class ScannerView extends Fragment {
 //    private Bitmap mXMParticleIcon = null;
 
     private final HashMap<String, Bitmap> mIcons = new HashMap<>();
-    private HashMap<String, Marker> mMarkers = null;
+    private HashMap<String, GroundOverlay> mMarkers = null;
     private HashMap<String, Polyline> mLines = null;
     private HashMap<String, Polygon> mPolygons = null;
 
@@ -177,11 +173,11 @@ public class ScannerView extends Fragment {
         public void onStatusChanged(String provider, int status, Bundle extras) {
             // probably useless, might not be called above android Q
             // could be interesting for checking that gps fix comes from satellites
-            Log.d("ScannerView/Location", provider + ": "+status);
+            Log.d("ScannerView/Location", provider + ": " + status);
             Set<String> keys = extras.keySet();
 
             for (String key : keys) {
-                        Log.d("ScannerView/Location", key + " " + extras.getInt(key));
+                Log.d("ScannerView/Location", key + " " + extras.getInt(key));
             }
         }
     }
@@ -238,8 +234,7 @@ public class ScannerView extends Fragment {
 
         //Note! we are programmatically construction the map view
         //be sure to handle application lifecycle correct (see note in on pause)
-        mMap = new MapView(inflater.getContext()) {
-        };
+        mMap = new MapView(inflater.getContext());
         mMap.setDestroyMode(false);
         mMap.setTag("mapView"); // needed for OpenStreetMapViewTest
         mMap.setMinZoomLevel(16d);
@@ -260,7 +255,7 @@ public class ScannerView extends Fragment {
 
         loadAssets();
 
-        mMarkers = new HashMap<>();
+        mMarkers = new HashMap<String, GroundOverlay>();
         mLines = new HashMap<>();
         mPolygons = new HashMap<>();
 
@@ -411,12 +406,12 @@ public class ScannerView extends Fragment {
     private void setLocationInaccurate(boolean bool) {
         if (bool) {
             setMapEnabled(false);
-            ((TextView)getActivity().findViewById(R.id.quickMessage)).setText(R.string.location_inaccurate);
+            ((TextView) getActivity().findViewById(R.id.quickMessage)).setText(R.string.location_inaccurate);
             getActivity().findViewById(R.id.quickMessage).setVisibility(View.VISIBLE);
             mMap.getOverlayManager().remove(mActionRadius);
         } else {
             setMapEnabled(true);
-            if (((TextView)getActivity().findViewById(R.id.quickMessage)).getText() == getContext().getResources().getText(R.string.location_inaccurate)) {
+            if (((TextView) getActivity().findViewById(R.id.quickMessage)).getText() == getContext().getResources().getText(R.string.location_inaccurate)) {
                 getActivity().findViewById(R.id.quickMessage).setVisibility(View.INVISIBLE);
             }
         }
@@ -458,7 +453,8 @@ public class ScannerView extends Fragment {
     }
 
     private void addIngressTiles() {
-        // Add tiles layer with custom tile source
+        // Add tiles layer with custom tile source.
+        // i'm sure there's a better way to do this (constructor) but i'll look later :-/
         final MapTileProviderBasic tileProvider = new MapTileProviderBasic(mApp.getApplicationContext());
         final ITileSource tileSource = new XYTileSource("CartoDB Dark Matter", 3, 18, 256, ".png",
                 new String[]{"https://c.basemaps.cartocdn.com/dark_all/"});
@@ -505,7 +501,7 @@ public class ScannerView extends Fragment {
     }
 
     private void drawXMParticles() {
-        // draw xm particles
+        // draw xm particles (as groundoverlays)
         /*World world = mGame.getWorld();
         Map<String, XMParticle> xmParticles = world.getXMParticles();
         Set<String> keys = xmParticles.keySet();
@@ -535,26 +531,32 @@ public class ScannerView extends Fragment {
 
                 getActivity().runOnUiThread(() -> {
                     Bitmap portalIcon;
-                    portalIcon = mIcons.get(team.toString());
-
                     // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
                     // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
                     // ... maybe i can at least write the portal level on the portal, like in iitc
                     // it's quite possible that resonators can live in a separate Hash of markers,
                     //   as long as the guids are stored with the portal info
-                    Drawable icon = new BitmapDrawable(getResources(), portalIcon);
+                    portalIcon = mIcons.get(team.toString());
 
-                    Marker marker = new Marker(mMap);
-                    marker.setPosition(location.getLatLng());
-                    marker.setTitle(portal.getPortalTitle());
-                    marker.setIcon(icon);
-                    marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
-                    marker.setOnMarkerClickListener((marker12, mapView) -> {
-                        Intent myIntent = new Intent(getContext(), ActivityPortal.class);
-                        mGame.setCurrentPortal(portal);
-                        startActivityForResult(myIntent, PORTAL_INTENT_CODE);
-                        return true;
-                    });
+                    GroundOverlay marker = new GroundOverlay() {
+                        public boolean touchedBy(final MotionEvent event) {
+                            GeoPoint tappedGeoPoint = (GeoPoint) mMap.getProjection().fromPixels((int) event.getX(), (int) event.getY());
+                            return getBounds().contains(tappedGeoPoint);
+                        }
+
+                        @Override
+                        public boolean onSingleTapConfirmed(final MotionEvent e, final MapView mapView) {
+                            if (touchedBy(e)) {
+                                Intent myIntent = new Intent(getContext(), ActivityPortal.class);
+                                mGame.setCurrentPortal(portal);
+                                startActivityForResult(myIntent, PORTAL_INTENT_CODE);
+                                return true;
+                            }
+                            return false;
+                        }
+                    };
+                    marker.setPosition(location.getLatLng().destinationPoint(25, 315), location.getLatLng().destinationPoint(25, 135));
+                    marker.setImage(portalIcon);
 
                     mMap.getOverlays().add(marker);
                     mMarkers.put(portal.getEntityGuid(), marker);
