@@ -542,6 +542,15 @@ public class GameState
             mInterface.request(mHandshake, "gameplay/collectItemsFromPortal", mLocation, params, new RequestResult(handler) {
                 @Override
                 public void handleError(String error) {
+
+                    // this method often wants to display time deltas.
+                    // it's copying an implementation where the deltas are displayed in seconds.
+                    // it may be more sensible and user friendly to format as maybe HH:mm:ss
+                    // there are a few approaches here worth considering:
+                    // https://stackoverflow.com/questions/9214786/how-to-convert-the-seconds-in-this-format-hhmmss
+                    // some may be obvious.
+                    // i really like xeruf's solution: it makes "5 minutes and 20 seconds" possible
+
                     String pretty_error;
                     switch (error.replaceAll("\\d", "")) {
                         case "TOO_SOON_BIG":
@@ -550,11 +559,17 @@ public class GameState
                             pretty_error = "Portal running hot! Unsafe to acquire items. Estimated time to cooldown: 300 seconds";
                             break;
                         case "TOO_SOON_":
+                            // TODO: maybe format this as "x minutes, x seconds"
                             String seconds = error.substring(error.lastIndexOf("_")+1);
                             pretty_error = "Portal running hot! Unsafe to acquire items. Estimated time to cooldown: "+seconds+" seconds";
                             break;
                         case "TOO_OFTEN":
                             pretty_error = "Portal burned out! It may take significant time for the Portal to reset";
+                            break;
+                        case "TOO_OFTEN_": // new and unimplemented
+                            // TODO: maybe format this as "x hours, x minutes, x seconds"
+                            String ends = error.substring(error.lastIndexOf("_")+1);
+                            pretty_error = "Portal burned out! Estimated time for the Portal to reset: "+ends+" seconds";
                             break;
                         case "OUT_OF_RANGE":
                             pretty_error = "Portal is out of range";
@@ -569,6 +584,7 @@ public class GameState
                             pretty_error = "You are moving too fast";
                             break;
                         case "SPEED_LOCKED_": // new!
+                            // TODO: maybe format this as "x hours, x minutes, x seconds"
                             String t = error.substring(error.lastIndexOf("_")+1);
                             pretty_error = "You are moving too fast! You will be ready to play in "+t+"seconds";
                             break;
