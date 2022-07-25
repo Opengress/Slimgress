@@ -21,6 +21,7 @@
 package net.opengress.slimgress.API.Interface;
 
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Objects;
 
@@ -42,6 +43,7 @@ import okhttp3.Response;
 
 public class Interface
 {
+
     public enum AuthSuccess
     {
         Successful,
@@ -58,6 +60,9 @@ public class Interface
     private static final String mApiBaseURL = "https://" + mApiBase + "/";
     private static final String mApiHandshake = "handshake?json=";
     private static final String mApiRequest = "rpc/";
+
+    // kludge: interface can say the right things about collecting globs without asking GameState
+    private ArrayList<String> mSlurpableXMParticles;
 
     public Interface()
     {
@@ -114,10 +119,9 @@ public class Interface
                     Log.i("Interface", "executing handshake");
                     response = mClient.newCall(get).execute();
                 }
-                assert(response != null);
 
 
-                    String content = Objects.requireNonNull(response.body()).string();
+                String content = Objects.requireNonNull(response.body()).string();
 
                     // check for content type json
                     if (!Objects.requireNonNull(response.header("Content-Type")).contains("application/json"))
@@ -162,9 +166,8 @@ public class Interface
                         }
                         params.getJSONObject("params").put("knobSyncTimestamp", getCurrentTimestamp());
 
-                        JSONArray collectedEnergy = new JSONArray();
-
-                        // TODO: add collected energy guids
+                        // TODO: check that this works
+                        JSONArray collectedEnergy = new JSONArray(mSlurpableXMParticles);
 
                         params.getJSONObject("params").put("energyGlobGuids", collectedEnergy);
                     }
@@ -224,6 +227,11 @@ public class Interface
                 e.printStackTrace();
             }
         }).start();
+    }
+
+
+    public void setSlurpableParticles(ArrayList<String> slurpableParticles) {
+        mSlurpableXMParticles = slurpableParticles;
     }
 
     private long getCurrentTimestamp()

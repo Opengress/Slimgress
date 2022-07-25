@@ -1078,4 +1078,8 @@ public class GameState
     public GameEntityPortal getCurrentPortal() {
         return mPortal;
     }
+
+    public void setSlurpableXMParticles(ArrayList<String> slurpableParticles) {
+        mInterface.setSlurpableParticles(slurpableParticles);
+    }
 }
