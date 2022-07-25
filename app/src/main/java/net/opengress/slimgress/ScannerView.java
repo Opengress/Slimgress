@@ -20,12 +20,13 @@
 
 package net.opengress.slimgress;
 
+import static android.content.Context.SENSOR_SERVICE;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -46,6 +47,10 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -59,6 +64,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.graphics.Matrix;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -84,6 +90,7 @@ import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.Projection;
 import org.osmdroid.views.overlay.CopyrightOverlay;
 import org.osmdroid.views.overlay.GroundOverlay;
 import org.osmdroid.views.overlay.Polygon;
@@ -95,7 +102,7 @@ import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
-public class ScannerView extends Fragment {
+public class ScannerView extends Fragment implements SensorEventListener {
     private final IngressApplication mApp = IngressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private final ScannerKnobs mScannerKnobs = mGame.getKnobs().getScannerKnobs();
@@ -134,7 +141,8 @@ public class ScannerView extends Fragment {
     // FIXME this should be used to set "location inaccurate" if updates mysteriously stop
     private Date mLastLocationAcquired = null;
     private GeoPoint mLastLocation = null;
-    private Polygon mActionRadius = null;
+    private final GroundOverlay mActionRadius = new GroundOverlay();
+    private final GroundOverlay mPlayerCursor = new GroundOverlay();
 
 
     // ===========================================================
@@ -144,6 +152,27 @@ public class ScannerView extends Fragment {
     private final int mUpdateIntervalMS = mScannerKnobs.getUpdateIntervalMS();
     private final int mMinUpdateIntervalMS = mScannerKnobs.getMinUpdateIntervalMS();
     private final int mUpdateDistanceM = mScannerKnobs.getUpdateDistanceM();
+
+    // ===========================================================
+    // For device orientation
+    // ===========================================================
+    // record the compass picture angle turned
+    private float mCurrentDegree = 0f;
+
+    // device sensor manager
+    private SensorManager mSensorManager;
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        // get the angle around the z-axis rotated
+        mCurrentDegree = Math.round(event.values[0]);
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        // unimplemented, don't care
+    }
+
 
     public class MyLocationListener implements LocationListener {
 
@@ -178,12 +207,22 @@ public class ScannerView extends Fragment {
     }
 
     private void displayMyCurrentLocationOverlay(GeoPoint currentLocation) {
-        // TODO: draw player (manually) and use a GroundOverlay for action radius
-        List<GeoPoint> circle = Polygon.pointsAsCircle(currentLocation, mActionRadiusM);
+
+        // TODO: draw player (manually)
         mMap.getOverlayManager().remove(mActionRadius);
-        mActionRadius.setPoints(circle);
+        mActionRadius.setPosition(currentLocation.destinationPoint(56.57, 315), currentLocation.destinationPoint(56.57, 135));
+        mActionRadius.setImage(mIcons.get("actionradius"));
         mMap.getOverlayManager().add(mActionRadius);
-        mMap.invalidate();
+
+        mMap.getOverlayManager().remove(mPlayerCursor);
+        mPlayerCursor.setPosition(currentLocation.destinationPoint(15, 315), currentLocation.destinationPoint(15, 135));
+        Bitmap cursor = mIcons.get("playercursor");
+        Matrix matrix = new Matrix();
+        matrix.postRotate(mCurrentDegree);
+        assert cursor != null;
+        mPlayerCursor.setImage(Bitmap.createBitmap(cursor, 0, 0, cursor.getWidth(), cursor.getHeight(), matrix, true));
+        mMap.getOverlayManager().add(mPlayerCursor);
+
 
         long now = new Date().getTime();
 
@@ -221,6 +260,7 @@ public class ScannerView extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mSensorManager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -236,11 +276,6 @@ public class ScannerView extends Fragment {
         mMap.setMaxZoomLevel(22d);
         mMap.setFlingEnabled(false);
         mMap.setMultiTouchControls(true);
-
-        mActionRadius = new Polygon(mMap);
-        mActionRadius.getOutlinePaint().setColor(0x32ffff00);
-        mActionRadius.getOutlinePaint().setStrokeWidth(10);
-        mActionRadius.setOnClickListener((polygon, mapView, eventPos) -> false);
 
         // deactivate standard map
 //        mMap.setMapType(GoogleMap.MAP_TYPE_NONE); // FIXME
@@ -278,7 +313,10 @@ public class ScannerView extends Fragment {
 
         //My Location
         //note you have handle the permissions yourself, the overlay did not do it for you
-        MyLocationNewOverlay mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(context), mMap);
+        MyLocationNewOverlay mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(context), mMap) {
+            @Override
+            protected void drawMyLocation(final Canvas canvas, final Projection pj, final Location lastFix) {}
+        };
         mLocationOverlay.enableMyLocation();
         mLocationOverlay.enableFollowLocation();
         mLocationOverlay.setEnableAutoStop(false);
@@ -343,6 +381,9 @@ public class ScannerView extends Fragment {
 
         mMap.onPause();
         super.onPause();
+
+        // to stop the listener and save battery
+        mSensorManager.unregisterListener(this);
     }
 
     @Override
@@ -357,6 +398,11 @@ public class ScannerView extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+
+        // for the system's orientation sensor registered listeners
+        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),
+                SensorManager.SENSOR_DELAY_GAME);
+
         mMap.onResume();
         setLocationInaccurate(true);
 
@@ -411,6 +457,7 @@ public class ScannerView extends Fragment {
             ((TextView) getActivity().findViewById(R.id.quickMessage)).setText(R.string.location_inaccurate);
             getActivity().findViewById(R.id.quickMessage).setVisibility(View.VISIBLE);
             mMap.getOverlayManager().remove(mActionRadius);
+            mMap.getOverlayManager().remove(mPlayerCursor);
         } else {
             setMapEnabled(true);
             if (((TextView) getActivity().findViewById(R.id.quickMessage)).getText() == getContext().getResources().getText(R.string.location_inaccurate)) {
@@ -420,19 +467,20 @@ public class ScannerView extends Fragment {
     }
 
     private void loadAssets() {
-        int portalSize = 80;
         Map<String, TeamKnobs.TeamType> teams = mGame.getKnobs().getTeamKnobs().getTeams();
         for (String team : teams.keySet()) {
-            mIcons.put(team, getTintedImage("portalTexture_NEUTRAL.png", 0xff000000 + Objects.requireNonNull(teams.get(team)).getColour(), portalSize));
+            mIcons.put(team, getTintedImage("portalTexture_NEUTRAL.png", 0xff000000 + Objects.requireNonNull(teams.get(team)).getColour()));
         }
-        mIcons.put("particle", Bitmap.createScaledBitmap(getBitmapFromAsset("particle.png"), 10, 10, true));
-//        mXMParticleIcon = Bitmap.createScaledBitmap(getBitmapFromAsset("particle.png"), 10, 10, true);
+        mIcons.put("particle", getBitmapFromAsset("particle.png"));
+        mIcons.put("actionradius", getBitmapFromAsset("actionradius.png"));
+        mIcons.put("playercursor", getTintedImage("playercursor.png", 0xff000000 + Objects.requireNonNull(mGame.getAgent().getTeam()).getColour()));
     }
 
-    public Bitmap getTintedImage(String image, int color, int size) {
-        Bitmap bitmap = Bitmap.createScaledBitmap(getBitmapFromAsset(image), size, size, true);
+    public Bitmap getTintedImage(String image, int color) {
+        Bitmap bitmap = getBitmapFromAsset(image);
         Paint paint = new Paint();
         paint.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
+        assert bitmap != null;
         Bitmap bitmapResult = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmapResult);
         canvas.drawBitmap(bitmap, 0, 0, paint);
@@ -460,7 +508,7 @@ public class ScannerView extends Fragment {
         // i'm sure there's a better way to do this (constructor) but i'll look later :-/
         final MapTileProviderBasic tileProvider = new MapTileProviderBasic(mApp.getApplicationContext());
         final ITileSource tileSource = new XYTileSource("CartoDB Dark Matter", 3, 18, 256, ".png",
-                new String[]{"https://c.basemaps.cartocdn.com/dark_all/"});
+                new String[]{"https://c.basemaps.cartocdn.com/dark_nolabels/"});
         tileProvider.setTileSource(tileSource);
         tileProvider.getTileRequestCompleteHandlers().add(mMap.getTileRequestCompleteHandler());
         final TilesOverlay tilesOverlay = new TilesOverlay(tileProvider, this.getContext());
