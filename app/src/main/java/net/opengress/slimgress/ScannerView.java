@@ -22,6 +22,7 @@ package net.opengress.slimgress;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -45,8 +46,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -83,7 +82,6 @@ import org.osmdroid.tileprovider.MapTileProviderBasic;
 import org.osmdroid.tileprovider.tilesource.ITileSource;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
-import org.osmdroid.util.RectL;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.CopyrightOverlay;
@@ -130,15 +128,10 @@ public class ScannerView extends Fragment {
     // ===========================================================
     private SharedPreferences mPrefs;
 
-    // ===========================================================
-    // Other (location)
-    // ===========================================================
-    private MyLocationListener locationListener = null;
-    private LocationManager locationManager = null;
-    private MyLocationNewOverlay mLocationOverlay = null;
     private GeoPoint mCurrentLocation = null;
     private static final int RECORD_REQUEST_CODE = 101;
     private Date mLastScan = null;
+    // FIXME this should be used to set "location inaccurate" if updates mysteriously stop
     private Date mLastLocationAcquired = null;
     private GeoPoint mLastLocation = null;
     private Polygon mActionRadius = null;
@@ -185,7 +178,7 @@ public class ScannerView extends Fragment {
     }
 
     private void displayMyCurrentLocationOverlay(GeoPoint currentLocation) {
-        // TODO: draw player (manually) and get action radius from knobs (when implemented)
+        // TODO: draw player (manually) and use a GroundOverlay for action radius
         List<GeoPoint> circle = Polygon.pointsAsCircle(currentLocation, mActionRadiusM);
         mMap.getOverlayManager().remove(mActionRadius);
         mActionRadius.setPoints(circle);
@@ -285,7 +278,7 @@ public class ScannerView extends Fragment {
 
         //My Location
         //note you have handle the permissions yourself, the overlay did not do it for you
-        mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(context), mMap);
+        MyLocationNewOverlay mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(context), mMap);
         mLocationOverlay.enableMyLocation();
         mLocationOverlay.enableFollowLocation();
         mLocationOverlay.setEnableAutoStop(false);
@@ -367,8 +360,11 @@ public class ScannerView extends Fragment {
         mMap.onResume();
         setLocationInaccurate(true);
 
-        locationListener = new MyLocationListener();
-        locationManager = (LocationManager) mApp.getSystemService(Context.LOCATION_SERVICE);
+        // ===========================================================
+        // Other (location)
+        // ===========================================================
+        MyLocationListener locationListener = new MyLocationListener();
+        LocationManager locationManager = (LocationManager) mApp.getSystemService(Context.LOCATION_SERVICE);
         int permission = ContextCompat.checkSelfPermission(getContext(),
                 android.Manifest.permission.ACCESS_FINE_LOCATION);
 
@@ -397,6 +393,7 @@ public class ScannerView extends Fragment {
 
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void setMapEnabled(boolean bool) {
         // there's probably a better way
         if (bool) {
@@ -407,6 +404,8 @@ public class ScannerView extends Fragment {
     }
 
     private void setLocationInaccurate(boolean bool) {
+        // FIXME this is fine, but really the game state needs to know about it.
+        //  for example, if i'm about to hack a portal and i switch my GPS off, that shouldn't work!
         if (bool) {
             setMapEnabled(false);
             ((TextView) getActivity().findViewById(R.id.quickMessage)).setText(R.string.location_inaccurate);
@@ -474,6 +473,9 @@ public class ScannerView extends Fragment {
         final Handler resultHandler = new Handler(msg -> {
             // draw xm particles
             drawXMParticles();
+            // FIXME: they're probably being drawn and slurped at the same time,
+            //  in which case user will see ghost XM particles they've just slurped
+            setSlurpableXMParticles();
 
             new Thread(() -> {
                 // draw game entities
@@ -504,6 +506,25 @@ public class ScannerView extends Fragment {
         new Thread(() -> mGame.intGetObjectsInCells(region, resultHandler)).start();
     }
 
+    private void setSlurpableXMParticles() {
+        // FIXME maybe don't try to slurp particles that aren't needed to fill the tank
+        //  -- note that we may need to sort the particles and pick out the optimal configuration
+        //  -- also note that if we're really cheeky we may want/be able to do that serverside
+        Map<String, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
+        Set<String> keys = xmParticles.keySet();
+        ArrayList<String> slurpableParticles = new ArrayList<>();
+        for (String key : keys) {
+            XMParticle particle = xmParticles.get(key);
+
+            assert particle != null;
+            final net.opengress.slimgress.API.Common.Location location = particle.getCellLocation();
+            if (location.getLatLng().distanceToAsDouble(mGame.getLocation().getLatLng()) < mActionRadiusM) {
+                slurpableParticles.add(key);
+            }
+        }
+        mGame.setSlurpableXMParticles(slurpableParticles);
+    }
+
     private void drawXMParticles() {
         // draw xm particles (as groundoverlays)
         Map<String, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
@@ -514,27 +535,22 @@ public class ScannerView extends Fragment {
             assert particle != null;
             final net.opengress.slimgress.API.Common.Location location = particle.getCellLocation();
 
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    getActivity().runOnUiThread(() -> {
-                        Bitmap portalIcon;
-                        // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
-                        // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
-                        // ... maybe i can at least write the portal level on the portal, like in iitc
-                        // it's quite possible that resonators can live in a separate Hash of markers,
-                        //   as long as the guids are stored with the portal info
-                        portalIcon = mIcons.get("particle");
+            getActivity().runOnUiThread(() -> getActivity().runOnUiThread(() -> {
+                Bitmap portalIcon;
+                // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
+                // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
+                // ... maybe i can at least write the portal level on the portal, like in iitc
+                // it's quite possible that resonators can live in a separate Hash of markers,
+                //   as long as the guids are stored with the portal info
+                portalIcon = mIcons.get("particle");
 
-                        GroundOverlay marker = new GroundOverlay();
-                        marker.setPosition(location.getLatLng().destinationPoint(25, 315), location.getLatLng().destinationPoint(25, 135));
-                        marker.setImage(portalIcon);
+                GroundOverlay marker = new GroundOverlay();
+                marker.setPosition(location.getLatLng().destinationPoint(25, 315), location.getLatLng().destinationPoint(25, 135));
+                marker.setImage(portalIcon);
 
-                        mMap.getOverlays().add(marker);
-                        mXMMarkers.put(particle.getGuid(), marker);
-                    });
-                }
-            });
+                mMap.getOverlays().add(marker);
+                mXMMarkers.put(particle.getGuid(), marker);
+            }));
         }
     }
 
