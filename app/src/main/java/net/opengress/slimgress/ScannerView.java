@@ -21,6 +21,7 @@
 package net.opengress.slimgress;
 
 import static android.content.Context.SENSOR_SERVICE;
+import static android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_LOW;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,6 +57,8 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.StrictMode;
+import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -95,7 +98,6 @@ import org.osmdroid.views.overlay.CopyrightOverlay;
 import org.osmdroid.views.overlay.GroundOverlay;
 import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.Polyline;
-import org.osmdroid.views.overlay.TilesOverlay;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
@@ -153,21 +155,40 @@ public class ScannerView extends Fragment implements SensorEventListener {
     private final int mMinUpdateIntervalMS = mScannerKnobs.getMinUpdateIntervalMS();
     private final int mUpdateDistanceM = mScannerKnobs.getUpdateDistanceM();
 
-    // ===========================================================
-    // For device orientation
-    // ===========================================================
-    // record the compass picture angle turned
-    private float mCurrentDegree = 0f;
-
     // device sensor manager
     private SensorManager mSensorManager;
+    private Sensor mOrientationSensor;
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        // get the angle around the z-axis rotated
-        mCurrentDegree = Math.round(event.values[0]);
+        float bearing = event.accuracy >= SENSOR_STATUS_ACCURACY_LOW ? event.values[0] : 0;
+        var location = mCurrentLocation != null ? mCurrentLocation : (GeoPoint) mMap.getMapCenter();
+        drawPlayerCursor(location, bearing);
     }
 
+    public void drawPlayerCursor(GeoPoint location, float bearing) {
+        mMap.getOverlayManager().remove(mPlayerCursor);
+
+        mPlayerCursor.setPosition(location.destinationPoint(15, 315), location.destinationPoint(15, 135));
+        Bitmap cursor = mIcons.get("playercursor");
+        Matrix matrix = new Matrix();
+        matrix.postRotate(Math.round(bearing));
+        assert cursor != null;
+        mPlayerCursor.setImage(Bitmap.createBitmap(cursor, 0, 0, cursor.getWidth(), cursor.getHeight(), matrix, true));
+
+        mMap.getOverlayManager().add(mPlayerCursor);
+    }
+
+    /**
+     * Called when the accuracy of the registered sensor has changed.  Unlike
+     * onSensorChanged(), this is only called when this accuracy value changes.
+     *
+     * <p>See the SENSOR_STATUS_* constants in
+     * {@link android.hardware.SensorManager SensorManager} for details.
+     *
+     * @param accuracy The new accuracy of this sensor, one of
+     *         {@code SensorManager.SENSOR_STATUS_*}
+     */
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
         // unimplemented, don't care
@@ -180,7 +201,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
             mCurrentLocation = new GeoPoint(location);
             mGame.updateLocation(new net.opengress.slimgress.API.Common.Location(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()));
             mLastLocationAcquired = new Date();
-            displayMyCurrentLocationOverlay(mCurrentLocation);
+            displayMyCurrentLocationOverlay(mCurrentLocation, location.getBearing());
         }
 
         public void onProviderDisabled(String provider) {
@@ -206,23 +227,18 @@ public class ScannerView extends Fragment implements SensorEventListener {
         }
     }
 
-    private void displayMyCurrentLocationOverlay(GeoPoint currentLocation) {
+    private void displayMyCurrentLocationOverlay(GeoPoint currentLocation, float bearing) {
 
-        // TODO: draw player (manually)
         mMap.getOverlayManager().remove(mActionRadius);
+
         mActionRadius.setPosition(currentLocation.destinationPoint(56.57, 315), currentLocation.destinationPoint(56.57, 135));
         mActionRadius.setImage(mIcons.get("actionradius"));
+
+        if (mOrientationSensor == null) {
+            drawPlayerCursor(currentLocation, bearing);
+        }
+
         mMap.getOverlayManager().add(mActionRadius);
-
-        mMap.getOverlayManager().remove(mPlayerCursor);
-        mPlayerCursor.setPosition(currentLocation.destinationPoint(15, 315), currentLocation.destinationPoint(15, 135));
-        Bitmap cursor = mIcons.get("playercursor");
-        Matrix matrix = new Matrix();
-        matrix.postRotate(mCurrentDegree);
-        assert cursor != null;
-        mPlayerCursor.setImage(Bitmap.createBitmap(cursor, 0, 0, cursor.getWidth(), cursor.getHeight(), matrix, true));
-        mMap.getOverlayManager().add(mPlayerCursor);
-
 
         long now = new Date().getTime();
 
@@ -270,9 +286,20 @@ public class ScannerView extends Fragment implements SensorEventListener {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
+        // allows map tiles to be cached in SQLite so map draws properly
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+        Configuration.getInstance().load(getContext(), PreferenceManager.getDefaultSharedPreferences(getContext()));
+
+        // set up map tile source before creating map, so we don't download wrong tiles wastefully
+        final ITileSource tileSource = new XYTileSource("CartoDB Dark Matter", 3, 18, 256, ".png",
+                new String[]{"https://c.basemaps.cartocdn.com/dark_nolabels/"});
+        final MapTileProviderBasic tileProvider = new MapTileProviderBasic(mApp.getApplicationContext(), tileSource);
+
         //Note! we are programmatically construction the map view
         //be sure to handle application lifecycle correct (see note in on pause)
-        mMap = new MapView(inflater.getContext());
+        mMap = new MapView(inflater.getContext(), tileProvider);
+        mMap.getMapOverlay().setLoadingBackgroundColor(Color.BLACK);
         mMap.setDestroyMode(false);
         mMap.setTag("mapView"); // needed for OpenStreetMapViewTest
         mMap.setMinZoomLevel(16d);
@@ -280,11 +307,6 @@ public class ScannerView extends Fragment implements SensorEventListener {
         mMap.setFlingEnabled(false);
         mMap.setMultiTouchControls(true);
 
-        // deactivate standard map
-//        mMap.setMapType(GoogleMap.MAP_TYPE_NONE); // FIXME
-
-        // add custom map tiles
-        addIngressTiles();
 
         loadAssets();
 
@@ -402,12 +424,16 @@ public class ScannerView extends Fragment implements SensorEventListener {
     public void onResume() {
         super.onResume();
 
-        // for the system's orientation sensor registered listeners
-        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),
-                SensorManager.SENSOR_DELAY_GAME);
-
         mMap.onResume();
         setLocationInaccurate(true);
+
+        // TODO: 1. use not-deprecated stuff, 2. handle devices with no compass
+        // for the system's orientation sensor registered listeners
+        mOrientationSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+        if (mOrientationSensor != null) {
+            mSensorManager.registerListener(this, mOrientationSensor,
+                    SensorManager.SENSOR_DELAY_GAME);
+        }
 
         // ===========================================================
         // Other (location)
@@ -455,12 +481,13 @@ public class ScannerView extends Fragment implements SensorEventListener {
     private void setLocationInaccurate(boolean bool) {
         // FIXME this is fine, but really the game state needs to know about it.
         //  for example, if i'm about to hack a portal and i switch my GPS off, that shouldn't work!
+
+        // FIXME this MIGHT be able to fire before activity/view exists, need to maybe wrap it up
         if (bool) {
             setMapEnabled(false);
             ((TextView) getActivity().findViewById(R.id.quickMessage)).setText(R.string.location_inaccurate);
             getActivity().findViewById(R.id.quickMessage).setVisibility(View.VISIBLE);
             mMap.getOverlayManager().remove(mActionRadius);
-            mMap.getOverlayManager().remove(mPlayerCursor);
         } else {
             setMapEnabled(true);
             if (((TextView) getActivity().findViewById(R.id.quickMessage)).getText() == getContext().getResources().getText(R.string.location_inaccurate)) {
@@ -504,19 +531,6 @@ public class ScannerView extends Fragment implements SensorEventListener {
         }
 
         return bitmap;
-    }
-
-    private void addIngressTiles() {
-        // Add tiles layer with custom tile source.
-        // i'm sure there's a better way to do this (constructor) but i'll look later :-/
-        final MapTileProviderBasic tileProvider = new MapTileProviderBasic(mApp.getApplicationContext());
-        final ITileSource tileSource = new XYTileSource("CartoDB Dark Matter", 3, 18, 256, ".png",
-                new String[]{"https://c.basemaps.cartocdn.com/dark_nolabels/"});
-        tileProvider.setTileSource(tileSource);
-        tileProvider.getTileRequestCompleteHandlers().add(mMap.getTileRequestCompleteHandler());
-        final TilesOverlay tilesOverlay = new TilesOverlay(tileProvider, this.getContext());
-        tilesOverlay.setLoadingBackgroundColor(Color.BLACK);
-        mMap.getOverlays().add(tilesOverlay);
     }
 
     private synchronized void updateWorld(final S2LatLngRect region, final Handler uiHandler) {
