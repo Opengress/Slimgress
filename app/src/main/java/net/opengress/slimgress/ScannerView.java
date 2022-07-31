@@ -242,6 +242,9 @@ public class ScannerView extends Fragment implements SensorEventListener {
                     final S2LatLngRect region = S2LatLngRect.fromPointPair(S2LatLng.fromDegrees(north, west),
                             S2LatLng.fromDegrees(south, east));
 
+                    // guard against scanning too fast if request fails
+                    mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
+
                     updateWorld(region, uiHandler);
                 });
 
@@ -519,10 +522,23 @@ public class ScannerView extends Fragment implements SensorEventListener {
     private synchronized void updateWorld(final S2LatLngRect region, final Handler uiHandler) {
         // handle interface result (on timer thread)
         final Handler resultHandler = new Handler(msg -> {
+
+            if (msg.getData().keySet().contains("Error")) {
+                ((TextView) getActivity().findViewById(R.id.quickMessage)).setText(R.string.scan_failed);
+                getActivity().findViewById(R.id.quickMessage).setVisibility(View.VISIBLE);
+                return true;
+            }
+
+            if (((TextView) getActivity().findViewById(R.id.quickMessage)).getText() == getContext().getResources().getText(R.string.scan_failed)) {
+                getActivity().findViewById(R.id.quickMessage).setVisibility(View.INVISIBLE);
+            }
+
             // draw xm particles
             drawXMParticles();
             // FIXME: they're probably being drawn and slurped at the same time,
             //  in which case user will see ghost XM particles they've just slurped
+            //  ... also, can we get particles that we passed over between scans? probably not.
+            //  maybe with slurp?
             setSlurpableXMParticles();
 
             new Thread(() -> {
@@ -705,7 +721,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode != PORTAL_INTENT_CODE) {
-            Log.d("ScannerView", "Unknown intent code, I don't understand: " + requestCode);
+            Log.e("ScannerView", "Unknown intent code, I don't understand: " + requestCode);
             return;
         }
         if (data == null) {

@@ -40,7 +40,8 @@ public class Handshake
         NoActionsRequired
     }
 
-    private final PregameStatus mPregameStatus;
+    // final, but stupid javac thinks it's uninitialized even though it's initialized in every code path
+    private PregameStatus mPregameStatus;
     private final String mServerVersion;
     private final String mNickname;
     private Agent mAgent = null;
@@ -48,31 +49,41 @@ public class Handshake
 
     public Handshake(JSONObject json) throws JSONException
     {
-        JSONObject result = json.getJSONObject("result");
+        JSONObject result = json.optJSONObject("result");
 
-        String pregameStatus = result.getJSONObject("pregameStatus").getString("action");
-        if (pregameStatus.equals("CLIENT_MUST_UPGRADE"))
-                mPregameStatus = PregameStatus.ClientMustUpgrade;
-        else if (pregameStatus.equals("NO_ACTIONS_REQUIRED"))
+        if (result != null) {
+
+            JSONObject pregameStatus = result.optJSONObject("pregameStatus");
+            if (pregameStatus != null) {
+                String pregameStatusString = pregameStatus.optString("action");
+                if (pregameStatusString.equals("CLIENT_MUST_UPGRADE"))
+                    mPregameStatus = PregameStatus.ClientMustUpgrade;
+                else if (pregameStatusString.equals("NO_ACTIONS_REQUIRED"))
+                    mPregameStatus = PregameStatus.NoActionsRequired;
+                else
+                    throw new RuntimeException("unknown pregame status " + pregameStatus);
+            }
+
+            mServerVersion = result.optString("serverVersion");
+
+            // storage
+
+            // get knobs
+            JSONObject knobs = result.optJSONObject("initialKnobs");
+            if (knobs != null) {
+                mKnobs = new KnobsBundle(knobs);
+            }
+
+            // get player entity
+            mNickname = result.optString("nickname");
+            JSONArray playerEntity = result.optJSONArray("playerEntity");
+            if (playerEntity != null) {
+                mAgent = new Agent(playerEntity, mNickname, mKnobs.getTeamKnobs());
+            }
+        } else {
             mPregameStatus = PregameStatus.NoActionsRequired;
-        else
-            throw new RuntimeException("unknown pregame status " + pregameStatus);
-
-        mServerVersion = result.getString("serverVersion");
-
-        // storage
-
-        // get knobs
-        JSONObject knobs = result.optJSONObject("initialKnobs");
-        if (knobs != null) {
-            mKnobs = new KnobsBundle(knobs);
-        }
-
-        // get player entity
-        mNickname = result.optString("nickname");
-        JSONArray playerEntity = result.optJSONArray("playerEntity");
-        if (playerEntity != null) {
-            mAgent = new Agent(playerEntity, mNickname, mKnobs.getTeamKnobs());
+            mServerVersion = "";
+            mNickname = "";
         }
     }
 
