@@ -133,6 +133,8 @@ public class GameState
                 String errString;
                 if (mHandshake.getPregameStatus() == Handshake.PregameStatus.ClientMustUpgrade)
                     errString = "Client must upgrade";
+                else if (Objects.equals(mHandshake.getServerVersion(), ""))
+                    errString = "Server returned incorrect handshake response";
                 else if (mHandshake.getAgent() == null)
                     errString = "Invalid agent data";
                 else

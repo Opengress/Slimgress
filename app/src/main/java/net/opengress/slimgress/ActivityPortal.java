@@ -116,6 +116,7 @@ public class ActivityPortal extends Activity {
 //        ((TextView)findViewById(R.id.agentinfo)).setTextColor(textColor);
 
         // FIXME there should be some kind of listener or observer I can use for this
+        //  -- maybe i can use device orientation sensor
         Handler locationHandler = new Handler();
         Runnable mRunnable = new Runnable(){
             @Override

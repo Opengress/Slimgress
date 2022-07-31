@@ -136,7 +136,11 @@ public class Interface
 
             }
             catch (Exception e) {
-                e.printStackTrace();
+                try {
+                    callback.handle(new Handshake(new JSONObject()));
+                } catch (JSONException ex) {
+                    ex.printStackTrace();
+                }
             }
         }).start();
     }
@@ -208,8 +212,10 @@ public class Interface
 
                     if (response.code() == 401) {
                         // TODO: work out what to do... a simple, ugly idea: dialog and quit
-                        // token expired or similar
+                        // token expired or similar. player isn't logged in
 //                        isAuthenticated = false;
+                        result.handleError("You are not logged in. Restart the application.");
+                        result.finished();
                     }
                     else {
                         content = Objects.requireNonNull(response.body()).string();
@@ -224,6 +230,8 @@ public class Interface
                 }
             }
             catch (Exception e) {
+                result.handleError(e.getMessage());
+                result.finished();
                 e.printStackTrace();
             }
         }).start();

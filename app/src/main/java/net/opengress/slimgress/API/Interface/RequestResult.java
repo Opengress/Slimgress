@@ -86,7 +86,7 @@ public class RequestResult
         return mBundle;
     }
 
-    private void finished()
+    public void finished()
     {
         mMessage.setData(mBundle);
         mResultHandler.sendMessage(mMessage);
