@@ -163,6 +163,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
     public void onSensorChanged(SensorEvent event) {
         float bearing = event.accuracy >= SENSOR_STATUS_ACCURACY_LOW ? event.values[0] : 0;
         var location = mCurrentLocation != null ? mCurrentLocation : (GeoPoint) mMap.getMapCenter();
+        mLastLocationAcquired = new Date();
         drawPlayerCursor(location, bearing);
     }
 
@@ -230,14 +231,11 @@ public class ScannerView extends Fragment implements SensorEventListener {
     private void displayMyCurrentLocationOverlay(GeoPoint currentLocation, float bearing) {
 
         mMap.getOverlayManager().remove(mActionRadius);
-
-        mActionRadius.setPosition(currentLocation.destinationPoint(56.57, 315), currentLocation.destinationPoint(56.57, 135));
-        mActionRadius.setImage(mIcons.get("actionradius"));
-
         if (mOrientationSensor == null) {
             drawPlayerCursor(currentLocation, bearing);
         }
-
+        mActionRadius.setPosition(currentLocation.destinationPoint(56.57, 315), currentLocation.destinationPoint(56.57, 135));
+        mActionRadius.setImage(mIcons.get("actionradius"));
         mMap.getOverlayManager().add(mActionRadius);
 
         long now = new Date().getTime();
@@ -287,7 +285,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         // allows map tiles to be cached in SQLite so map draws properly
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitDiskReads().permitDiskWrites().build();
         StrictMode.setThreadPolicy(policy);
         Configuration.getInstance().load(getContext(), PreferenceManager.getDefaultSharedPreferences(getContext()));
 
@@ -296,15 +294,16 @@ public class ScannerView extends Fragment implements SensorEventListener {
                 new String[]{"https://c.basemaps.cartocdn.com/dark_nolabels/"});
         final MapTileProviderBasic tileProvider = new MapTileProviderBasic(mApp.getApplicationContext(), tileSource);
 
-        //Note! we are programmatically construction the map view
-        //be sure to handle application lifecycle correct (see note in on pause)
+        // Note! we are programmatically construction the map view
+        // be sure to handle application lifecycle correct (see onPause)
         mMap = new MapView(inflater.getContext(), tileProvider);
         mMap.getMapOverlay().setLoadingBackgroundColor(Color.BLACK);
         mMap.setDestroyMode(false);
-        mMap.setTag("mapView"); // needed for OpenStreetMapViewTest
         mMap.setMinZoomLevel(16d);
         mMap.setMaxZoomLevel(22d);
         mMap.setFlingEnabled(false);
+        // TODO: rewrite MultiTouchController to NOT change map position on pinch
+        // (if that's the right way)
         mMap.setMultiTouchControls(true);
 
 
@@ -345,7 +344,8 @@ public class ScannerView extends Fragment implements SensorEventListener {
         mLocationOverlay.enableMyLocation();
         mLocationOverlay.enableFollowLocation();
         mLocationOverlay.setEnableAutoStop(false);
-        mMap.getOverlays().add(mLocationOverlay);
+        // TODO: check that i don't need this - then i don't have to override its drawMyLocation
+//        mMap.getOverlays().add(mLocationOverlay);
 
         mMap.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
 
@@ -425,7 +425,12 @@ public class ScannerView extends Fragment implements SensorEventListener {
         super.onResume();
 
         mMap.onResume();
-        setLocationInaccurate(true);
+        if (mLastLocationAcquired == null || mLastLocationAcquired.before(new Date(System.currentTimeMillis() - mUpdateIntervalMS))) {
+            setLocationInaccurate(true);
+        } else if (mLastLocationAcquired.before(new Date(System.currentTimeMillis() - mMinUpdateIntervalMS))) {
+            // might be pointing the wrong way til next location update but that's ok
+            displayMyCurrentLocationOverlay(mCurrentLocation, 0);
+        }
 
         // TODO: 1. use not-deprecated stuff, 2. handle devices with no compass
         // for the system's orientation sensor registered listeners
