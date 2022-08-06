@@ -37,6 +37,8 @@ import com.google.common.geometry.S2LatLngRect;
 import com.google.common.geometry.S2Region;
 import com.google.common.geometry.S2RegionCoverer;
 
+import net.opengress.slimgress.API.Interface.Interface;
+
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -110,16 +112,17 @@ public class Utils
     }
 
     public static Bitmap getImageBitmap(String url, File cacheDir) {
+        // FIXME there's an unclosed resource here, reported when closing portal view
+        // shouldn't any Closeable i create in this method call close() on return automatically?
         Bitmap bm = null;
         try {
             Request get = new Request.Builder()
                     .url(url)
-                    .header("User-Agent", "Opengress/Slimgress (API dev)")
+                    .header("User-Agent", Interface.mUserAgent)
                     .build();
             Response response = getCachedClient(cacheDir).newCall(get).execute();
             InputStream content = Objects.requireNonNull(response.body()).byteStream();
             bm = BitmapFactory.decodeStream(content);
-            content.close();
         } catch (IOException e) {
             Log.e("Utils.getImageBitmap", "Error getting bitmap", e);
         }

@@ -60,6 +60,7 @@ public class Interface
     private static final String mApiBaseURL = "https://" + mApiBase + "/";
     private static final String mApiHandshake = "handshake?json=";
     private static final String mApiRequest = "rpc/";
+    public static final String mUserAgent = "Opengress/Slimgress (API dev)";
 
     // kludge: interface can say the right things about collecting globs without asking GameState
     private ArrayList<String> mSlurpableXMParticles;
@@ -110,6 +111,11 @@ public class Interface
                         .url(handshake)
                         .header("Accept-Charset", "utf-8")
                         .header("Cache-Control", "max-age=0")
+                        .header("Content-Type", "application/json;charset=UTF-8")
+                        .header("Accept-Encoding", "gzip")
+                        .header("User-Agent", mUserAgent)
+                        .header("Host", mApiBase)
+                        .header("Connection", "Keep-Alive")
                         .addHeader("Cookie", mCookie)
                         .build();
 
@@ -196,7 +202,7 @@ public class Interface
                     .post(body)
                     .header("Content-Type", "application/json;charset=UTF-8")
                     .header("Accept-Encoding", "gzip")
-                    .header("User-Agent", "Opengress/Slimgress (API dev)")
+                    .header("User-Agent", mUserAgent)
                     .header("Host", mApiBase)
                     .header("Connection", "Keep-Alive")
                     .addHeader("Cookie", mCookie)
