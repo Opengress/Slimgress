@@ -110,7 +110,7 @@ public class GameBasket
     private void processLevelUp(JSONObject levelUp) {
         // TODO: UNDONE
         if (levelUp != null) {
-            Log.d("GameBasket", "level up: " + levelUp);
+            Log.e("GameBasket", "level up: " + levelUp);
         }
     }
 

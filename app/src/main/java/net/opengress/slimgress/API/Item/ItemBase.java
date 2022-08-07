@@ -137,7 +137,6 @@ public abstract class ItemBase extends EntityBase
             itemResource = item.getJSONObject("resourceWithLevels");
             JSONObject accessLevel = item.getJSONObject("accessLevel");
             // accessLevel/failure/{isAllowed,requiredLevel}
-            Log.d("MAKING ITEM", item.toString());
             mItemAccessLevel = accessLevel.getInt("requiredLevel");
             mItemLevel = itemResource.getInt("level");
         }

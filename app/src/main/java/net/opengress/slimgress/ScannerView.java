@@ -104,8 +104,6 @@ public class ScannerView extends Fragment implements SensorEventListener {
     private final ScannerKnobs mScannerKnobs = mGame.getKnobs().getScannerKnobs();
     private MapView mMap = null;
 
-//    private Bitmap mXMParticleIcon = null;
-
     private final HashMap<String, Bitmap> mIcons = new HashMap<>();
     private HashMap<String, GroundOverlay> mMarkers = null;
     private HashMap<String, GroundOverlay> mXMMarkers = null;
@@ -217,12 +215,6 @@ public class ScannerView extends Fragment implements SensorEventListener {
         public void onStatusChanged(String provider, int status, Bundle extras) {
             // probably useless, might not be called above android Q
             // could be interesting for checking that gps fix comes from satellites
-            Log.d("ScannerView/Location", provider + ": " + status);
-            Set<String> keys = extras.keySet();
-
-            for (String key : keys) {
-                Log.d("ScannerView/Location", key + " " + extras.getInt(key));
-            }
         }
     }
 
@@ -311,12 +303,6 @@ public class ScannerView extends Fragment implements SensorEventListener {
                 new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                 RECORD_REQUEST_CODE);
     }
-
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-//                                           @NonNull int[] grantResults) {
-//        Log.e("ScannerView/RequestPermissions", "permission result!");
-//    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
