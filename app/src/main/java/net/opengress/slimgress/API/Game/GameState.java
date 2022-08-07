@@ -92,7 +92,7 @@ public class GameState
         if (gameBasket == null)
             Log.w("Game", "game basket is invalid");
         else {
-            Log.w("Game", "processing game basket");
+            Log.d("Game", "processing game basket");
             mInventory.processGameBasket(gameBasket);
             mWorld.processGameBasket(gameBasket);
 

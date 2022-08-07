@@ -122,7 +122,7 @@ public class Interface
                 // do handshake
                 Response response;
                 synchronized(Interface.this) {
-                    Log.i("Interface", "executing handshake");
+                    Log.d("Interface", "executing handshake");
                     response = mClient.newCall(get).execute();
                 }
 
@@ -138,7 +138,7 @@ public class Interface
                     // handle handshake data
                     callback.handle(new Handshake(new JSONObject(content)));
 
-                    Log.i("Interface", "handshake finished");
+                    Log.d("Interface", "handshake finished");
 
             }
             catch (Exception e) {

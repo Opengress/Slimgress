@@ -45,7 +45,6 @@ public class TeamKnobs extends Knobs{
     public TeamKnobs(JSONObject json) throws JSONException
     {
         super(json);
-        Log.d("teamknobs", "teamknobs get");
 
         mTeamsMap = new HashMap<>();
         Iterator<?> it = json.keys();
