@@ -170,13 +170,13 @@ public class GameState
         }
     }
 
-    public void intGetObjectsInCells(final S2LatLngRect region, final Handler handler)
+    public void intGetObjectsInCells(final Location location, final Handler handler)
     {
         try {
             checkInterface();
 
             // get cell ids for surrounding area
-            String[] cellIds = Utils.getCellIdsFromRegion(region, 16, 16);
+            String[] cellIds = Utils.getCellIdsFromLocationArea(location, 500 * 500 * Math.PI, 16, 16);
 
             // create cells
             JSONArray cellsAsHex = new JSONArray();

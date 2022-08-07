@@ -20,9 +20,10 @@
 
 package net.opengress.slimgress;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
-import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.API.Common.Team;
 import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Player.Agent;
@@ -33,8 +34,7 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-public class ActivityMain extends FragmentActivity
-{
+public class ActivityMain extends FragmentActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
     private final IngressApplication mApp = IngressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
 
@@ -61,6 +61,14 @@ public class ActivityMain extends FragmentActivity
         buttonComm.setOnClickListener(v -> showInfoBox("Info"));
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        ScannerView scanner = (ScannerView) getFragmentManager().findFragmentById(R.id.map);
+        scanner.requestLocationUpdates();
+    }
+
     private void showInfoBox(String message)
     {
         DialogInfo newDialog = new DialogInfo(this);
@@ -68,7 +76,7 @@ public class ActivityMain extends FragmentActivity
         newDialog.show();
     }
 
-    private void updateAgent()
+    void updateAgent()
     {
         // get agent data
         Agent agent = mGame.getAgent();
@@ -93,7 +101,5 @@ public class ActivityMain extends FragmentActivity
             ((TextView)findViewById(R.id.agentinfo)).setTextColor(textColor);
         }
 
-        // update current position
-        mGame.updateLocation(new Location(50.345963, 7.588223));
     }
 }

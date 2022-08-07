@@ -59,10 +59,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -72,9 +70,6 @@ import android.graphics.Matrix;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
-import com.google.common.geometry.S2LatLng;
-import com.google.common.geometry.S2LatLngRect;
 
 import net.opengress.slimgress.API.Common.Team;
 import net.opengress.slimgress.API.Game.GameState;
@@ -93,7 +88,6 @@ import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.Projection;
 import org.osmdroid.views.overlay.CopyrightOverlay;
 import org.osmdroid.views.overlay.GroundOverlay;
 import org.osmdroid.views.overlay.Polygon;
@@ -127,9 +121,6 @@ public class ScannerView extends Fragment implements SensorEventListener {
     private static final String PREFS_LONGITUDE_STRING = "longitudeString";
     private static final String PREFS_ZOOM_LEVEL_DOUBLE = "zoomLevelDouble";
 
-    private static final int MENU_ABOUT = Menu.FIRST + 1;
-    private static final int MENU_LAST_ID = MENU_ABOUT + 1; // Always set to last unused id
-
     private final int PORTAL_INTENT_CODE = 1;
 
     // ===========================================================
@@ -154,6 +145,13 @@ public class ScannerView extends Fragment implements SensorEventListener {
     private final int mUpdateIntervalMS = mScannerKnobs.getUpdateIntervalMS();
     private final int mMinUpdateIntervalMS = mScannerKnobs.getMinUpdateIntervalMS();
     private final int mUpdateDistanceM = mScannerKnobs.getUpdateDistanceM();
+
+    // ===========================================================
+    // Other (location)
+    // ===========================================================
+    MyLocationListener mLocationListener = null;
+    LocationManager mLocationManager = null;
+    MyLocationNewOverlay mLocationOverlay = null;
 
     // device sensor manager
     private SensorManager mSensorManager;
@@ -248,18 +246,9 @@ public class ScannerView extends Fragment implements SensorEventListener {
             if (mGame.getLocation() != null) {
                 final Handler uiHandler = new Handler();
                 uiHandler.post(() -> {
-                    // get map boundaries (on ui thread)
-                    double east = mMap.getProjection().getBoundingBox().getLonEast();
-                    double west = mMap.getProjection().getBoundingBox().getLonWest();
-                    double north = mMap.getProjection().getBoundingBox().getLatNorth();
-                    double south = mMap.getProjection().getBoundingBox().getLatSouth();
-                    final S2LatLngRect region = S2LatLngRect.fromPointPair(S2LatLng.fromDegrees(north, west),
-                            S2LatLng.fromDegrees(south, east));
-
                     // guard against scanning too fast if request fails
                     mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
-
-                    updateWorld(region, uiHandler);
+                    updateWorld(uiHandler);
                 });
 
             }
@@ -323,29 +312,22 @@ public class ScannerView extends Fragment implements SensorEventListener {
                 RECORD_REQUEST_CODE);
     }
 
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+//                                           @NonNull int[] grantResults) {
+//        Log.e("ScannerView/RequestPermissions", "permission result!");
+//    }
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
         final Context context = this.getActivity();
-        final DisplayMetrics dm = context.getResources().getDisplayMetrics();
 
         mPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
 
         Configuration.getInstance().setUserAgentValue("Slimgress/Openflux (OSMDroid)");
-
-        //My Location
-        //note you have handle the permissions yourself, the overlay did not do it for you
-        MyLocationNewOverlay mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(context), mMap) {
-            @Override
-            protected void drawMyLocation(final Canvas canvas, final Projection pj, final Location lastFix) {}
-        };
-        mLocationOverlay.enableMyLocation();
-        mLocationOverlay.enableFollowLocation();
-        mLocationOverlay.setEnableAutoStop(false);
-        // TODO: check that i don't need this - then i don't have to override its drawMyLocation
-//        mMap.getOverlays().add(mLocationOverlay);
 
         mMap.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
 
@@ -394,36 +376,6 @@ public class ScannerView extends Fragment implements SensorEventListener {
 
         setHasOptionsMenu(false);
 
-
-        // ===========================================================
-        // Other (location)
-        // ===========================================================
-        MyLocationListener locationListener = new MyLocationListener();
-        LocationManager locationManager = (LocationManager) mApp.getSystemService(Context.LOCATION_SERVICE);
-        int permission = ContextCompat.checkSelfPermission(getContext(),
-                android.Manifest.permission.ACCESS_FINE_LOCATION);
-
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-
-            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                builder.setMessage("Permission to access the device location is required for this app to function correctly.")
-                        .setTitle("Permission required");
-
-                builder.setPositiveButton("OK", (dialog, id) -> makeRequest());
-
-                AlertDialog dialog = builder.create();
-                dialog.show();
-            } else {
-                makeRequest();
-            }
-        } else {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if (location != null) {
-                mCurrentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
-            }
-        }
     }
 
     @Override
@@ -472,6 +424,45 @@ public class ScannerView extends Fragment implements SensorEventListener {
         }
 
 
+        // ===========================================================
+        // Other (location)
+        // ===========================================================
+
+        if (ContextCompat.checkSelfPermission(getContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            builder.setMessage("Permission to access the device location is required for this app to function correctly.")
+                    .setTitle("Permission required");
+
+            builder.setPositiveButton("OK", (dialog, id) -> makeRequest());
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        } else {
+            requestLocationUpdates();
+        }
+
+    }
+
+    @SuppressLint("MissingPermission")
+    public void requestLocationUpdates() {
+        if (mLocationListener == null) {
+            mLocationListener = new MyLocationListener();
+        }
+        if (mLocationManager == null) {
+            mLocationManager = (LocationManager) mApp.getSystemService(Context.LOCATION_SERVICE);
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mLocationListener);
+            Location location = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (location != null) {
+                mCurrentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
+            }
+        }
+        if (mLocationOverlay == null) {
+            mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(getContext()), mMap);
+            mLocationOverlay.enableMyLocation();
+            mLocationOverlay.enableFollowLocation();
+            mLocationOverlay.setEnableAutoStop(false);
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -539,7 +530,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
         return bitmap;
     }
 
-    private synchronized void updateWorld(final S2LatLngRect region, final Handler uiHandler) {
+    private synchronized void updateWorld(final Handler uiHandler) {
         // handle interface result (on timer thread)
         final Handler resultHandler = new Handler(msg -> {
 
@@ -560,6 +551,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
             //  ... also, can we get particles that we passed over between scans? probably not.
             //  maybe with slurp?
             setSlurpableXMParticles();
+            ((ActivityMain) getActivity()).updateAgent();
 
             new Thread(() -> {
                 // draw game entities
@@ -587,7 +579,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
         });
 
         // get objects (on new thread)
-        new Thread(() -> mGame.intGetObjectsInCells(region, resultHandler)).start();
+        new Thread(() -> mGame.intGetObjectsInCells(mGame.getLocation(), resultHandler)).start();
     }
 
     private void setSlurpableXMParticles() {
