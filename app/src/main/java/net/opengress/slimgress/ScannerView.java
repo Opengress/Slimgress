@@ -393,6 +393,37 @@ public class ScannerView extends Fragment implements SensorEventListener {
         mMap.setExpectedCenter(new GeoPoint(latitude, longitude));
 
         setHasOptionsMenu(false);
+
+
+        // ===========================================================
+        // Other (location)
+        // ===========================================================
+        MyLocationListener locationListener = new MyLocationListener();
+        LocationManager locationManager = (LocationManager) mApp.getSystemService(Context.LOCATION_SERVICE);
+        int permission = ContextCompat.checkSelfPermission(getContext(),
+                android.Manifest.permission.ACCESS_FINE_LOCATION);
+
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+
+            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                builder.setMessage("Permission to access the device location is required for this app to function correctly.")
+                        .setTitle("Permission required");
+
+                builder.setPositiveButton("OK", (dialog, id) -> makeRequest());
+
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            } else {
+                makeRequest();
+            }
+        } else {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (location != null) {
+                mCurrentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
+            }
+        }
     }
 
     @Override
@@ -423,8 +454,8 @@ public class ScannerView extends Fragment implements SensorEventListener {
     @Override
     public void onResume() {
         super.onResume();
-
         mMap.onResume();
+
         if (mLastLocationAcquired == null || mLastLocationAcquired.before(new Date(System.currentTimeMillis() - mUpdateIntervalMS))) {
             setLocationInaccurate(true);
         } else if (mLastLocationAcquired.before(new Date(System.currentTimeMillis() - mMinUpdateIntervalMS))) {
@@ -438,36 +469,6 @@ public class ScannerView extends Fragment implements SensorEventListener {
         if (mOrientationSensor != null) {
             mSensorManager.registerListener(this, mOrientationSensor,
                     SensorManager.SENSOR_DELAY_GAME);
-        }
-
-        // ===========================================================
-        // Other (location)
-        // ===========================================================
-        MyLocationListener locationListener = new MyLocationListener();
-        LocationManager locationManager = (LocationManager) mApp.getSystemService(Context.LOCATION_SERVICE);
-        int permission = ContextCompat.checkSelfPermission(getContext(),
-                android.Manifest.permission.ACCESS_FINE_LOCATION);
-
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-
-            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                builder.setMessage("Permission to access the device location is required for this app to function correctly.")
-                        .setTitle("Permission required");
-
-                builder.setPositiveButton("OK", (dialog, id) -> makeRequest());
-
-                AlertDialog dialog = builder.create();
-                dialog.show();
-            } else {
-                makeRequest();
-            }
-        } else {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if (location != null) {
-                mCurrentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
-            }
         }
 
 
