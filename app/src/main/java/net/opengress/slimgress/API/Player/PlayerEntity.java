@@ -122,6 +122,10 @@ public class PlayerEntity extends EntityBase
         return mEnergy;
     }
 
+    public void setEnergy(int newEnergy) {
+        mEnergy = newEnergy;
+    }
+
     public EnergyState getEnergyState()
     {
         return mEnergyState;

@@ -20,6 +20,9 @@
 
 package net.opengress.slimgress.API.Game;
 
+import com.github.msteinbeck.sig4j.signal.Signal1;
+import com.github.msteinbeck.sig4j.slot.Slot1;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,12 +34,13 @@ import net.opengress.slimgress.API.Interface.GameBasket;
 public class World
 {
     private final Map<String, GameEntityBase> mGameEntities;
-    private final Map<String, XMParticle> mXMParticles;
+    private final Map<Long, XMParticle> mXMParticles;
+    private final Signal1<List<String>> mDeletedEntitySignal = new Signal1<>();
 
     public World()
     {
         mGameEntities = new HashMap<>();
-        mXMParticles = new HashMap<>();
+        mXMParticles = new HashMap<Long, XMParticle>();
     }
 
     public void clear()
@@ -57,15 +61,16 @@ public class World
         // only add non-existing xm particles
         List<XMParticle> xmParticles = basket.getEnergyGlobGuids();
         for (XMParticle particle : xmParticles) {
-            if (!mXMParticles.containsKey(particle.getGuid()))
-                mXMParticles.put(particle.getGuid(), particle);
+            if (!mXMParticles.containsKey(particle.getCellId()))
+                mXMParticles.put(particle.getCellId(), particle);
         }
 
         // remove deleted entities
         List<String> deletedEntityGuids = basket.getDeletedEntityGuids();
+        mDeletedEntitySignal.emit(deletedEntityGuids);
         for (String guid : deletedEntityGuids) {
             mGameEntities.remove(guid);
-            mXMParticles.remove(guid);  // necessary?
+            mXMParticles.remove(Long.parseLong(guid.substring(0, 16), 16));
         }
     }
 
@@ -79,7 +84,7 @@ public class World
         return new ArrayList<>(mGameEntities.values());
     }
 
-    public final Map<String, XMParticle> getXMParticles()
+    public final Map<Long, XMParticle> getXMParticles()
     {
         return mXMParticles;
     }
@@ -88,4 +93,9 @@ public class World
     {
         return new ArrayList<>(mXMParticles.values());
     }
+
+    public void connectDeletedEntitySignal(Slot1<List<String>> handler) {
+        mDeletedEntitySignal.connect(handler);
+    }
+
 }
