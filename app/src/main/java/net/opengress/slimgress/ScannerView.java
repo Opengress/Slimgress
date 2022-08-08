@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -106,7 +107,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
 
     private final HashMap<String, Bitmap> mIcons = new HashMap<>();
     private HashMap<String, GroundOverlay> mMarkers = null;
-    private HashMap<String, GroundOverlay> mXMMarkers = null;
+    private HashMap<Long, GroundOverlay> mXMMarkers = null;
     private HashMap<String, Polyline> mLines = null;
     private HashMap<String, Polygon> mPolygons = null;
 
@@ -259,6 +260,41 @@ public class ScannerView extends Fragment implements SensorEventListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mSensorManager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
+        mGame.getWorld().connectDeletedEntitySignal(this::onReceiveDeletedEntityGuids);
+    }
+
+    public void onReceiveDeletedEntityGuids(List<String> deletedEntityGuids) {
+        for (String guid : deletedEntityGuids) {
+            Log.e("ScannerView/DeletedEntityGuids", guid);
+
+            // for XM particles
+            long particle = Long.parseLong(guid.substring(0, 16), 16);
+            if (mXMMarkers.containsKey(particle)) {
+                mMap.getOverlays().remove(mXMMarkers.get(particle));
+                mXMMarkers.remove(particle);
+            }
+
+            // for portals
+            if (mMarkers.containsKey(guid)) {
+                mMap.getOverlays().remove(mMarkers.get(guid));
+                mMarkers.remove(guid);
+            }
+
+            // for links
+            if (mLines.containsKey(guid)) {
+                mMap.getOverlays().remove(mLines.get(guid));
+                mLines.remove(guid);
+            }
+
+            // for fields
+            if (mPolygons.containsKey(guid)) {
+                mMap.getOverlays().remove(mPolygons.get(guid));
+                mPolygons.remove(guid);
+            }
+
+            // for dropped items .... not done yet...
+
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -572,47 +608,58 @@ public class ScannerView extends Fragment implements SensorEventListener {
         // FIXME maybe don't try to slurp particles that aren't needed to fill the tank
         //  -- note that we may need to sort the particles and pick out the optimal configuration
         //  -- also note that if we're really cheeky we may want/be able to do that serverside
-        Map<String, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
-        Set<String> keys = xmParticles.keySet();
+        Map<Long, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
+        Set<Long> keys = xmParticles.keySet();
         ArrayList<String> slurpableParticles = new ArrayList<>();
-        for (String key : keys) {
+
+        int newXM = 0;
+
+        for (Long key : keys) {
             XMParticle particle = xmParticles.get(key);
 
             assert particle != null;
             final net.opengress.slimgress.API.Common.Location location = particle.getCellLocation();
             if (location.getLatLng().distanceToAsDouble(mGame.getLocation().getLatLng()) < mActionRadiusM) {
-                slurpableParticles.add(key);
+                slurpableParticles.add(particle.getGuid());
+                newXM += particle.getAmount();
             }
         }
+
         mGame.setSlurpableXMParticles(slurpableParticles);
+        mGame.getAgent().addEnergy(newXM);
     }
 
     private void drawXMParticles() {
         // draw xm particles (as groundoverlays)
-        Map<String, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
-        Set<String> keys = xmParticles.keySet();
-        for (String key : keys) {
+        Map<Long, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
+        Set<Long> keys = xmParticles.keySet();
+
+        for (Long key : keys) {
             XMParticle particle = xmParticles.get(key);
-
             assert particle != null;
-            final net.opengress.slimgress.API.Common.Location location = particle.getCellLocation();
 
-            getActivity().runOnUiThread(() -> getActivity().runOnUiThread(() -> {
-                Bitmap portalIcon;
-                // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
-                // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
-                // ... maybe i can at least write the portal level on the portal, like in iitc
-                // it's quite possible that resonators can live in a separate Hash of markers,
-                //   as long as the guids are stored with the portal info
-                portalIcon = mIcons.get("particle");
+            // only draw if not already in list
+            if (!mXMMarkers.containsKey(particle.getCellId())) {
 
-                GroundOverlay marker = new GroundOverlay();
-                marker.setPosition(location.getLatLng().destinationPoint(25, 315), location.getLatLng().destinationPoint(25, 135));
-                marker.setImage(portalIcon);
+                final net.opengress.slimgress.API.Common.Location location = particle.getCellLocation();
 
-                mMap.getOverlays().add(marker);
-                mXMMarkers.put(particle.getGuid(), marker);
-            }));
+                getActivity().runOnUiThread(() -> getActivity().runOnUiThread(() -> {
+                    Bitmap portalIcon;
+                    // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
+                    // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
+                    // ... maybe i can at least write the portal level on the portal, like in iitc
+                    // it's quite possible that resonators can live in a separate Hash of markers,
+                    //   as long as the guids are stored with the portal info
+                    portalIcon = mIcons.get("particle");
+
+                    GroundOverlay marker = new GroundOverlay();
+                    marker.setPosition(location.getLatLng().destinationPoint(25, 315), location.getLatLng().destinationPoint(25, 135));
+                    marker.setImage(portalIcon);
+
+                    mMap.getOverlays().add(marker);
+                    mXMMarkers.put(particle.getCellId(), marker);
+                }));
+            }
         }
     }
 

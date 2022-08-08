@@ -70,4 +70,8 @@ public class Agent extends PlayerEntity
     {
         return IngressApplication.getInstance().getGame().getKnobs().getPlayerLevelKnobs().getXmCapacityForLevel(getLevel());
     }
+
+    public void addEnergy(int energyAmount) {
+        setEnergy(Math.min(getEnergy() + energyAmount, getEnergyMax()));
+    }
 }

@@ -53,4 +53,5 @@ dependencies {
     implementation 'com.google.guava:guava:31.1-jre'
     implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.10'
     implementation 'org.osmdroid:osmdroid-android:6.1.13'
+    implementation 'com.github.msteinbeck:sig4j:1.0.1'
 }
