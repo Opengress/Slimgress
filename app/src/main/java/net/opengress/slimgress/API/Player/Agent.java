@@ -54,13 +54,13 @@ public class Agent extends PlayerEntity
     public int getLevel()
     {
         // TODO: more efficient?
-        // also TODO: badges and stuff
+        // also TODO: badges and stuff. levels currently capped at 8 because badges not implemented
 
         Map<String, PlayerLevelKnobs.PlayerLevel> playerLevels = IngressApplication.getInstance().getGame().getKnobs().getPlayerLevelKnobs().getPlayerLevelsMap();
 
         for (int i = playerLevels.size() - 1; i >= 0; i--) {
             if (this.getAp() >= Objects.requireNonNull(playerLevels.get(String.valueOf(i))).getApRequired())
-                return i;
+                return Math.min(i, 8);
         }
 
         throw new IndexOutOfBoundsException("agent level could not be retrieved");
