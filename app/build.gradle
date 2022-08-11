@@ -17,7 +17,7 @@ android {
 
     buildTypes {
         release {
-//            minifyEnabled true
+            minifyEnabled true
 //            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -48,10 +48,14 @@ android {
 
 dependencies {
 
+    def acraVersion = '5.9.6'
+
     implementation 'androidx.appcompat:appcompat:1.4.2'
     implementation 'com.google.android.material:material:1.6.1'
     implementation 'com.google.guava:guava:31.1-jre'
     implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.10'
     implementation 'org.osmdroid:osmdroid-android:6.1.13'
     implementation 'com.github.msteinbeck:sig4j:1.0.1'
+    implementation "ch.acra:acra-http:$acraVersion"
+
 }

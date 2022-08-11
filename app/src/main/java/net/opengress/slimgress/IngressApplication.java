@@ -23,6 +23,12 @@ package net.opengress.slimgress;
 import net.opengress.slimgress.API.Game.GameState;
 
 import android.app.Application;
+import android.content.Context;
+
+import org.acra.ACRA;
+import org.acra.config.CoreConfigurationBuilder;
+import org.acra.config.HttpSenderConfigurationBuilder;
+import org.acra.data.StringFormat;
 
 public class IngressApplication extends Application
 {
@@ -42,6 +48,24 @@ public class IngressApplication extends Application
     @Override
     public void onTerminate()
     {
+    }
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+
+        ACRA.init(this, new CoreConfigurationBuilder()
+                //core configuration:
+                .withBuildConfigClass(BuildConfig.class)
+                .withReportFormat(StringFormat.JSON)
+                .withPluginConfigurations(
+                        new HttpSenderConfigurationBuilder()
+                                //required. Https recommended
+                                .withUri("https://opengress.net/acra")
+                                .build()
+                )
+        );
+
     }
 
     public static IngressApplication getInstance()
