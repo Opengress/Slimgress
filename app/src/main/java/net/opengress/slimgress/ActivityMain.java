@@ -96,7 +96,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
             ((ProgressBar)findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
             ((ProgressBar)findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
-            Log.e("ActivityMain/updateAgent", "Energy: "+agent.getEnergy());
 
             String agentinfo = "AP: " + agent.getAp() + " / XM: " + (agent.getEnergy() * 100 / agent.getEnergyMax()) + " %";
             ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);

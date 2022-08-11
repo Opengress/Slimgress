@@ -60,6 +60,7 @@ public class Interface
     private static final String mApiBaseURL = "https://" + mApiBase + "/";
     private static final String mApiHandshake = "handshake?json=";
     private static final String mApiRequest = "rpc/";
+    // would like to use android resources here... will figure that out later
     public static final String mUserAgent = "Opengress/Slimgress (API dev)";
 
     // kludge: interface can say the right things about collecting globs without asking GameState
@@ -96,6 +97,7 @@ public class Interface
                 params.put("adversarySoftwareVersion", mApiVersion);
                 params.put("deviceSoftwareVersion", Build.VERSION.SDK_INT);
                 params.put("deviceHardwareVersion", Build.MODEL);
+                params.put("deviceOperatingSystem", "Android");
 
                 // TODO:
                 /*params.put("activationCode", "");
@@ -133,6 +135,7 @@ public class Interface
                     if (!Objects.requireNonNull(response.header("Content-Type")).contains("application/json"))
                         throw new RuntimeException("content type is not json");
 
+                    // leaving this here in case it's ever implemented serverside for some reason
                     content = content.replace("while(1);", "");
 
                     // handle handshake data

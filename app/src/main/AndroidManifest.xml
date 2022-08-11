@@ -23,7 +23,9 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- That clear text traffic thing... I think there is a way to whitelist things? -->
     <application
         android:allowBackup="true"
         android:name="net.opengress.slimgress.IngressApplication"
@@ -32,6 +34,16 @@
         android:label="@string/appname"
         android:usesCleartextTraffic="true">
 
+        <!-- to be allowed to "install software" - self-updates -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
 
         <!-- start with splash activity to authenticate and get handshake data -->
         <activity
