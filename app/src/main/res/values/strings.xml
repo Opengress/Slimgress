@@ -27,4 +27,5 @@
     <string name="dummy">Dummy</string>
     <string name="location_inaccurate">Scanner disabled - location inaccurate</string>
     <string name="scan_failed">Scan failed</string>
+    <string name="user_agent">Opengress/Slimgress (API dev)</string>
 </resources>

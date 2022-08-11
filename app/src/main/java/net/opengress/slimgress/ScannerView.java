@@ -265,7 +265,6 @@ public class ScannerView extends Fragment implements SensorEventListener {
 
     public void onReceiveDeletedEntityGuids(List<String> deletedEntityGuids) {
         for (String guid : deletedEntityGuids) {
-            Log.e("ScannerView/DeletedEntityGuids", guid);
 
             // for XM particles
             long particle = Long.parseLong(guid.substring(0, 16), 16);
@@ -320,9 +319,8 @@ public class ScannerView extends Fragment implements SensorEventListener {
         mMap.setMaxZoomLevel(22d);
         mMap.setFlingEnabled(false);
         // TODO: rewrite MultiTouchController to NOT change map position on pinch
-        // (if that's the right way)
+        //  (if that's the right way)
         mMap.setMultiTouchControls(true);
-
 
         loadAssets();
 
@@ -498,6 +496,10 @@ public class ScannerView extends Fragment implements SensorEventListener {
     }
 
     private void setLocationInaccurate(boolean bool) {
+        // unresearched workaround for crash on exit
+        if (getActivity() == null || getActivity().findViewById(R.id.quickMessage) == null) {
+            return;
+        }
         // FIXME this is fine, but really the game state needs to know about it.
         //  for example, if i'm about to hack a portal and i switch my GPS off, that shouldn't work!
 
@@ -643,7 +645,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
 
                 final net.opengress.slimgress.API.Common.Location location = particle.getCellLocation();
 
-                getActivity().runOnUiThread(() -> getActivity().runOnUiThread(() -> {
+                getActivity().runOnUiThread(() -> {
                     Bitmap portalIcon;
                     // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
                     // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
@@ -658,7 +660,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
 
                     mMap.getOverlays().add(marker);
                     mXMMarkers.put(particle.getCellId(), marker);
-                }));
+                });
             }
         }
     }

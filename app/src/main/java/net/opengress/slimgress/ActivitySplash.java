@@ -21,23 +21,38 @@
 package net.opengress.slimgress;
 
 import net.opengress.slimgress.API.Game.GameState;
+import net.opengress.slimgress.API.Interface.Handshake;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 
-public class ActivitySplash extends Activity
-{
+import androidx.core.content.FileProvider;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.Objects;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+
+public class ActivitySplash extends Activity {
     private final IngressApplication mApp = IngressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
 
     @Override
-    public void onCreate(Bundle savedInstanceState)
-    {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
@@ -45,8 +60,7 @@ public class ActivitySplash extends Activity
         if (!mApp.isLoggedIn()) {
             Intent myIntent = new Intent(getApplicationContext(), ActivityAuth.class);
             startActivityForResult(myIntent, 0);
-        }
-        else {
+        } else {
             // start main activity
             finish();
             startActivity(new Intent(getApplicationContext(), ActivityMain.class));
@@ -54,8 +68,7 @@ public class ActivitySplash extends Activity
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data)
-    {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         final Context context = this;
 
         if (requestCode == 0) {
@@ -70,26 +83,38 @@ public class ActivitySplash extends Activity
                         // start main activity
                         ActivitySplash.this.finish();
                         ActivitySplash.this.startActivity(new Intent(ActivitySplash.this, ActivityMain.class));
-                    }
-                    else {
+                    } else {
                         mApp.setLoggedIn(false);
 
                         AlertDialog.Builder builder = new AlertDialog.Builder(context);
                         builder.setTitle("Handshake error");
-                        builder.setMessage(data1.getString("Error"));
-                        builder.setNegativeButton("OK", (dialog, which) -> finish());
+                        if (mGame.getHandshake().getPregameStatus() == Handshake.PregameStatus.ClientMustUpgrade) {
+                            builder.setCancelable(false);
+
+                            builder.setMessage("Your client software is out of date. You must update the app to play.");
+                            builder.setPositiveButton("Update in-app", (dialog, which) -> {
+                                downloadAndInstallClientUpdate();
+                                finish();
+                            });
+                            builder.setNegativeButton("Download update in browser", (dialog, which) -> {
+                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://opengress.net/downloads/"));
+                                startActivity(browserIntent);
+                                finish();
+                            });
+                        } else {
+                            builder.setMessage(data1.getString("Error"));
+                            builder.setNegativeButton("OK", (dialog, which) -> finish());
+                        }
                         Dialog dialog = builder.create();
                         dialog.show();
                     }
 
                     return true;
                 }));
-            }
-            else if (resultCode == RESULT_FIRST_USER) {
+            } else if (resultCode == RESULT_FIRST_USER) {
                 // user cancelled authentication
                 finish();
-            }
-            else {
+            } else {
                 // authentication failed
                 mApp.setLoggedIn(false);
 
@@ -108,4 +133,80 @@ public class ActivitySplash extends Activity
             }
         }
     }
+
+    private void downloadAndInstallClientUpdate() {
+        File downloads = getApplicationContext().getExternalCacheDir();
+
+        Thread gfgThread = new Thread(() -> {
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .followRedirects(false)
+                    .build();
+            try {
+                Request request = new Request.Builder().url("https://opengress.net/downloads/slimgress.apk")
+                        .header("User-Agent", getString(R.string.user_agent))
+                        .header("Accept", "application/vnd.android.package-archive")
+                        .build();
+                Response response;
+                response = client.newCall(request).execute();
+                ResponseBody responseBody = response.body();
+                double length = Double.parseDouble(Objects.requireNonNull(response.header("Content-Length", "1")));
+                File apkFile = new File(downloads + "/slimgress.apk");
+                apkFile.delete();
+                OutputStream outputStream = new FileOutputStream(apkFile);
+                try (BufferedInputStream input = new BufferedInputStream(responseBody.byteStream())) {
+                    byte[] dataBuffer = new byte[1024];
+                    int readBytes;
+                    long totalBytes = 0;
+                    while ((readBytes = input.read(dataBuffer)) != -1) {
+                        totalBytes += readBytes;
+                        outputStream.write(dataBuffer, 0, readBytes);
+                        onDownloadUpdateProgress(totalBytes / length * 100.0);
+                    }
+                } catch (Exception e) {
+                    // download failed. do something.
+                    e.printStackTrace();
+                }
+
+                try {
+
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                    if (Build.VERSION.SDK_INT >= 24) {
+                        intent.setDataAndType(FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", apkFile), "application/vnd.android.package-archive");
+                    } else {
+                        intent.setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive");
+                    }
+                    try {
+                        startActivityForResult(intent, 500);
+                    } catch (Exception e) {
+                        Log.e("ActivitySplash/Installer", e.getMessage());
+                        e.printStackTrace();
+                    }
+
+                } catch (Exception e) {
+                    Log.e("ActivitySplash/Installer", e.getMessage());
+                    e.printStackTrace();
+                }
+
+                response.close();
+
+            } catch (Exception e) {
+                // download failed. do something
+                e.printStackTrace();
+            }
+        });
+
+        synchronized (this) {
+            gfgThread.start();
+        }
+
+    }
+
+    private void onDownloadUpdateProgress(double v) {
+        // TODO find some way to report progress
+        Log.d("ActivitySplash/DownloadProgress", String.valueOf(v));
+    }
+
+
 }

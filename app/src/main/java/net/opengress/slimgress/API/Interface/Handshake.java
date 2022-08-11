@@ -37,7 +37,9 @@ public class Handshake
     public enum PregameStatus
     {
         ClientMustUpgrade,
-        NoActionsRequired
+        NoActionsRequired,
+        UserRequiresActivation,
+        UserMustAcceptTOS
     }
 
     // final, but stupid javac thinks it's uninitialized even though it's initialized in every code path
@@ -56,12 +58,22 @@ public class Handshake
             JSONObject pregameStatus = result.optJSONObject("pregameStatus");
             if (pregameStatus != null) {
                 String pregameStatusString = pregameStatus.optString("action");
-                if (pregameStatusString.equals("CLIENT_MUST_UPGRADE"))
-                    mPregameStatus = PregameStatus.ClientMustUpgrade;
-                else if (pregameStatusString.equals("NO_ACTIONS_REQUIRED"))
-                    mPregameStatus = PregameStatus.NoActionsRequired;
-                else
-                    throw new RuntimeException("unknown pregame status " + pregameStatus);
+                switch (pregameStatusString) {
+                    case "CLIENT_MUST_UPGRADE":
+                        mPregameStatus = PregameStatus.ClientMustUpgrade;
+                        break;
+                    case "NO_ACTIONS_REQUIRED":
+                        mPregameStatus = PregameStatus.NoActionsRequired;
+                        break;
+                    case "USER_REQUIRES_ACTIVATION":
+                        mPregameStatus = PregameStatus.UserRequiresActivation;
+                        break;
+                    case "USER_MUST_ACCEPT_TOS":
+                        mPregameStatus = PregameStatus.UserMustAcceptTOS;
+                        break;
+                    default:
+                        throw new RuntimeException("unknown pregame status " + pregameStatus);
+                }
             }
 
             mServerVersion = result.optString("serverVersion");
