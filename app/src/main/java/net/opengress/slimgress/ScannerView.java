@@ -570,12 +570,6 @@ public class ScannerView extends Fragment implements SensorEventListener {
 
             // draw xm particles
             drawXMParticles();
-            // FIXME: they're probably being drawn and slurped at the same time,
-            //  in which case user will see ghost XM particles they've just slurped
-            //  ... also, can we get particles that we passed over between scans? probably not.
-            //  maybe with slurp?
-            setSlurpableXMParticles();
-            ((ActivityMain) getActivity()).updateAgent();
 
             new Thread(() -> {
                 // draw game entities
@@ -601,6 +595,13 @@ public class ScannerView extends Fragment implements SensorEventListener {
 
             return true;
         });
+
+        // FIXME: they're probably being drawn and slurped at the same time,
+        //  in which case user will see ghost XM particles they've just slurped
+        //  ... also, can we get particles that we passed over between scans? probably not.
+        //  maybe with slurp?
+        setSlurpableXMParticles();
+        ((ActivityMain) getActivity()).updateAgent();
 
         // get objects (on new thread)
         new Thread(() -> mGame.intGetObjectsInCells(mGame.getLocation(), resultHandler)).start();
@@ -781,6 +782,13 @@ public class ScannerView extends Fragment implements SensorEventListener {
         String error = hackResultBundle.getString("error");
 
         if (error != null) {
+            // FIXME magic number and possibly (hopefully) handled by server
+            mGame.getAgent().setEnergy(mGame.getAgent().getEnergy() - 50);
+            var main = ((ActivityMain) getActivity());
+            if (main != null) {
+                main.updateAgent();
+            }
+
             DialogHackResult newDialog = new DialogHackResult(getContext());
 //                newDialog.setTitle("");
             newDialog.setMessage(error);
