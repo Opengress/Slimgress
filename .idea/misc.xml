@@ -12,6 +12,7 @@
         <entry key="app/src/main/res/layout/activity_splash.xml" value="0.27309782608695654" />
         <entry key="app/src/main/res/layout/dialog_hack.xml" value="0.24583333333333332" />
         <entry key="app/src/main/res/layout/dialog_hack_result.xml" value="0.37916666666666665" />
+        <entry key="app/src/main/res/layout/fragment_device.xml" value="0.19322916666666667" />
         <entry key="app/src/main/res/layout/fragment_hack_result.xml" value="0.24583333333333332" />
         <entry key="app/src/main/res/layout/fragment_inventory.xml" value="0.27309782608695654" />
         <entry key="app/src/main/res/layout/fragment_user.xml" value="0.19791666666666666" />
