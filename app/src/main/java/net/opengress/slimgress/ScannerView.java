@@ -603,7 +603,9 @@ public class ScannerView extends Fragment implements SensorEventListener {
         //  ... also, can we get particles that we passed over between scans? probably not.
         //  maybe with slurp?
         setSlurpableXMParticles();
-        ((ActivityMain) getActivity()).updateAgent();
+        if (getActivity() != null) {
+            ((ActivityMain) getActivity()).updateAgent();
+        }
 
         // get objects (on new thread)
         new Thread(() -> mGame.intGetObjectsInCells(mGame.getLocation(), resultHandler)).start();
