@@ -23,8 +23,8 @@ package net.opengress.slimgress;
 import static android.content.Context.SENSOR_SERVICE;
 import static android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_LOW;
 
-import java.io.IOException;
-import java.io.InputStream;
+import static net.opengress.slimgress.ViewHelpers.getBitmapFromAsset;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -43,12 +43,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -69,7 +64,6 @@ import android.widget.TextView;
 import android.graphics.Matrix;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -437,7 +431,8 @@ public class ScannerView extends Fragment implements SensorEventListener {
         }
 
         // TODO: 1. use not-deprecated stuff, 2. handle devices with no compass
-        // for the system's orientation sensor registered listeners
+        //  for the system's orientation sensor registered listeners
+        // see https://stackoverflow.com/a/17477963
         mOrientationSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
         if (mOrientationSensor != null) {
             mSensorManager.registerListener(this, mOrientationSensor,
@@ -519,41 +514,15 @@ public class ScannerView extends Fragment implements SensorEventListener {
     }
 
     private void loadAssets() {
+        AssetManager assetManager = getActivity().getAssets();
         Map<String, TeamKnobs.TeamType> teams = mGame.getKnobs().getTeamKnobs().getTeams();
         for (String team : teams.keySet()) {
-            mIcons.put(team, getTintedImage("portalTexture_NEUTRAL.png", 0xff000000 + Objects.requireNonNull(teams.get(team)).getColour()));
-        }
-        mIcons.put("particle", getBitmapFromAsset("particle.png"));
-        mIcons.put("actionradius", getBitmapFromAsset("actionradius.png"));
-        mIcons.put("playercursor", getTintedImage("playercursor.png", 0xff000000 + Objects.requireNonNull(mGame.getAgent().getTeam()).getColour()));
-    }
-
-    public Bitmap getTintedImage(String image, int color) {
-        Bitmap bitmap = getBitmapFromAsset(image);
-        Paint paint = new Paint();
-        paint.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
-        assert bitmap != null;
-        Bitmap bitmapResult = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmapResult);
-        canvas.drawBitmap(bitmap, 0, 0, paint);
-        return bitmapResult;
-    }
-
-    // FIXME duplicated in ActivityPortal
-    @Nullable
-    private Bitmap getBitmapFromAsset(String name) {
-        AssetManager assetManager = getActivity().getAssets();
-
-        InputStream istr;
-        Bitmap bitmap;
-        try {
-            istr = assetManager.open(name);
-            bitmap = BitmapFactory.decodeStream(istr);
-        } catch (IOException e) {
-            return null;
+            mIcons.put(team, ViewHelpers.getTintedImage("portalTexture_NEUTRAL.png", 0xff000000 + Objects.requireNonNull(teams.get(team)).getColour(), assetManager));
         }
 
-        return bitmap;
+        mIcons.put("particle", getBitmapFromAsset("particle.png", assetManager));
+        mIcons.put("actionradius", getBitmapFromAsset("actionradius.png", assetManager));
+        mIcons.put("playercursor", ViewHelpers.getTintedImage("playercursor.png", 0xff000000 + Objects.requireNonNull(mGame.getAgent().getTeam()).getColour(), assetManager));
     }
 
     private synchronized void updateWorld(final Handler uiHandler) {

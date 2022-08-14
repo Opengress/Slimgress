@@ -22,6 +22,7 @@ package net.opengress.slimgress;
 
 import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Interface.Handshake;
+import net.opengress.slimgress.API.Interface.Interface;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -143,7 +144,7 @@ public class ActivitySplash extends Activity {
                     .build();
             try {
                 Request request = new Request.Builder().url("https://opengress.net/downloads/slimgress.apk")
-                        .header("User-Agent", getString(R.string.user_agent))
+                        .header("User-Agent", Interface.mUserAgent)
                         .header("Accept", "application/vnd.android.package-archive")
                         .build();
                 Response response;
