@@ -1,28 +1,23 @@
 package net.opengress.slimgress;
 
 import static net.opengress.slimgress.API.Common.Utils.getImageBitmap;
+import static net.opengress.slimgress.ViewHelpers.*;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.API.Item.ItemBase;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -92,7 +87,7 @@ public class ActivityPortal extends Activity {
         // FIXME: format this nicely
         ((TextView)findViewById(R.id.portalEnergy)).setText(getString(R.string.portal_energy, portal.getPortalEnergy()));
 
-        ((ImageView)findViewById(R.id.portalImage)).setImageBitmap(getBitmapFromAsset("no_image.png"));
+        ((ImageView)findViewById(R.id.portalImage)).setImageBitmap(getBitmapFromAsset("no_image.png", getAssets()));
         new MyTask(this, portal).execute();
 
         ((TextView)findViewById(R.id.portalOwner)).setText(portal.getOwnerGuid());
@@ -242,24 +237,6 @@ public class ActivityPortal extends Activity {
         }
 
         return level + item.getDisplayName();
-    }
-
-    // FIXME duplicated in ScannerView
-    @Nullable
-    private Bitmap getBitmapFromAsset(String name)
-    {
-        AssetManager assetManager = getAssets();
-
-        InputStream istr;
-        Bitmap bitmap;
-        try {
-            istr = assetManager.open(name);
-            bitmap = BitmapFactory.decodeStream(istr);
-        } catch (IOException e) {
-            return null;
-        }
-
-        return bitmap;
     }
 
 }

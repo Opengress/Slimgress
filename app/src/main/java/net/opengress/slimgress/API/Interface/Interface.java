@@ -233,7 +233,7 @@ public class Interface
 
                 // handle request result
                 if (content != null) {
-                    Log.d("Interface.request", content);
+//                    Log.d("Interface.request", content);
                     JSONObject json = new JSONObject(content);
                     RequestResult.handleRequest(json, result);
                 }
