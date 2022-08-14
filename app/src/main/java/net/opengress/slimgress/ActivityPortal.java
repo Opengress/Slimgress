@@ -10,8 +10,12 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
@@ -45,6 +49,7 @@ public class ActivityPortal extends Activity {
             mPortal = thePortal;
         }
 
+        @NonNull
         @Override
         protected String doInBackground(Void... params) {
             mBitmap = getImageBitmap(mPortal.getPortalImageUrl(), activityReference.get().getApplicationContext().getCacheDir());
@@ -93,7 +98,7 @@ public class ActivityPortal extends Activity {
         ((TextView)findViewById(R.id.portalOwner)).setText(portal.getOwnerGuid());
         ((TextView)findViewById(R.id.portalOwner)).setTextColor(0xFF000000 + portal.getPortalTeam().getColour());
 
-        Handler handler = new Handler(msg -> {
+        Handler hackResultHandler = new Handler(msg -> {
             Bundle hackresultBundle = generateHackResultBundle(msg.getData());
             Intent myIntent = getIntent();
             setResult(RESULT_OK, myIntent);
@@ -102,12 +107,23 @@ public class ActivityPortal extends Activity {
             return false;
         });
 
-        findViewById(R.id.hackButton).setOnClickListener(v -> mGame.intHackPortal(portal, handler));
+        findViewById(R.id.hackButton).setOnClickListener(v -> mGame.intHackPortal(portal, hackResultHandler));
         findViewById(R.id.hackButton).setOnLongClickListener(v -> {
             // TODO: upgrade to glyph hacking stuff
-            mGame.intHackPortal(portal, handler);
+            mGame.intHackPortal(portal, hackResultHandler);
             return false;
         });
+
+//        if (Objects.equals(mGame.getAgent().getNickname(), "2-136958297")) {
+//            findViewById(R.id.deployButton).setEnabled(true);
+//            findViewById(R.id.deployButton).setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    Intent myIntent = new Intent(getApplicationContext(), ActivityDeploy.class);
+//                    startActivity(myIntent);
+//                }
+//            });
+//        }
 //        ((ProgressBar)findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
 //        ((ProgressBar)findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
 //
@@ -117,6 +133,7 @@ public class ActivityPortal extends Activity {
 
         // FIXME there should be some kind of listener or observer I can use for this
         //  -- maybe i can use device orientation sensor
+        //  -- I CAN MAYBE USE A SIGNAL
         Handler locationHandler = new Handler();
         Runnable mRunnable = new Runnable(){
             @Override
@@ -136,7 +153,8 @@ public class ActivityPortal extends Activity {
         return mGame.getLocation().getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng()) <= mActionRadiusM;
     }
 
-    private Bundle generateHackResultBundle(Bundle data) {
+    @NonNull
+    private Bundle generateHackResultBundle(@NonNull Bundle data) {
         Bundle bundle = new Bundle();
 
         ArrayList<String> guids = data.getStringArrayList("guids");
@@ -183,7 +201,7 @@ public class ActivityPortal extends Activity {
         return bundle;
     }
 
-    private void putItemInMap(HashMap<String, Integer> items, String name) {
+    private void putItemInMap(@NonNull HashMap<String, Integer> items, String name) {
         if (!items.containsKey(name)) {
             items.put(name, 1);
         } else {
@@ -191,7 +209,8 @@ public class ActivityPortal extends Activity {
         }
     }
 
-    private String getPrettyItemName(ItemBase item) {
+    @NonNull
+    private String getPrettyItemName(@NonNull ItemBase item) {
         String level;
         // rarity will maybe eventually expressed by colour, not text. that's why html
         switch (item.getItemRarity()) {
@@ -226,6 +245,7 @@ public class ActivityPortal extends Activity {
     }
 
     // FIXME duplicated in ScannerView
+    @Nullable
     private Bitmap getBitmapFromAsset(String name)
     {
         AssetManager assetManager = getAssets();

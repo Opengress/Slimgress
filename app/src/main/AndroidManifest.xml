@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="net.opengress.slimgress"
-    android:versionCode="0000000030"
-    android:versionName="0.0.30" >
+    android:versionCode="0000000031"
+    android:versionName="0.0.31" >
 <!--    1112223333-->
 
     <uses-sdk
@@ -74,6 +74,11 @@
         <!-- portal view activity with additional information -->
         <activity
             android:name="net.opengress.slimgress.ActivityPortal">
+        </activity>
+
+        <!-- resonator deployment activity with additional information -->
+        <activity
+            android:name="net.opengress.slimgress.ActivityDeploy">
         </activity>
     </application>
 

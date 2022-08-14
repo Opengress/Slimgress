@@ -82,6 +82,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         // get agent data
         Agent agent = mGame.getAgent();
 
+        // TODO move some of this style info into onCreate
         if (agent != null) {
             int textColor;
             Team team = agent.getTeam();
@@ -94,8 +95,15 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             ((TextView)findViewById(R.id.agentlevel)).setText(agentlevel);
             ((TextView)findViewById(R.id.agentlevel)).setTextColor(textColor);
 
+
+            int nextLevel = Math.min(agent.getLevel()+1, 8);
+            ((ProgressBar)findViewById(R.id.agentap)).setMax(mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(String.valueOf(nextLevel)).getApRequired());
+            ((ProgressBar)findViewById(R.id.agentap)).setProgress(agent.getAp());
+            ((ProgressBar)findViewById(R.id.agentap)).getProgressDrawable().setTint(textColor);
+
             ((ProgressBar)findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
             ((ProgressBar)findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
+            ((ProgressBar)findViewById(R.id.agentxm)).getProgressDrawable().setTint(textColor);
 
             String agentinfo = "AP: " + agent.getAp() + " / XM: " + (agent.getEnergy() * 100 / agent.getEnergyMax()) + " %";
             ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);

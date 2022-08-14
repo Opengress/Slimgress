@@ -69,6 +69,7 @@ import android.widget.TextView;
 import android.graphics.Matrix;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -539,6 +540,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
     }
 
     // FIXME duplicated in ActivityPortal
+    @Nullable
     private Bitmap getBitmapFromAsset(String name) {
         AssetManager assetManager = getActivity().getAssets();
 
@@ -683,7 +685,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
                     portalIcon = mIcons.get(team.toString());
 
                     GroundOverlay marker = new GroundOverlay() {
-                        public boolean touchedBy(final MotionEvent event) {
+                        public boolean touchedBy(@NonNull final MotionEvent event) {
                             GeoPoint tappedGeoPoint = (GeoPoint) mMap.getProjection().fromPixels((int) event.getX(), (int) event.getY());
                             return getBounds().contains(tappedGeoPoint);
                         }
