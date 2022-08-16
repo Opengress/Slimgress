@@ -21,11 +21,47 @@
     <!-- Application theme. -->
     <style name="AppTheme" parent="AppBaseTheme">
         <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="android:textColor">@android:color/white</item>
     </style>
 
     <style name="FadeAnimation">
         <item name="android:windowEnterAnimation">@anim/fade_in</item>
         <item name="android:windowExitAnimation">@anim/fade_out</item>
     </style>
+
+    <!--
+    I think it'd be nice to add styles from https://github.com/Cypher01/Xglyph2,
+    where "make stuff look like x" is already solved.
+    I haven't, because such an action is forbidden by the licence (XGlyph2 is GPL).
+
+    Now, on the one other hand,
+    Media.net Advertising FZ-LLC v. Netseer, Inc gave us a world (or at least a country) where
+    style/layout information is not really copyrightable since it's just "methods":
+    https://aeonlaw.com/blog/2016/02/22/copyright-protection-css-and-html/
+
+    Then again, the style stuff in XGlyph is reimplemented based on the look and feel of another
+    application.
+    If the look *itself* is protected,
+    then it's proprietary (yeah, right. again, "formatting methods") ...
+
+    Either way,
+    given its nature I don't think anyone can really claim copyright on that particular portion.
+
+    On the OTHER other hand,
+    Cypher01 DID do the work of writing all that XML, and law aside,
+    it would be polite to ASK before pulling all the button (etc) styles out of his application.
+    I haven't asked, so I won't do it, at this moment.
+
+    Finally, that isn't necessarily the correct look for THIS application.
+    Maybe all the branding is wrong.
+    What is the branding like in IITC? That's original, right? What is its licence?
+    The point is, maybe it CAN look how XGlyph2 looks, and maybe it doesn't HAVE to look like that.
+
+    At the moment this application is mostly done in black/charcoal/granite tones,
+    and so far that mostly serves it very well.
+
+    I should change the highlight colour, though, at runtime. Blue on every screen, lol.
+    -->
 
 </resources>

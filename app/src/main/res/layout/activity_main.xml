@@ -27,37 +27,31 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <ProgressBar
+                android:id="@+id/agentap"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:indeterminate="false"
+                android:progress="100" />
+
             <LinearLayout
                 style="@style/AppTheme"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <TextView
-                    android:id="@+id/agentlevel"
-                    android:layout_width="40dp"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_horizontal"
-                    android:shadowColor="#000000"
-                    android:shadowDx="1"
-                    android:shadowDy="1"
-                    android:shadowRadius="1"
-                    android:text="@string/main_level"
-                    android:textAppearance="?android:attr/textAppearanceLarge"
-                    android:textColor="#FFFFFF" />
+                <ImageView
+                    android:id="@+id/imageView"
+                    android:layout_width="46dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0"
+                    app:srcCompat="@android:drawable/ic_menu_report_image" />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="0.87"
                     android:orientation="vertical">
-
-                    <ProgressBar
-                        android:id="@+id/agentap"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:indeterminate="false"
-                        android:progress="100" />
 
                     <ProgressBar
                         android:id="@+id/agentxm"
@@ -67,10 +61,23 @@
                         android:indeterminate="false"
                         android:progress="100" />
 
-                    <androidx.constraintlayout.widget.ConstraintLayout
+                    <LinearLayout
                         android:id="@+id/agentinfobar"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent">
+
+                        <TextView
+                            android:id="@+id/agentlevel"
+                            android:layout_width="40dp"
+                            android:layout_height="25dp"
+                            android:gravity="center_horizontal"
+                            android:shadowColor="#000000"
+                            android:shadowDx="1"
+                            android:shadowDy="1"
+                            android:shadowRadius="1"
+                            android:text="@string/main_level"
+                            android:textAppearance="?android:attr/textAppearanceLarge"
+                            android:textColor="#EACA75" />
 
                         <TextView
                             android:id="@+id/agentname"
@@ -83,9 +90,7 @@
                             android:shadowRadius="1"
                             android:text="@string/main_agent"
                             android:textAppearance="?android:attr/textAppearanceMedium"
-                            android:textColor="#FFFFFF"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toStartOf="parent" />
+                            android:textColor="#FFFFFF" />
 
                         <TextView
                             android:id="@+id/agentinfo"
@@ -99,9 +104,8 @@
                             android:text="@string/main_agentinfo"
                             android:textAppearance="?android:attr/textAppearanceSmall"
                             android:textColor="#FFFFFF"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent" />
-                    </androidx.constraintlayout.widget.ConstraintLayout>
+                            android:visibility="invisible" />
+                    </LinearLayout>
 
                 </LinearLayout>
 

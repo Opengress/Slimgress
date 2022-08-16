@@ -28,5 +28,30 @@
     <string name="location_inaccurate">Scanner disabled - location inaccurate</string>
     <string name="scan_failed">Scan failed</string>
     <string name="user_screen_coming_soon">User screen coming soon!</string>
-    <string name="device_screen_coming_soon">Device screen coming soon!</string>
+    <string name="build_number">Build number</string>
+
+    <string name="credits">
+        <![CDATA[
+        <h1>Assets, libraries and services used in this application</h1>
+        <ul>
+        <li>AppCompat and Material Design components for most widgets(Apache 2.0)</li>
+        <li><a href="https://github.com/google/guava">Guava</a> for various android utilities (Apache 2.0)</li>
+        <li><a href="https://github.com/square/okhttp">OkHttp</a> for HTTP(s) requests, generally (Apache 2.0)</li>
+        <li><a href="https://github.com/osmdroid/osmdroid">OSMDroid</a> for the map taking centre stage i nthe scanner (Apache 2.0)</li>
+        <li><a href="https://github.com/msteinbeck/sig4j">Sig4j</a> to provide signals and slots for easy inter-class communication (MIT)</li>
+        <li><a href="https://github.com/ACRA/acra">ACRA</a> for crash reporting (Apache 2)</li>
+        </ul>
+        <h1>Authors</h1>
+        <ul>
+        <li>"Opengress Team" - server code, and client code after 2020</li>
+        <li>"Opengress Team" - Logos and player icon</li>
+        <li>Norman0406 - Portal and XM icons</li>
+        <li>The map in the main activity is sourced from Carto.
+        The map data is © <a href="https://www.openstreetmap.org/copyright/">OpenStreetMap</a> contributors and is available under the Open Database License.
+        The tiles (images from which represent the map data on-screen) are © <a href="https://carto.com/attribution/">CartoDB</a>.
+        </li>
+        </ul>
+        ]]>
+    </string>
+    <string name="slimgress_version_unknown">Slimgress (Opengress dev client)</string>
 </resources>
