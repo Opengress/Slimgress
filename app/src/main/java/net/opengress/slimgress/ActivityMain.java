@@ -30,7 +30,6 @@ import net.opengress.slimgress.API.Player.Agent;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -93,7 +92,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
             String agentlevel = "L" + agent.getLevel();
             ((TextView)findViewById(R.id.agentlevel)).setText(agentlevel);
-            ((TextView)findViewById(R.id.agentlevel)).setTextColor(textColor);
+//            ((TextView)findViewById(R.id.agentlevel)).setTextColor(textColor);
 
 
             int nextLevel = Math.min(agent.getLevel()+1, 8);
@@ -105,9 +104,9 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             ((ProgressBar)findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
             ((ProgressBar)findViewById(R.id.agentxm)).getProgressDrawable().setTint(textColor);
 
-            String agentinfo = "AP: " + agent.getAp() + " / XM: " + (agent.getEnergy() * 100 / agent.getEnergyMax()) + " %";
-            ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);
-            ((TextView)findViewById(R.id.agentinfo)).setTextColor(textColor);
+//            String agentinfo = "AP: " + agent.getAp() + " / XM: " + (agent.getEnergy() * 100 / agent.getEnergyMax()) + " %";
+//            ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);
+//            ((TextView)findViewById(R.id.agentinfo)).setTextColor(0x99999999);
         }
 
     }

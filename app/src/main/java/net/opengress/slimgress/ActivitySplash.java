@@ -34,6 +34,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.TextView;
 
 import androidx.core.content.FileProvider;
 
@@ -56,6 +57,8 @@ public class ActivitySplash extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+
+        ((TextView) findViewById(R.id.splashVersion)).setText(String.format("%s version %s", getText(R.string.slimgress_version_unknown), BuildConfig.VERSION_NAME));
 
         // authenticate if necessary
         if (!mApp.isLoggedIn()) {
@@ -95,7 +98,7 @@ public class ActivitySplash extends Activity {
                             builder.setMessage("Your client software is out of date. You must update the app to play.");
                             builder.setPositiveButton("Update in-app", (dialog, which) -> {
                                 downloadAndInstallClientUpdate();
-                                finish();
+//                                finish();
                             });
                             builder.setNegativeButton("Download update in browser", (dialog, which) -> {
                                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://opengress.net/downloads/"));

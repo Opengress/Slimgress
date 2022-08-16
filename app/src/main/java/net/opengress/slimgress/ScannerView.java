@@ -84,7 +84,6 @@ import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.CopyrightOverlay;
 import org.osmdroid.views.overlay.GroundOverlay;
 import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.Polyline;
@@ -162,6 +161,20 @@ public class ScannerView extends Fragment implements SensorEventListener {
     public void drawPlayerCursor(GeoPoint location, float bearing) {
         mMap.getOverlayManager().remove(mPlayerCursor);
 
+        /*
+         because we retain the original image size, the rotated image gets scaled.
+         this means that rotating the cursor changes its size.
+         we need to do a couple of things when we fix this:
+         1) find a better way to draw the cursor.
+             i think you can paste the image on to a rotated canvas.
+             that's probably the correct approach.
+             It might be sensible to draw the cursor programmatically (like the compass rose)
+             but it's crucial that the drawing method leaves the cursor on the map at the
+             CORRECT SIZE for the world - like a GroundOverlay
+         2) integrate the actionRadius. tying them together will remove that jumpy feeling.
+             this may or may not be the correct solution,
+             as basically it might mean more compositing work. we shall see later, maybe.
+         */
         mPlayerCursor.setPosition(location.destinationPoint(15, 315), location.destinationPoint(15, 135));
         Bitmap cursor = mIcons.get("playercursor");
         Matrix matrix = new Matrix();
@@ -346,13 +359,6 @@ public class ScannerView extends Fragment implements SensorEventListener {
 
         mMap.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
 
-        //Copyright overlay
-        CopyrightOverlay mCopyrightOverlay = new CopyrightOverlay(context);
-        //i hate this very much, but it seems as if certain versions of android and/or
-        //device types handle screen offsets differently
-        mMap.getOverlays().add(mCopyrightOverlay);
-
-
         //On screen compass
         CompassOverlay mCompassOverlay = new CompassOverlay(context, new InternalCompassOrientationProvider(context),
                 mMap) {
@@ -363,7 +369,8 @@ public class ScannerView extends Fragment implements SensorEventListener {
             }
         };
         mCompassOverlay.enableCompass();
-        mCompassOverlay.setCompassCenter(30, 85);
+        // FIXME set compass size, i think it's too big
+        mCompassOverlay.setCompassCenter(30, 60);
         mMap.getOverlays().add(mCompassOverlay);
 
 

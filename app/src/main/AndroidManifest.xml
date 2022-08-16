@@ -80,6 +80,11 @@
         <activity
             android:name="net.opengress.slimgress.ActivityDeploy">
         </activity>
+
+        <!-- which libraries are used, who created what etc-->
+        <activity
+            android:name="net.opengress.slimgress.ActivityCredits">
+        </activity>
     </application>
 
 </manifest>
