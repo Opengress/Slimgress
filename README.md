@@ -35,17 +35,21 @@ third-party documentation published online, other third-party client code, scree
 - View basic portal details (picture, title, level)
 - Hack portal (incomplete implementation, but it works)
 - View inventory (can't do anything with it, but you can view it)
+- View and slurp energy globs on map
+- Auto update detection
 
 # To do soon (almost all of it needing further serverside work)
 - Finish polishing hacking
 - Drop and recycle
-- View and slurp energy globs on map
 - Deploy on to portals
 - Fire weapons
 - Link portals
 - Log out
-- Auto update detection
 - Toggle switches for things like loading portal images and maybe even map tiles (save data)
+
+# To do (but it's technical etc)
+- Custom player cursor overlay which sizes like a GroundOverlay but rotates to match orientation
+- Custom CompassOverlay which might draw onto an external widget and not the MapView, and should lock scanner rotation to IRL orientation when clicked
 
 # To do eventually (again, needs serverside stuff)
 - View and pick up items from map
