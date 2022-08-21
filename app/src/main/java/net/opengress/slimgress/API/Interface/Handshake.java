@@ -39,7 +39,9 @@ public class Handshake
         ClientMustUpgrade,
         NoActionsRequired,
         UserRequiresActivation,
-        UserMustAcceptTOS
+        UserMustAcceptTOS,
+        UserMustChangeNickname,
+        UserMustChooseFaction
     }
 
     // final, but stupid javac thinks it's uninitialized even though it's initialized in every code path
@@ -76,10 +78,6 @@ public class Handshake
                 }
             }
 
-            mServerVersion = result.optString("serverVersion");
-
-            // storage
-
             // get knobs
             JSONObject knobs = result.optJSONObject("initialKnobs");
             if (knobs != null) {
@@ -92,6 +90,19 @@ public class Handshake
             if (playerEntity != null) {
                 mAgent = new Agent(playerEntity, mNickname, mKnobs.getTeamKnobs());
             }
+
+            if (mPregameStatus == PregameStatus.NoActionsRequired && mAgent != null) {
+                if (mAgent.isAllowFactionChoice()) {
+                    mPregameStatus = PregameStatus.UserMustChooseFaction;
+                } else if (mAgent.isAllowNicknameEdit()) {
+                    mPregameStatus = PregameStatus.UserMustChangeNickname;
+                }
+            }
+
+            mServerVersion = result.optString("serverVersion");
+
+            // storage
+
         } else {
             mPregameStatus = PregameStatus.NoActionsRequired;
             mServerVersion = "";
@@ -101,6 +112,7 @@ public class Handshake
 
     public boolean isValid()
     {
+        // not sure if this logic is really correct. probably.
         return mAgent != null &&
                 mPregameStatus == PregameStatus.NoActionsRequired;
     }

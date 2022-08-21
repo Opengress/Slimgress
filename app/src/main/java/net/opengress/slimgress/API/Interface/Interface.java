@@ -145,6 +145,8 @@ public class Interface
 
             }
             catch (Exception e) {
+                Log.e("Interface", e.getMessage());
+                e.printStackTrace();
                 try {
                     callback.handle(new Handshake(new JSONObject()));
                 } catch (JSONException ex) {
