@@ -20,6 +20,9 @@
 
 package net.opengress.slimgress.API.Game;
 
+import static net.opengress.slimgress.API.Interface.Handshake.*;
+import static net.opengress.slimgress.API.Interface.Handshake.PregameStatus.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -124,19 +127,25 @@ public class GameState
         mInterface.handshake(handshake -> {
             mHandshake = handshake;
             mKnobs = mHandshake.getKnobs();
+            boolean handshakeValid = mHandshake.isValid();
+            PregameStatus status = mHandshake.getPregameStatus();
 
             Message msg = new Message();
             Bundle bundle = new Bundle();
-            bundle.putBoolean("Successful", mHandshake.isValid());
+            bundle.putBoolean("Successful", handshakeValid);
 
-            if (!mHandshake.isValid()) {
+            if (!handshakeValid) {
                 String errString;
-                if (mHandshake.getPregameStatus() == Handshake.PregameStatus.ClientMustUpgrade)
+                if (status == ClientMustUpgrade)
                     errString = "Client must upgrade";
                 else if (Objects.equals(mHandshake.getServerVersion(), ""))
                     errString = "Server returned incorrect handshake response";
                 else if (mHandshake.getAgent() == null)
                     errString = "Invalid agent data";
+                else if (status == UserMustChooseFaction)
+                    errString = "You must pick a faction"; // gross way of doing things?
+                else if (status == UserMustChangeNickname)
+                    errString = "You must pick a nickname";
                 else
                     errString = "Unknown error";
 

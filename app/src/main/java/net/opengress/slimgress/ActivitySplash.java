@@ -20,6 +20,9 @@
 
 package net.opengress.slimgress;
 
+import static net.opengress.slimgress.API.Interface.Handshake.*;
+import static net.opengress.slimgress.API.Interface.Handshake.PregameStatus.*;
+
 import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Interface.Handshake;
 import net.opengress.slimgress.API.Interface.Interface;
@@ -92,7 +95,8 @@ public class ActivitySplash extends Activity {
 
                         AlertDialog.Builder builder = new AlertDialog.Builder(context);
                         builder.setTitle("Handshake error");
-                        if (mGame.getHandshake().getPregameStatus() == Handshake.PregameStatus.ClientMustUpgrade) {
+                        PregameStatus status = mGame.getHandshake().getPregameStatus();
+                        if (status == ClientMustUpgrade) {
                             builder.setCancelable(false);
 
                             builder.setMessage("Your client software is out of date. You must update the app to play.");
@@ -105,6 +109,9 @@ public class ActivitySplash extends Activity {
                                 startActivity(browserIntent);
                                 finish();
                             });
+                        } else if (status == UserMustChangeNickname) {
+                            builder.setMessage("YOU MUST CHANGE YOUR NICKNAMEAsdhibdasdfskg");
+                            builder.setNegativeButton("ok then", (dialog, which) -> finish());
                         } else {
                             builder.setMessage(data1.getString("Error"));
                             builder.setNegativeButton("OK", (dialog, which) -> finish());
