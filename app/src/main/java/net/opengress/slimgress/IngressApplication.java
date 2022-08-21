@@ -46,25 +46,33 @@ public class IngressApplication extends Application
     }
 
     @Override
-    public void onTerminate()
-    {
+    public void onTerminate() {
+        super.onTerminate();
     }
 
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
 
-        ACRA.init(this, new CoreConfigurationBuilder()
-                //core configuration:
-                .withBuildConfigClass(BuildConfig.class)
-                .withReportFormat(StringFormat.JSON)
-                .withPluginConfigurations(
-                        new HttpSenderConfigurationBuilder()
-                                //required. Https recommended
-                                .withUri("https://opengress.net/acra")
-                                .build()
-                )
-        );
+        // (ONLY) release (non-debug) builds use ACRA, because debug builds => developing => crashes
+        if (BuildConfig.BUILD_TYPE != "debug") {
+            ACRA.init(this, new CoreConfigurationBuilder()
+                    //core configuration:
+                    .withBuildConfigClass(BuildConfig.class)
+                    .withReportFormat(StringFormat.JSON)
+                    .withPluginConfigurations(
+                            new HttpSenderConfigurationBuilder()
+                                    //required. Https recommended
+                                    .withUri("https://opengress.net/acra")
+                                    .build()
+                    )
+            );
+        }
+
+        // this should never actually work when ACRA is not init-ed, and that seems harmless
+        ACRA.getErrorReporter().putCustomData("reason", "startup");
+        ACRA.getErrorReporter().handleSilentException(null);
+        ACRA.getErrorReporter().clearCustomData();
 
     }
 
