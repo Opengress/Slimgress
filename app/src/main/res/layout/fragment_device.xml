@@ -2,17 +2,21 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical" >
+    android:orientation="vertical">
+<!--    style="@style/SectionStyle"-->
 
+<!--    style="@style/ButtonStyle"-->
     <Button
         android:id="@+id/buttonCredits"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Credits" />
+        android:text="@string/button_show_credits" />
 
+<!--    style="@style/SectionBodyStyle"-->
     <TextView
         android:id="@+id/buildNumberText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/gap_margin"
         android:text="@string/build_number" />
 </LinearLayout>

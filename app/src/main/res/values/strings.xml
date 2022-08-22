@@ -54,4 +54,5 @@
         ]]>
     </string>
     <string name="slimgress_version_unknown">Slimgress (Opengress dev client)</string>
+    <string name="button_show_credits">Credits</string>
 </resources>

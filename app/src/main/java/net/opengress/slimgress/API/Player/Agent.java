@@ -32,7 +32,7 @@ import java.util.Objects;
 
 public class Agent extends PlayerEntity
 {
-    private final String mNickname;
+    private String mNickname;
 
     public Agent(JSONArray json, String nickname) throws JSONException
     {
@@ -49,6 +49,11 @@ public class Agent extends PlayerEntity
     public String getNickname()
     {
         return mNickname;
+    }
+
+    public void setNickname(String nickname)
+    {
+        mNickname = nickname;
     }
 
     public int getLevel()

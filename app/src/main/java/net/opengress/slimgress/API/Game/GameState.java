@@ -142,10 +142,6 @@ public class GameState
                     errString = "Server returned incorrect handshake response";
                 else if (mHandshake.getAgent() == null)
                     errString = "Invalid agent data";
-                else if (status == UserMustChooseFaction)
-                    errString = "You must pick a faction"; // gross way of doing things?
-                else if (status == UserMustChangeNickname)
-                    errString = "You must pick a nickname";
                 else
                     errString = "Unknown error";
 
@@ -410,19 +406,22 @@ public class GameState
                 public void handleError(String error) {
                     switch (error) {
                         case "INVALID_CHARACTERS":
-                            super.handleError("Nickname contains invalid characters");
+                            super.handleError("Agent name contains invalid characters.");
                             break;
                         case "TOO_SHORT":
-                            super.handleError("Nickname is too short");
+                            super.handleError("Agent name is too short.");
+                            break;
+                        case "TOO_LONG":
+                            super.handleError("Agent name is too long.");
                             break;
                         case "BAD_WORDS":
-                            super.handleError("Nickname contains bad words");
+                            super.handleError("Agent name contains bad words.");
                             break;
                         case "NOT_UNIQUE":
-                            super.handleError("Nickname is already in use");
+                            super.handleError("Agent name is already in use.");
                             break;
                         case "CANNOT_EDIT":
-                            super.handleError("Cannot edit nickname");
+                            super.handleError("Cannot edit agent name.");
                             break;
                         default:
                             super.handleError("Unknown error: " + error);

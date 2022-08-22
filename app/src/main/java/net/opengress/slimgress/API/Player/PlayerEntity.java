@@ -40,6 +40,7 @@ public class PlayerEntity extends EntityBase
     private int mAP;
     private int mEnergy;
     private EnergyState mEnergyState;
+    // maybe called clientLevel in some versions. what does it do?
     private int mVerifiedLevel;
     private boolean mAllowNicknameEdit;
     private boolean mAllowFactionChoice;
