@@ -39,9 +39,7 @@ public class Handshake
         ClientMustUpgrade,
         NoActionsRequired,
         UserRequiresActivation,
-        UserMustAcceptTOS,
-        UserMustChangeNickname,
-        UserMustChooseFaction
+        UserMustAcceptTOS
     }
 
     // final, but stupid javac thinks it's uninitialized even though it's initialized in every code path
@@ -89,14 +87,6 @@ public class Handshake
             JSONArray playerEntity = result.optJSONArray("playerEntity");
             if (playerEntity != null) {
                 mAgent = new Agent(playerEntity, mNickname, mKnobs.getTeamKnobs());
-            }
-
-            if (mPregameStatus == PregameStatus.NoActionsRequired && mAgent != null) {
-                if (mAgent.isAllowFactionChoice()) {
-                    mPregameStatus = PregameStatus.UserMustChooseFaction;
-                } else if (mAgent.isAllowNicknameEdit()) {
-                    mPregameStatus = PregameStatus.UserMustChangeNickname;
-                }
             }
 
             mServerVersion = result.optString("serverVersion");

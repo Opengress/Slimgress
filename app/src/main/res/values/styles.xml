@@ -4,7 +4,7 @@
         Base application theme, dependent on API level. This theme is replaced
         by AppBaseTheme from res/values-vXX/styles.xml on newer devices.
     -->
-    <style name="AppBaseTheme" parent="android:Theme.Light">
+    <style name="AppBaseTheme" parent="android:ThemeOverlay.Material.Dark">
         <!--
             Theme customizations available in newer API levels can go in
             res/values-vXX/styles.xml, while customizations related to
@@ -24,6 +24,7 @@
         <item name="android:colorBackground">@android:color/black</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:textSize">@dimen/text_size</item>
+        <item name="colorAccent">@color/rectangle_cyan</item>
     </style>
 
     <style name="FadeAnimation">
@@ -72,13 +73,16 @@
         <item name="android:layout_weight">1</item>
     </style>
 
-    <style name="ButtonStyle" parent="android:Widget.Button">
+    <style name="ShortButtonStyle" parent="android:Widget.Button">
+        <item name="android:background">@drawable/rectangle_cyan</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <style name="ButtonStyle" parent="@style/ShortButtonStyle">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/button_height</item>
         <item name="android:layout_marginLeft">@dimen/gap_margin</item>
         <item name="android:padding">0dp</item>
-        <item name="android:background">@drawable/rectangle_cyan</item>
-        <item name="android:textColor">@android:color/white</item>
         <item name="android:textSize">@dimen/text_size_button</item>
     </style>
 

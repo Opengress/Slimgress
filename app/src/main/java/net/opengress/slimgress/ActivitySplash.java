@@ -24,19 +24,19 @@ import static net.opengress.slimgress.API.Interface.Handshake.*;
 import static net.opengress.slimgress.API.Interface.Handshake.PregameStatus.*;
 
 import net.opengress.slimgress.API.Game.GameState;
-import net.opengress.slimgress.API.Interface.Handshake;
 import net.opengress.slimgress.API.Interface.Interface;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.InputFilter;
 import android.util.Log;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.core.content.FileProvider;
@@ -55,6 +55,7 @@ import okhttp3.ResponseBody;
 public class ActivitySplash extends Activity {
     private final IngressApplication mApp = IngressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
+    private Bundle loginBundle;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -76,7 +77,6 @@ public class ActivitySplash extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        final Context context = this;
 
         if (requestCode == 0) {
             if (resultCode == RESULT_OK) {
@@ -84,40 +84,13 @@ public class ActivitySplash extends Activity {
 
                 // perform handshake
                 mGame.intHandshake(new Handler(msg -> {
-                    Bundle data1 = msg.getData();
+                    loginBundle = msg.getData();
 
-                    if (data1.getBoolean("Successful")) {
-                        // start main activity
-                        ActivitySplash.this.finish();
-                        ActivitySplash.this.startActivity(new Intent(ActivitySplash.this, ActivityMain.class));
+                    // this will need further updates, like when user needs to select a faction
+                    if (mGame.getAgent().isAllowNicknameEdit()) {
+                        return showValidateUsernameDialog(null);
                     } else {
-                        mApp.setLoggedIn(false);
-
-                        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                        builder.setTitle("Handshake error");
-                        PregameStatus status = mGame.getHandshake().getPregameStatus();
-                        if (status == ClientMustUpgrade) {
-                            builder.setCancelable(false);
-
-                            builder.setMessage("Your client software is out of date. You must update the app to play.");
-                            builder.setPositiveButton("Update in-app", (dialog, which) -> {
-                                downloadAndInstallClientUpdate();
-//                                finish();
-                            });
-                            builder.setNegativeButton("Download update in browser", (dialog, which) -> {
-                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://opengress.net/downloads/"));
-                                startActivity(browserIntent);
-                                finish();
-                            });
-                        } else if (status == UserMustChangeNickname) {
-                            builder.setMessage("YOU MUST CHANGE YOUR NICKNAMEAsdhibdasdfskg");
-                            builder.setNegativeButton("ok then", (dialog, which) -> finish());
-                        } else {
-                            builder.setMessage(data1.getString("Error"));
-                            builder.setNegativeButton("OK", (dialog, which) -> finish());
-                        }
-                        Dialog dialog = builder.create();
-                        dialog.show();
+                        procedWithLogin();
                     }
 
                     return true;
@@ -142,6 +115,39 @@ public class ActivitySplash extends Activity {
                 AlertDialog dialog = builder.create();
                 dialog.show();
             }
+        }
+    }
+
+    // might change this to be recursive
+    private void procedWithLogin() {
+        if (loginBundle.getBoolean("Successful")) {
+            // start main activity
+            ActivitySplash.this.finish();
+            ActivitySplash.this.startActivity(new Intent(ActivitySplash.this, ActivityMain.class));
+        } else {
+            mApp.setLoggedIn(false);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setCancelable(false);
+            builder.setTitle("Handshake error");
+            PregameStatus status = mGame.getHandshake().getPregameStatus();
+            if (status == ClientMustUpgrade) {
+                builder.setMessage("Your client software is out of date. You must update the app to play.");
+                builder.setPositiveButton("Update in-app", (dialog, which) -> {
+                    downloadAndInstallClientUpdate();
+//                                finish();
+                });
+                builder.setNegativeButton("Download update in browser", (dialog, which) -> {
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://opengress.net/downloads/"));
+                    startActivity(browserIntent);
+                    finish();
+                });
+            } else {
+                builder.setMessage(loginBundle.getString("Error"));
+                builder.setNegativeButton("OK", (dialog, which) -> finish());
+            }
+            Dialog dialog = builder.create();
+            dialog.show();
         }
     }
 
@@ -217,6 +223,95 @@ public class ActivitySplash extends Activity {
     private void onDownloadUpdateProgress(double v) {
         // TODO find some way to report progress
         Log.d("ActivitySplash/DownloadProgress", String.valueOf(v));
+    }
+
+    private boolean showValidateUsernameDialog(String error) {
+        mApp.setLoggedIn(false);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
+
+        builder.setTitle("Codename required");
+        builder.setMessage(Objects.requireNonNullElse(error, "Create an agent name. This is the name other agents will know you by.")+"\n\nType a new agent name.");
+
+        // Set an EditText view to get user input
+        final EditText input = new EditText(this);
+        // this filter probably misses some edge cases
+        input.setFilters(new InputFilter[] {(source, start, end, dest, dstart, dend) -> {
+
+            int maxLength = 16;
+
+            if (source.length() > maxLength-1) {
+                return source.subSequence(0,maxLength);
+            } else if (input.length() > maxLength-1) {
+                return "";
+            } else {
+                for (int i = start; i < end; i++) {
+                    if (!Character.isLetterOrDigit(source.charAt(i)) && !Character.toString(source.charAt(i)).equals("_")) {
+                        return "";
+                    }
+                }
+            }
+
+            return null;
+        }});
+        builder.setView(input);
+
+        builder.setPositiveButton("Transmit", (dialog, whichButton) -> {
+            String value = input.getText().toString().trim();
+            // Do something with value!
+            mGame.intValidateNickname(value, new Handler(msg -> {
+
+                if (msg.getData().keySet().contains("Error")) {
+                    // do something with error
+                    Log.e("validateNicknameError", msg.getData().getString("Error"));
+                    showValidateUsernameDialog(msg.getData().getString("Error"));
+                    return false;
+                }
+
+                return showPersistUsernameDialog(value);
+            }));
+        });
+
+        Dialog dialog = builder.create();
+        dialog.show();
+
+        return false;
+    }
+
+    private boolean showPersistUsernameDialog(String name) {
+        mApp.setLoggedIn(false);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
+
+        builder.setTitle("Success");
+        builder.setMessage("Codename valid. Please confirm:\n\n"+name);
+
+
+        builder.setPositiveButton("Confirm", (dialog, whichButton) -> {
+            // Do something with value!
+            mGame.intPersistNickname(name, new Handler(msg -> {
+
+                if (msg.getData().keySet().contains("Error")) {
+                    showValidateUsernameDialog(msg.getData().getString("Error"));
+                    return false;
+                }
+
+                dialog.dismiss();
+                // i think we just assume that this is good
+                mGame.getAgent().setNickname(name);
+                procedWithLogin();
+                return true;
+            }));
+        });
+
+        builder.setNegativeButton("Retry", (dialog, whichButton) -> showValidateUsernameDialog(null));
+
+        Dialog dialog = builder.create();
+        dialog.show();
+
+        return false;
     }
 
 
