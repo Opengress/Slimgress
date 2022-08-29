@@ -70,9 +70,14 @@ public class IngressApplication extends Application
         }
 
         // this should never actually work when ACRA is not init-ed, and that seems harmless
-        ACRA.getErrorReporter().putCustomData("reason", "startup");
-        ACRA.getErrorReporter().handleSilentException(null);
-        ACRA.getErrorReporter().clearCustomData();
+        /*
+        i am very interested in this information, but i don't want it every time.
+        maybe i can add a "participate in device survey" button in OPS or something.
+        i do get most of the useful stuff in handshake. hmm.
+         */
+//        ACRA.getErrorReporter().putCustomData("reason", "startup");
+//        ACRA.getErrorReporter().handleSilentException(null);
+//        ACRA.getErrorReporter().clearCustomData();
 
     }
 
