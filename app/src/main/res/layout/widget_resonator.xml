@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/ButtonStyle"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    tools:ignore="HardcodedText" >
+
+    <TextView
+        android:id="@+id/widgetBtnOwner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="owner"
+        android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/linearLayout2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toTopOf="@+id/positionText"
+                app:layout_constraintEnd_toEndOf="@+id/positionText"
+                app:layout_constraintStart_toEndOf="@+id/positionText"
+                app:layout_constraintTop_toTopOf="@+id/positionText">
+
+                <TextView
+                    android:id="@+id/positionText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="\??m ??"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    tools:layout_conversion_absoluteHeight="19dp"
+                    tools:layout_conversion_absoluteWidth="13dp" />
+
+                <TextView
+                    android:id="@+id/resoLevelText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="L0"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    tools:layout_conversion_absoluteHeight="19dp"
+                    tools:layout_conversion_absoluteWidth="16dp" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <Button
+                android:id="@+id/widgetActionButton"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/button_height"
+                android:text="⚡"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+
+            <ProgressBar
+                android:id="@+id/resoHealthBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+</LinearLayout>
