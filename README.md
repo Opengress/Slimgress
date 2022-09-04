@@ -98,9 +98,9 @@ Another thing we don't want is to ever make a client which:
 
 # Roadmap (subject to revision)
 ## v0.2 - by which time dev client should be ready for alpha/beta testing
-- Complete UI for hacking
-- Auto update detection
-- View and slurp energy globs
+- Complete UI for hacking (done)
+- Auto update detection (done)
+- View and slurp energy globs (done)
 - Drop and recycle items
 - Lock map to compass
 
