@@ -1,6 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:ignore="RtlHardcoded, HardcodedText">
+
+    <Button
+        android:id="@+id/button9"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="CHARGE\nALL"
+        app:layout_constraintBottom_toTopOf="@id/deployScreenResonatorS"
+        app:layout_constraintLeft_toRightOf="@id/deployScreenResonatorW"
+        app:layout_constraintRight_toLeftOf="@id/deployScreenResonatorE"
+        app:layout_constraintTop_toBottomOf="@id/deployScreenResonatorN" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/deployScreenResonatorN"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toBottomOf="@id/deployScreenResonatorNE"
+        app:layout_constraintRight_toLeftOf="@id/deployScreenResonatorNE" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/deployScreenResonatorNE"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@id/deployScreenResonatorE"
+        app:layout_constraintRight_toRightOf="@id/deployScreenResonatorE" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/deployScreenResonatorE"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@id/deployScreenResonatorSE"
+        app:layout_constraintRight_toRightOf="@id/deployScreenResonatorSE" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/deployScreenResonatorSE"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/deployScreenResonatorS"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toBottomOf="@id/deployScreenResonatorSE"
+        app:layout_constraintRight_toLeftOf="@id/deployScreenResonatorSE" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/deployScreenResonatorSW"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toBottomOf="@id/deployScreenResonatorS"
+        app:layout_constraintRight_toLeftOf="@id/deployScreenResonatorS" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/deployScreenResonatorW"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@id/deployScreenResonatorSW"
+        app:layout_constraintRight_toRightOf="@id/deployScreenResonatorSW" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/deployScreenResonatorNW"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toBottomOf="@id/deployScreenResonatorN"
+        app:layout_constraintRight_toLeftOf="@id/deployScreenResonatorN" />
+
+    <TextView
+        android:id="@+id/deployScreenPortalInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="LVL: L?\nRNG: ?km\nENR: ?????? / ??????\nMOD: ?\nMOD: ?\nMOD: ?\nMOD: ?\nLNK: ?? in, ?? out"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

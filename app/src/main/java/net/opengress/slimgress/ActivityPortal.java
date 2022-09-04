@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -109,16 +110,16 @@ public class ActivityPortal extends Activity {
             return false;
         });
 
-//        if (Objects.equals(mGame.getAgent().getNickname(), "2-136958297")) {
-//            findViewById(R.id.deployButton).setEnabled(true);
-//            findViewById(R.id.deployButton).setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    Intent myIntent = new Intent(getApplicationContext(), ActivityDeploy.class);
-//                    startActivity(myIntent);
-//                }
-//            });
-//        }
+        if (!mGame.getAgent().getNickname().startsWith("MT")) {
+            findViewById(R.id.deployButton).setEnabled(true);
+            findViewById(R.id.deployButton).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent myIntent = new Intent(getApplicationContext(), ActivityDeploy.class);
+                    startActivity(myIntent);
+                }
+            });
+        }
 //        ((ProgressBar)findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
 //        ((ProgressBar)findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
 //
