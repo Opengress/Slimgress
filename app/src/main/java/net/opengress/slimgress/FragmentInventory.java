@@ -37,9 +37,7 @@ import net.opengress.slimgress.API.Item.ItemMedia;
 
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;

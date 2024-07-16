@@ -20,14 +20,18 @@
 
 package net.opengress.slimgress.API.Game;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.API.Interface.GameBasket;
 import net.opengress.slimgress.API.Item.ItemBase;
+import net.opengress.slimgress.API.Item.ItemResonator;
 
 public class Inventory
 {
@@ -129,5 +133,31 @@ public class Inventory
         }
 
         return null;
+    }
+
+    public final ItemResonator getResoForDeployment(int accessLevel) {
+
+        for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
+            ItemBase item = pair.getValue();
+            if (item.getItemType() == ItemBase.ItemType.Resonator &&
+                    item.getItemAccessLevel() == accessLevel)
+                return (ItemResonator) item;
+        }
+
+        return null;
+    }
+
+    public final List<ItemResonator> getResosForUpgrade(int accessLevel)
+    {
+        List<ItemResonator> items = new LinkedList<>();
+
+        for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
+            ItemBase item = pair.getValue();
+            if (item.getItemType() == ItemBase.ItemType.Resonator &&
+                    item.getItemAccessLevel() > accessLevel)
+                items.add((ItemResonator) item);
+        }
+
+        return items;
     }
 }
