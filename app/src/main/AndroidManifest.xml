@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="net.opengress.slimgress"
     android:versionCode="0000000031"
-    android:versionName="0.0.31" >
+    android:versionName="0.0.32" >
 <!--    1112223333-->
 
     <uses-sdk
         android:minSdkVersion="23"
-        android:targetSdkVersion="32"
+        android:targetSdkVersion="33"
         tools:ignore="GradleOverrides" />
 
     <uses-feature
@@ -24,6 +23,8 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- For attack notifications in Android 33+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <!-- That clear text traffic thing... I think there is a way to whitelist things? -->
     <application
