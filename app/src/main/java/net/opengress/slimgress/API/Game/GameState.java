@@ -25,6 +25,7 @@ import static net.opengress.slimgress.API.Interface.Handshake.PregameStatus.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -33,11 +34,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import com.github.msteinbeck.sig4j.signal.Signal1;
+import com.github.msteinbeck.sig4j.slot.Slot1;
 import com.google.common.geometry.S2LatLng;
 import com.google.common.geometry.S2LatLngRect;
 import net.opengress.slimgress.API.Common.Location;
@@ -49,6 +54,8 @@ import net.opengress.slimgress.API.GameEntity.*;
 import net.opengress.slimgress.API.Item.*;
 import net.opengress.slimgress.API.Knobs.KnobsBundle;
 import net.opengress.slimgress.API.Player.*;
+import net.opengress.slimgress.ActivitySplash;
+import net.opengress.slimgress.IngressApplication;
 
 public class GameState
 {
@@ -62,6 +69,9 @@ public class GameState
     private String mLastSyncTimestamp;
     private Location mLocation;
     private GameEntityPortal mPortal;
+    private final HashMap<String, String> mAgentNames = new HashMap<>();
+    private final Signal1<Location> mSignalLocationUpdated = new Signal1<>();
+    private final Signal1<List<String>> mSignalLocationLost = new Signal1<>();
 
     public GameState()
     {
@@ -83,6 +93,7 @@ public class GameState
     public void updateLocation(Location location)
     {
         mLocation = location;
+        mSignalLocationUpdated.emit(location);
     }
 
     public final Location getLocation()
@@ -670,8 +681,41 @@ public class GameState
                 @Override
                 public void handleError(String error) {
                     // PORTAL_OUT_OF_RANGE, TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER, PORTAL_AT_MAX_RESONATORS, ITEM_DOES_NOT_EXIST, SERVER_ERROR
-                    super.handleError(error);
+                    String pretty_error;
+                    // some of these error message strings might be a bit clumsy
+                    switch (error.replaceAll("\\d", "")) {
+                        case "PORTAL_OUT_OF_RANGE":
+                            pretty_error = "Portal is out of range";
+                            break;
+                        case "TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER":
+                            // You already have the maximum number of resonators of that level on the portal
+                            pretty_error = "Too many resonators with same level by you";
+                            break;
+                        case "PORTAL_AT_MAX_RESONATORS":
+                            // Portal is already fully deployed
+                            pretty_error = "Portal already has all resonators";
+                            break;
+                        case "ITEM_DOES_NOT_EXIST":
+                            pretty_error = "The resonator you tried to deploy is not in your inventory";
+                            break;
+                        case "SERVER_ERROR":
+                            pretty_error = "Server error";
+                            break;
+                        case "SPEED_LOCKED": // new!
+                            pretty_error = "You are moving too fast";
+                            break;
+                        case "SPEED_LOCKED_": // new!
+                            // TODO: maybe format this as "x hours, x minutes, x seconds"
+                            String t = error.substring(error.lastIndexOf("_")+1);
+                            pretty_error = "You are moving too fast! You will be ready to play in "+t+"seconds";
+                            break;
+                        default:
+                            pretty_error = "Deployment failed: unknown error";
+                            break;
+                    }
+                    super.handleError(pretty_error);
                 }
+
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
@@ -1055,6 +1099,11 @@ public class GameState
         return mHandshake;
     }
 
+    public void invalidateHandshake()
+    {
+        mHandshake = null;
+    }
+
     public KnobsBundle getKnobs()
     {
         return mKnobs;
@@ -1091,5 +1140,31 @@ public class GameState
 
     public void setSlurpableXMParticles(ArrayList<String> slurpableParticles) {
         mInterface.setSlurpableParticles(slurpableParticles);
+    }
+
+    public void setAgentNames(HashMap<String, String> agentNames) {
+        mAgentNames.putAll(agentNames);
+    }
+
+    public String getAgentName(String guid) {
+        return mAgentNames.get(guid);
+    }
+
+    public HashMap<String, String> getAgentNames() {
+        return mAgentNames;
+    }
+
+    public List<String> checkAgentNames(HashSet<String> guids) {
+        List<String> rejects = new ArrayList<>();
+        for (String guid : guids) {
+            if (!mAgentNames.containsKey(guid)) {
+                rejects.add(guid);
+            }
+        }
+        return rejects;
+    }
+
+    public void connectSignalLocationUpdated(Slot1<Location> handler) {
+        mSignalLocationUpdated.connect(handler);
     }
 }
