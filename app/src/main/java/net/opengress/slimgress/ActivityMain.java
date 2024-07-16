@@ -30,6 +30,8 @@ import net.opengress.slimgress.API.Player.Agent;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -47,6 +49,9 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
         // update agent data
         updateAgent();
+        // loading the inventory at start makes weapons, deploy etc work nicely
+        // maybe should be in scanner view instead?
+        mGame.intGetInventory(new Handler(msg -> true));
 
         // create ops button callback
         final Button buttonOps = findViewById(R.id.buttonOps);
