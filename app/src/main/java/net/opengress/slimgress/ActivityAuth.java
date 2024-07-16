@@ -156,7 +156,10 @@ public class ActivityAuth extends Activity
                                 "    }\n" +
                                 "\n" +
                                 "    ;if (document.location.href == 'https://opengress.net/login') {\n" +
-                                "        location.assign(document.getElementById('telegram-login-OPRIESTbot').src);\n" +
+                                "        let el = document.getElementById('telegram-login-OPRIESTbot');" +
+                                "        if (el) {" +
+                                "           location.assign(el.src);" +
+                                "        }\n" +
                                 "    } else if (document.getElementsByClassName('widget_frame_base')[0]) {\n" +
                                 "        origin = 'https://opengress.net';\n" +
 //                        "        //postMessage = window.doAuthInWebview;\n" +
@@ -165,15 +168,15 @@ public class ActivityAuth extends Activity
 //                        "    //\n" +
                                 "\n" +
                                 "    var auth = function() {\n" +
-//                        "        //alert('**************TRYING AUTH***************');\n" +
+                        "        console.log('**************TRYING AUTH***************');\n" +
                                 "        var theUrl ='https://oauth.telegram.org/auth?bot_id=' + TWidgetLogin.botId + (TWidgetLogin.paramsEncoded ? '&' + TWidgetLogin.paramsEncoded : '');\n" +
                                 "        var xhr = new XMLHttpRequest();\n" +
                                 "        xhr.onload = function(response) {\n" +
                                 "           ; if(this.responseXML.title) {\n" +
-//                        "                //alert('**************HAVE TITLE***************');\n" +
+                        "                console.log('**************HAVE TITLE***************');\n" +
                                 "                location.href = theUrl;\n" +
                                 "            } else {\n" +
-//                        "                //alert('**************NO HAVE TITLE***************');\n" +
+                        "                console.log('**************NO HAVE TITLE***************');\n" +
                                 "                TWidgetLogin.getAuth();\n" +
                                 "            }\n" +
                                 "        }\n" +
@@ -208,13 +211,13 @@ public class ActivityAuth extends Activity
                                 "\n" +
                                 "\n" +
                                 "    function checkAuth() {\n" +
-//                        "        //alert('**************CHECKING AUTH***************');\n" +
+//                        "        alert('**************CHECKING AUTH***************');\n" +
                                 "        clearTimeout(window.authTimeout);\n" +
                                 "        window.authTimeout = setTimeout(function doCheckAuth() {\n" +
                                 "            ajax('/auth/login?bot_id=392271520&origin=https%3A%2F%2Fopengress.net&request_access=write', {}, function(result) {\n" +
                                 "               ; if (result) {\n" +
 //                        "                    //location.reload();\n" +
-//                        "                    //alert('**************LOOKS GOOD NOW WHAT***************');\n" +
+//                        "                    alert('**************LOOKS GOOD NOW WHAT***************');\n" +
                                 "                    window.history.back();\n" +
                                 "                } else {\n" +
                                 "                    checkAuth();\n" +
@@ -228,6 +231,7 @@ public class ActivityAuth extends Activity
 
                         view.evaluateJavascript(js, s -> {
                             // log s string etc
+                            System.out.println("Finished running login script");
                         });
                     }
                 }
@@ -257,6 +261,7 @@ public class ActivityAuth extends Activity
     public void authFinished(final String session_name, final String session_id)
     {
         mNumAttempts++;
+        System.out.println("AUTH FINISHED");
 
         new Thread(() -> {
             // authenticate ingress

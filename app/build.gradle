@@ -9,8 +9,8 @@ android {
         applicationId "net.opengress.slimgress"
         minSdk 23
         targetSdk 33
-        versionCode 32
-        versionName "0.0.32"
+        versionCode 33
+        versionName "0.0.33"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -49,8 +49,11 @@ android {
 
 dependencies {
 
+    implementation 'androidx.test:monitor:1.7.1'
+    implementation 'androidx.test.ext:junit:1.2.1'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
     testImplementation 'org.testng:testng:6.9.6'
+    androidTestImplementation 'junit:junit:4.12'
     def acraVersion = '5.9.6'
 
 //    this next line is redundant, but without it i get complaints from android studio

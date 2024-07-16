@@ -23,6 +23,7 @@ package net.opengress.slimgress.API.Interface;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONStringer;
 
 import net.opengress.slimgress.API.Knobs.KnobsBundle;
 import net.opengress.slimgress.API.Player.Agent;
@@ -48,12 +49,15 @@ public class Handshake
     private final String mNickname;
     private Agent mAgent = null;
     private KnobsBundle mKnobs = null;
+    private final String mErrorFromServer;
 
     public Handshake(JSONObject json) throws JSONException
     {
         JSONObject result = json.optJSONObject("result");
 
         if (result != null) {
+
+            mErrorFromServer = null;
 
             JSONObject pregameStatus = result.optJSONObject("pregameStatus");
             if (pregameStatus != null) {
@@ -97,6 +101,7 @@ public class Handshake
             mPregameStatus = PregameStatus.NoActionsRequired;
             mServerVersion = "";
             mNickname = "";
+            mErrorFromServer = json.isNull("error") ? null : json.getString("error");
         }
     }
 
@@ -121,6 +126,8 @@ public class Handshake
     {
         return mNickname;
     }
+
+    public String getErrorFromServer() { return mErrorFromServer; }
 
     public Agent getAgent()
     {

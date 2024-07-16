@@ -27,9 +27,12 @@ import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Interface.Interface;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -87,7 +90,7 @@ public class ActivitySplash extends Activity {
                     loginBundle = msg.getData();
 
                     // this will need further updates, like when user needs to select a faction
-                    if (mGame.getAgent().isAllowNicknameEdit()) {
+                    if (mGame.getHandshake().isValid() && mGame.getAgent().isAllowNicknameEdit()) {
                         return showValidateUsernameDialog(null);
                     } else {
                         procedWithLogin();
@@ -142,7 +145,18 @@ public class ActivitySplash extends Activity {
                     startActivity(browserIntent);
                     finish();
                 });
-            } else {
+            } /*else if (Objects.equals(mGame.getHandshake().getErrorFromServer(), "NOT_LOGGED_IN")) {
+                SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, 0);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putString("session_name", null);
+                editor.putString("session_id", null);
+                editor.apply();
+                mGame.invalidateHandshake();
+                System.out.println("CLEARED AUTH DATA");
+//                mApp.setLoggedIn(true);
+//                builder.setMessage("Your session has been invalidated. Restart the application to log in again.");
+//                builder.setNegativeButton("OK", (dialog, which) -> finish());
+            } */else {
                 builder.setMessage(loginBundle.getString("Error"));
                 builder.setNegativeButton("OK", (dialog, which) -> finish());
             }
