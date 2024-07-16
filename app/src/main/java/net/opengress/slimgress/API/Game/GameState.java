@@ -720,7 +720,38 @@ public class GameState
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
+//                    initBundle();
+//                    HashMap<String, ItemBase> items = new HashMap<>();
+//                    for (ItemBase item: gameBasket.getInventory()) {
+//                        items.put(item.getEntityGuid(), item);
+//                        getData().putSerializable("items", items);
+//                    }
                 }
+
+//                @Override
+//                public void handleResult(JSONObject result) {
+//                    try {
+//                        initBundle();
+//                        ArrayList<String> items = new ArrayList<>();
+//                        ArrayList<String> bonusItems = new ArrayList<>();
+//                        JSONArray guids = result.getJSONObject("items").getJSONArray("addedGuids");
+//                        // glyphs aren't supported yet and this may need to be moved to another method
+//                        JSONObject glyphResponse = result.optJSONObject("glyphResponse");
+//                        if (glyphResponse != null) {
+//                            JSONArray bonusGuids = glyphResponse.getJSONArray("bonusGuids");
+//                            for (int x = 0; x < bonusGuids.length(); x++) {
+//                                bonusItems.add(bonusGuids.getString(x));
+//                            }
+//                            getData().putStringArrayList("bonusGuids", bonusItems);
+//                        }
+//                        for (int x=0; x < guids.length(); x++) {
+//                            items.add(guids.getString(x));
+//                        }
+//                        getData().putStringArrayList("guids", items);
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
             });
         }
         catch (JSONException | InterruptedException e) {

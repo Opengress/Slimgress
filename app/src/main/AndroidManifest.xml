@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionCode="0000000031"
-    android:versionName="0.0.32" >
+    android:versionCode="0000000033"
+    android:versionName="0.0.33" >
 <!--    1112223333-->
 
     <uses-sdk

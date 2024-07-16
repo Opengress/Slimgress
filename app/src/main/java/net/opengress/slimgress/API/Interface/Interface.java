@@ -74,7 +74,7 @@ public class Interface
                 .addInterceptor(chain -> {
                     final Request original = chain.request();
                     final Request fixed = original.newBuilder()
-                            .addHeader("Cookie", mCookie)
+//                            .addHeader("Cookie", mCookie)
                             .build();
                     return chain.proceed(fixed);
                 })
