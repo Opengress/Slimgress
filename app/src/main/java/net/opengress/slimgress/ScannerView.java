@@ -268,7 +268,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mSensorManager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
-        mGame.getWorld().connectDeletedEntitySignal(this::onReceiveDeletedEntityGuids);
+        mGame.getWorld().connectSignalDeletedEntities(this::onReceiveDeletedEntityGuids);
     }
 
     public void onReceiveDeletedEntityGuids(List<String> deletedEntityGuids) {
@@ -535,6 +535,11 @@ public class ScannerView extends Fragment implements SensorEventListener {
     private synchronized void updateWorld(final Handler uiHandler) {
         // handle interface result (on timer thread)
         final Handler resultHandler = new Handler(msg -> {
+
+            // protect against crash from unclean exit
+            if (getActivity() == null) {
+                return true;
+            }
 
             if (msg.getData().keySet().contains("Error")) {
                 ((TextView) getActivity().findViewById(R.id.quickMessage)).setText(R.string.scan_failed);

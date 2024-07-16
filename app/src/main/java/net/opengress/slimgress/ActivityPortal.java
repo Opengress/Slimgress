@@ -9,20 +9,29 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.View;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 
+import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.API.Game.GameState;
+import net.opengress.slimgress.API.GameEntity.GameEntityBase;
+import net.opengress.slimgress.API.GameEntity.GameEntityControlField;
+import net.opengress.slimgress.API.GameEntity.GameEntityLink;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.API.Item.ItemBase;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 // FIXME: if a portal enters/exits range, enable/disable the hack button etc
 public class ActivityPortal extends Activity {
@@ -30,53 +39,22 @@ public class ActivityPortal extends Activity {
     private final IngressApplication mApp = IngressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private final int mActionRadiusM = mGame.getKnobs().getScannerKnobs().getActionRadiusM();
+    private Bitmap mBitmap;
 
-    // TODO: maybe change this to a java executor,
-    //  looks cleaner and could put a threadpool in Application class. Eg to display portal keys
-    private static class MyTask extends AsyncTask<Void, Void, String> {
-
-        private final WeakReference<ActivityPortal> activityReference;
-        Bitmap mBitmap;
-        final GameEntityPortal mPortal;
-
-        // only retain a weak reference to the activity
-        MyTask(ActivityPortal context, GameEntityPortal thePortal) {
-            activityReference = new WeakReference<>(context);
-            mPortal = thePortal;
-        }
-
-        @NonNull
-        @Override
-        protected String doInBackground(Void... params) {
-            mBitmap = getImageBitmap(mPortal.getPortalImageUrl(), activityReference.get().getApplicationContext().getCacheDir());
-            return "task finished";
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-
-            // get a reference to the activity if it is still there
-            ActivityPortal activity = activityReference.get();
-            if (activity == null || activity.isFinishing()) return;
-
-            // modify the activity's UI
-            if (mBitmap != null) {
-                ((ImageView) activity.findViewById(R.id.portalImage)).setImageBitmap(mBitmap);
-            }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mBitmap != null) {
+            mBitmap.recycle();
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_portal);
 
         GameEntityPortal portal = mGame.getCurrentPortal();
-
-//        int textColor;
-//        Team team = agent.getTeam();
-//        textColor = 0xff000000 + team.getColour();
 
         ((TextView)findViewById(R.id.portalTitle)).setText(portal.getPortalTitle());
 
@@ -88,10 +66,42 @@ public class ActivityPortal extends Activity {
         // FIXME: format this nicely
         ((TextView)findViewById(R.id.portalEnergy)).setText(getString(R.string.portal_energy, portal.getPortalEnergy()));
 
+        // TODO: link to photostream with portal description, up/downvotes, whatever
+        // also maybe hardcode this background image
         ((ImageView)findViewById(R.id.portalImage)).setImageBitmap(getBitmapFromAsset("no_image.png", getAssets()));
-        new MyTask(this, portal).execute();
+        new Thread(() -> {
+            mBitmap = getImageBitmap(portal.getPortalImageUrl(), getApplicationContext().getCacheDir());
+            if (mBitmap != null) {
+                runOnUiThread(() -> ((ImageView) findViewById(R.id.portalImage)).setImageBitmap(mBitmap));
+            }
+        }).start();
 
-        ((TextView)findViewById(R.id.portalOwner)).setText(portal.getOwnerGuid());
+        HashSet<String> guids = new HashSet<>();
+        for (var reso : portal.getPortalResonators()) {
+            if (reso != null) {
+                guids.add(reso.ownerGuid);
+            }
+        }
+        if (portal.getOwnerGuid() != null) {
+            guids.add(portal.getOwnerGuid());
+        }
+
+        var unknownGuids = mGame.checkAgentNames(guids);
+
+        if (unknownGuids.isEmpty()) {
+            ((TextView) findViewById(R.id.portalOwner)).setText(mGame.getAgentName(portal.getOwnerGuid()));
+        } else {
+            Handler ownerResultHandler = new Handler(msg -> {
+                ((TextView) findViewById(R.id.portalOwner)).setText(msg.getData().getString(portal.getOwnerGuid()));
+                HashMap<String, String> names = new HashMap<>();
+                for (var guid : guids) {
+                    names.put(guid, msg.getData().getString(guid));
+                }
+                mGame.setAgentNames(names);
+                return false;
+            });
+            new Thread(() -> mGame.intGetNicknamesFromUserGUIDs(guids.toArray(new String[0]),ownerResultHandler)).start();
+        }
         ((TextView)findViewById(R.id.portalOwner)).setTextColor(0xFF000000 + portal.getPortalTeam().getColour());
 
         Handler hackResultHandler = new Handler(msg -> {
@@ -110,14 +120,13 @@ public class ActivityPortal extends Activity {
             return false;
         });
 
-        if (!mGame.getAgent().getNickname().startsWith("MT")) {
+        // testing atm, will try it properly later
+        if (mGame.getAgent().getNickname().startsWith("MT")) {
+            // tough luck if you don't have the agent names loaded up yet :thinking_face:
             findViewById(R.id.deployButton).setEnabled(true);
-            findViewById(R.id.deployButton).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent myIntent = new Intent(getApplicationContext(), ActivityDeploy.class);
-                    startActivity(myIntent);
-                }
+            findViewById(R.id.deployButton).setOnClickListener(v -> {
+                Intent myIntent = new Intent(getApplicationContext(), ActivityDeploy.class);
+                startActivity(myIntent);
             });
         }
 //        ((ProgressBar)findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
@@ -127,28 +136,19 @@ public class ActivityPortal extends Activity {
 //        ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);
 //        ((TextView)findViewById(R.id.agentinfo)).setTextColor(textColor);
 
-        // FIXME there should be some kind of listener or observer I can use for this
-        //  -- maybe i can use device orientation sensor
-        //  -- I CAN MAYBE USE A SIGNAL
-        Handler locationHandler = new Handler();
-        Runnable mRunnable = new Runnable(){
-            @Override
-            public void run() {
-                setButtonsEnabled(isPortalInRange());
-                locationHandler.postDelayed(this, 250);
-            }
-        };
-        mRunnable.run();
+        setButtonsEnabled(mGame.getLocation().getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng()) <= mActionRadiusM);
+        mGame.connectSignalLocationUpdated(this::onReceiveLocation);
     }
 
-    private void setButtonsEnabled(boolean bool) {
-        findViewById(R.id.hackButton).setEnabled(bool);
+    private void onReceiveLocation(Location location) {
+        setButtonsEnabled(location.getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng()) <= mActionRadiusM);
     }
 
-    private boolean isPortalInRange() {
-        return mGame.getLocation().getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng()) <= mActionRadiusM;
+    private void setButtonsEnabled(boolean shouldEnableButton) {
+        findViewById(R.id.hackButton).setEnabled(shouldEnableButton);
     }
 
+    @SuppressWarnings("unchecked")
     @NonNull
     private Bundle generateHackResultBundle(@NonNull Bundle data) {
         Bundle bundle = new Bundle();
@@ -184,7 +184,7 @@ public class ActivityPortal extends Activity {
                 bundle.putSerializable("items", items);
             }
         }
-        // this should always be false until I implement glyph hacking, then always false
+        // this should always be false until I implement glyph hacking
         if (bonusGuids != null && !bonusGuids.isEmpty()) {
             for (String guid : bonusGuids) {
                 ItemBase item = Objects.requireNonNull(rawItems.get(guid));

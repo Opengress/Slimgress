@@ -29,6 +29,8 @@ import org.json.JSONObject;
 
 import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.API.Common.Team;
+import net.opengress.slimgress.API.Knobs.PortalKnobs;
+import net.opengress.slimgress.IngressApplication;
 
 public class GameEntityPortal extends GameEntityBase
 {
@@ -55,6 +57,9 @@ public class GameEntityPortal extends GameEntityBase
         public String id;
         public String ownerGuid;
         public int level;
+        public int getMaxEnergy() {
+            return mPortalKnobs.getResonatorEnergyForLevel(1);
+        }
     }
 
     private final Location mPortalLocation;
@@ -67,6 +72,7 @@ public class GameEntityPortal extends GameEntityBase
     private final List<LinkedEdge> mPortalEdges;
     private final List<LinkedMod> mPortalMods;
     private final List<LinkedResonator> mPortalResonators;
+    private final PortalKnobs mPortalKnobs = IngressApplication.getInstance().getGame().getKnobs().getPortalKnobs();
 
     GameEntityPortal(JSONArray json) throws JSONException
     {
@@ -144,7 +150,7 @@ public class GameEntityPortal extends GameEntityBase
                 mPortalResonators.add(newResonator);
             }
             else {
-                // resonator == null means the slot is unused
+                // resonator == null means the slot is unused .... do i want this? slot property...
                 mPortalResonators.add(null);
             }
         }
@@ -157,6 +163,17 @@ public class GameEntityPortal extends GameEntityBase
         for (LinkedResonator resonator : mPortalResonators) {
             if (resonator != null)
                 energy += resonator.energyTotal;
+        }
+        return energy;
+    }
+
+    public int getPortalMaxEnergy()
+    {
+        // TODO: don't recalculate every time
+        int energy = 0;
+        for (LinkedResonator resonator : mPortalResonators) {
+            if (resonator != null)
+                energy += resonator.getMaxEnergy();
         }
         return energy;
     }
@@ -177,6 +194,15 @@ public class GameEntityPortal extends GameEntityBase
             return 0;
 
         return level / resonatorCount;
+    }
+
+    public int getPortalLinkRange() {
+        // TODO: consider mods like link amps
+        // this number could change one day?
+        if (mPortalResonators.size() < 8) {
+            return 0;
+        }
+        return (int) Math.pow(getPortalLevel(), 4);
     }
 
     public Location getPortalLocation()
@@ -227,5 +253,14 @@ public class GameEntityPortal extends GameEntityBase
     public List<LinkedResonator> getPortalResonators()
     {
         return mPortalResonators;
+    }
+
+    public LinkedResonator getPortalResonator(int slot) {
+        for (LinkedResonator reso : mPortalResonators) {
+            if (reso.slot == slot) {
+                return reso;
+            }
+        }
+        return null;
     }
 }

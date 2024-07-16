@@ -112,8 +112,8 @@ public class Utils
     }
 
     public static Bitmap getImageBitmap(String url, File cacheDir) {
-        // FIXME there's an unclosed resource here, reported when closing portal view
-        // shouldn't any Closeable i create in this method call close() on return automatically?
+        // there's MAYBE an unclosed resource here, reported when closing portal view
+        // ... shouldn't any Closeable i create in this method call close() on return automatically?
         Bitmap bm = null;
         try {
             Request get = new Request.Builder()
@@ -123,6 +123,7 @@ public class Utils
             Response response = getCachedClient(cacheDir).newCall(get).execute();
             InputStream content = Objects.requireNonNull(response.body()).byteStream();
             bm = BitmapFactory.decodeStream(content);
+            response.close();
         } catch (IOException e) {
             Log.e("Utils.getImageBitmap", "Error getting bitmap", e);
         }
