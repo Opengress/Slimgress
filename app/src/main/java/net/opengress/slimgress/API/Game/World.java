@@ -35,12 +35,12 @@ public class World
 {
     private final Map<String, GameEntityBase> mGameEntities;
     private final Map<Long, XMParticle> mXMParticles;
-    private final Signal1<List<String>> mDeletedEntitySignal = new Signal1<>();
+    private final Signal1<List<String>> mSignalDeletedEntities = new Signal1<>();
 
     public World()
     {
         mGameEntities = new HashMap<>();
-        mXMParticles = new HashMap<Long, XMParticle>();
+        mXMParticles = new HashMap<>();
     }
 
     public void clear()
@@ -67,7 +67,7 @@ public class World
 
         // remove deleted entities
         List<String> deletedEntityGuids = basket.getDeletedEntityGuids();
-        mDeletedEntitySignal.emit(deletedEntityGuids);
+        mSignalDeletedEntities.emit(deletedEntityGuids);
         for (String guid : deletedEntityGuids) {
             mGameEntities.remove(guid);
             mXMParticles.remove(Long.parseLong(guid.substring(0, 16), 16));
@@ -94,8 +94,8 @@ public class World
         return new ArrayList<>(mXMParticles.values());
     }
 
-    public void connectDeletedEntitySignal(Slot1<List<String>> handler) {
-        mDeletedEntitySignal.connect(handler);
+    public void connectSignalDeletedEntities(Slot1<List<String>> handler) {
+        mSignalDeletedEntities.connect(handler);
     }
 
 }

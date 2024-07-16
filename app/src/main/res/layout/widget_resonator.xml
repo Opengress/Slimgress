@@ -6,13 +6,14 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    android:padding="@dimen/text_margin"
     tools:ignore="HardcodedText" >
 
     <TextView
         android:id="@+id/widgetBtnOwner"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="owner"
+        android:text=""
         android:textAppearance="@style/TextAppearance.AppCompat.Small" />
 
         <LinearLayout
@@ -33,7 +34,7 @@
                     android:id="@+id/positionText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="\??m ??"
+                    android:text=""
                     android:textAppearance="@style/TextAppearance.AppCompat.Small"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -44,7 +45,7 @@
                     android:id="@+id/resoLevelText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="L0"
+                    android:text=""
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     tools:layout_conversion_absoluteHeight="19dp"

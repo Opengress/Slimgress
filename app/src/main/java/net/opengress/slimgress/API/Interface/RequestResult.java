@@ -83,6 +83,7 @@ public class RequestResult
 
     public Bundle getData()
     {
+        initBundle();
         return mBundle;
     }
 
