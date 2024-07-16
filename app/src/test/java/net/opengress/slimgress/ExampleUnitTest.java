@@ -1,6 +1,6 @@
 package net.opengress.slimgress;
 
-import org.junit.Test;
+import org.testng.annotations.Test;
 
 import static org.junit.Assert.*;
 
