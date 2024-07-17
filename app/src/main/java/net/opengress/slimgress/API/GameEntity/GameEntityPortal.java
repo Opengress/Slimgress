@@ -257,7 +257,7 @@ public class GameEntityPortal extends GameEntityBase
 
     public LinkedResonator getPortalResonator(int slot) {
         for (LinkedResonator reso : mPortalResonators) {
-            if (reso.slot == slot) {
+            if (reso != null && reso.slot == slot) {
                 return reso;
             }
         }
