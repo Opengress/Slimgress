@@ -143,6 +143,12 @@ public class ActivityDeploy extends Activity {
 
         builder.setItems(levels.values().toArray(new String[0]), (dialogInterface, i) -> {
             var which = levels.keySet().toArray(new Integer[0])[i];
+            for (var r : resosForUpgrade) {
+                if (r.getItemAccessLevel() == which) {
+                    mGame.intUpgradeResonator(r, mGame.getCurrentPortal(), slot, deployResultHandler);
+                    break;
+                }
+            }
             Log.e("ActivityDeploy", String.format("Picked resonator: %d on slot %d", which, slot));
         });
         builder.show();

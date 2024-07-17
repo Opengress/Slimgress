@@ -765,13 +765,64 @@ public class GameState
                 @Override
                 public void handleError(String error) {
                     // PORTAL_OUT_OF_RANGE, CAN_ONLY_UPGRADE_TO_HIGHER_LEVEL, TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER
-                    super.handleError(error);
+                    String pretty_error;
+                    // some of these error message strings might be a bit clumsy
+                    switch (error.replaceAll("\\d", "")) {
+                        case "PORTAL_OUT_OF_RANGE":
+                            pretty_error = "Portal is out of range";
+                            break;
+                        case "TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER":
+                            // You already have the maximum number of resonators of that level on the portal
+                            pretty_error = "Too many resonators with same level by you";
+                            break;
+                        case "CAN_ONLY_UPGRADE_TO_HIGHER_LEVEL":
+                            // Resonator is already upgraded
+                            pretty_error = "You can't upgrade that resonator as it's already upgraded";
+                            break;
+                        case "ITEM_DOES_NOT_EXIST": // new!
+                            pretty_error = "The resonator you tried to deploy is not in your inventory";
+                            break;
+                        case "SERVER_ERROR": // new!
+                            pretty_error = "Server error";
+                            break;
+                        case "SPEED_LOCKED": // new!
+                            pretty_error = "You are moving too fast";
+                            break;
+                        case "SPEED_LOCKED_": // new!
+                            // TODO: maybe format this as "x hours, x minutes, x seconds"
+                            String t = error.substring(error.lastIndexOf("_")+1);
+                            pretty_error = "You are moving too fast! You will be ready to play in "+t+"seconds";
+                            break;
+                        default:
+                            pretty_error = "Upgrade failed: unknown error: "+error;
+                            break;
+                    }
+                    super.handleError(pretty_error);
                 }
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
+                    super.handleGameBasket(gameBasket);
                 }
+
+                @Override
+                public void finished() {
+                    Map<String, GameEntityBase> entities = getWorld().getGameEntities();
+                    Set<String> keys = entities.keySet();
+                    for (String key : keys) {
+                        final GameEntityBase entity = entities.get(key);
+                        assert entity != null;
+                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
+                            if (Objects.equals(entity.getEntityGuid(), portal.getEntityGuid())) {
+                                setCurrentPortal((GameEntityPortal) entity);
+                                break;
+                            }
+                        }
+                    }
+                    super.finished();
+                }
+
             });
         }
         catch (JSONException | InterruptedException e) {
