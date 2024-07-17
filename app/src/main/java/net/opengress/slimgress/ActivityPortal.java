@@ -136,15 +136,12 @@ public class ActivityPortal extends Activity {
         });
 
         // FIXME make this work OK
-        // testing atm, will try it properly later
-        if (mGame.getAgent().getNickname().startsWith("MT")) {
-            // tough luck if you don't have the agent names loaded up yet :thinking_face:
-            findViewById(R.id.deployButton).setEnabled(true);
-            findViewById(R.id.deployButton).setOnClickListener(v -> {
-                Intent myIntent = new Intent(getApplicationContext(), ActivityDeploy.class);
-                startActivityForResult(myIntent, DEPLOY_INTENT_CODE);
-            });
-        }
+        // tough luck if you don't have the agent names loaded up yet :thinking_face:
+        findViewById(R.id.deployButton).setEnabled(true);
+        findViewById(R.id.deployButton).setOnClickListener(v -> {
+            Intent myIntent = new Intent(getApplicationContext(), ActivityDeploy.class);
+            startActivityForResult(myIntent, DEPLOY_INTENT_CODE);
+        });
 //        ((ProgressBar)findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
 //        ((ProgressBar)findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
 //
