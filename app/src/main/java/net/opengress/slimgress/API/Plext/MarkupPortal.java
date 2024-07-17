@@ -1,7 +1,8 @@
 /*
 
- Slimgress: Ingress API for Android
+ Slimgress: Opengress API for Android
  Copyright (C) 2013 Norman Link <norman.link@gmx.net>
+ Copyright (C) 2024 Opengress Team <info@opengress.net>
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
