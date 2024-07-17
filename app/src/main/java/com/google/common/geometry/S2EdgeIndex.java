@@ -85,7 +85,7 @@ public abstract strictfp class S2EdgeIndex {
    * @return -1 if [cell1, edge1] is less than [cell2, edge2], 1 if [cell1,
    *         edge1] is greater than [cell2, edge2], 0 otherwise.
    */
-  private static final int compare(long cell1, int edge1, long cell2, int edge2) {
+  private static int compare(long cell1, int edge1, long cell2, int edge2) {
     if (cell1 < cell2) {
       return -1;
     } else if (cell1 > cell2) {

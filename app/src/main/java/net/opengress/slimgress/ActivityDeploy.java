@@ -16,11 +16,7 @@ import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Game.Inventory;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 
-import org.json.JSONArray;
-
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Objects;
 
 // FIXME user can't deploy on portal if portal belongs to wrong team!
 // maybe resonators should show PORTAL team colour instead of owner team colour

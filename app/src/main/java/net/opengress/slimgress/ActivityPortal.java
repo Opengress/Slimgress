@@ -6,7 +6,6 @@ import static net.opengress.slimgress.ViewHelpers.*;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -16,22 +15,15 @@ import android.widget.TextView;
 
 import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.API.Game.GameState;
-import net.opengress.slimgress.API.GameEntity.GameEntityBase;
-import net.opengress.slimgress.API.GameEntity.GameEntityControlField;
-import net.opengress.slimgress.API.GameEntity.GameEntityLink;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.API.Item.ItemBase;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 // FIXME: if a portal enters/exits range, enable/disable the hack button etc
 public class ActivityPortal extends Activity {

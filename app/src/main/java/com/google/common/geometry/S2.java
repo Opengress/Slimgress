@@ -129,7 +129,7 @@ public final strictfp class S2 {
    *     [0,3].
    * @throws IllegalArgumentException if either parameter is out of bounds.
    */
-  public static final int ijToPos(int orientation, int ijIndex) {
+  public static int ijToPos(int orientation, int ijIndex) {
     Preconditions.checkArgument(0 <= orientation && orientation < 4);
     Preconditions.checkArgument(0 <= ijIndex && ijIndex < 4);
     return IJ_TO_POS[orientation][ijIndex];
