@@ -27,12 +27,9 @@ import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Interface.Interface;
 
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;

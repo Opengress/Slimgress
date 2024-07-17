@@ -20,15 +20,12 @@
 
 package net.opengress.slimgress.API.Game;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.API.Interface.GameBasket;
 import net.opengress.slimgress.API.Item.ItemBase;
 import net.opengress.slimgress.API.Item.ItemResonator;

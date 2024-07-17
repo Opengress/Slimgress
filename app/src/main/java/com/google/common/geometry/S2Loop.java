@@ -678,7 +678,7 @@ public final strictfp class S2Loop implements S2Region, Comparable<S2Loop> {
    * so, we do so. Finally an iterator is returned that can be used to perform
    * edge lookups.
    */
-  private final DataEdgeIterator getEdgeIterator(int expectedQueries) {
+  private DataEdgeIterator getEdgeIterator(int expectedQueries) {
     if (index == null) {
       index = new S2EdgeIndex() {
         @Override

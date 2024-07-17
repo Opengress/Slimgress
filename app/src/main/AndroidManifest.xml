@@ -7,7 +7,7 @@
 
     <uses-sdk
         android:minSdkVersion="23"
-        android:targetSdkVersion="33"
+        android:targetSdkVersion="35"
         tools:ignore="GradleOverrides" />
 
     <uses-feature
@@ -33,7 +33,8 @@
         android:icon="@drawable/ic_launcher"
         android:theme="@android:style/Theme.Holo.NoActionBar"
         android:label="@string/appname"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        android:supportsRtl="false">
 
         <!-- to be allowed to "install software" - self-updates -->
         <provider

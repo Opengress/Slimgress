@@ -36,7 +36,7 @@ package com.google.common.geometry;
  *
  */
 
-public final strictfp class S1Interval implements Cloneable {
+public final strictfp class S1Interval {
 
   private final double lo;
   private final double hi;

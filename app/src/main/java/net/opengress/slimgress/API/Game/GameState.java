@@ -20,7 +20,6 @@
 
 package net.opengress.slimgress.API.Game;
 
-import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static net.opengress.slimgress.API.Interface.Handshake.*;
 import static net.opengress.slimgress.API.Interface.Handshake.PregameStatus.*;
 
@@ -37,13 +36,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.app.Activity;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.github.msteinbeck.sig4j.signal.Signal1;
 import com.github.msteinbeck.sig4j.slot.Slot1;
@@ -58,10 +54,6 @@ import net.opengress.slimgress.API.GameEntity.*;
 import net.opengress.slimgress.API.Item.*;
 import net.opengress.slimgress.API.Knobs.KnobsBundle;
 import net.opengress.slimgress.API.Player.*;
-import net.opengress.slimgress.ActivityDeploy;
-import net.opengress.slimgress.ActivitySplash;
-import net.opengress.slimgress.IngressApplication;
-import net.opengress.slimgress.ScannerView;
 
 public class GameState
 {

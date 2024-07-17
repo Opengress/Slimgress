@@ -30,6 +30,8 @@ import org.acra.config.CoreConfigurationBuilder;
 import org.acra.config.HttpSenderConfigurationBuilder;
 import org.acra.data.StringFormat;
 
+import java.util.Objects;
+
 public class IngressApplication extends Application
 {
     private static IngressApplication mSingleton;
@@ -55,7 +57,7 @@ public class IngressApplication extends Application
         super.attachBaseContext(base);
 
         // (ONLY) release (non-debug) builds use ACRA, because debug builds => developing => crashes
-        if (BuildConfig.BUILD_TYPE != "debug") {
+        if (!Objects.equals(BuildConfig.BUILD_TYPE, "debug")) {
             ACRA.init(this, new CoreConfigurationBuilder()
                     //core configuration:
                     .withBuildConfigClass(BuildConfig.class)

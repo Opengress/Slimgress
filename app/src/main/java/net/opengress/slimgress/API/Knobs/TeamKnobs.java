@@ -1,9 +1,5 @@
 package net.opengress.slimgress.API.Knobs;
 
-import android.util.Log;
-
-import androidx.annotation.NonNull;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 

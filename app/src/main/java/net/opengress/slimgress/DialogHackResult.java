@@ -176,8 +176,8 @@ public class DialogHackResult extends Dialog
         }
 
         public static class ViewHolder extends RecyclerView.ViewHolder {
-            TextView quantityField;
-            TextView descriptionField;
+            final TextView quantityField;
+            final TextView descriptionField;
 
             ViewHolder(View itemView) {
                 super(itemView);
