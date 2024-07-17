@@ -37,19 +37,22 @@ third-party documentation published online, other third-party client code, scree
 - View inventory (can't do anything with it, but you can view it)
 - View and slurp energy globs on map
 - Auto update detection
+- Deploy and upgrade resonators on portals
 
 # To do soon (almost all of it needing further serverside work)
 - Finish polishing hacking
 - Drop and recycle
-- Deploy on to portals
 - Fire weapons
 - Link portals
-- Log out
+- Log out (Workaround: clear data)
 - Toggle switches for things like loading portal images and maybe even map tiles (save data)
+- Deploy mods to portals
 
 # To do (but it's technical etc)
 - Custom player cursor overlay which sizes like a GroundOverlay but rotates to match orientation
 - Custom CompassOverlay which might draw onto an external widget and not the MapView, and should lock scanner rotation to IRL orientation when clicked
+- Keep scanner's map centred (etc)
+- 3D map
 
 # To do eventually (again, needs serverside stuff)
 - View and pick up items from map
