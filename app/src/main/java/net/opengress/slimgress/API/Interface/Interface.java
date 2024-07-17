@@ -215,21 +215,20 @@ public class Interface
 
             // execute and get the response.
             try {
-                Response response;
                 String content = null;
 
                 synchronized(Interface.this) {
-                    response = mClient.newCall(post).execute();
+                    try (Response response = mClient.newCall(post).execute()) {
 
-                    if (response.code() == 401) {
-                        // TODO: work out what to do... a simple, ugly idea: dialog and quit
-                        // token expired or similar. player isn't logged in
+                        if (response.code() == 401) {
+                            // TODO: work out what to do... a simple, ugly idea: dialog and quit
+                            // token expired or similar. player isn't logged in
 //                        isAuthenticated = false;
-                        result.handleError("You are not logged in. Restart the application.");
-                        result.finished();
-                    }
-                    else {
-                        content = Objects.requireNonNull(response.body()).string();
+                            result.handleError("You are not logged in. Restart the application.");
+                            result.finished();
+                        } else {
+                            content = Objects.requireNonNull(response.body()).string();
+                        }
                     }
                 }
 

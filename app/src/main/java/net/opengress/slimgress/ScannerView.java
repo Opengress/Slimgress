@@ -193,7 +193,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
      * {@link android.hardware.SensorManager SensorManager} for details.
      *
      * @param accuracy The new accuracy of this sensor, one of
-     *         {@code SensorManager.SENSOR_STATUS_*}
+     *                 {@code SensorManager.SENSOR_STATUS_*}
      */
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -275,10 +275,12 @@ public class ScannerView extends Fragment implements SensorEventListener {
         for (String guid : deletedEntityGuids) {
 
             // for XM particles
-            long particle = Long.parseLong(guid.substring(0, 16), 16);
-            if (mXMMarkers.containsKey(particle)) {
-                mMap.getOverlays().remove(mXMMarkers.get(particle));
-                mXMMarkers.remove(particle);
+            if (guid.contains(".")) {
+                long particle = Long.parseLong(guid.substring(0, 16), 16);
+                if (mXMMarkers.containsKey(particle)) {
+                    mMap.getOverlays().remove(mXMMarkers.get(particle));
+                    mXMMarkers.remove(particle);
+                }
             }
 
             // for portals
@@ -654,43 +656,47 @@ public class ScannerView extends Fragment implements SensorEventListener {
     private void drawPortal(@NonNull final GameEntityPortal portal) {
         final Team team = portal.getPortalTeam();
         if (mMap != null) {
-            // only update if marker has not yet been added
-            if (!mMarkers.containsKey(portal.getEntityGuid())) {
-                final net.opengress.slimgress.API.Common.Location location = portal.getPortalLocation();
-
-                getActivity().runOnUiThread(() -> {
-                    Bitmap portalIcon;
-                    // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
-                    // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
-                    // ... maybe i can at least write the portal level on the portal, like in iitc
-                    // it's quite possible that resonators can live in a separate Hash of markers,
-                    //   as long as the guids are stored with the portal info
-                    portalIcon = mIcons.get(team.toString());
-
-                    GroundOverlay marker = new GroundOverlay() {
-                        public boolean touchedBy(@NonNull final MotionEvent event) {
-                            GeoPoint tappedGeoPoint = (GeoPoint) mMap.getProjection().fromPixels((int) event.getX(), (int) event.getY());
-                            return getBounds().contains(tappedGeoPoint);
-                        }
-
-                        @Override
-                        public boolean onSingleTapConfirmed(final MotionEvent e, final MapView mapView) {
-                            if (touchedBy(e)) {
-                                Intent myIntent = new Intent(getContext(), ActivityPortal.class);
-                                mGame.setCurrentPortal(portal);
-                                startActivityForResult(myIntent, PORTAL_INTENT_CODE);
-                                return true;
-                            }
-                            return false;
-                        }
-                    };
-                    marker.setPosition(location.getLatLng().destinationPoint(25, 315), location.getLatLng().destinationPoint(25, 135));
-                    marker.setImage(portalIcon);
-
-                    mMap.getOverlays().add(marker);
-                    mMarkers.put(portal.getEntityGuid(), marker);
-                });
+            // if marker already exists, remove it so it can be updated
+            String guid = portal.getEntityGuid();
+            if (mMarkers.containsKey(guid)) {
+                mMap.getOverlays().remove(mMarkers.get(guid));
+                mMarkers.remove(guid);
             }
+            final net.opengress.slimgress.API.Common.Location location = portal.getPortalLocation();
+
+            getActivity().runOnUiThread(() -> {
+                Bitmap portalIcon;
+                // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
+                // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
+                // ... maybe i can at least write the portal level on the portal, like in iitc
+                // it's quite possible that resonators can live in a separate Hash of markers,
+                //   as long as the guids are stored with the portal info
+                portalIcon = mIcons.get(team.toString());
+
+                GroundOverlay marker = new GroundOverlay() {
+                    public boolean touchedBy(@NonNull final MotionEvent event) {
+                        GeoPoint tappedGeoPoint = (GeoPoint) mMap.getProjection().fromPixels((int) event.getX(), (int) event.getY());
+                        return getBounds().contains(tappedGeoPoint);
+                    }
+
+                    @Override
+                    public boolean onSingleTapConfirmed(final MotionEvent e, final MapView mapView) {
+                        if (touchedBy(e)) {
+                            Intent myIntent = new Intent(getContext(), ActivityPortal.class);
+                            mGame.setCurrentPortal(portal);
+                            startActivityForResult(myIntent, PORTAL_INTENT_CODE);
+                            return true;
+                        }
+                        return false;
+                    }
+                };
+                marker.setPosition(location.getLatLng().destinationPoint(25, 315), location.getLatLng().destinationPoint(25, 135));
+                marker.setImage(portalIcon);
+
+                mMap.getOverlays().add(marker);
+                mMarkers.put(guid, marker);
+            });
+
         }
     }
 
@@ -753,6 +759,15 @@ public class ScannerView extends Fragment implements SensorEventListener {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (mGame.getLocation() != null) {
+            final Handler uiHandler = new Handler();
+            uiHandler.post(() -> {
+                // guard against scanning too fast if request fails
+                mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
+                updateWorld(uiHandler);
+            });
+
+        }
         if (requestCode != PORTAL_INTENT_CODE) {
             Log.e("ScannerView", "Unknown intent code, I don't understand: " + requestCode);
             return;
@@ -802,5 +817,6 @@ public class ScannerView extends Fragment implements SensorEventListener {
             }
 
         }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }
