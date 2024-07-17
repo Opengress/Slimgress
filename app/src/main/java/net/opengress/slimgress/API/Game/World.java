@@ -31,38 +31,37 @@ import java.util.Map;
 import net.opengress.slimgress.API.GameEntity.GameEntityBase;
 import net.opengress.slimgress.API.Interface.GameBasket;
 
-public class World
-{
+public class World {
     private final Map<String, GameEntityBase> mGameEntities;
     private final Map<Long, XMParticle> mXMParticles;
     private final Signal1<List<String>> mSignalDeletedEntities = new Signal1<>();
 
-    public World()
-    {
+    public World() {
         mGameEntities = new HashMap<>();
         mXMParticles = new HashMap<>();
     }
 
-    public void clear()
-    {
+    public void clear() {
         mGameEntities.clear();
         mXMParticles.clear();
     }
 
-    public void processGameBasket(GameBasket basket)
-    {
+    public void processGameBasket(GameBasket basket) {
         // only add non-existing game entities
         List<GameEntityBase> entities = basket.getGameEntities();
         for (GameEntityBase entity : entities) {
-            if (!mGameEntities.containsKey(entity.getEntityGuid()))
-                mGameEntities.put(entity.getEntityGuid(), entity);
+            if (mGameEntities.containsKey(entity.getEntityGuid())) {
+                mGameEntities.remove(entity.getEntityGuid());
+            }
+            mGameEntities.put(entity.getEntityGuid(), entity);
         }
 
         // only add non-existing xm particles
         List<XMParticle> xmParticles = basket.getEnergyGlobGuids();
         for (XMParticle particle : xmParticles) {
-            if (!mXMParticles.containsKey(particle.getCellId()))
+            if (!mXMParticles.containsKey(particle.getCellId())) {
                 mXMParticles.put(particle.getCellId(), particle);
+            }
         }
 
         // remove deleted entities
@@ -70,27 +69,25 @@ public class World
         mSignalDeletedEntities.emit(deletedEntityGuids);
         for (String guid : deletedEntityGuids) {
             mGameEntities.remove(guid);
-            mXMParticles.remove(Long.parseLong(guid.substring(0, 16), 16));
+            if (guid.contains(".")) {
+                mXMParticles.remove(Long.parseLong(guid.substring(0, 16), 16));
+            }
         }
     }
 
-    public final Map<String, GameEntityBase> getGameEntities()
-    {
+    public final Map<String, GameEntityBase> getGameEntities() {
         return mGameEntities;
     }
 
-    public final List<GameEntityBase> getGameEntitiesList()
-    {
+    public final List<GameEntityBase> getGameEntitiesList() {
         return new ArrayList<>(mGameEntities.values());
     }
 
-    public final Map<Long, XMParticle> getXMParticles()
-    {
+    public final Map<Long, XMParticle> getXMParticles() {
         return mXMParticles;
     }
 
-    public final List<XMParticle> getXMParticlesList()
-    {
+    public final List<XMParticle> getXMParticlesList() {
         return new ArrayList<>(mXMParticles.values());
     }
 

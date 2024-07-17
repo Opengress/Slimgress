@@ -3,8 +3,6 @@ package net.opengress.slimgress;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -18,8 +16,11 @@ import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Game.Inventory;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 
+import org.json.JSONArray;
+
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Objects;
 
 // FIXME user can't deploy on portal if portal belongs to wrong team!
 // maybe resonators should show PORTAL team colour instead of owner team colour
@@ -41,15 +42,18 @@ public class ActivityDeploy extends Activity {
     };
     private final Handler deployResultHandler = new Handler(msg -> {
         var data = msg.getData();
-        Log.d("ActivityDeploy", Arrays.toString(data.keySet().toArray(new String[0])));
-        String exception = data.getString("Exception");
-        String error = exception.isEmpty() ? data.getString("Error") : exception;
-        if (!error.isEmpty()) {
+        String error = data.getString("Exception");
+        if (error == null) {
+            error = data.getString("Error");
+        }
+        if (error != null && !error.isEmpty()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage(error).setTitle("Error");
             AlertDialog dialog = builder.create();
             dialog.show();
         }
+
+        setUpView();
         return false;
     });
 
@@ -58,8 +62,14 @@ public class ActivityDeploy extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_deploy);
+        setUpView();
+        mGame.connectSignalLocationUpdated(this::onReceiveLocation);
 
+    }
+
+    public void setUpView() {
         GameEntityPortal portal = mGame.getCurrentPortal();
+
         // hide a reso (don't do this)
 //        findViewById(R.id.deployScreenResonatorNW).setVisibility(View.INVISIBLE);
         // set text on reso (do do this)
@@ -70,11 +80,11 @@ public class ActivityDeploy extends Activity {
 
         // iterate over the resos (maybe unrolled) and set up their info and any relevant callbacks
         for (int id : mResoViewIds) {
-            ((Button) findViewById(id).findViewById(R.id.widgetActionButton)).setText("DPLY");
+            ((Button) findViewById(id).findViewById(R.id.widgetActionButton)).setText(R.string.dply);
             findViewById(id).findViewById(R.id.widgetActionButton).setOnClickListener(this::onDeployButtonPressed);
             findViewById(id).findViewById(R.id.widgetActionButton).setTag(id);
             // we don't do this in the reso widget because it's also used for recharging
-            ((TextView) findViewById(id).findViewById(R.id.resoLevelText)).setText("L0");
+            ((TextView) findViewById(id).findViewById(R.id.resoLevelText)).setText(R.string.l0);
         }
 
         for (var reso : portal.getPortalResonators()) {
@@ -96,7 +106,7 @@ public class ActivityDeploy extends Activity {
             } else {
                 widget.findViewById(R.id.widgetActionButton).setVisibility(View.VISIBLE);
                 widget.findViewById(R.id.widgetActionButton).setEnabled(true);
-                ((Button) widget.findViewById(R.id.widgetActionButton)).setText("UPGD");
+                ((Button) widget.findViewById(R.id.widgetActionButton)).setText(R.string.upgd);
                 widget.findViewById(R.id.widgetActionButton).setOnClickListener(this::onUpgradeButtonPressed);
             }
             ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).setMax(reso.getMaxEnergy());
@@ -106,8 +116,6 @@ public class ActivityDeploy extends Activity {
         int dist = (int) mGame.getLocation().getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng());
         updateInfoText(dist);
         setButtonsEnabled(dist <= mActionRadiusM);
-        mGame.connectSignalLocationUpdated(this::onReceiveLocation);
-
     }
 
     @SuppressLint("DefaultLocale")
@@ -174,7 +182,7 @@ public class ActivityDeploy extends Activity {
             Log.e("ActivityDeploy", String.format("Picked resonator: %d on slot %d", which, slot));
         });
         builder.show();
-        Log.e("ActivityDeploy", "Resos for deployment:" + levels);
+        Log.d("ActivityDeploy", "Resos for deployment:" + levels);
     }
 
     private void onReceiveLocation(Location location) {

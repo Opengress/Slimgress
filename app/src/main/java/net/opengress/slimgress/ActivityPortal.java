@@ -40,6 +40,7 @@ public class ActivityPortal extends Activity {
     private final GameState mGame = mApp.getGame();
     private final int mActionRadiusM = mGame.getKnobs().getScannerKnobs().getActionRadiusM();
     private Bitmap mBitmap;
+    private final int DEPLOY_INTENT_CODE = 1;
 
     @Override
     protected void onDestroy() {
@@ -49,11 +50,7 @@ public class ActivityPortal extends Activity {
         }
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_portal);
-
+    private void setUpView() {
         GameEntityPortal portal = mGame.getCurrentPortal();
 
         ((TextView)findViewById(R.id.portalTitle)).setText(portal.getPortalTitle());
@@ -65,6 +62,7 @@ public class ActivityPortal extends Activity {
 
         // FIXME: format this nicely
         ((TextView)findViewById(R.id.portalEnergy)).setText(getString(R.string.portal_energy, portal.getPortalEnergy()));
+
 
         // TODO: link to photostream with portal description, up/downvotes, whatever
         // also maybe hardcode this background image
@@ -104,6 +102,23 @@ public class ActivityPortal extends Activity {
         }
         ((TextView)findViewById(R.id.portalOwner)).setTextColor(0xFF000000 + portal.getPortalTeam().getColour());
 
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d("ActivityPortal", "OnActivityResult called");
+        setUpView();
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_portal);
+
+        setUpView();
+        GameEntityPortal portal = mGame.getCurrentPortal();
+
         Handler hackResultHandler = new Handler(msg -> {
             Bundle hackresultBundle = generateHackResultBundle(msg.getData());
             Intent myIntent = getIntent();
@@ -120,13 +135,14 @@ public class ActivityPortal extends Activity {
             return false;
         });
 
+        // FIXME make this work OK
         // testing atm, will try it properly later
         if (mGame.getAgent().getNickname().startsWith("MT")) {
             // tough luck if you don't have the agent names loaded up yet :thinking_face:
             findViewById(R.id.deployButton).setEnabled(true);
             findViewById(R.id.deployButton).setOnClickListener(v -> {
                 Intent myIntent = new Intent(getApplicationContext(), ActivityDeploy.class);
-                startActivity(myIntent);
+                startActivityForResult(myIntent, DEPLOY_INTENT_CODE);
             });
         }
 //        ((ProgressBar)findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());

@@ -20,6 +20,7 @@
 
 package net.opengress.slimgress.API.Game;
 
+import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static net.opengress.slimgress.API.Interface.Handshake.*;
 import static net.opengress.slimgress.API.Interface.Handshake.PregameStatus.*;
 
@@ -28,7 +29,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -40,6 +43,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.github.msteinbeck.sig4j.signal.Signal1;
 import com.github.msteinbeck.sig4j.slot.Slot1;
@@ -54,8 +58,10 @@ import net.opengress.slimgress.API.GameEntity.*;
 import net.opengress.slimgress.API.Item.*;
 import net.opengress.slimgress.API.Knobs.KnobsBundle;
 import net.opengress.slimgress.API.Player.*;
+import net.opengress.slimgress.ActivityDeploy;
 import net.opengress.slimgress.ActivitySplash;
 import net.opengress.slimgress.IngressApplication;
+import net.opengress.slimgress.ScannerView;
 
 public class GameState
 {
@@ -710,48 +716,34 @@ public class GameState
                             pretty_error = "You are moving too fast! You will be ready to play in "+t+"seconds";
                             break;
                         default:
-                            pretty_error = "Deployment failed: unknown error";
+                            pretty_error = "Deployment failed: unknown error: "+error;
                             break;
                     }
                     super.handleError(pretty_error);
                 }
 
-
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
-//                    initBundle();
-//                    HashMap<String, ItemBase> items = new HashMap<>();
-//                    for (ItemBase item: gameBasket.getInventory()) {
-//                        items.put(item.getEntityGuid(), item);
-//                        getData().putSerializable("items", items);
-//                    }
+                    super.handleGameBasket(gameBasket);
                 }
 
-//                @Override
-//                public void handleResult(JSONObject result) {
-//                    try {
-//                        initBundle();
-//                        ArrayList<String> items = new ArrayList<>();
-//                        ArrayList<String> bonusItems = new ArrayList<>();
-//                        JSONArray guids = result.getJSONObject("items").getJSONArray("addedGuids");
-//                        // glyphs aren't supported yet and this may need to be moved to another method
-//                        JSONObject glyphResponse = result.optJSONObject("glyphResponse");
-//                        if (glyphResponse != null) {
-//                            JSONArray bonusGuids = glyphResponse.getJSONArray("bonusGuids");
-//                            for (int x = 0; x < bonusGuids.length(); x++) {
-//                                bonusItems.add(bonusGuids.getString(x));
-//                            }
-//                            getData().putStringArrayList("bonusGuids", bonusItems);
-//                        }
-//                        for (int x=0; x < guids.length(); x++) {
-//                            items.add(guids.getString(x));
-//                        }
-//                        getData().putStringArrayList("guids", items);
-//                    } catch (JSONException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
+                @Override
+                public void finished() {
+                    Map<String, GameEntityBase> entities = getWorld().getGameEntities();
+                    Set<String> keys = entities.keySet();
+                    for (String key : keys) {
+                        final GameEntityBase entity = entities.get(key);
+                        assert entity != null;
+                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
+                                if (Objects.equals(entity.getEntityGuid(), portal.getEntityGuid())) {
+                                    setCurrentPortal((GameEntityPortal) entity);
+                                    break;
+                                }
+                            }
+                    }
+                    super.finished();
+                }
             });
         }
         catch (JSONException | InterruptedException e) {
