@@ -108,7 +108,7 @@ Another thing we don't want is to ever make a client which:
 - Lock map to compass
 
 ## v0.3 - by which time players should be able to leave marks on the world and play by game rules
-- Deploy on to portals to power them up
+- Deploy on to portals to power them up (done)
 - Flipcards
 - Weapons (firing of)
 - Data/battery saver toggles
