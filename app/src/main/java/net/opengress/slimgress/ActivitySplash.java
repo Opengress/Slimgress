@@ -233,7 +233,7 @@ public class ActivitySplash extends Activity {
     }
 
     private void onDownloadUpdateProgress(double v) {
-        // TODO find some way to report progress
+        // TODO find some way to report progress - notification?
         Log.d("ActivitySplash/DownloadProgress", String.valueOf(v));
     }
 

@@ -372,7 +372,6 @@ public class ScannerView extends Fragment implements SensorEventListener {
             }
         };
         mCompassOverlay.enableCompass();
-        // FIXME set compass size, i think it's too big
         mCompassOverlay.setCompassCenter(30, 60);
         mMap.getOverlays().add(mCompassOverlay);
 
