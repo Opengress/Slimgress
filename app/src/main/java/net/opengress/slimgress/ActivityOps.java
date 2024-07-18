@@ -91,7 +91,7 @@ public class ActivityOps extends FragmentActivity implements TabListener
     @Override
     public void onTabReselected(Tab tab, FragmentTransaction ft)
     {
-        // TODO Auto-generated method stub
+        // Auto-generated method stub
     }
 
     @Override
@@ -103,7 +103,7 @@ public class ActivityOps extends FragmentActivity implements TabListener
     @Override
     public void onTabUnselected(Tab tab, FragmentTransaction ft)
     {
-        // TODO Auto-generated method stub
+        // Auto-generated method stub
     }
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter

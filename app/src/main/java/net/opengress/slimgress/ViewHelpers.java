@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class ViewHelpers {
-    // FIXME duplicated in ScannerView
     @Nullable
     static Bitmap getBitmapFromAsset(String name, @NonNull AssetManager assetManager)
     {
