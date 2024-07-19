@@ -35,7 +35,7 @@ import android.widget.Toast;
 public class InventoryList extends BaseExpandableListAdapter
 {
     public final ArrayList<String> mGroupItem;
-    public ArrayList<String> mTempChild;
+    public ArrayList<InventoryListItem> mTempChild;
     public final ArrayList<Object> mChildItem;
     public LayoutInflater mInflater;
     public Activity mActivity;
@@ -67,14 +67,14 @@ public class InventoryList extends BaseExpandableListAdapter
     @Override
     public View getChildView(int groupPosition, final int childPosition, boolean isLastChild, View convertView, ViewGroup parent)
     {
-        mTempChild = (ArrayList<String>) mChildItem.get(groupPosition);
+        mTempChild = (ArrayList<InventoryListItem>) mChildItem.get(groupPosition);
         TextView text;
         if (convertView == null) {
             convertView = mInflater.inflate(R.layout.inventory_childrow, null);
         }
         text = convertView.findViewById(R.id.agentlevel);
-        text.setText(mTempChild.get(childPosition));
-        convertView.setOnClickListener(v -> Toast.makeText(mActivity, mTempChild.get(childPosition), Toast.LENGTH_SHORT).show());
+        text.setText(mTempChild.get(childPosition).getPrettyDescription());
+        convertView.setOnClickListener(v -> Toast.makeText(mActivity, text.getText(), Toast.LENGTH_SHORT).show());
         return convertView;
     }
 
