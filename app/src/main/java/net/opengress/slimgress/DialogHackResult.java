@@ -127,7 +127,7 @@ public class DialogHackResult extends Dialog
         Set<String> strings = data.keySet();
 
         for (String string : strings) {
-            items.put(string, new Pair<String, Integer>(string, data.get(string)));
+            items.put(string, new Pair<>(string, data.get(string)));
         }
 
         RecyclerView itemView = findViewById(R.id.items);
