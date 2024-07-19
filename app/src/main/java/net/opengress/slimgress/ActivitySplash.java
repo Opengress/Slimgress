@@ -40,6 +40,7 @@ import android.util.Log;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
 import java.io.BufferedInputStream;
@@ -89,7 +90,8 @@ public class ActivitySplash extends Activity {
 
                     // this will need further updates, like when user needs to select a faction
                     if (mGame.getHandshake().isValid() && mGame.getAgent().isAllowNicknameEdit()) {
-                        return showValidateUsernameDialog(null);
+                        showValidateUsernameDialog(null);
+                        return false;
                     } else {
                         procedWithLogin();
                     }
@@ -237,7 +239,7 @@ public class ActivitySplash extends Activity {
         Log.d("ActivitySplash/DownloadProgress", String.valueOf(v));
     }
 
-    private boolean showValidateUsernameDialog(String error) {
+    private void showValidateUsernameDialog(String error) {
         mApp.setLoggedIn(false);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -247,6 +249,31 @@ public class ActivitySplash extends Activity {
         builder.setMessage(Objects.requireNonNullElse(error, "Create an agent name. This is the name other agents will know you by.")+"\n\nType a new agent name.");
 
         // Set an EditText view to get user input
+        final EditText input = getEditTextInput();
+        builder.setView(input);
+
+        builder.setPositiveButton("Transmit", (dialog, whichButton) -> {
+            String value = input.getText().toString().trim();
+            // Do something with value!
+            mGame.intValidateNickname(value, new Handler(msg -> {
+
+                if (msg.getData().keySet().contains("Error")) {
+                    // do something with error
+                    Log.e("validateNicknameError", Objects.requireNonNull(msg.getData().getString("Error")));
+                    showValidateUsernameDialog(msg.getData().getString("Error"));
+                    return false;
+                }
+
+                showPersistUsernameDialog(value);
+                return false;
+            }));
+        });
+
+        Dialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private @NonNull EditText getEditTextInput() {
         final EditText input = new EditText(this);
         // this filter probably misses some edge cases
         input.setFilters(new InputFilter[] {(source, start, end, dest, dstart, dend) -> {
@@ -267,31 +294,10 @@ public class ActivitySplash extends Activity {
 
             return null;
         }});
-        builder.setView(input);
-
-        builder.setPositiveButton("Transmit", (dialog, whichButton) -> {
-            String value = input.getText().toString().trim();
-            // Do something with value!
-            mGame.intValidateNickname(value, new Handler(msg -> {
-
-                if (msg.getData().keySet().contains("Error")) {
-                    // do something with error
-                    Log.e("validateNicknameError", msg.getData().getString("Error"));
-                    showValidateUsernameDialog(msg.getData().getString("Error"));
-                    return false;
-                }
-
-                return showPersistUsernameDialog(value);
-            }));
-        });
-
-        Dialog dialog = builder.create();
-        dialog.show();
-
-        return false;
+        return input;
     }
 
-    private boolean showPersistUsernameDialog(String name) {
+    private void showPersistUsernameDialog(String name) {
         mApp.setLoggedIn(false);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -322,8 +328,6 @@ public class ActivitySplash extends Activity {
 
         Dialog dialog = builder.create();
         dialog.show();
-
-        return false;
     }
 
 

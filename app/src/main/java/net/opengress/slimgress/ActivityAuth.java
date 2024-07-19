@@ -39,6 +39,8 @@ import android.widget.TextView;
 
 import org.json.JSONObject;
 
+import java.util.Objects;
+
 public class ActivityAuth extends Activity
 {
     private final IngressApplication mApp = IngressApplication.getInstance();
@@ -133,7 +135,7 @@ public class ActivityAuth extends Activity
             myWebView.setWebViewClient(new WebViewClient() {
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                    return !request.getUrl().getPath().startsWith("/embed") && !request.getUrl().getPath().startsWith("/login") && !request.getUrl().getPath().startsWith("/auth");
+                    return !Objects.requireNonNull(request.getUrl().getPath()).startsWith("/embed") && !request.getUrl().getPath().startsWith("/login") && !request.getUrl().getPath().startsWith("/auth");
                 }
 
                 @Override

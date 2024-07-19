@@ -4,7 +4,7 @@
         Base application theme, dependent on API level. This theme is replaced
         by AppBaseTheme from res/values-vXX/styles.xml on newer devices.
     -->
-    <style name="AppBaseTheme" parent="android:ThemeOverlay.Material.Dark"></style>
+    <style name="AppBaseTheme" parent="android:ThemeOverlay.Material.Dark" />
 
     <style name="AppTheme.NoActionBar" parent="android:Theme.Black.NoTitleBar.Fullscreen">
         <item name="windowActionBar">false</item>

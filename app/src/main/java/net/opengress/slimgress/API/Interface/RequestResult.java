@@ -102,12 +102,12 @@ public class RequestResult
         try {
             // handle exception string if available
             String excString = json.optString("exception");
-            if (excString.length() > 0)
+            if (!excString.isEmpty())
                 result.handleException(excString);
 
             // handle error code if available
             String error = json.optString("error");
-            if (error.length() > 0)
+            if (!error.isEmpty())
                 result.handleError(error);
             else if (json.has("error"))
                 Log.w("RequestResult", "request contains an unknown error type");

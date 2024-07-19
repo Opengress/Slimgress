@@ -183,6 +183,7 @@ public class ActivityPortal extends Activity {
         HashMap<String, Integer> bonusItems = new HashMap<>();
         if (guids != null && !guids.isEmpty()) {
             for (String guid : guids) {
+                assert rawItems != null;
                 ItemBase item = Objects.requireNonNull(rawItems.get(guid));
                 String name = getPrettyItemName(item);
                 putItemInMap(items, name);
@@ -192,6 +193,7 @@ public class ActivityPortal extends Activity {
         // this should always be false until I implement glyph hacking
         if (bonusGuids != null && !bonusGuids.isEmpty()) {
             for (String guid : bonusGuids) {
+                assert rawItems != null;
                 ItemBase item = Objects.requireNonNull(rawItems.get(guid));
                 String name = getPrettyItemName(item);
                 putItemInMap(bonusItems, name);

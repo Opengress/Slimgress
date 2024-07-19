@@ -51,9 +51,7 @@ public class World {
         // only add non-existing game entities
         List<GameEntityBase> entities = basket.getGameEntities();
         for (GameEntityBase entity : entities) {
-            if (mGameEntities.containsKey(entity.getEntityGuid())) {
-                mGameEntities.remove(entity.getEntityGuid());
-            }
+            mGameEntities.remove(entity.getEntityGuid());
             mGameEntities.put(entity.getEntityGuid(), entity);
         }
 

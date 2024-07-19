@@ -49,11 +49,6 @@ public class IngressApplication extends Application
     }
 
     @Override
-    public void onTerminate() {
-        super.onTerminate();
-    }
-
-    @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
 

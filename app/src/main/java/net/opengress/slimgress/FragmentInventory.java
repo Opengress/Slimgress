@@ -194,7 +194,7 @@ public class FragmentInventory extends Fragment implements OnChildClickListener
                 List<ItemBase> items = inv.getItems(type, rarity);
                 count += items.size();
 
-                if (items.size() > 0) {
+                if (!items.isEmpty()) {
                     ItemMod theFirstItem = (ItemMod) (items.get(0));
                     String descr = theFirstItem.getModDisplayName();
 
@@ -221,7 +221,7 @@ public class FragmentInventory extends Fragment implements OnChildClickListener
                             break;
                     }
 
-                    if (items.size() > 0) {
+                    if (!items.isEmpty()) {
                         if (items.size() > 1)
                             descr += " (" + items.size() + ")";
                         mGroupMods.add(descr);
@@ -244,7 +244,7 @@ public class FragmentInventory extends Fragment implements OnChildClickListener
             count += items.size();
 
             String descr = "L" + level + " Resonator";
-            if (items.size() > 0) {
+            if (!items.isEmpty()) {
                 if (items.size() > 1)
                     descr += " (" + items.size() + ")";
                 mGroupResonators.add(descr);
@@ -266,7 +266,7 @@ public class FragmentInventory extends Fragment implements OnChildClickListener
             count += items.size();
 
             String descr = "L" + level + " XMP";
-            if (items.size() > 0) {
+            if (!items.isEmpty()) {
                 if (items.size() > 1)
                     descr += " (" + items.size() + ")";
                 mGroupWeapons.add(descr);
@@ -279,7 +279,7 @@ public class FragmentInventory extends Fragment implements OnChildClickListener
             count += items.size();
 
             String descr = "L" + level + " UltraStrike";
-            if (items.size() > 0) {
+            if (!items.isEmpty()) {
                 if (items.size() > 1)
                     descr += " (" + items.size() + ")";
                 mGroupWeapons.add(descr);
@@ -327,7 +327,7 @@ public class FragmentInventory extends Fragment implements OnChildClickListener
             count += items.size();
 
             String descr = "L" + level + " PowerCube";
-            if (items.size() > 0) {
+            if (!items.isEmpty()) {
                 if (items.size() > 1)
                     descr += " (" + items.size() + ")";
                 mGroupPowerCubes.add(descr);

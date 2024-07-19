@@ -142,7 +142,7 @@ public class GameBasket
 
     private void processEnergyGlobGuids(JSONArray energyGlobGuids, String timestamp) throws JSONException
     {
-        if (energyGlobGuids != null && timestamp.length() > 0) {
+        if (energyGlobGuids != null && !timestamp.isEmpty()) {
             for (int i = 0; i < energyGlobGuids.length(); i++) {
                 String guid = energyGlobGuids.getString(i);
 

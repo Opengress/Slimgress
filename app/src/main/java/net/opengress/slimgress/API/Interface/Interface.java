@@ -22,6 +22,7 @@
 package net.opengress.slimgress.API.Interface;
 
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Objects;
