@@ -21,10 +21,13 @@
 
 package net.opengress.slimgress;
 
+import static androidx.core.content.ContextCompat.getDrawable;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Game.Inventory;
 import net.opengress.slimgress.API.Item.ItemBase;
@@ -39,6 +42,7 @@ import net.opengress.slimgress.API.Item.ItemMedia;
 import android.os.Bundle;
 import android.os.Handler;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
@@ -149,7 +153,8 @@ public class FragmentInventory extends Fragment {
                 if (!theItem1.getMediaHasBeenViewed())
                     descr += " [NEW]";
 
-                InventoryListItem media = new InventoryListItem(descr, ItemType.Media, "@drawable/ic_launcher", medias);
+                InventoryListItem media = new InventoryListItem(descr, ItemType.Media, getDrawable(getContext(), R.drawable.no_image), medias);
+                media.setRarity(theItem1.getItemRarity());
                 mGroupMedia.add(media);
             }
         }
@@ -186,38 +191,7 @@ public class FragmentInventory extends Fragment {
                 count += items.size();
 
                 if (!items.isEmpty()) {
-                    ItemMod theFirstItem = (ItemMod) (items.get(0));
-                    String descr = theFirstItem.getModDisplayName();
-
-                    switch (theFirstItem.getItemRarity()) {
-                        case None:
-                            break;
-                        case LessCommon:
-                            descr += " - Less Common";
-                            break;
-                        case Common:
-                            descr += " - Common";
-                            break;
-                        case VeryCommon:
-                            descr += " - Very Common";
-                            break;
-                        case Rare:
-                            descr += " - Rare";
-                            break;
-                        case VeryRare:
-                            descr += " - VeryRare";
-                            break;
-                        case ExtraRare:
-                            descr += " - Extra Rare";
-                            break;
-                    }
-
-                    ArrayList<String> mods = new ArrayList<>();
-                    for (ItemBase item : items) {
-                        mods.add(item.getEntityGuid());
-                    }
-
-                    InventoryListItem mod = new InventoryListItem(descr, type, "@drawable/ic_launcher", mods);
+                    InventoryListItem mod = getModInventoryListItem(type, items);
                     mGroupMods.add(mod);
                 }
             }
@@ -225,6 +199,44 @@ public class FragmentInventory extends Fragment {
 
         mGroupNames.add("Mods (" + count + ")");
         mGroups.add(mGroupMods);
+    }
+
+    private @NonNull InventoryListItem getModInventoryListItem(ItemType type, List<ItemBase> items) {
+        ItemMod theFirstItem = (ItemMod) (items.get(0));
+        String descr = theFirstItem.getModDisplayName();
+        var rarity = theFirstItem.getItemRarity();
+
+        switch (rarity) {
+            case None:
+                break;
+            case LessCommon:
+                descr += " - Less Common";
+                break;
+            case Common:
+                descr += " - Common";
+                break;
+            case VeryCommon:
+                descr += " - Very Common";
+                break;
+            case Rare:
+                descr += " - Rare";
+                break;
+            case VeryRare:
+                descr += " - VeryRare";
+                break;
+            case ExtraRare:
+                descr += " - Extra Rare";
+                break;
+        }
+
+        ArrayList<String> mods = new ArrayList<>();
+        for (ItemBase item : items) {
+            mods.add(item.getEntityGuid());
+        }
+
+        var mod = new InventoryListItem(descr, type, getDrawable(getContext(), R.drawable.no_image), mods);
+        mod.setRarity(rarity);
+        return mod;
     }
 
     void fillResonators() {
@@ -241,7 +253,35 @@ public class FragmentInventory extends Fragment {
                 for (ItemBase item : items) {
                     resos.add(item.getEntityGuid());
                 }
-                InventoryListItem reso = new InventoryListItem(descr, ItemType.Resonator, "@drawable/ic_launcher", resos);
+                int drawable = R.drawable.no_image;
+                switch (level) {
+                    case 1:
+                        drawable = R.drawable.r1;
+                        break;
+                    case 2:
+                        drawable = R.drawable.r2;
+                        break;
+                    case 3:
+                        drawable = R.drawable.r3;
+                        break;
+                    case 4:
+                        drawable = R.drawable.r4;
+                        break;
+                    case 5:
+                        drawable = R.drawable.r5;
+                        break;
+                    case 6:
+                        drawable = R.drawable.r6;
+                        break;
+                    case 7:
+                        drawable = R.drawable.r7;
+                        break;
+                    case 8:
+                        drawable = R.drawable.r8;
+                        break;
+                }
+                InventoryListItem reso = new InventoryListItem(descr, ItemType.Resonator, getDrawable(getContext(), drawable), resos);
+                reso.setRarity(items.get(0).getItemRarity());
                 mGroupResonators.add(reso);
             }
         }
@@ -265,7 +305,9 @@ public class FragmentInventory extends Fragment {
                 for (ItemBase item : items) {
                     weapons.add(item.getEntityGuid());
                 }
-                InventoryListItem weapon = new InventoryListItem(descr, ItemType.Resonator, "@drawable/ic_launcher", weapons);
+                InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponXMP, getDrawable(getContext(), R.drawable.no_image), weapons);
+                // should come from server
+                weapon.setRarity(Rarity.VeryCommon);
                 mGroupWeapons.add(weapon);
             }
         }
@@ -281,7 +323,9 @@ public class FragmentInventory extends Fragment {
                 for (ItemBase item : items) {
                     weapons.add(item.getEntityGuid());
                 }
-                InventoryListItem weapon = new InventoryListItem(descr, ItemType.Resonator, "@drawable/ic_launcher", weapons);
+                InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponUltraStrike, getDrawable(getContext(), R.drawable.no_image), weapons);
+                // should come from server
+                weapon.setRarity(Rarity.VeryCommon);
                 mGroupWeapons.add(weapon);
             }
         }
@@ -292,7 +336,6 @@ public class FragmentInventory extends Fragment {
         ArrayList<String> adas = new ArrayList<>();
         count += items.size();
 
-        int adaCount = 0, jarvisCount = 0;
         for (ItemBase item : items) {
             ItemFlipCard theItem = (ItemFlipCard) item;
             if (theItem.getFlipCardType() == FlipCardType.Ada)
@@ -303,15 +346,19 @@ public class FragmentInventory extends Fragment {
 
         String descr = "ADA Refactor";
         if (!adas.isEmpty()) {
-            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, "@drawable/ic_launcher", adas);
+            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(getContext(), R.drawable.no_image), adas);
             weapon.setFlipCardType(FlipCardType.Ada);
+            // should come from server
+            weapon.setRarity(Rarity.VeryRare);
             mGroupWeapons.add(weapon);
         }
 
         descr = "Jarvis Virus";
         if (!jarvises.isEmpty()) {
-            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, "@drawable/ic_launcher", jarvises);
+            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(getContext(), R.drawable.no_image), jarvises);
             weapon.setFlipCardType(FlipCardType.Jarvis);
+            // should come from server
+            weapon.setRarity(Rarity.VeryRare);
             mGroupWeapons.add(weapon);
         }
 
@@ -333,7 +380,9 @@ public class FragmentInventory extends Fragment {
                 for (ItemBase item : items) {
                     cubes.add(item.getEntityGuid());
                 }
-                InventoryListItem cube = new InventoryListItem(descr, ItemType.Resonator, "@drawable/ic_launcher", cubes);
+                InventoryListItem cube = new InventoryListItem(descr, ItemType.PowerCube, getDrawable(getContext(), R.drawable.no_image), cubes);
+                // should come from server
+                cube.setRarity(Rarity.VeryCommon);
                 mGroupResonators.add(cube);
             }
         }
@@ -374,7 +423,8 @@ public class FragmentInventory extends Fragment {
                 }
             }
 
-            InventoryListItem key = new InventoryListItem(descr, ItemType.Media, "@drawable/ic_launcher", keys);
+            InventoryListItem key = new InventoryListItem(descr, ItemType.PortalKey, getDrawable(getContext(), R.drawable.no_image), keys);
+            key.setLocation(new Location(theItem1.getPortalLocation()).getS2LatLng());
             mGroupPortalKeys.add(key);
         }
         mGroupNames.add("PortalKeys (" + count + ")");

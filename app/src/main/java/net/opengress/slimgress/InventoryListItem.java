@@ -1,5 +1,10 @@
 package net.opengress.slimgress;
 
+import android.graphics.drawable.Drawable;
+
+import com.google.common.geometry.S2LatLng;
+
+import net.opengress.slimgress.API.Item.ItemBase.Rarity;
 import net.opengress.slimgress.API.Item.ItemBase.ItemType;
 import net.opengress.slimgress.API.Item.ItemFlipCard.FlipCardType;
 
@@ -8,14 +13,17 @@ import java.util.ArrayList;
 public class InventoryListItem {
     private String mDescription;
     private ItemType mType;
+    private Drawable mIcon;
     private String mImage;
     private final ArrayList<String> mIDs;
     private FlipCardType mFlipCardType;
+    private Rarity mRarity = Rarity.None;
+    private S2LatLng mLocation;
 
-    public InventoryListItem(String description, ItemType type, String image, ArrayList<String> IDs) {
+    public InventoryListItem(String description, ItemType type, Drawable icon, ArrayList<String> IDs) {
         this.mDescription = description;
         this.mType = type;
-        this.mImage = image;
+        this.mIcon = icon;
         this.mIDs = IDs;
     }
 
@@ -67,12 +75,12 @@ public class InventoryListItem {
         this.mDescription = description;
     }
 
-    public String getImage() {
-        return mImage;
+    public Drawable getIcon() {
+        return mIcon;
     }
 
-    public void setImage(String image) {
-        this.mImage = image;
+    public void setIcon(Drawable image) {
+        this.mIcon = image;
     }
 
     public ItemType getType() {
@@ -89,5 +97,33 @@ public class InventoryListItem {
 
     public void setFlipCardType(FlipCardType flipCardType) {
         this.mFlipCardType = flipCardType;
+    }
+
+    public void setLocation(S2LatLng loc) {
+        this.mLocation = loc;
+    }
+
+    public S2LatLng getLocation() {
+        return mLocation;
+    }
+
+    public double getDistance(S2LatLng playerLocation) {
+        return mLocation.getEarthDistance(playerLocation);
+    }
+
+    public Rarity getRarity() {
+        return mRarity;
+    }
+
+    public void setRarity(Rarity rarity) {
+        this.mRarity = rarity;
+    }
+
+    public String getImage() {
+        return mImage;
+    }
+
+    public void setImage(String mImage) {
+        this.mImage = mImage;
     }
 }

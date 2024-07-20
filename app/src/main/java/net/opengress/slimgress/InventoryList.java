@@ -29,6 +29,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.CheckedTextView;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -74,6 +75,18 @@ public class InventoryList extends BaseExpandableListAdapter
         }
         text = convertView.findViewById(R.id.agentlevel);
         text.setText(mTempChild.get(childPosition).getPrettyDescription());
+        ImageView image = convertView.findViewById(R.id.childImage);
+        image.setImageDrawable(mTempChild.get(childPosition).getIcon());
+//        image.setImageURI(Uri.parse(mTempChild.get(childPosition).getImage()));
+        // race condition
+//        String uri = mTempChild.get(childPosition).getImage().replace("t_lim1kstripfaces", "t_lim1kstripfaces_32");
+//        new Thread(() -> {
+//            Bitmap bitmap;
+//            bitmap = getImageBitmap(uri, mActivity.getApplicationContext().getCacheDir());
+//            if (bitmap != null) {
+//                mActivity.runOnUiThread(() -> image.setImageBitmap(bitmap));
+//            }
+//        }).start();
         convertView.setOnClickListener(v -> Toast.makeText(mActivity, text.getText(), Toast.LENGTH_SHORT).show());
         return convertView;
     }

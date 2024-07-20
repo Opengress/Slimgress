@@ -58,7 +58,7 @@ public class ActivityPortal extends Activity {
 
         // TODO: link to photostream with portal description, up/downvotes, whatever
         // also maybe hardcode this background image
-        ((ImageView)findViewById(R.id.portalImage)).setImageBitmap(getBitmapFromAsset("no_image.png", getAssets()));
+        ((ImageView)findViewById(R.id.portalImage)).setImageResource(R.drawable.no_image);
         new Thread(() -> {
             mBitmap = getImageBitmap(portal.getPortalImageUrl(), getApplicationContext().getCacheDir());
             if (mBitmap != null) {
