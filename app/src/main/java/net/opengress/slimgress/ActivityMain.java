@@ -36,6 +36,8 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.util.Objects;
+
 public class ActivityMain extends FragmentActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
     private final IngressApplication mApp = IngressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
@@ -70,8 +72,8 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        ScannerView scanner = (ScannerView) getFragmentManager().findFragmentById(R.id.map);
-        scanner.requestLocationUpdates();
+        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
+        Objects.requireNonNull(scanner).requestLocationUpdates();
     }
 
     private void showInfoBox(String message)
