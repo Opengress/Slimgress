@@ -28,10 +28,21 @@ import org.osmdroid.util.GeoPoint;
 import com.google.common.geometry.S2CellId;
 import com.google.common.geometry.S2LatLng;
 
+import java.math.BigInteger;
+
 public class Location
 {
     private final long latitude;
     private final long longitude;
+
+    private double hexToDecimal(String hex) {
+        BigInteger bigInt = new BigInteger(hex, 16);
+        // Handle negative values for latitude
+        if (bigInt.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+            bigInt = bigInt.subtract(BigInteger.ONE.shiftLeft(64)); // Adjust for signed 64-bit integer
+        }
+        return bigInt.doubleValue();
+    }
 
     public Location(JSONObject json) throws JSONException
     {
@@ -62,6 +73,13 @@ public class Location
         longitude = lngE6;
     }
 
+    public Location(String hexLatLng)
+    {
+        String[] parts = hexLatLng.split(",");
+        latitude = (long) hexToDecimal(parts[0]);
+        longitude = (long) hexToDecimal(parts[1]);
+    }
+
     public long getLatitude()
     {
         return latitude;
@@ -70,6 +88,10 @@ public class Location
     public long getLongitude()
     {
         return longitude;
+    }
+
+    public S2LatLng getS2LatLng() {
+        return S2LatLng.fromE6(latitude, longitude);
     }
 
     public GeoPoint getLatLng()
