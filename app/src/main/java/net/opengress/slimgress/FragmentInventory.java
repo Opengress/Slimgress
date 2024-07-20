@@ -305,9 +305,35 @@ public class FragmentInventory extends Fragment {
                 for (ItemBase item : items) {
                     weapons.add(item.getEntityGuid());
                 }
-                InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponXMP, getDrawable(getContext(), R.drawable.no_image), weapons);
-                // should come from server
-                weapon.setRarity(Rarity.VeryCommon);
+                int drawable = R.drawable.no_image;
+                switch (level) {
+                    case 1:
+                        drawable = R.drawable.x1;
+                        break;
+                    case 2:
+                        drawable = R.drawable.x2;
+                        break;
+                    case 3:
+                        drawable = R.drawable.x3;
+                        break;
+                    case 4:
+                        drawable = R.drawable.x4;
+                        break;
+                    case 5:
+                        drawable = R.drawable.x5;
+                        break;
+                    case 6:
+                        drawable = R.drawable.x6;
+                        break;
+                    case 7:
+                        drawable = R.drawable.x7;
+                        break;
+                    case 8:
+                        drawable = R.drawable.x8;
+                        break;
+                }
+                InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponXMP, getDrawable(getContext(), drawable), weapons);
+                weapon.setRarity(items.get(0).getItemRarity());
                 mGroupWeapons.add(weapon);
             }
         }
@@ -323,9 +349,35 @@ public class FragmentInventory extends Fragment {
                 for (ItemBase item : items) {
                     weapons.add(item.getEntityGuid());
                 }
-                InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponUltraStrike, getDrawable(getContext(), R.drawable.no_image), weapons);
-                // should come from server
-                weapon.setRarity(Rarity.VeryCommon);
+                int drawable = R.drawable.no_image;
+                switch (level) {
+                    case 1:
+                        drawable = R.drawable.u1;
+                        break;
+                    case 2:
+                        drawable = R.drawable.u2;
+                        break;
+                    case 3:
+                        drawable = R.drawable.u3;
+                        break;
+                    case 4:
+                        drawable = R.drawable.u4;
+                        break;
+                    case 5:
+                        drawable = R.drawable.u5;
+                        break;
+                    case 6:
+                        drawable = R.drawable.u6;
+                        break;
+                    case 7:
+                        drawable = R.drawable.u7;
+                        break;
+                    case 8:
+                        drawable = R.drawable.u8;
+                        break;
+                }
+                InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponUltraStrike, getDrawable(getContext(), drawable), weapons);
+                weapon.setRarity(items.get(0).getItemRarity());
                 mGroupWeapons.add(weapon);
             }
         }
@@ -348,8 +400,7 @@ public class FragmentInventory extends Fragment {
         if (!adas.isEmpty()) {
             InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(getContext(), R.drawable.no_image), adas);
             weapon.setFlipCardType(FlipCardType.Ada);
-            // should come from server
-            weapon.setRarity(Rarity.VeryRare);
+            weapon.setRarity(items.get(0).getItemRarity());
             mGroupWeapons.add(weapon);
         }
 
@@ -357,8 +408,7 @@ public class FragmentInventory extends Fragment {
         if (!jarvises.isEmpty()) {
             InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(getContext(), R.drawable.no_image), jarvises);
             weapon.setFlipCardType(FlipCardType.Jarvis);
-            // should come from server
-            weapon.setRarity(Rarity.VeryRare);
+            weapon.setRarity(items.get(0).getItemRarity());
             mGroupWeapons.add(weapon);
         }
 
@@ -381,8 +431,7 @@ public class FragmentInventory extends Fragment {
                     cubes.add(item.getEntityGuid());
                 }
                 InventoryListItem cube = new InventoryListItem(descr, ItemType.PowerCube, getDrawable(getContext(), R.drawable.no_image), cubes);
-                // should come from server
-                cube.setRarity(Rarity.VeryCommon);
+                cube.setRarity(items.get(0).getItemRarity());
                 mGroupResonators.add(cube);
             }
         }
@@ -423,8 +472,9 @@ public class FragmentInventory extends Fragment {
                 }
             }
 
-            InventoryListItem key = new InventoryListItem(descr, ItemType.PortalKey, getDrawable(getContext(), R.drawable.no_image), keys);
+            InventoryListItem key = new InventoryListItem(descr, ItemType.PortalKey, getDrawable(getContext(), R.drawable.portalkey), keys);
             key.setLocation(new Location(theItem1.getPortalLocation()).getS2LatLng());
+            key.setRarity(theItem1.getItemRarity());
             mGroupPortalKeys.add(key);
         }
         mGroupNames.add("PortalKeys (" + count + ")");
