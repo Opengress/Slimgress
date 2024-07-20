@@ -24,6 +24,8 @@ package net.opengress.slimgress;
 import java.util.ArrayList;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -87,7 +89,29 @@ public class InventoryList extends BaseExpandableListAdapter
 //                mActivity.runOnUiThread(() -> image.setImageBitmap(bitmap));
 //            }
 //        }).start();
-        convertView.setOnClickListener(v -> Toast.makeText(mActivity, text.getText(), Toast.LENGTH_SHORT).show());
+        convertView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                Toast.makeText(mActivity, text.getText(), Toast.LENGTH_SHORT).show();
+                // Open the first dialog
+                new AlertDialog.Builder(parent.getContext())
+                        .setTitle("First Dialog")
+                        .setMessage("This is the first dialog.")
+                        .setPositiveButton("Open Second Dialog", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Open the second dialog
+                                new AlertDialog.Builder(parent.getContext())
+                                        .setTitle("Second Dialog")
+                                        .setMessage("This is the second dialog.")
+                                        .setPositiveButton("OK", null)
+                                        .show();
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            }
+        });
         return convertView;
     }
 
