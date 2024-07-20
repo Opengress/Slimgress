@@ -10,4 +10,16 @@
     <color name="rectangle_red_fill">#600000</color>
     <color name="half_transparent">#C0000000</color>
     <color name="transparent">#00000000</color>
+    <!--
+        Don't know how correct the level colours are.
+        Inlined on https://ingress.fandom.com/wiki/Resonator on 20 July 2024
+    -->
+    <color name="level_one">#F0FF20</color>
+    <color name="level_two">#FFB01C</color>
+    <color name="level_three">#FF8733</color>
+    <color name="level_four">#FF632C</color>
+    <color name="level_five">#C80431</color>
+    <color name="level_six">#FF0E82</color>
+    <color name="level_seven">#B400FF</color>
+    <color name="level_eight">#5200FF</color>
 </resources>
