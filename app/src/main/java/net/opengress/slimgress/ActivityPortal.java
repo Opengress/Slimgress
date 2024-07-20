@@ -1,7 +1,6 @@
 package net.opengress.slimgress;
 
 import static net.opengress.slimgress.API.Common.Utils.getImageBitmap;
-import static net.opengress.slimgress.ViewHelpers.*;
 
 import android.app.Activity;
 import android.content.Intent;

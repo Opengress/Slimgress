@@ -268,7 +268,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mSensorManager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
+        mSensorManager = (SensorManager) requireActivity().getSystemService(SENSOR_SERVICE);
         mGame.getWorld().connectSignalDeletedEntities(this::onReceiveDeletedEntityGuids);
     }
 
@@ -344,7 +344,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
     }
 
     protected void makeRequest() {
-        ActivityCompat.requestPermissions(getActivity(),
+        ActivityCompat.requestPermissions(requireActivity(),
                 new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                 RECORD_REQUEST_CODE);
     }
@@ -353,7 +353,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        final Context context = this.getActivity();
+        final Context context = this.requireActivity();
 
         mPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
@@ -363,16 +363,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
         mMap.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
 
         //On screen compass
-        CompassOverlay mCompassOverlay = new CompassOverlay(context, new InternalCompassOrientationProvider(context),
-                mMap) {
-            @Override
-            public boolean onSingleTapConfirmed(final MotionEvent e, final MapView mapView) {
-                // FIXME set auto/manual rotation (may need to reset to north)
-                return true;
-            }
-        };
-        mCompassOverlay.enableCompass();
-        mCompassOverlay.setCompassCenter(30, 60);
+        CompassOverlay mCompassOverlay = getCompassOverlay(context);
         mMap.getOverlays().add(mCompassOverlay);
 
 
@@ -400,6 +391,20 @@ public class ScannerView extends Fragment implements SensorEventListener {
 
         setHasOptionsMenu(false);
 
+    }
+
+    private @NonNull CompassOverlay getCompassOverlay(Context context) {
+        CompassOverlay mCompassOverlay = new CompassOverlay(context, new InternalCompassOrientationProvider(context),
+                mMap) {
+            @Override
+            public boolean onSingleTapConfirmed(final MotionEvent e, final MapView mapView) {
+                // FIXME set auto/manual rotation (may need to reset to north)
+                return true;
+            }
+        };
+        mCompassOverlay.enableCompass();
+        mCompassOverlay.setCompassCenter(30, 60);
+        return mCompassOverlay;
     }
 
     @Override
@@ -453,7 +458,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
         // Other (location)
         // ===========================================================
 
-        if (ContextCompat.checkSelfPermission(getContext(),
+        if (ContextCompat.checkSelfPermission(requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
             builder.setMessage("Permission to access the device location is required for this app to function correctly.")
@@ -483,7 +488,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
             }
         }
         if (mLocationOverlay == null) {
-            mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(getContext()), mMap);
+            mLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(requireContext()), mMap);
             mLocationOverlay.enableMyLocation();
             mLocationOverlay.enableFollowLocation();
             mLocationOverlay.setEnableAutoStop(false);
@@ -516,14 +521,14 @@ public class ScannerView extends Fragment implements SensorEventListener {
             mMap.getOverlayManager().remove(mActionRadius);
         } else {
             setMapEnabled(true);
-            if (((TextView) getActivity().findViewById(R.id.quickMessage)).getText() == getContext().getResources().getText(R.string.location_inaccurate)) {
+            if (((TextView) getActivity().findViewById(R.id.quickMessage)).getText() == requireContext().getResources().getText(R.string.location_inaccurate)) {
                 getActivity().findViewById(R.id.quickMessage).setVisibility(View.INVISIBLE);
             }
         }
     }
 
     private void loadAssets() {
-        AssetManager assetManager = getActivity().getAssets();
+        AssetManager assetManager = requireActivity().getAssets();
         Map<String, TeamKnobs.TeamType> teams = mGame.getKnobs().getTeamKnobs().getTeams();
         for (String team : teams.keySet()) {
             mIcons.put(team, ViewHelpers.getTintedImage("portalTexture_NEUTRAL.png", 0xff000000 + Objects.requireNonNull(teams.get(team)).getColour(), assetManager));
@@ -549,7 +554,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
                 return true;
             }
 
-            if (((TextView) getActivity().findViewById(R.id.quickMessage)).getText() == getContext().getResources().getText(R.string.scan_failed)) {
+            if (((TextView) getActivity().findViewById(R.id.quickMessage)).getText() == requireContext().getResources().getText(R.string.scan_failed)) {
                 getActivity().findViewById(R.id.quickMessage).setVisibility(View.INVISIBLE);
             }
 
@@ -633,7 +638,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
 
                 final net.opengress.slimgress.API.Common.Location location = particle.getCellLocation();
 
-                getActivity().runOnUiThread(() -> {
+                requireActivity().runOnUiThread(() -> {
                     Bitmap portalIcon;
                     // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
                     // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
@@ -664,7 +669,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
             }
             final net.opengress.slimgress.API.Common.Location location = portal.getPortalLocation();
 
-            getActivity().runOnUiThread(() -> {
+            requireActivity().runOnUiThread(() -> {
                 Bitmap portalIcon;
                 // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
                 // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
@@ -708,7 +713,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
                 final net.opengress.slimgress.API.Common.Location dest = link.getLinkDestinationLocation();
 
                 // TODO: decay link per portal health
-                getActivity().runOnUiThread(() -> {
+                requireActivity().runOnUiThread(() -> {
                     Team team = link.getLinkControllingTeam();
                     int color = 0xff000000 + team.getColour(); // adding opacity
 
@@ -735,7 +740,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
                 final net.opengress.slimgress.API.Common.Location vB = field.getFieldVertexB().getPortalLocation();
                 final net.opengress.slimgress.API.Common.Location vC = field.getFieldVertexC().getPortalLocation();
 
-                getActivity().runOnUiThread(() -> {
+                requireActivity().runOnUiThread(() -> {
 
                     // todo: decay field per portal health
                     Team team = field.getFieldControllingTeam();
