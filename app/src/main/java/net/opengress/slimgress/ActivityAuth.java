@@ -30,6 +30,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
@@ -112,10 +113,17 @@ public class ActivityAuth extends Activity
 
     private boolean isLoggedIn()
     {
+        String accountName;
+        String accountToken;
         // check if login data exists
-        SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName,  0);
-        String accountName = prefs.getString("session_name", null);
-        String accountToken = prefs.getString("session_id", null);
+        StrictMode.ThreadPolicy oldPolicy = StrictMode.allowThreadDiskReads();
+        try {
+            SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, 0);
+            accountName = prefs.getString("session_name", null);
+            accountToken = prefs.getString("session_id", null);
+        } finally {
+            StrictMode.setThreadPolicy(oldPolicy);
+        }
 
         return accountName != null && accountToken != null;
     }

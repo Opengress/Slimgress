@@ -33,6 +33,7 @@ import org.json.JSONObject;
 import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.BuildConfig;
 
+import android.net.TrafficStats;
 import android.os.Build;
 import android.util.Log;
 
@@ -123,27 +124,28 @@ public class Interface
                         .build();
 
                 // do handshake
-                Response response;
                 synchronized(Interface.this) {
                     Log.d("Interface", "executing handshake");
-                    response = mClient.newCall(get).execute();
+                    TrafficStats.setThreadStatsTag((int) Thread.currentThread().getId());
+                    try (Response response = mClient.newCall(get).execute()) {
+
+                        String content = Objects.requireNonNull(response.body()).string();
+
+                        // check for content type json
+                        if (!Objects.requireNonNull(response.header("Content-Type")).contains("application/json"))
+                            throw new RuntimeException("content type is not json");
+
+                        // leaving this here in case it's ever implemented serverside for some reason
+                        content = content.replace("while(1);", "");
+
+                        // handle handshake data
+                        callback.handle(new Handshake(new JSONObject(content)));
+
+                        Log.d("Interface", "handshake finished");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
-
-
-                String content = Objects.requireNonNull(response.body()).string();
-
-                    // check for content type json
-                    if (!Objects.requireNonNull(response.header("Content-Type")).contains("application/json"))
-                        throw new RuntimeException("content type is not json");
-
-                    // leaving this here in case it's ever implemented serverside for some reason
-                    content = content.replace("while(1);", "");
-
-                    // handle handshake data
-                    callback.handle(new Handshake(new JSONObject(content)));
-
-                    Log.d("Interface", "handshake finished");
-
             }
             catch (Exception e) {
                 Log.e("Interface", e.getMessage());
@@ -219,6 +221,7 @@ public class Interface
                 String content = null;
 
                 synchronized(Interface.this) {
+                    TrafficStats.setThreadStatsTag((int) Thread.currentThread().getId());
                     try (Response response = mClient.newCall(post).execute()) {
 
                         if (response.code() == 401) {
