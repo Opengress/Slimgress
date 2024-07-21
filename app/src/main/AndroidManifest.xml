@@ -70,7 +70,7 @@
         <!-- ops activity with additional information -->
         <activity
             android:name="net.opengress.slimgress.ActivityOps"
-            android:theme="@android:style/Theme.Holo" >
+            android:theme="@style/AppTheme" >
         </activity>
 
         <!-- portal view activity with additional information -->
@@ -91,7 +91,7 @@
         <!-- viewing an inventory item -->
         <activity
             android:name="net.opengress.slimgress.ActivityInventoryItem"
-            android:theme="@style/Theme.AppCompat" >
+            android:theme="@style/AppTheme" >
         </activity>
     </application>
 

@@ -39,6 +39,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -51,7 +52,7 @@ public class DialogHackResult extends Dialog
         super(context);
         setContentView(R.layout.dialog_hack_result);
 
-        getWindow().setWindowAnimations(R.style.FadeAnimation);
+        Objects.requireNonNull(getWindow()).setWindowAnimations(R.style.FadeAnimation);
         //getWindow().setBackgroundDrawable(new ColorDrawable(android.R.color.transparent));
         getWindow().setBackgroundDrawable(new ColorDrawable(0));
         getWindow().setGravity(Gravity.BOTTOM);
@@ -106,20 +107,6 @@ public class DialogHackResult extends Dialog
         }, delay));
     }
 
-    public DialogHackResult setTouchable(boolean isTouchable)
-    {
-        if (isTouchable) {
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
-        }
-        else {
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
-        }
-
-        return this;
-    }
-
     // to be used when hack acquired items!
     public void setItems(HashMap<String, Integer> data) {
 
@@ -144,6 +131,7 @@ public class DialogHackResult extends Dialog
         private final LayoutInflater mInflater;
 
         // data is passed into the constructor
+        @SuppressWarnings("unchecked")
         public HackItemViewAdapter(Context context, HashMap<String, Pair<String, Integer>> items) {
             this.mInflater = LayoutInflater.from(context);
             this.mData = (Pair<String, Integer>[]) items.values().toArray(new Pair[0]);

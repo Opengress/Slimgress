@@ -21,6 +21,7 @@
 
 package net.opengress.slimgress;
 
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -38,7 +39,7 @@ public class DialogInfo extends Dialog
         super(context);
         setContentView(R.layout.dialog_infobox);
 
-        getWindow().setWindowAnimations(R.style.FadeAnimation);
+        Objects.requireNonNull(getWindow()).setWindowAnimations(R.style.FadeAnimation);
         //getWindow().setBackgroundDrawable(new ColorDrawable(android.R.color.transparent));
         getWindow().setBackgroundDrawable(new ColorDrawable(0));
 
@@ -71,25 +72,25 @@ public class DialogInfo extends Dialog
 
     public DialogInfo setDismissDelay(int delay)
     {
-        // automatically dismiss dialog after 3 seconds
+        // automatically dismiss dialog after x seconds
         setOnShowListener(dialog -> new Timer().schedule(new TimerTask() {
             @Override
             public void run()
             {
                 dialog.dismiss();
             }
-        }, 3000));
+        }, delay));
         return this;
     }
 
     public DialogInfo setTouchable(boolean isTouchable)
     {
         if (isTouchable) {
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
+            Objects.requireNonNull(getWindow()).addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
         }
         else {
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
+            Objects.requireNonNull(getWindow()).clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
         }
 

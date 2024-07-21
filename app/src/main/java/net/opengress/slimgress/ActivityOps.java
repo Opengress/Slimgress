@@ -21,27 +21,22 @@
 
 package net.opengress.slimgress;
 
-import static androidx.fragment.app.FragmentStatePagerAdapter.BEHAVIOR_SET_USER_VISIBLE_HINT;
-
-import java.util.Locale;
-
-import android.app.ActionBar;
-import android.app.ActionBar.Tab;
-import android.app.ActionBar.TabListener;
-import android.app.FragmentTransaction;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.viewpager.widget.ViewPager;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
 
-public class ActivityOps extends FragmentActivity implements TabListener
-{
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
+
+public class ActivityOps extends AppCompatActivity implements TabLayout.OnTabSelectedListener {
     SectionsPagerAdapter mSectionsPagerAdapter;
-    ViewPager mViewPager;
+    ViewPager2 mViewPager;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -50,71 +45,58 @@ public class ActivityOps extends FragmentActivity implements TabListener
         setContentView(R.layout.activity_ops);
 
         // Set up the action bar.
-        final ActionBar actionBar = getActionBar();
-        actionBar.setDisplayShowHomeEnabled(false);
-        actionBar.setDisplayShowTitleEnabled(false);
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the app.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(
-                getSupportFragmentManager(), BEHAVIOR_SET_USER_VISIBLE_HINT);
+        mSectionsPagerAdapter = new SectionsPagerAdapter(this);
 
         // Set up the ViewPager with the sections adapter.
         mViewPager = findViewById(R.id.pager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
-
-        // When swiping between different sections, select the corresponding
-        // tab. We can also use ActionBar.Tab#select() to do this if we have
-        // a reference to the Tab.
-        mViewPager
-                .addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-                    @Override
-                    public void onPageSelected(int position) {
-                        actionBar.setSelectedNavigationItem(position);
+        // Set up the TabLayout with the ViewPager.
+        TabLayout tabLayout = findViewById(R.id.tabs);
+        new TabLayoutMediator(tabLayout, mViewPager,
+                (tab, position) -> {
+                    switch (position) {
+                        case 0:
+                            tab.setText(R.string.ops_inventory);
+                            break;
+                        case 1:
+                            tab.setText(R.string.ops_user);
+                            break;
+                        case 2:
+                            tab.setText(R.string.ops_device);
+                            break;
                     }
-                });
-
-        // For each of the sections in the app, add a tab to the action bar.
-        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
-            // Create a tab with text corresponding to the page title defined by
-            // the adapter. Also specify this Activity object, which implements
-            // the TabListener interface, as the callback (listener) for when
-            // this tab is selected.
-            actionBar.addTab(actionBar.newTab()
-                    .setText(mSectionsPagerAdapter.getPageTitle(i))
-                    .setTabListener(this));
-        }
+                }).attach();
+        tabLayout.addOnTabSelectedListener(this);
     }
 
     @Override
-    public void onTabReselected(Tab tab, FragmentTransaction ft)
-    {
-        // Auto-generated method stub
-    }
-
-    @Override
-    public void onTabSelected(Tab tab, FragmentTransaction ft)
-    {
+    public void onTabSelected(TabLayout.Tab tab) {
         mViewPager.setCurrentItem(tab.getPosition());
     }
 
     @Override
-    public void onTabUnselected(Tab tab, FragmentTransaction ft)
-    {
+    public void onTabUnselected(TabLayout.Tab tab) {
         // Auto-generated method stub
     }
 
-    public class SectionsPagerAdapter extends FragmentPagerAdapter
-    {
-        public SectionsPagerAdapter(FragmentManager fm, int behavior)
-        {
-            super(fm, behavior);
+    @Override
+    public void onTabReselected(TabLayout.Tab tab) {
+        // Auto-generated method stub
+    }
+
+    public static class SectionsPagerAdapter extends FragmentStateAdapter {
+        public SectionsPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
+            super(fragmentActivity);
         }
 
         @NonNull
         @Override
-        public Fragment getItem(int position)
+        public Fragment createFragment(int position)
         {
             // getItem is called to instantiate the fragment for the given page.
             // Return a DummySectionFragment (defined as a static inner class
@@ -138,24 +120,10 @@ public class ActivityOps extends FragmentActivity implements TabListener
         }
 
         @Override
-        public int getCount()
+        public int getItemCount()
         {
             return 3;
         }
 
-        @Override
-        public CharSequence getPageTitle(int position)
-        {
-            Locale l = Locale.getDefault();
-            switch (position) {
-            case 0:
-                return getString(R.string.ops_inventory).toUpperCase(l);
-            case 1:
-                return getString(R.string.ops_user).toUpperCase(l);
-            case 2:
-                return getString(R.string.ops_device).toUpperCase(l);
-            }
-            return null;
-        }
     }
 }

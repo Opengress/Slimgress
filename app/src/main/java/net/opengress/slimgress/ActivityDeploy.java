@@ -65,6 +65,7 @@ public class ActivityDeploy extends Activity {
 
     }
 
+    @SuppressLint("DefaultLocale")
     public void setUpView() {
         GameEntityPortal portal = mGame.getCurrentPortal();
 
@@ -119,6 +120,7 @@ public class ActivityDeploy extends Activity {
     }
 
     @SuppressLint("DefaultLocale")
+    @SuppressWarnings("ConstantConditions")
     private void onUpgradeButtonPressed(View view) {
         int slot = layoutIdToResoSlot((Integer) view.getTag());
         Log.d("ActivityDeploy", "Pressed UPGRADE button: " + slot);
@@ -156,6 +158,7 @@ public class ActivityDeploy extends Activity {
     }
 
     @SuppressLint("DefaultLocale")
+    @SuppressWarnings("ConstantConditions")
     private void onDeployButtonPressed(View view) {
         int slot = layoutIdToResoSlot((Integer) view.getTag());
         Log.d("ActivityDeploy", "Pressed DEPLOY button: " + slot);
