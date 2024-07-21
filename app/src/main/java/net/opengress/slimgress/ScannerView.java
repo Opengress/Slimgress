@@ -22,7 +22,6 @@
 package net.opengress.slimgress;
 
 import static android.content.Context.SENSOR_SERVICE;
-import static android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_LOW;
 
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromAsset;
 
@@ -36,8 +35,8 @@ import java.util.Set;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
-import androidx.fragment.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -45,6 +44,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -55,7 +55,6 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.StrictMode;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -64,9 +63,13 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.graphics.Matrix;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.preference.PreferenceManager;
 
 import net.opengress.slimgress.API.Common.Team;
 import net.opengress.slimgress.API.Game.GameState;
@@ -106,6 +109,8 @@ public class ScannerView extends Fragment implements SensorEventListener {
     private HashMap<String, Polyline> mLines = null;
     private HashMap<String, Polygon> mPolygons = null;
 
+    private ActivityResultLauncher<Intent> mPortalActivityResultLauncher;
+
     // ===========================================================
     // Constants
     // ===========================================================
@@ -114,8 +119,6 @@ public class ScannerView extends Fragment implements SensorEventListener {
     private static final String PREFS_LATITUDE_STRING = "latitudeString";
     private static final String PREFS_LONGITUDE_STRING = "longitudeString";
     private static final String PREFS_ZOOM_LEVEL_DOUBLE = "zoomLevelDouble";
-
-    private final int PORTAL_INTENT_CODE = 1;
 
     // ===========================================================
     // Fields and permissions
@@ -143,20 +146,55 @@ public class ScannerView extends Fragment implements SensorEventListener {
     // ===========================================================
     // Other (location)
     // ===========================================================
-    MyLocationListener mLocationListener = null;
-    LocationManager mLocationManager = null;
-    MyLocationNewOverlay mLocationOverlay = null;
+    private MyLocationListener mLocationListener = null;
+    private LocationManager mLocationManager = null;
+    private MyLocationNewOverlay mLocationOverlay = null;
 
     // device sensor manager
     private SensorManager mSensorManager;
-    private Sensor mOrientationSensor;
+    private Sensor mAccelerometer;
+    private Sensor mMagnetometer;
+    private float[] mGravity;
+    private float[] mGeomagnetic;
+    private float mBearing = 0;
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        float bearing = event.accuracy >= SENSOR_STATUS_ACCURACY_LOW ? event.values[0] : 0;
-        var location = mCurrentLocation != null ? mCurrentLocation : (GeoPoint) mMap.getMapCenter();
-        mLastLocationAcquired = new Date();
-        drawPlayerCursor(location, bearing);
+        GeoPoint location;
+        if (mCurrentLocation != null) {
+            location = mCurrentLocation;
+            // todo: check this - did we acquire a location? i think not.
+            //  i don't think this makes sense.
+            mLastLocationAcquired = new Date();
+        } else {
+            location = (GeoPoint) mMap.getMapCenter();
+        }
+
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+            mGravity = event.values;
+        else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+            mGeomagnetic = event.values;
+
+        if (mGravity != null && mGeomagnetic != null) {
+            float[] R = new float[9];
+            float[] I = new float[9];
+            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+            if (success) {
+                float[] orientation = new float[3];
+                SensorManager.getOrientation(R, orientation);
+                float z = (float) (Math.toDegrees(orientation[0]) + 360) % 360;
+                float x = (float) (Math.toDegrees(orientation[1]) + 360) % 360;
+                /*
+                If x is 0, y should give correct info. but i can't get it from [2] so idk.
+                Then again, who holds their phone perfectly vertically?
+                 */
+                if (Math.abs(x) > 0) {
+                    z = (z + 180) % 360;
+                }
+                mBearing = z;
+            }
+        }
+        drawPlayerCursor(location, mBearing);
     }
 
     public void drawPlayerCursor(GeoPoint location, float bearing) {
@@ -204,21 +242,21 @@ public class ScannerView extends Fragment implements SensorEventListener {
 
     public class MyLocationListener implements LocationListener {
 
-        public void onLocationChanged(Location location) {
+        public void onLocationChanged(@NonNull Location location) {
             mCurrentLocation = new GeoPoint(location);
             mGame.updateLocation(new net.opengress.slimgress.API.Common.Location(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()));
             mLastLocationAcquired = new Date();
             displayMyCurrentLocationOverlay(mCurrentLocation, location.getBearing());
         }
 
-        public void onProviderDisabled(String provider) {
+        public void onProviderDisabled(@NonNull String provider) {
             if (!Objects.equals(provider, "gps")) {
                 return;
             }
             setLocationInaccurate(true);
         }
 
-        public void onProviderEnabled(String provider) {
+        public void onProviderEnabled(@NonNull String provider) {
             // don't register location as no longer inaccurate until new location info arrives
         }
 
@@ -231,7 +269,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
     private void displayMyCurrentLocationOverlay(GeoPoint currentLocation, float bearing) {
 
         mMap.getOverlayManager().remove(mActionRadius);
-        if (mOrientationSensor == null) {
+        if (mAccelerometer == null && mMagnetometer == null) {
             drawPlayerCursor(currentLocation, bearing);
         }
         mActionRadius.setPosition(currentLocation.destinationPoint(56.57, 315), currentLocation.destinationPoint(56.57, 135));
@@ -269,7 +307,75 @@ public class ScannerView extends Fragment implements SensorEventListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mSensorManager = (SensorManager) requireActivity().getSystemService(SENSOR_SERVICE);
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mMagnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         mGame.getWorld().connectSignalDeletedEntities(this::onReceiveDeletedEntityGuids);
+        mPortalActivityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        var data = result.getData();
+                        if (mGame.getLocation() != null) {
+                            final Handler uiHandler = new Handler();
+                            uiHandler.post(() -> {
+                                // guard against scanning too fast if request fails
+                                mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
+                                updateWorld(uiHandler);
+                            });
+
+                        }
+
+                        if (data == null) {
+                            return;
+                        }
+
+                        Bundle hackResultBundle = data.getBundleExtra("result");
+                        assert hackResultBundle != null;
+                        @SuppressWarnings("unchecked")
+                        HashMap<String, Integer> items = (HashMap<String, Integer>) hackResultBundle.getSerializable("items");
+                        @SuppressWarnings("unchecked")
+                        HashMap<String, Integer> bonusItems = (HashMap<String, Integer>) hackResultBundle.getSerializable("bonusItems");
+                        String error = hackResultBundle.getString("error");
+
+                        if (error != null) {
+                            // FIXME magic number and possibly (hopefully) handled by server
+                            mGame.getAgent().setEnergy(mGame.getAgent().getEnergy() - 50);
+                            var main = ((ActivityMain) getActivity());
+                            if (main != null) {
+                                main.updateAgent();
+                            }
+
+                            DialogHackResult newDialog = new DialogHackResult(getContext());
+//                newDialog.setTitle("");
+                            newDialog.setMessage(error);
+                            newDialog.show();
+                        } else {
+                            if (items != null) {
+                                DialogHackResult newDialog = new DialogHackResult(getContext());
+                                newDialog.setTitle("Acquired items");
+                                newDialog.setItems(items);
+                                newDialog.show();
+
+                                if (bonusItems != null) {
+                                    newDialog.setOnDismissListener(dialog -> {
+                                        DialogHackResult newDialog1 = new DialogHackResult(getContext());
+                                        newDialog1.setTitle("Bonus items");
+                                        newDialog1.setItems(bonusItems);
+                                        newDialog1.show();
+                                    });
+                                }
+
+                            } else if (bonusItems != null) {
+                                DialogHackResult newDialog = new DialogHackResult(getContext());
+                                newDialog.setTitle("Bonus items");
+                                newDialog.setItems(bonusItems);
+                                newDialog.show();
+                            }
+
+                        }
+                    }
+                }
+        );
     }
 
     public void onReceiveDeletedEntityGuids(List<String> deletedEntityGuids) {
@@ -314,7 +420,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
         // allows map tiles to be cached in SQLite so map draws properly
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitDiskReads().permitDiskWrites().build();
         StrictMode.setThreadPolicy(policy);
-        Configuration.getInstance().load(getContext(), PreferenceManager.getDefaultSharedPreferences(getContext()));
+        Configuration.getInstance().load(requireContext(), PreferenceManager.getDefaultSharedPreferences(requireContext()));
 
         // set up map tile source before creating map, so we don't download wrong tiles wastefully
         final ITileSource tileSource = new XYTileSource("CartoDB Dark Matter", 3, 18, 256, ".png",
@@ -350,8 +456,8 @@ public class ScannerView extends Fragment implements SensorEventListener {
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
         final Context context = this.requireActivity();
 
@@ -389,7 +495,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
         final double longitude = Double.parseDouble(longitudeString);
         mMap.setExpectedCenter(new GeoPoint(latitude, longitude));
 
-        setHasOptionsMenu(false);
+//        setHasOptionsMenu(false);
 
     }
 
@@ -444,12 +550,12 @@ public class ScannerView extends Fragment implements SensorEventListener {
             displayMyCurrentLocationOverlay(mCurrentLocation, 0);
         }
 
-        // TODO: 1. use not-deprecated stuff, 2. handle devices with no compass
-        //  for the system's orientation sensor registered listeners
-        // see https://stackoverflow.com/a/17477963
-        mOrientationSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
-        if (mOrientationSensor != null) {
-            mSensorManager.registerListener(this, mOrientationSensor,
+        if (mAccelerometer != null) {
+            mSensorManager.registerListener(this, mAccelerometer,
+                    SensorManager.SENSOR_DELAY_GAME);
+        }
+        if (mMagnetometer != null) {
+            mSensorManager.registerListener(this, mMagnetometer,
                     SensorManager.SENSOR_DELAY_GAME);
         }
 
@@ -689,7 +795,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
                         if (touchedBy(e)) {
                             Intent myIntent = new Intent(getContext(), ActivityPortal.class);
                             mGame.setCurrentPortal(portal);
-                            startActivityForResult(myIntent, PORTAL_INTENT_CODE);
+                            mPortalActivityResultLauncher.launch(myIntent);
                             return true;
                         }
                         return false;
@@ -720,8 +826,10 @@ public class ScannerView extends Fragment implements SensorEventListener {
                     Polyline line = new Polyline(mMap);
                     line.addPoint(origin.getLatLng());
                     line.addPoint(dest.getLatLng());
-                    line.setColor(color);
-                    line.setWidth(2);
+                    Paint paint = new Paint();
+                    paint.setColor(color);
+                    paint.setStrokeWidth(2);
+                    line.getOutlinePaint().set(paint);
 //                        line.zIndex(2);
                     line.setOnClickListener((poly, mapView, eventPos) -> false);
 
@@ -750,8 +858,10 @@ public class ScannerView extends Fragment implements SensorEventListener {
                     polygon.addPoint(new GeoPoint(vA.getLatLng()));
                     polygon.addPoint(new GeoPoint(vB.getLatLng()));
                     polygon.addPoint(new GeoPoint(vC.getLatLng()));
-                    polygon.setFillColor(color);
-                    polygon.setStrokeWidth(0);
+                    Paint paint = new Paint();
+                    paint.setColor(color);
+                    paint.setStrokeWidth(0);
+                    polygon.getOutlinePaint().set(paint);
 //                        polygon.zIndex(1);
                     polygon.setOnClickListener((poly, mapView, eventPos) -> false);
 
@@ -762,66 +872,4 @@ public class ScannerView extends Fragment implements SensorEventListener {
         }
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (mGame.getLocation() != null) {
-            final Handler uiHandler = new Handler();
-            uiHandler.post(() -> {
-                // guard against scanning too fast if request fails
-                mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
-                updateWorld(uiHandler);
-            });
-
-        }
-        if (requestCode != PORTAL_INTENT_CODE) {
-            Log.e("ScannerView", "Unknown intent code, I don't understand: " + requestCode);
-            return;
-        }
-        if (data == null) {
-            return;
-        }
-
-        Bundle hackResultBundle = data.getBundleExtra("result");
-        HashMap<String, Integer> items = (HashMap<String, Integer>) hackResultBundle.getSerializable("items");
-        HashMap<String, Integer> bonusItems = (HashMap<String, Integer>) hackResultBundle.getSerializable("bonusItems");
-        String error = hackResultBundle.getString("error");
-
-        if (error != null) {
-            // FIXME magic number and possibly (hopefully) handled by server
-            mGame.getAgent().setEnergy(mGame.getAgent().getEnergy() - 50);
-            var main = ((ActivityMain) getActivity());
-            if (main != null) {
-                main.updateAgent();
-            }
-
-            DialogHackResult newDialog = new DialogHackResult(getContext());
-//                newDialog.setTitle("");
-            newDialog.setMessage(error);
-            newDialog.show();
-        } else {
-            if (items != null) {
-                DialogHackResult newDialog = new DialogHackResult(getContext());
-                newDialog.setTitle("Acquired items");
-                newDialog.setItems(items);
-                newDialog.show();
-
-                if (bonusItems != null) {
-                    newDialog.setOnDismissListener(dialog -> {
-                        DialogHackResult newDialog1 = new DialogHackResult(getContext());
-                        newDialog1.setTitle("Bonus items");
-                        newDialog1.setItems(bonusItems);
-                        newDialog1.show();
-                    });
-                }
-
-            } else if (bonusItems != null) {
-                DialogHackResult newDialog = new DialogHackResult(getContext());
-                newDialog.setTitle("Bonus items");
-                newDialog.setItems(bonusItems);
-                newDialog.show();
-            }
-
-        }
-        super.onActivityResult(requestCode, resultCode, data);
-    }
 }
