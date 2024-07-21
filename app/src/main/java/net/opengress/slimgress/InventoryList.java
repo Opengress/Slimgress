@@ -24,8 +24,8 @@ package net.opengress.slimgress;
 import java.util.ArrayList;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,11 +41,13 @@ public class InventoryList extends BaseExpandableListAdapter
     public final ArrayList<Object> mChildItem;
     public LayoutInflater mInflater;
     public Activity mActivity;
+    private Context mContext;
 
-    public InventoryList(ArrayList<String> grList, ArrayList<Object> childItem)
+    public InventoryList(Context context, ArrayList<String> grList, ArrayList<Object> childItem)
     {
         mGroupItem = grList;
         mChildItem = childItem;
+        mContext = context;
     }
 
     public void setInflater(LayoutInflater inflater, Activity act)
@@ -76,9 +78,10 @@ public class InventoryList extends BaseExpandableListAdapter
             convertView = mInflater.inflate(R.layout.inventory_childrow, parent, false);
         }
         text = convertView.findViewById(R.id.agentlevel);
-        text.setText(mTempChild.get(childPosition).getPrettyDescription());
+        var item = mTempChild.get(childPosition);
+        text.setText(item.getPrettyDescription());
         ImageView image = convertView.findViewById(R.id.childImage);
-        image.setImageDrawable(mTempChild.get(childPosition).getIcon());
+        image.setImageDrawable(item.getIcon());
 //        image.setImageURI(Uri.parse(mTempChild.get(childPosition).getImage()));
         // race condition
 //        String uri = mTempChild.get(childPosition).getImage().replace("t_lim1kstripfaces", "t_lim1kstripfaces_32");
@@ -92,24 +95,28 @@ public class InventoryList extends BaseExpandableListAdapter
         convertView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Toast.makeText(mActivity, text.getText(), Toast.LENGTH_SHORT).show();
-                // Open the first dialog
-                new AlertDialog.Builder(parent.getContext())
-                        .setTitle("First Dialog")
-                        .setMessage("This is the first dialog.")
-                        .setPositiveButton("Open Second Dialog", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                // Open the second dialog
-                                new AlertDialog.Builder(parent.getContext())
-                                        .setTitle("Second Dialog")
-                                        .setMessage("This is the second dialog.")
-                                        .setPositiveButton("OK", null)
-                                        .show();
-                            }
-                        })
-                        .setNegativeButton("Cancel", null)
-                        .show();
+////                Toast.makeText(mActivity, text.getText(), Toast.LENGTH_SHORT).show();
+//                // Open the first dialog
+//                new AlertDialog.Builder(parent.getContext())
+//                        .setTitle("First Dialog")
+//                        .setMessage(item.getPrettyDescription())
+//                        .setPositiveButton("Open Second Dialog", new DialogInterface.OnClickListener() {
+//                            @Override
+//                            public void onClick(DialogInterface dialog, int which) {
+//                                // Open the second dialog
+//                                new AlertDialog.Builder(parent.getContext())
+//                                        .setTitle("Second Dialog")
+//                                        .setMessage(item.getDescription())
+//                                        .setPositiveButton("OK", null)
+//                                        .show();
+//                            }
+//                        })
+//                        .setNegativeButton("Cancel", null)
+//                        .show();
+                Intent intent = new Intent(mContext, ActivityInventoryItem.class);
+                intent.putExtra("item", item);
+                item.getLocation();
+                mContext.startActivity(intent);
             }
         });
         return convertView;
