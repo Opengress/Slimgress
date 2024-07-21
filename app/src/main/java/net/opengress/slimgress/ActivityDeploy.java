@@ -1,5 +1,7 @@
 package net.opengress.slimgress;
 
+import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -89,6 +91,8 @@ public class ActivityDeploy extends Activity {
             }
             var widget = findViewById(resoSlotToLayoutId(reso.slot));
             ((TextView) widget.findViewById(R.id.resoLevelText)).setText(String.format("L%d", reso.level));
+            int levelColour = getLevelColor(reso.level);
+            ((TextView) widget.findViewById(R.id.resoLevelText)).setTextColor(getResources().getColor(levelColour, null));
             ((TextView) widget.findViewById(R.id.positionText)).setText(String.format("%dm %s", reso.distanceToPortal, resoSlotToOctantText(reso.slot)));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setText(mGame.getAgentName(reso.ownerGuid));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());
@@ -200,7 +204,7 @@ public class ActivityDeploy extends Activity {
     }
 
     private void updateInfoText(int dist) {
-        // these should probably all be separate fields, but whatever
+        // FIXME make these into separate fields and set colours
         GameEntityPortal portal = mGame.getCurrentPortal();
         String portalInfoText = "LVL: L" + portal.getPortalLevel() + "\n"
                 + "RNG: " + portal.getPortalLinkRange() + "km\n"

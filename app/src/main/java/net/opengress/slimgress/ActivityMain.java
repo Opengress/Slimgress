@@ -21,6 +21,8 @@
 
 package net.opengress.slimgress;
 
+import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
+
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
@@ -93,19 +95,20 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             int textColor;
             Team team = agent.getTeam();
             textColor = 0xff000000 + team.getColour();
+            var levelColor = getResources().getColor(getLevelColor(agent.getLevel()), null);
 
             ((TextView)findViewById(R.id.agentname)).setText(agent.getNickname());
             ((TextView)findViewById(R.id.agentname)).setTextColor(textColor);
 
             String agentlevel = "L" + agent.getLevel();
             ((TextView)findViewById(R.id.agentlevel)).setText(agentlevel);
-//            ((TextView)findViewById(R.id.agentlevel)).setTextColor(textColor);
+            ((TextView)findViewById(R.id.agentlevel)).setTextColor(levelColor);
 
 
-            int nextLevel = Math.min(agent.getLevel()+1, 8);
-            ((ProgressBar)findViewById(R.id.agentap)).setMax(mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(String.valueOf(nextLevel)).getApRequired());
+            String nextLevel = String.valueOf(Math.min(agent.getLevel()+1, 8));
+            ((ProgressBar)findViewById(R.id.agentap)).setMax(mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(nextLevel).getApRequired());
             ((ProgressBar)findViewById(R.id.agentap)).setProgress(agent.getAp());
-            ((ProgressBar)findViewById(R.id.agentap)).getProgressDrawable().setTint(textColor);
+            ((ProgressBar)findViewById(R.id.agentap)).getProgressDrawable().setTint(levelColor);
 
             ((ProgressBar)findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
             ((ProgressBar)findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
