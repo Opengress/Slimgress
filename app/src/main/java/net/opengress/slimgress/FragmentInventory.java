@@ -151,7 +151,7 @@ public class FragmentInventory extends Fragment {
                 if (!theItem1.getMediaHasBeenViewed())
                     descr += " [NEW]";
 
-                InventoryListItem media = new InventoryListItem(descr, ItemType.Media, getDrawable(requireContext(), R.drawable.no_image), medias);
+                InventoryListItem media = new InventoryListItem(descr, ItemType.Media, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, medias);
                 media.setRarity(theItem1.getItemRarity());
                 mGroupMedia.add(media);
             }
@@ -232,7 +232,7 @@ public class FragmentInventory extends Fragment {
             mods.add(item.getEntityGuid());
         }
 
-        var mod = new InventoryListItem(descr, type, getDrawable(requireContext(), R.drawable.no_image), mods);
+        var mod = new InventoryListItem(descr, type, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, mods);
         mod.setRarity(rarity);
         return mod;
     }
@@ -278,7 +278,7 @@ public class FragmentInventory extends Fragment {
                         drawable = R.drawable.r8;
                         break;
                 }
-                InventoryListItem reso = new InventoryListItem(descr, ItemType.Resonator, getDrawable(requireContext(), drawable), resos);
+                InventoryListItem reso = new InventoryListItem(descr, ItemType.Resonator, getDrawable(requireContext(), drawable), drawable, resos);
                 reso.setRarity(items.get(0).getItemRarity());
                 mGroupResonators.add(reso);
             }
@@ -330,7 +330,7 @@ public class FragmentInventory extends Fragment {
                         drawable = R.drawable.x8;
                         break;
                 }
-                InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponXMP, getDrawable(requireContext(), drawable), weapons);
+                InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponXMP, getDrawable(requireContext(), drawable), drawable, weapons);
                 weapon.setRarity(items.get(0).getItemRarity());
                 mGroupWeapons.add(weapon);
             }
@@ -374,7 +374,7 @@ public class FragmentInventory extends Fragment {
                         drawable = R.drawable.u8;
                         break;
                 }
-                InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponUltraStrike, getDrawable(requireContext(), drawable), weapons);
+                InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponUltraStrike, getDrawable(requireContext(), drawable), drawable, weapons);
                 weapon.setRarity(items.get(0).getItemRarity());
                 mGroupWeapons.add(weapon);
             }
@@ -396,7 +396,7 @@ public class FragmentInventory extends Fragment {
 
         String descr = "ADA Refactor";
         if (!adas.isEmpty()) {
-            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(requireContext(), R.drawable.no_image), adas);
+            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, adas);
             weapon.setFlipCardType(FlipCardType.Ada);
             weapon.setRarity(items.get(0).getItemRarity());
             mGroupWeapons.add(weapon);
@@ -404,7 +404,7 @@ public class FragmentInventory extends Fragment {
 
         descr = "Jarvis Virus";
         if (!jarvises.isEmpty()) {
-            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(requireContext(), R.drawable.no_image), jarvises);
+            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, jarvises);
             weapon.setFlipCardType(FlipCardType.Jarvis);
             weapon.setRarity(items.get(0).getItemRarity());
             mGroupWeapons.add(weapon);
@@ -428,7 +428,7 @@ public class FragmentInventory extends Fragment {
                 for (ItemBase item : items) {
                     cubes.add(item.getEntityGuid());
                 }
-                InventoryListItem cube = new InventoryListItem(descr, ItemType.PowerCube, getDrawable(requireContext(), R.drawable.no_image), cubes);
+                InventoryListItem cube = new InventoryListItem(descr, ItemType.PowerCube, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, cubes);
                 cube.setRarity(items.get(0).getItemRarity());
                 mGroupResonators.add(cube);
             }
@@ -470,7 +470,7 @@ public class FragmentInventory extends Fragment {
                 }
             }
 
-            InventoryListItem key = new InventoryListItem(descr, ItemType.PortalKey, getDrawable(requireContext(), R.drawable.portalkey), keys);
+            InventoryListItem key = new InventoryListItem(descr, ItemType.PortalKey, getDrawable(requireContext(), R.drawable.portalkey), R.drawable.portalkey, keys);
             key.setLocation(new Location(theItem1.getPortalLocation()).getS2LatLng());
             key.setImage(theItem1.getPortalImageUrl());
             key.setRarity(theItem1.getItemRarity());
