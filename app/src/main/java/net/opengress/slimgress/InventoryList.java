@@ -41,7 +41,7 @@ public class InventoryList extends BaseExpandableListAdapter
     public final ArrayList<Object> mChildItem;
     public LayoutInflater mInflater;
     public Activity mActivity;
-    private Context mContext;
+    private final Context mContext;
 
     public InventoryList(Context context, ArrayList<String> grList, ArrayList<Object> childItem)
     {
@@ -92,32 +92,11 @@ public class InventoryList extends BaseExpandableListAdapter
 //                mActivity.runOnUiThread(() -> image.setImageBitmap(bitmap));
 //            }
 //        }).start();
-        convertView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-////                Toast.makeText(mActivity, text.getText(), Toast.LENGTH_SHORT).show();
-//                // Open the first dialog
-//                new AlertDialog.Builder(parent.getContext())
-//                        .setTitle("First Dialog")
-//                        .setMessage(item.getPrettyDescription())
-//                        .setPositiveButton("Open Second Dialog", new DialogInterface.OnClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialog, int which) {
-//                                // Open the second dialog
-//                                new AlertDialog.Builder(parent.getContext())
-//                                        .setTitle("Second Dialog")
-//                                        .setMessage(item.getDescription())
-//                                        .setPositiveButton("OK", null)
-//                                        .show();
-//                            }
-//                        })
-//                        .setNegativeButton("Cancel", null)
-//                        .show();
-                Intent intent = new Intent(mContext, ActivityInventoryItem.class);
-                intent.putExtra("item", item);
-                item.getLocation();
-                mContext.startActivity(intent);
-            }
+        convertView.setOnClickListener(v -> {
+            Intent intent = new Intent(mContext, ActivityInventoryItem.class);
+            intent.putExtra("item", item);
+            item.getLocation();
+            mContext.startActivity(intent);
         });
         return convertView;
     }

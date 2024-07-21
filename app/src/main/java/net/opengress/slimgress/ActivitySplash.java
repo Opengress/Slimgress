@@ -165,6 +165,7 @@ public class ActivitySplash extends Activity {
         }
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     private void downloadAndInstallClientUpdate() {
         File downloads = getApplicationContext().getExternalCacheDir();
 
@@ -211,12 +212,12 @@ public class ActivitySplash extends Activity {
                     try {
                         startActivityForResult(intent, 500);
                     } catch (Exception e) {
-                        Log.e("ActivitySplash/Installer", e.getMessage());
+                        Log.e("ActivitySplash/Installer", Objects.requireNonNull(e.getMessage()));
                         e.printStackTrace();
                     }
 
                 } catch (Exception e) {
-                    Log.e("ActivitySplash/Installer", e.getMessage());
+                    Log.e("ActivitySplash/Installer", Objects.requireNonNull(e.getMessage()));
                     e.printStackTrace();
                 }
 
