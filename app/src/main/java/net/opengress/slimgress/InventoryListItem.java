@@ -18,6 +18,7 @@ public class InventoryListItem implements Serializable {
     private String mDescription;
     private ItemType mType;
     private transient Drawable mIcon;
+    private int mIconID = 0;
     private String mImage;
     private final ArrayList<String> mIDs;
     private FlipCardType mFlipCardType;
@@ -25,11 +26,12 @@ public class InventoryListItem implements Serializable {
     private transient S2LatLng mLocation;
     private String mSerializableLocation;
 
-    public InventoryListItem(String description, ItemType type, Drawable icon, ArrayList<String> IDs) {
+    public InventoryListItem(String description, ItemType type, Drawable icon, int iconID, ArrayList<String> IDs) {
         this.mDescription = description;
         this.mType = type;
         this.mIcon = icon;
         this.mIDs = IDs;
+        mIconID = iconID;
     }
 
     public String getFirstID() {
@@ -86,6 +88,14 @@ public class InventoryListItem implements Serializable {
 
     public void setIcon(Drawable image) {
         this.mIcon = image;
+    }
+
+    public int getIconID() {
+        return mIconID;
+    }
+
+    public void setIconID(int resID) {
+        this.mIconID = resID;
     }
 
     public ItemType getType() {

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionCode="0000000034"
-    android:versionName="0.0.34" >
+    android:versionCode="0000010000"
+    android:versionName="0.1.0" >
 <!--    1112223333-->
 
     <uses-sdk
@@ -26,7 +26,7 @@
     <!-- For attack notifications in Android 33+ -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
-    <!-- That clear text traffic thing... I think there is a way to whitelist things? -->
+    <!-- If I'm right, clear traffic will work from N on but silently fail from M down -->
     <application
         android:allowBackup="true"
         android:name="net.opengress.slimgress.IngressApplication"
@@ -34,7 +34,8 @@
         android:theme="@android:style/Theme.Holo.NoActionBar"
         android:label="@string/appname"
         android:networkSecurityConfig="@xml/network_security_config"
-        android:supportsRtl="false">
+        android:supportsRtl="false"
+        tools:targetApi="n">
 
         <!-- to be allowed to "install software" - self-updates -->
         <provider

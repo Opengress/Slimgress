@@ -182,6 +182,7 @@ public class ScannerView extends Fragment implements SensorEventListener {
             if (success) {
                 float[] orientation = new float[3];
                 SensorManager.getOrientation(R, orientation);
+                // FIXME somewhere in this screen we must make an adjustment from OPS
                 float z = (float) (Math.toDegrees(orientation[0]) + 360) % 360;
                 float x = (float) (Math.toDegrees(orientation[1]) + 360) % 360;
                 /*
