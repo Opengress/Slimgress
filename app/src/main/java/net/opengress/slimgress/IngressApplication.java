@@ -25,6 +25,7 @@ import net.opengress.slimgress.API.Game.GameState;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.StrictMode;
 
 import org.acra.ACRA;
 import org.acra.config.CoreConfigurationBuilder;
@@ -65,6 +66,20 @@ public class IngressApplication extends Application
                                     .build()
                     )
             );
+        }
+
+        if (BuildConfig.DEBUG) {
+            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                    .detectAll()
+                    .penaltyLog()
+                    .penaltyDeath()
+                    .build());
+
+            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+                    .detectAll()
+                    .penaltyLog()
+                    .penaltyDeath()
+                    .build());
         }
 
         // this should never actually work when ACRA is not init-ed, and that seems harmless
