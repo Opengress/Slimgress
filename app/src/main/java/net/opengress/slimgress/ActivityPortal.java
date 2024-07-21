@@ -1,6 +1,7 @@
 package net.opengress.slimgress;
 
 import static net.opengress.slimgress.API.Common.Utils.getImageBitmap;
+import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -46,18 +47,16 @@ public class ActivityPortal extends Activity {
 
         ((TextView)findViewById(R.id.portalTitle)).setText(portal.getPortalTitle());
 
-        String portalLevel = "L" + portal.getPortalLevel();
+        String portalLevel = "L" + Math.max(1, portal.getPortalLevel());
         ((TextView)findViewById(R.id.portalLevel)).setText(portalLevel);
-        // TODO: level colours
-//        ((TextView)findViewById(R.id.portalLevel)).setTextColor();
+        int levelColour = getLevelColor(portal.getPortalLevel());
+        ((TextView)findViewById(R.id.portalLevel)).setTextColor(getResources().getColor(levelColour, null));
 
         // FIXME: format this nicely
         ((TextView)findViewById(R.id.portalEnergy)).setText(getString(R.string.portal_energy, portal.getPortalEnergy()));
 
 
         // TODO: link to photostream with portal description, up/downvotes, whatever
-        // also maybe hardcode this background image
-        ((ImageView)findViewById(R.id.portalImage)).setImageResource(R.drawable.no_image);
         new Thread(() -> {
             mBitmap = getImageBitmap(portal.getPortalImageUrl(), getApplicationContext().getCacheDir());
             if (mBitmap != null) {

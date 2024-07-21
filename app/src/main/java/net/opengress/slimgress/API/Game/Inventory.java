@@ -133,6 +133,7 @@ public class Inventory
         return null;
     }
 
+    // FIXME don't return resos above your level (also server) or above limits
     public final ItemResonator getResoForDeployment(int accessLevel) {
 
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
@@ -145,6 +146,7 @@ public class Inventory
         return null;
     }
 
+    // FIXME don't return resos above your level (also server) or above limits
     public final List<ItemResonator> getResosForUpgrade(int accessLevel)
     {
         List<ItemResonator> items = new LinkedList<>();

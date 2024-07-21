@@ -39,6 +39,7 @@ import com.google.common.geometry.S2Region;
 import com.google.common.geometry.S2RegionCoverer;
 
 import net.opengress.slimgress.API.Interface.Interface;
+import net.opengress.slimgress.R;
 
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
@@ -136,6 +137,34 @@ public class Utils
             Log.e("Utils.getImageBitmap", "Error getting bitmap", e);
         }
         return bm;
+    }
+
+    public static int getLevelColor(int level) {
+        int levelColour = R.color.level_one;
+        switch (level) {
+            case 2:
+                levelColour = R.color.level_two;
+                break;
+            case 3:
+                levelColour = R.color.level_three;
+                break;
+            case 4:
+                levelColour = R.color.level_four;
+                break;
+            case 5:
+                levelColour = R.color.level_five;
+                break;
+            case 6:
+                levelColour = R.color.level_six;
+                break;
+            case 7:
+                levelColour = R.color.level_seven;
+                break;
+            case 8:
+                levelColour = R.color.level_eight;
+                break;
+        }
+        return levelColour;
     }
 
 }
