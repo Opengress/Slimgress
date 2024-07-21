@@ -472,6 +472,7 @@ public class FragmentInventory extends Fragment {
 
             InventoryListItem key = new InventoryListItem(descr, ItemType.PortalKey, getDrawable(requireContext(), R.drawable.portalkey), keys);
             key.setLocation(new Location(theItem1.getPortalLocation()).getS2LatLng());
+            key.setImage(theItem1.getPortalImageUrl());
             key.setRarity(theItem1.getItemRarity());
             mGroupPortalKeys.add(key);
         }

@@ -33,7 +33,7 @@
         android:icon="@drawable/ic_launcher"
         android:theme="@android:style/Theme.Holo.NoActionBar"
         android:label="@string/appname"
-        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="false">
 
         <!-- to be allowed to "install software" - self-updates -->

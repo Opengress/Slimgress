@@ -23,13 +23,14 @@ package net.opengress.slimgress.API.Common;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.TrafficStats;
+import android.os.StrictMode;
 import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Objects;
 
 import com.google.common.geometry.S2Cap;
 import com.google.common.geometry.S2CellId;
@@ -39,6 +40,7 @@ import com.google.common.geometry.S2Region;
 import com.google.common.geometry.S2RegionCoverer;
 
 import net.opengress.slimgress.API.Interface.Interface;
+import net.opengress.slimgress.IngressApplication;
 import net.opengress.slimgress.R;
 
 import okhttp3.Cache;
@@ -101,19 +103,20 @@ public class Utils
         return cellIdsHex;
     }
 
-    public static OkHttpClient getCachedClient(File cacheDir) {
+    public static OkHttpClient getCachedClient() {
         if (mCachedClient == null) {
             int cacheSize = 125 * 1024 * 1024; // 125 MiB
-            Cache cache = new Cache(new File(cacheDir, "http-cache"), cacheSize);
+            Cache cache = new Cache(new File(IngressApplication.getInstance().getCacheDir(), "http-cache"), cacheSize);
 
             mCachedClient = new OkHttpClient.Builder()
                     .cache(cache)
                     .build();
         }
+        TrafficStats.setThreadStatsTag((int) Thread.currentThread().getId());
         return mCachedClient;
     }
 
-    public static Bitmap getImageBitmap(String url, File cacheDir) {
+    public static Bitmap getImageBitmap(String url) {
         Bitmap bm = null;
         try {
             Request get = new Request.Builder()
@@ -121,7 +124,10 @@ public class Utils
                     .header("User-Agent", Interface.mUserAgent)
                     .build();
 
-            try (Response response = getCachedClient(cacheDir).newCall(get).execute()) {
+            StrictMode.VmPolicy oldPolicy = StrictMode.getVmPolicy();
+            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().build());
+            // FIXME why does this next line leak??
+            try (Response response = getCachedClient().newCall(get).execute()) {
                 if (!response.isSuccessful()) {
                     Log.e("Utils.getImageBitmap", "HTTP error code: " + response.code());
                     return null;
@@ -129,9 +135,12 @@ public class Utils
 
                 try (InputStream content = response.body().byteStream()) {
                     BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.inSampleSize = 3; // Adjust as needed
+                    // FIXME make this configurable
+                    options.inSampleSize = 2;
                     bm = BitmapFactory.decodeStream(content, null, options);
 }
+            } finally {
+                StrictMode.setVmPolicy(oldPolicy);
             }
         } catch (IOException e) {
             Log.e("Utils.getImageBitmap", "Error getting bitmap", e);

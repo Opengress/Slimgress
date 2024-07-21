@@ -25,6 +25,7 @@ import net.opengress.slimgress.API.Game.GameState;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.Build;
 import android.os.StrictMode;
 
 import org.acra.ACRA;
@@ -34,15 +35,13 @@ import org.acra.data.StringFormat;
 
 import java.util.Objects;
 
-public class IngressApplication extends Application
-{
+public class IngressApplication extends Application {
     private static IngressApplication mSingleton;
     private boolean mLoggedIn = false;
     protected GameState mGame;
 
     @Override
-    public void onCreate()
-    {
+    public void onCreate() {
         super.onCreate();
 
         mSingleton = this;
@@ -75,11 +74,34 @@ public class IngressApplication extends Application
                     .penaltyDeath()
                     .build());
 
-            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
-                    .detectAll()
-                    .penaltyLog()
-                    .penaltyDeath()
-                    .build());
+            // FIXME learn how to not leak activities...
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+//                        .detectActivityLeaks()
+                        .detectLeakedClosableObjects()
+                        .detectLeakedRegistrationObjects()
+                        .detectLeakedSqlLiteObjects()
+                        .detectContentUriWithoutPermission()
+                        .detectUntaggedSockets()
+                        .detectFileUriExposure()
+                        .detectCleartextNetwork()
+                        .penaltyLog()
+                        .penaltyDeath()
+                        .build());
+            } else {
+                StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+//                        .detectActivityLeaks()
+                        .detectLeakedClosableObjects()
+                        .detectLeakedRegistrationObjects()
+                        .detectLeakedSqlLiteObjects()
+                        .detectFileUriExposure()
+                        .detectCleartextNetwork()
+                        .penaltyLog()
+                        .penaltyDeath()
+                        .build());
+            }
+            // android P:
+            //                        .detectNonSdkApiUsage()
         }
 
         // this should never actually work when ACRA is not init-ed, and that seems harmless
@@ -94,23 +116,19 @@ public class IngressApplication extends Application
 
     }
 
-    public static IngressApplication getInstance()
-    {
+    public static IngressApplication getInstance() {
         return mSingleton;
     }
 
-    public GameState getGame()
-    {
+    public GameState getGame() {
         return mGame;
     }
 
-    public boolean isLoggedIn()
-    {
+    public boolean isLoggedIn() {
         return mLoggedIn;
     }
 
-    public void setLoggedIn(boolean loggedIn)
-    {
+    public void setLoggedIn(boolean loggedIn) {
         mLoggedIn = loggedIn;
     }
 }
