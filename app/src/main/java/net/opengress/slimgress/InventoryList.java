@@ -67,12 +67,13 @@ public class InventoryList extends BaseExpandableListAdapter
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public View getChildView(int groupPosition, final int childPosition, boolean isLastChild, View convertView, ViewGroup parent)
     {
         mTempChild = (ArrayList<InventoryListItem>) mChildItem.get(groupPosition);
         TextView text;
         if (convertView == null) {
-            convertView = mInflater.inflate(R.layout.inventory_childrow, null);
+            convertView = mInflater.inflate(R.layout.inventory_childrow, parent);
         }
         text = convertView.findViewById(R.id.agentlevel);
         text.setText(mTempChild.get(childPosition).getPrettyDescription());
@@ -115,6 +116,7 @@ public class InventoryList extends BaseExpandableListAdapter
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public int getChildrenCount(int groupPosition)
     {
         return ((ArrayList<String>) mChildItem.get(groupPosition)).size();
@@ -154,7 +156,7 @@ public class InventoryList extends BaseExpandableListAdapter
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent)
     {
         if (convertView == null) {
-            convertView = mInflater.inflate(R.layout.inventory_grouprow, null);
+            convertView = mInflater.inflate(R.layout.inventory_grouprow, parent);
         }
         ((CheckedTextView)convertView).setText(mGroupItem.get(groupPosition));
         ((CheckedTextView)convertView).setChecked(isExpanded);
