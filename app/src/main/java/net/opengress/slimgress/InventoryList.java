@@ -95,7 +95,6 @@ public class InventoryList extends BaseExpandableListAdapter
         convertView.setOnClickListener(v -> {
             Intent intent = new Intent(mContext, ActivityInventoryItem.class);
             intent.putExtra("item", item);
-            item.getLocation();
             mContext.startActivity(intent);
         });
         return convertView;
