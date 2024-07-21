@@ -38,7 +38,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
-@SuppressWarnings("deprecation")
 public class ActivityOps extends FragmentActivity implements TabListener
 {
     SectionsPagerAdapter mSectionsPagerAdapter;

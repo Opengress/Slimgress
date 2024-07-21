@@ -8,17 +8,22 @@ import net.opengress.slimgress.API.Item.ItemBase.Rarity;
 import net.opengress.slimgress.API.Item.ItemBase.ItemType;
 import net.opengress.slimgress.API.Item.ItemFlipCard.FlipCardType;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class InventoryListItem {
+public class InventoryListItem implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String mDescription;
     private ItemType mType;
-    private Drawable mIcon;
+    private transient Drawable mIcon;
     private String mImage;
     private final ArrayList<String> mIDs;
     private FlipCardType mFlipCardType;
     private Rarity mRarity = Rarity.None;
-    private S2LatLng mLocation;
+    private transient S2LatLng mLocation;
+    private String mSerializableLocation;
 
     public InventoryListItem(String description, ItemType type, Drawable icon, ArrayList<String> IDs) {
         this.mDescription = description;
@@ -100,10 +105,14 @@ public class InventoryListItem {
     }
 
     public void setLocation(S2LatLng loc) {
-        this.mLocation = loc;
+        mLocation = loc;
     }
 
     public S2LatLng getLocation() {
+        if (mLocation == null && mSerializableLocation != null) {
+            String[] lls = mSerializableLocation.substring(1, mSerializableLocation.length() - 1).split(",");
+            mLocation = S2LatLng.fromDegrees(Double.parseDouble(lls[0]), Double.parseDouble(lls[1]));
+        }
         return mLocation;
     }
 
@@ -125,5 +134,14 @@ public class InventoryListItem {
 
     public void setImage(String mImage) {
         this.mImage = mImage;
+    }
+
+    private void writeObject(ObjectOutputStream oos) throws IOException {
+        if (mLocation != null) {
+            mSerializableLocation = mLocation.toStringDegrees();
+        }
+
+        // Default serialization
+        oos.defaultWriteObject();
     }
 }

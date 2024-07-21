@@ -87,6 +87,12 @@
         <activity
             android:name="net.opengress.slimgress.ActivityCredits">
         </activity>
+
+        <!-- viewing an inventory item -->
+        <activity
+            android:name="net.opengress.slimgress.ActivityInventoryItem"
+            android:theme="@style/Theme.AppCompat" >
+        </activity>
     </application>
 
 </manifest>
