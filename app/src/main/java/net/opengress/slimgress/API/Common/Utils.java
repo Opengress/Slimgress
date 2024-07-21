@@ -102,7 +102,7 @@ public class Utils
 
     public static OkHttpClient getCachedClient(File cacheDir) {
         if (mCachedClient == null) {
-            int cacheSize = 75 * 1024 * 1024; // 75 MiB
+            int cacheSize = 125 * 1024 * 1024; // 125 MiB
             Cache cache = new Cache(new File(cacheDir, "http-cache"), cacheSize);
 
             mCachedClient = new OkHttpClient.Builder()
@@ -113,18 +113,25 @@ public class Utils
     }
 
     public static Bitmap getImageBitmap(String url, File cacheDir) {
-        // there's MAYBE an unclosed resource here, reported when closing portal view
-        // ... shouldn't any Closeable i create in this method call close() on return automatically?
         Bitmap bm = null;
         try {
             Request get = new Request.Builder()
                     .url(url)
                     .header("User-Agent", Interface.mUserAgent)
                     .build();
-            Response response = getCachedClient(cacheDir).newCall(get).execute();
-            InputStream content = Objects.requireNonNull(response.body()).byteStream();
-            bm = BitmapFactory.decodeStream(content);
-            response.close();
+
+            try (Response response = getCachedClient(cacheDir).newCall(get).execute()) {
+                if (!response.isSuccessful()) {
+                    Log.e("Utils.getImageBitmap", "HTTP error code: " + response.code());
+                    return null;
+                }
+
+                try (InputStream content = response.body().byteStream()) {
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inSampleSize = 3; // Adjust as needed
+                    bm = BitmapFactory.decodeStream(content, null, options);
+}
+            }
         } catch (IOException e) {
             Log.e("Utils.getImageBitmap", "Error getting bitmap", e);
         }
