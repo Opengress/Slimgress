@@ -21,19 +21,17 @@
 
 package net.opengress.slimgress;
 
-import net.opengress.slimgress.API.Game.GameState;
-
 import android.app.Application;
 import android.content.Context;
 import android.os.Build;
 import android.os.StrictMode;
 
+import net.opengress.slimgress.API.Game.GameState;
+
 import org.acra.ACRA;
 import org.acra.config.CoreConfigurationBuilder;
 import org.acra.config.HttpSenderConfigurationBuilder;
 import org.acra.data.StringFormat;
-
-import java.util.Objects;
 
 public class IngressApplication extends Application {
     private static IngressApplication mSingleton;
@@ -53,7 +51,7 @@ public class IngressApplication extends Application {
         super.attachBaseContext(base);
 
         // (ONLY) release (non-debug) builds use ACRA, because debug builds => developing => crashes
-        if (!Objects.equals(BuildConfig.BUILD_TYPE, "debug")) {
+        if (!BuildConfig.DEBUG) {
             ACRA.init(this, new CoreConfigurationBuilder()
                     //core configuration:
                     .withBuildConfigClass(BuildConfig.class)
@@ -70,9 +68,8 @@ public class IngressApplication extends Application {
         if (BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
                     .detectAll()
-                    .permitNetwork() // OSMDroid
                     .penaltyLog()
-                    .penaltyDeath()
+//                    .penaltyDeath()
                     .build());
 
             // FIXME learn how to not leak activities...
@@ -87,7 +84,7 @@ public class IngressApplication extends Application {
                         .detectFileUriExposure()
                         .detectCleartextNetwork()
                         .penaltyLog()
-                        .penaltyDeath()
+//                        .penaltyDeath()
                         .build());
             } else {
                 StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
@@ -98,7 +95,7 @@ public class IngressApplication extends Application {
                         .detectFileUriExposure()
                         .detectCleartextNetwork()
                         .penaltyLog()
-                        .penaltyDeath()
+//                        .penaltyDeath()
                         .build());
             }
             // android P:

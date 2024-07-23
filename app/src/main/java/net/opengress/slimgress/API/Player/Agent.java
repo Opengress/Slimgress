@@ -61,6 +61,8 @@ public class Agent extends PlayerEntity
     {
         // TODO: more efficient?
         // also TODO: badges and stuff. levels currently capped at 8 because badges not implemented
+        // TODO: CHECK: is this right - what about levelUp? Seems the server DOES know your level.
+        //  Check ancient handshakes!
 
         Map<String, PlayerLevelKnobs.PlayerLevel> playerLevels = IngressApplication.getInstance().getGame().getKnobs().getPlayerLevelKnobs().getPlayerLevelsMap();
 

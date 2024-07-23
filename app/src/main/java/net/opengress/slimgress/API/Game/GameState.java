@@ -21,21 +21,8 @@
 
 package net.opengress.slimgress.API.Game;
 
-import static net.opengress.slimgress.API.Interface.Handshake.*;
-import static net.opengress.slimgress.API.Interface.Handshake.PregameStatus.*;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import static net.opengress.slimgress.API.Interface.Handshake.PregameStatus;
+import static net.opengress.slimgress.API.Interface.Handshake.PregameStatus.ClientMustUpgrade;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -46,15 +33,40 @@ import com.github.msteinbeck.sig4j.signal.Signal1;
 import com.github.msteinbeck.sig4j.slot.Slot1;
 import com.google.common.geometry.S2LatLng;
 import com.google.common.geometry.S2LatLngRect;
+
 import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.API.Common.Team;
 import net.opengress.slimgress.API.Common.Utils;
-import net.opengress.slimgress.API.Plext.PlextBase;
-import net.opengress.slimgress.API.Interface.*;
-import net.opengress.slimgress.API.GameEntity.*;
-import net.opengress.slimgress.API.Item.*;
+import net.opengress.slimgress.API.GameEntity.GameEntityBase;
+import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
+import net.opengress.slimgress.API.Interface.GameBasket;
+import net.opengress.slimgress.API.Interface.Handshake;
+import net.opengress.slimgress.API.Interface.Interface;
+import net.opengress.slimgress.API.Interface.RequestResult;
+import net.opengress.slimgress.API.Item.ItemBase;
+import net.opengress.slimgress.API.Item.ItemFlipCard;
+import net.opengress.slimgress.API.Item.ItemMod;
+import net.opengress.slimgress.API.Item.ItemPortalKey;
+import net.opengress.slimgress.API.Item.ItemPowerCube;
+import net.opengress.slimgress.API.Item.ItemResonator;
+import net.opengress.slimgress.API.Item.ItemWeapon;
 import net.opengress.slimgress.API.Knobs.KnobsBundle;
-import net.opengress.slimgress.API.Player.*;
+import net.opengress.slimgress.API.Player.Agent;
+import net.opengress.slimgress.API.Player.PlayerEntity;
+import net.opengress.slimgress.API.Plext.PlextBase;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class GameState
 {
@@ -1083,9 +1095,34 @@ public class GameState
         Log.w("Game", "intSetNotificationSettings not yet implemented");
     }
 
-    public void intGetModifiedEntity(final Handler handler)
+    public void intGetModifiedEntity(String guid, final Handler handler)
     {
-        Log.w("Game", "intSetNotificationSettings not yet implemented");
+        String[] guids = {guid};
+        intGetModifiedEntitiesByGuid(guids, handler);
+    }
+
+    public void intGetModifiedEntitiesByGuid(String[] guids, final Handler handler) {
+        Log.w("Game", "intGetModifiedEntitiesByGuid not yet TESTED");
+        try {
+            checkInterface();
+
+            JSONObject params = new JSONObject();
+
+            JSONArray entityGuids = new JSONArray();
+            for (String guid : guids)
+                entityGuids.put(guid);
+            params.put("params", entityGuids);
+
+            // request basket
+            mInterface.request(mHandshake, "gameplay/getModifiedEntitiesByGuid", mLocation, params, new RequestResult(handler) {
+                @Override
+                public void handleGameBasket(GameBasket gameBasket) {
+                    processGameBasket(gameBasket);
+                }
+            });
+        } catch (JSONException | InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void intFlipPortal(GameEntityPortal portal, ItemFlipCard flipCard, final Handler handler)
