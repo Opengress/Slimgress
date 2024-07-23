@@ -23,33 +23,34 @@ package net.opengress.slimgress;
 
 import static androidx.core.content.ContextCompat.getDrawable;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
-import net.opengress.slimgress.API.Common.Location;
-import net.opengress.slimgress.API.Game.GameState;
-import net.opengress.slimgress.API.Game.Inventory;
-import net.opengress.slimgress.API.Item.ItemBase;
-import net.opengress.slimgress.API.Item.ItemBase.Rarity;
-import net.opengress.slimgress.API.Item.ItemFlipCard;
-import net.opengress.slimgress.API.Item.ItemMod;
-import net.opengress.slimgress.API.Item.ItemPortalKey;
-import net.opengress.slimgress.API.Item.ItemBase.ItemType;
-import net.opengress.slimgress.API.Item.ItemFlipCard.FlipCardType;
-import net.opengress.slimgress.API.Item.ItemMedia;
-
 import android.os.Bundle;
 import android.os.Handler;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ExpandableListView;
 import android.widget.ProgressBar;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+
+import net.opengress.slimgress.API.Common.Location;
+import net.opengress.slimgress.API.Game.GameState;
+import net.opengress.slimgress.API.Game.Inventory;
+import net.opengress.slimgress.API.Item.ItemBase;
+import net.opengress.slimgress.API.Item.ItemBase.ItemType;
+import net.opengress.slimgress.API.Item.ItemBase.Rarity;
+import net.opengress.slimgress.API.Item.ItemFlipCard;
+import net.opengress.slimgress.API.Item.ItemFlipCard.FlipCardType;
+import net.opengress.slimgress.API.Item.ItemMedia;
+import net.opengress.slimgress.API.Item.ItemMod;
+import net.opengress.slimgress.API.Item.ItemPortalKey;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 public class FragmentInventory extends Fragment {
     private final IngressApplication mApp = IngressApplication.getInstance();
@@ -102,7 +103,7 @@ public class FragmentInventory extends Fragment {
     }
 
     private void fillInventory(final Runnable callback) {
-        new Thread(() -> {
+        requireActivity().runOnUiThread(() -> {
             fillMedia();
             fillMods();
             fillResonators();
@@ -111,7 +112,7 @@ public class FragmentInventory extends Fragment {
             fillPowerCubes();
 
             callback.run();
-        }).start();
+        });
     }
 
     void fillMedia() {
@@ -440,10 +441,9 @@ public class FragmentInventory extends Fragment {
     void fillPortalKeys() {
         Inventory inv = mGame.getInventory();
 
-        int count = 0;
-        List<ItemBase> items = inv.getItems(ItemType.PortalKey);
-        count += items.size();
 
+        List<ItemBase> items = inv.getItems(ItemType.PortalKey);
+        Set<String> portalGUIDs = new HashSet<>();
         LinkedList<ItemPortalKey> skipItems = new LinkedList<>();
         for (ItemBase item1 : items) {
             ItemPortalKey theItem1 = (ItemPortalKey) item1;
@@ -474,10 +474,12 @@ public class FragmentInventory extends Fragment {
             key.setLocation(new Location(theItem1.getPortalLocation()).getS2LatLng());
             key.setImage(theItem1.getPortalImageUrl());
             key.setRarity(theItem1.getItemRarity());
+            portalGUIDs.add(theItem1.getPortalGuid());
             mGroupPortalKeys.add(key);
         }
-        mGroupNames.add("PortalKeys (" + count + ")");
+        mGroupNames.add("PortalKeys (" + items.size() + ")");
         mGroups.add(mGroupPortalKeys);
+        mGame.intGetModifiedEntitiesByGuid(portalGUIDs.toArray(new String[0]), new Handler(msg -> true));
     }
 
 }

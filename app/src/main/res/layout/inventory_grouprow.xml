@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- height = wrap_content was a banger -->
 <CheckedTextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/agentlevel"
+    android:id="@+id/prettyDescription"
     android:layout_width="match_parent"
     android:layout_height="60dp"
     android:layout_marginLeft="5dp"

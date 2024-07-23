@@ -23,11 +23,12 @@ package net.opengress.slimgress;
 
 import android.content.Intent;
 import android.os.Bundle;
-import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import androidx.fragment.app.Fragment;
 
 public class FragmentDevice extends Fragment
 {
@@ -45,7 +46,7 @@ public class FragmentDevice extends Fragment
             startActivity(myIntent);
         });
 
-        ((TextView) rootView.findViewById(R.id.buildNumberText)).setText(String.format("%s %s(%s)", getText(R.string.build_number), BuildConfig.VERSION_NAME, BuildConfig.BUILD_TYPE));
+        ((TextView) rootView.findViewById(R.id.buildNumberText)).setText(String.format("%s %s (%s)", getText(R.string.build_number), BuildConfig.VERSION_NAME, BuildConfig.BUILD_TYPE));
 
         return rootView;
     }

@@ -21,17 +21,17 @@
 
 package net.opengress.slimgress.API.GameEntity;
 
-import java.util.LinkedList;
-import java.util.List;
+import net.opengress.slimgress.API.Common.Location;
+import net.opengress.slimgress.API.Common.Team;
+import net.opengress.slimgress.API.Knobs.PortalKnobs;
+import net.opengress.slimgress.IngressApplication;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import net.opengress.slimgress.API.Common.Location;
-import net.opengress.slimgress.API.Common.Team;
-import net.opengress.slimgress.API.Knobs.PortalKnobs;
-import net.opengress.slimgress.IngressApplication;
+import java.util.LinkedList;
+import java.util.List;
 
 public class GameEntityPortal extends GameEntityBase
 {
@@ -59,7 +59,7 @@ public class GameEntityPortal extends GameEntityBase
         public String ownerGuid;
         public int level;
         public int getMaxEnergy() {
-            return mPortalKnobs.getResonatorEnergyForLevel(1);
+            return mPortalKnobs.getResonatorEnergyForLevel(level);
         }
     }
 
@@ -181,7 +181,7 @@ public class GameEntityPortal extends GameEntityBase
 
     public int getPortalLevel()
     {
-        // TODO: don't recalculate every time
+        // TODO: don't recalculate every time...
         int level = 0;
         int resonatorCount = 0;
         for (LinkedResonator resonator : mPortalResonators) {
@@ -192,7 +192,7 @@ public class GameEntityPortal extends GameEntityBase
         }
 
         if (resonatorCount == 0)
-            return 0;
+            return 1;
 
         return level / resonatorCount;
     }
