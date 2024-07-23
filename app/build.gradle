@@ -9,6 +9,7 @@ android {
         applicationId "net.opengress.slimgress"
         minSdk 23
         targetSdk 35
+//        1112223333
         versionCode 10000
         versionName "0.1.0"
 
@@ -20,13 +21,20 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        full {
+            minifyEnabled false
+        }
+        debug {
+            debuggable true
+        }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
-    signingConfigs {
 
+    signingConfigs {
         release {
             storeFile file(RELEASE_STORE_FILE)
             storePassword RELEASE_STORE_PASSWORD
@@ -47,27 +55,36 @@ android {
         release {
             signingConfig signingConfigs.release
         }
+        full {
+            signingConfig signingConfigs.release
+        }
+    }
+}
+
+tasks.register('printVersionName') {
+    doLast {
+        println android.defaultConfig.versionName
     }
 }
 
 dependencies {
-
-    implementation 'androidx.test:monitor:1.7.1'
-    implementation 'androidx.test.ext:junit:1.2.1'
-    implementation 'androidx.preference:preference:1.2.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
-    testImplementation 'org.testng:testng:6.9.6'
-    androidTestImplementation 'junit:junit:4.13.2'
     def acraVersion = '5.9.6'
 
 //    this next line is redundant, but without it i get complaints from android studio
     implementation 'androidx.appcompat:appcompat:1.7.0'
+
+    androidTestImplementation 'junit:junit:4.13.2'
+    implementation "ch.acra:acra-http:$acraVersion"
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'androidx.test.ext:junit:1.2.1'
+    implementation 'androidx.test:monitor:1.7.1'
+    implementation 'com.github.msteinbeck:sig4j:1.0.1'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'com.google.guava:guava:32.0.1-jre'
     implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.10'
     implementation 'org.osmdroid:osmdroid-android:6.1.13'
-    implementation 'com.github.msteinbeck:sig4j:1.0.1'
-    implementation "ch.acra:acra-http:$acraVersion"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+    testImplementation 'org.testng:testng:6.9.6'
 
 }
