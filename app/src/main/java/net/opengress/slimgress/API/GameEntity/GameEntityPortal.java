@@ -183,18 +183,15 @@ public class GameEntityPortal extends GameEntityBase
     {
         // TODO: don't recalculate every time...
         int level = 0;
-        int resonatorCount = 0;
         for (LinkedResonator resonator : mPortalResonators) {
             if (resonator != null) {
                 level += resonator.level;
-                resonatorCount++;
             }
         }
 
-        if (resonatorCount == 0)
-            return 1;
+        level /= 8;
 
-        return level / resonatorCount;
+        return level == 0 ? 1 : level;
     }
 
     public int getPortalLinkRange() {
