@@ -23,7 +23,7 @@
         android:allowBackup="true"
         android:name="net.opengress.slimgress.IngressApplication"
         android:icon="@drawable/ic_launcher"
-        android:theme="@android:style/Theme.Holo.NoActionBar"
+        android:theme="@style/AppTheme"
         android:label="@string/appname"
         android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="false"
@@ -68,7 +68,8 @@
 
         <!-- portal view activity with additional information -->
         <activity
-            android:name="net.opengress.slimgress.ActivityPortal">
+            android:name="net.opengress.slimgress.ActivityPortal"
+            android:theme="@style/GradientTheme">
         </activity>
 
         <!-- resonator deployment activity with additional information -->
