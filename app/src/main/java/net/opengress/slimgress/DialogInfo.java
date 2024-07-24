@@ -21,16 +21,16 @@
 
 package net.opengress.slimgress;
 
-import java.util.Objects;
-import java.util.Timer;
-import java.util.TimerTask;
-
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
+
+import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class DialogInfo extends Dialog
 {
@@ -46,6 +46,8 @@ public class DialogInfo extends Dialog
         // set additional parameters
         WindowManager.LayoutParams lp = getWindow().getAttributes();
         lp.dimAmount = 0.0f;
+        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
         getWindow().setAttributes(lp);
 
         findViewById(R.id.message).setVisibility(View.INVISIBLE);
