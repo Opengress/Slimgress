@@ -21,9 +21,6 @@
 
 package net.opengress.slimgress;
 
-import net.opengress.slimgress.API.Game.GameState;
-import net.opengress.slimgress.API.Interface.Interface;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
@@ -31,12 +28,16 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
+
+import net.opengress.slimgress.API.Game.GameState;
+import net.opengress.slimgress.API.Interface.Interface;
 
 import org.json.JSONObject;
 
@@ -138,6 +139,7 @@ public class ActivityAuth extends Activity
             myWebView.getSettings().setSupportMultipleWindows(false);
             CookieManager.getInstance().setAcceptCookie(true);
             CookieManager.getInstance().setAcceptThirdPartyCookies(myWebView, true);
+        myWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
             myWebView.addJavascriptInterface(new MyJavaScriptInterface(), "textClaimer");
 
             myWebView.setWebViewClient(new WebViewClient() {
