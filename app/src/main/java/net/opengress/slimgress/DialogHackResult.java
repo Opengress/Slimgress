@@ -60,6 +60,8 @@ public class DialogHackResult extends Dialog
         // set additional parameters
         WindowManager.LayoutParams lp = getWindow().getAttributes();
         lp.dimAmount = 0.0f;
+        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
         getWindow().setAttributes(lp);
 
         findViewById(R.id.message).setVisibility(View.INVISIBLE);
