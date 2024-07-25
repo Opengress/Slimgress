@@ -34,8 +34,6 @@
                 android:layout_marginLeft="5sp"
                 android:ellipsize="middle"
                 android:maxLines="1"
-                android:scrollHorizontally="true"
-                android:text="@string/dummy"
                 android:textColor="#FFFFFF"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -47,8 +45,6 @@
                 android:layout_marginLeft="5sp"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:scrollHorizontally="true"
-                android:text="@string/dummy"
                 android:textColor="#666"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -60,10 +56,9 @@
 
                 <TextView
                     android:id="@+id/inventory_childRow_portalKey_level"
-                    android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_marginLeft="5sp"
-                    android:text="@string/dummy"
                     android:textColor="#666"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -140,7 +135,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="5sp"
-                    android:text="@string/dummy"
                     android:textColor="#666"
                     android:textSize="14sp"
                     android:textStyle="bold" />

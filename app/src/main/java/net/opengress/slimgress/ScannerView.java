@@ -22,16 +22,8 @@
 package net.opengress.slimgress;
 
 import static android.content.Context.SENSOR_SERVICE;
-
+import static net.opengress.slimgress.API.Item.ItemBase.ItemType.PortalKey;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromAsset;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -44,6 +36,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -54,6 +47,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -61,7 +55,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.graphics.Matrix;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -78,6 +71,7 @@ import net.opengress.slimgress.API.GameEntity.GameEntityBase;
 import net.opengress.slimgress.API.GameEntity.GameEntityControlField;
 import net.opengress.slimgress.API.GameEntity.GameEntityLink;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
+import net.opengress.slimgress.API.Item.ItemPortalKey;
 import net.opengress.slimgress.API.Knobs.ScannerKnobs;
 import net.opengress.slimgress.API.Knobs.TeamKnobs;
 
@@ -97,10 +91,19 @@ import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
-public class ScannerView extends Fragment implements SensorEventListener {
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+public class ScannerView extends Fragment implements SensorEventListener, LocationListener {
     private final IngressApplication mApp = IngressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
-    private final ScannerKnobs mScannerKnobs = mGame.getKnobs().getScannerKnobs();
+    private ScannerKnobs mScannerKnobs;
     private MapView mMap = null;
 
     private final HashMap<String, Bitmap> mIcons = new HashMap<>();
@@ -138,15 +141,14 @@ public class ScannerView extends Fragment implements SensorEventListener {
     // ===========================================================
     // Knobs quick reference
     // ===========================================================
-    private final int mActionRadiusM = mScannerKnobs.getActionRadiusM();
-    private final int mUpdateIntervalMS = mScannerKnobs.getUpdateIntervalMS();
-    private final int mMinUpdateIntervalMS = mScannerKnobs.getMinUpdateIntervalMS();
-    private final int mUpdateDistanceM = mScannerKnobs.getUpdateDistanceM();
+    private int mActionRadiusM;
+    private int mUpdateIntervalMS;
+    private int mMinUpdateIntervalMS;
+    private int mUpdateDistanceM;
 
     // ===========================================================
     // Other (location)
     // ===========================================================
-    private MyLocationListener mLocationListener = null;
     private LocationManager mLocationManager = null;
     private MyLocationNewOverlay mLocationOverlay = null;
 
@@ -241,31 +243,31 @@ public class ScannerView extends Fragment implements SensorEventListener {
     }
 
 
-    public class MyLocationListener implements LocationListener {
-
-        public void onLocationChanged(@NonNull Location location) {
-            mCurrentLocation = new GeoPoint(location);
-            mGame.updateLocation(new net.opengress.slimgress.API.Common.Location(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()));
-            mLastLocationAcquired = new Date();
-            displayMyCurrentLocationOverlay(mCurrentLocation, location.getBearing());
-        }
-
-        public void onProviderDisabled(@NonNull String provider) {
-            if (!Objects.equals(provider, "gps")) {
-                return;
-            }
-            setLocationInaccurate(true);
-        }
-
-        public void onProviderEnabled(@NonNull String provider) {
-            // don't register location as no longer inaccurate until new location info arrives
-        }
-
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            // probably useless, might not be called above android Q
-            // could be interesting for checking that gps fix comes from satellites
-        }
+    public void onLocationChanged(@NonNull Location location) {
+        mCurrentLocation = new GeoPoint(location);
+        var loc = new net.opengress.slimgress.API.Common.Location(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+        mApp.getLocationViewModel().setLocationData(loc);
+        mGame.updateLocation(loc);
+        mLastLocationAcquired = new Date();
+        displayMyCurrentLocationOverlay(mCurrentLocation, location.getBearing());
     }
+
+    public void onProviderDisabled(@NonNull String provider) {
+        if (!Objects.equals(provider, "gps")) {
+            return;
+        }
+        setLocationInaccurate(true);
+    }
+
+    public void onProviderEnabled(@NonNull String provider) {
+        // don't register location as no longer inaccurate until new location info arrives
+    }
+
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+        // probably useless, might not be called above android Q
+        // could be interesting for checking that gps fix comes from satellites
+    }
+
 
     private void displayMyCurrentLocationOverlay(GeoPoint currentLocation, float bearing) {
 
@@ -307,10 +309,17 @@ public class ScannerView extends Fragment implements SensorEventListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mScannerKnobs = mGame.getKnobs().getScannerKnobs();
+        mActionRadiusM = mScannerKnobs.getActionRadiusM();
+        mUpdateIntervalMS = mScannerKnobs.getUpdateIntervalMS();
+        mMinUpdateIntervalMS = mScannerKnobs.getMinUpdateIntervalMS();
+        mUpdateDistanceM = mScannerKnobs.getUpdateDistanceM();
+
         mSensorManager = (SensorManager) requireActivity().getSystemService(SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mMagnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        mGame.getWorld().connectSignalDeletedEntities(this::onReceiveDeletedEntityGuids);
+//        mGame.getWorld().connectSignalDeletedEntities(this::onReceiveDeletedEntityGuids);
+        mApp.getDeletedEntityGuidsModel().getDeletedEntityGuids().observe(this, this::onReceiveDeletedEntityGuids);
         mPortalActivityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -583,12 +592,9 @@ public class ScannerView extends Fragment implements SensorEventListener {
 
     @SuppressLint("MissingPermission")
     public void requestLocationUpdates() {
-        if (mLocationListener == null) {
-            mLocationListener = new MyLocationListener();
-        }
         if (mLocationManager == null) {
             mLocationManager = (LocationManager) mApp.getSystemService(Context.LOCATION_SERVICE);
-            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mLocationListener);
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
             Location location = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             if (location != null) {
                 mCurrentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
@@ -623,13 +629,12 @@ public class ScannerView extends Fragment implements SensorEventListener {
         // FIXME this MIGHT be able to fire before activity/view exists, need to maybe wrap it up
         if (bool) {
             setMapEnabled(false);
-            ((TextView) getActivity().findViewById(R.id.quickMessage)).setText(R.string.location_inaccurate);
-            getActivity().findViewById(R.id.quickMessage).setVisibility(View.VISIBLE);
+            displayQuickMessage(getStringSafely(R.string.location_inaccurate));
             mMap.getOverlayManager().remove(mActionRadius);
         } else {
             setMapEnabled(true);
-            if (((TextView) getActivity().findViewById(R.id.quickMessage)).getText() == requireContext().getResources().getText(R.string.location_inaccurate)) {
-                getActivity().findViewById(R.id.quickMessage).setVisibility(View.INVISIBLE);
+            if (Objects.equals(getQuickMessage(), getStringSafely(R.string.location_inaccurate))) {
+                hideQuickMessage();
             }
         }
     }
@@ -647,8 +652,25 @@ public class ScannerView extends Fragment implements SensorEventListener {
     }
 
     private synchronized void updateWorld(final Handler uiHandler) {
+        displayQuickMessage(getStringSafely(R.string.scanning_local_area));
+
         // handle interface result (on timer thread)
         final Handler resultHandler = new Handler(msg -> {
+
+            displayQuickMessage(getStringSafely(R.string.preparing_the_inventory));
+            mGame.intGetInventory(new Handler(ms -> {
+                // Since we just updated the inventory, let's also update the status of all the portal keys
+                var keys = mGame.getInventory().getItems(PortalKey);
+                Set<String> portalGUIDs = new HashSet<>();
+                for (var item : keys) {
+                    String portalGuid = ((ItemPortalKey) item).getPortalGuid();
+                    if (!mGame.getWorld().getGameEntities().containsKey(portalGuid)) {
+                        portalGUIDs.add(portalGuid);
+                    }
+                }
+                mGame.intGetModifiedEntitiesByGuid(portalGUIDs.toArray(new String[0]), new Handler(m -> true));
+                return true;
+            }));
 
             // protect against crash from unclean exit
             if (getActivity() == null) {
@@ -656,13 +678,12 @@ public class ScannerView extends Fragment implements SensorEventListener {
             }
 
             if (msg.getData().keySet().contains("Error")) {
-                ((TextView) getActivity().findViewById(R.id.quickMessage)).setText(R.string.scan_failed);
-                getActivity().findViewById(R.id.quickMessage).setVisibility(View.VISIBLE);
+                displayQuickMessage(getStringSafely(R.string.scan_failed));
                 return true;
             }
 
-            if (((TextView) getActivity().findViewById(R.id.quickMessage)).getText() == requireContext().getResources().getText(R.string.scan_failed)) {
-                getActivity().findViewById(R.id.quickMessage).setVisibility(View.INVISIBLE);
+            if (Objects.equals(getQuickMessage(), getStringSafely(R.string.scan_failed))) {
+                hideQuickMessage();
             }
 
             // draw xm particles
@@ -688,6 +709,8 @@ public class ScannerView extends Fragment implements SensorEventListener {
 
                 mLastScan = new Date();
                 Log.d("ScannerView", "world updated");
+                displayQuickMessage(getStringSafely(R.string.scan_complete));
+                setQuickMessageTimeout();
             }).start();
 
             return true;
@@ -871,6 +894,30 @@ public class ScannerView extends Fragment implements SensorEventListener {
                 });
             }
         }
+    }
+
+    public String getStringSafely(int id) {
+        if (getContext() == null) {
+            return "";
+        }
+        return getString(id);
+    }
+
+    public String getQuickMessage() {
+        return (String) ((TextView) requireActivity().findViewById(R.id.quickMessage)).getText();
+    }
+
+    public void displayQuickMessage(String message) {
+        ((TextView) requireActivity().findViewById(R.id.quickMessage)).setText(message);
+        requireActivity().findViewById(R.id.quickMessage).setVisibility(View.VISIBLE);
+    }
+
+    public void hideQuickMessage() {
+
+    }
+
+    public void setQuickMessageTimeout() {
+        new Handler(Looper.getMainLooper()).postDelayed(() -> requireActivity().runOnUiThread(() -> requireActivity().findViewById(R.id.quickMessage).setVisibility(View.GONE)), 3000);
     }
 
 }

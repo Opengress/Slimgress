@@ -2,10 +2,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/relativeLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:ignore="HardcodedText">
+
 
     <ImageView
         android:id="@+id/portalImage"
@@ -74,61 +74,56 @@
 
     <Button
         android:id="@+id/hackButton"
-        android:layout_width="120dp"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="59dp"
+        android:layout_marginEnd="80dp"
         android:layout_marginBottom="10dp"
         android:enabled="false"
         android:text="HACK\nportal"
-        android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/deployButton"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <Button
         android:id="@+id/deployButton"
-        android:layout_width="120dp"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="59dp"
+        android:layout_marginEnd="80dp"
         android:layout_marginBottom="10dp"
         android:enabled="false"
         android:text="DEPLOY\nstatus"
-        android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/rechargeButton"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <Button
         android:id="@+id/rechargeButton"
-        android:layout_width="120dp"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="59dp"
+        android:layout_marginEnd="80dp"
         android:layout_marginBottom="10dp"
         android:enabled="false"
         android:text="RECHARGE\nresonators"
-        android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/modButton"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <Button
         android:id="@+id/modButton"
-        android:layout_width="120dp"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="59dp"
+        android:layout_marginEnd="80dp"
         android:layout_marginBottom="10dp"
         android:enabled="false"
         android:text="MOD\nstatus"
-        android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/navigateButton"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <Button
         android:id="@+id/navigateButton"
-        android:layout_width="120dp"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="59dp"
+        android:layout_marginEnd="80dp"
         android:layout_marginBottom="70dp"
         android:enabled="false"
         android:text="NAVIGATE\nto portal"
-        android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

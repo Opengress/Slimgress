@@ -26,6 +26,11 @@ import android.content.Context;
 import android.os.Build;
 import android.os.StrictMode;
 
+import androidx.lifecycle.ViewModelProvider;
+
+import net.opengress.slimgress.API.Common.DeletedEntitiesGuidsModel;
+import net.opengress.slimgress.API.Common.InventoryViewModel;
+import net.opengress.slimgress.API.Common.LocationViewModel;
 import net.opengress.slimgress.API.Game.GameState;
 
 import org.acra.ACRA;
@@ -37,11 +42,16 @@ public class IngressApplication extends Application {
     private static IngressApplication mSingleton;
     private boolean mLoggedIn = false;
     protected GameState mGame;
+    private LocationViewModel mLocationViewModel;
+    private InventoryViewModel mInventoryViewModel;
+    private DeletedEntitiesGuidsModel mDeletedEntityGuidsModel;
 
     @Override
     public void onCreate() {
         super.onCreate();
-
+        mLocationViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(LocationViewModel.class);
+        mInventoryViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(InventoryViewModel.class);
+        mDeletedEntityGuidsModel = new ViewModelProvider.AndroidViewModelFactory(this).create(DeletedEntitiesGuidsModel.class);
         mSingleton = this;
         mGame = new GameState();
     }
@@ -75,7 +85,7 @@ public class IngressApplication extends Application {
             // FIXME learn how to not leak activities...
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
-//                        .detectActivityLeaks()
+                        .detectActivityLeaks()
                         .detectLeakedClosableObjects()
                         .detectLeakedRegistrationObjects()
                         .detectLeakedSqlLiteObjects()
@@ -88,7 +98,7 @@ public class IngressApplication extends Application {
                         .build());
             } else {
                 StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
-//                        .detectActivityLeaks()
+                        .detectActivityLeaks()
                         .detectLeakedClosableObjects()
                         .detectLeakedRegistrationObjects()
                         .detectLeakedSqlLiteObjects()
@@ -120,6 +130,18 @@ public class IngressApplication extends Application {
 
     public GameState getGame() {
         return mGame;
+    }
+
+    public LocationViewModel getLocationViewModel() {
+        return mLocationViewModel;
+    }
+
+    public InventoryViewModel getInventoryViewModel() {
+        return mInventoryViewModel;
+    }
+
+    public DeletedEntitiesGuidsModel getDeletedEntityGuidsModel() {
+        return mDeletedEntityGuidsModel;
     }
 
     public boolean isLoggedIn() {

@@ -17,8 +17,8 @@
     <dimen name="button_width">160dp</dimen>
     <dimen name="button_height">40dp</dimen>
     <dimen name="text_margin">4dp</dimen>
-    <dimen name="text_size">16sp</dimen>
-    <dimen name="text_size_button">20sp</dimen>
+    <dimen name="text_size">14dp</dimen>
+    <dimen name="text_size_button">18dp</dimen>
     <dimen name="text_size_header">24sp</dimen>
     <dimen name="text_size_description_hint">28sp</dimen>
 </resources>

@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    style="@style/ButtonStyle"
+    style="@style/SectionTitleStyle"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -55,7 +55,7 @@
 
             <Button
                 android:id="@+id/widgetActionButton"
-                android:layout_width="wrap_content"
+                android:layout_width="70dp"
                 android:layout_height="@dimen/button_height"
                 android:text="⚡"
                 android:textAppearance="@style/TextAppearance.AppCompat.Small" />

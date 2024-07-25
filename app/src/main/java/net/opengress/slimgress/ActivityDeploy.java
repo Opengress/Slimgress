@@ -3,7 +3,6 @@ package net.opengress.slimgress;
 import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,6 +11,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.API.Game.GameState;
@@ -22,7 +23,7 @@ import java.util.HashMap;
 
 // FIXME user can't deploy on portal if portal belongs to wrong team!
 // maybe resonators should show PORTAL team colour instead of owner team colour
-public class ActivityDeploy extends Activity {
+public class ActivityDeploy extends AppCompatActivity {
 
     private final IngressApplication mApp = IngressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
@@ -38,6 +39,7 @@ public class ActivityDeploy extends Activity {
             R.id.deployScreenResonatorS,
             R.id.deployScreenResonatorSE,
     };
+
     private final Handler deployResultHandler = new Handler(msg -> {
         var data = msg.getData();
         String error = data.getString("Exception");
@@ -61,7 +63,12 @@ public class ActivityDeploy extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_deploy);
         setUpView();
-        mGame.connectSignalLocationUpdated(this::onReceiveLocation);
+//        mGame.connectSignalLocationUpdated(this::onReceiveLocation);
+        mApp.getLocationViewModel().getLocationData().observe(this, location -> {
+            if (location != null) {
+                onReceiveLocation(location);
+            }
+        });
 
     }
 
@@ -112,6 +119,7 @@ public class ActivityDeploy extends Activity {
             }
             ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).setMax(reso.getMaxEnergy());
             ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).setProgress(reso.energyTotal);
+            ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).getProgressDrawable().setTint(0xff000000 + portal.getPortalTeam().getColour());
         }
 
         int dist = (int) mGame.getLocation().getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng());
@@ -210,7 +218,7 @@ public class ActivityDeploy extends Activity {
         // FIXME make these into separate fields and set colours
         GameEntityPortal portal = mGame.getCurrentPortal();
         String portalInfoText = "LVL: L" + portal.getPortalLevel() + "\n"
-                + "RNG: " + portal.getPortalLinkRange() + "km\n"
+                + "RNG: " + portal.getPortalLinkRange() + "m\n"
                 + "ENR: " + portal.getPortalEnergy() + " / " + portal.getPortalMaxEnergy() + "\n"
 //                + "MOD: [unimplemented]\n"
 //                + "MOD: [unimplemented]\n"
@@ -281,24 +289,18 @@ public class ActivityDeploy extends Activity {
         switch (slot) {
             case 1:
                 return "E";
-            case 2:
-                return "NE";
             case 3:
                 return "N";
-            case 4:
-                return "NW";
             case 5:
                 return "W";
-            case 6:
-                return "SW";
             case 7:
                 return "S";
+            case 2:
+            case 4:
+            case 6:
             case 8:
-                return "SE";
             default:
-                Log.e("ActivityDeploy", "Unknown resonator slot: " + slot);
-                // FIXME: maybe this should be a throw
-                return "??";
+                return "";
         }
     }
 

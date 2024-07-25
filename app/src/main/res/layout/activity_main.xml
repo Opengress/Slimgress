@@ -16,14 +16,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="70dp"
-            android:background="@drawable/gradient"
-            android:orientation="vertical">
-
-        </LinearLayout>
-
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -32,12 +24,13 @@
                 android:id="@+id/agentap"
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
-                android:layout_height="4dp"
+                android:layout_height="8dp"
                 android:indeterminate="false"
                 android:progress="100" />
 
             <LinearLayout
                 style="@style/AppTheme"
+                android:id="@+id/activity_main_header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 

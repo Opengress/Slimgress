@@ -22,11 +22,9 @@
 package net.opengress.slimgress;
 
 import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
-import static net.opengress.slimgress.API.Item.ItemBase.ItemType.PortalKey;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -39,12 +37,9 @@ import androidx.fragment.app.FragmentActivity;
 
 import net.opengress.slimgress.API.Common.Team;
 import net.opengress.slimgress.API.Game.GameState;
-import net.opengress.slimgress.API.Item.ItemPortalKey;
 import net.opengress.slimgress.API.Player.Agent;
 
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 public class ActivityMain extends FragmentActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
     private final IngressApplication mApp = IngressApplication.getInstance();
@@ -58,21 +53,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
         // update agent data
         updateAgent();
-        // loading the inventory at start makes weapons, deploy etc work nicely
-        // maybe should be in scanner view instead?
-        mGame.intGetInventory(new Handler(msg -> {
-            // Since we just updated the inventory, let's also update the status of all the portal keys
-            var keys = mGame.getInventory().getItems(PortalKey);
-            Set<String> portalGUIDs = new HashSet<>();
-            for (var item : keys) {
-                String portalGuid = ((ItemPortalKey) item).getPortalGuid();
-                if (!mGame.getWorld().getGameEntities().containsKey(portalGuid)) {
-                    portalGUIDs.add(portalGuid);
-                }
-            }
-            mGame.intGetModifiedEntitiesByGuid(portalGUIDs.toArray(new String[0]), new Handler(m -> true));
-            return true;
-        }));
 
         // create ops button callback
         final Button buttonOps = findViewById(R.id.buttonOps);
@@ -121,17 +101,18 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
 
             String nextLevel = String.valueOf(Math.min(agent.getLevel() + 1, 8));
-            ((ProgressBar) findViewById(R.id.agentap)).setMax(mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(nextLevel).getApRequired());
+            int nextLevelAP = mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(nextLevel).getApRequired();
+            ((ProgressBar) findViewById(R.id.agentap)).setMax(nextLevelAP);
             ((ProgressBar) findViewById(R.id.agentap)).setProgress(agent.getAp());
             ((ProgressBar) findViewById(R.id.agentap)).getProgressDrawable().setTint(levelColor);
 
             ((ProgressBar) findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
             ((ProgressBar) findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
             ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setTint(textColor);
-            findViewById(R.id.agentxm).setOnClickListener(new View.OnClickListener() {
+            findViewById(R.id.activity_main_header).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    String agentinfo = "AP: " + agent.getAp() + " / XM: " + (agent.getEnergy() * 100 / agent.getEnergyMax()) + " %";
+                    String agentinfo = "AP: " + agent.getAp() + " / " + nextLevelAP + "\nXM: " + agent.getEnergy() + " / " + agent.getEnergyMax();
                     Toast.makeText(getApplicationContext(), agentinfo, Toast.LENGTH_LONG).show();
                 }
             });

@@ -29,8 +29,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
-import com.github.msteinbeck.sig4j.signal.Signal1;
-import com.github.msteinbeck.sig4j.slot.Slot1;
 import com.google.common.geometry.S2LatLng;
 import com.google.common.geometry.S2LatLngRect;
 
@@ -54,6 +52,7 @@ import net.opengress.slimgress.API.Knobs.KnobsBundle;
 import net.opengress.slimgress.API.Player.Agent;
 import net.opengress.slimgress.API.Player.PlayerEntity;
 import net.opengress.slimgress.API.Plext.PlextBase;
+import net.opengress.slimgress.IngressApplication;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -81,8 +80,6 @@ public class GameState
     private Location mLocation;
     private GameEntityPortal mPortal;
     private final HashMap<String, String> mAgentNames = new HashMap<>();
-    private final Signal1<Location> mSignalLocationUpdated = new Signal1<>();
-    private final Signal1<List<String>> mSignalLocationLost = new Signal1<>();
 
     public GameState()
     {
@@ -104,7 +101,6 @@ public class GameState
     public void updateLocation(Location location)
     {
         mLocation = location;
-        mSignalLocationUpdated.emit(location);
     }
 
     public final Location getLocation()
@@ -120,6 +116,7 @@ public class GameState
             Log.d("Game", "processing game basket");
             mInventory.processGameBasket(gameBasket);
             mWorld.processGameBasket(gameBasket);
+            IngressApplication.getInstance().getInventoryViewModel().postInventory(mInventory);
 
             // update player data
             PlayerEntity playerEntity = gameBasket.getPlayerEntity();
@@ -1268,7 +1265,4 @@ public class GameState
         return rejects;
     }
 
-    public void connectSignalLocationUpdated(Slot1<Location> handler) {
-        mSignalLocationUpdated.connect(handler);
-    }
 }

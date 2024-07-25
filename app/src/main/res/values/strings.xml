@@ -26,7 +26,11 @@
     <!-- other -->
     <string name="dummy">Dummy</string>
     <string name="location_inaccurate">Scanner disabled - location inaccurate</string>
+    <string name="scanning_local_area">Scanning local area</string>
+    <string name="preparing_the_inventory">Preparing the inventory</string>
+    <string name="refreshing_the_inventory">Refreshing the inventory</string>
     <string name="scan_failed">Scan failed</string>
+    <string name="scan_complete">Scan complete</string>
     <string name="user_screen_coming_soon">User screen coming soon!</string>
     <string name="build_number">Build number</string>
 
@@ -58,4 +62,5 @@
     <string name="upgd">UPGD</string>
     <string name="dply">DPLY</string>
     <string name="l0">L0</string>
+    <string name="item_name_portal_key">Portal Key</string>
 </resources>
