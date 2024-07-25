@@ -186,7 +186,8 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 SensorManager.getOrientation(R, orientation);
                 // FIXME somewhere in this screen we must make an adjustment from OPS
                 float z = (float) (Math.toDegrees(orientation[0]) + 360) % 360;
-                float x = (float) (Math.toDegrees(orientation[1]) + 360) % 360;
+                // flip this so it works on my device
+                float x = (float) (Math.toDegrees(orientation[1]) + 180) % 360;
                 /*
                 If x is 0, y should give correct info. but i can't get it from [2] so idk.
                 Then again, who holds their phone perfectly vertically?
