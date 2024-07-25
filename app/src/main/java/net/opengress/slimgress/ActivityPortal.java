@@ -3,7 +3,6 @@ package net.opengress.slimgress;
 import static net.opengress.slimgress.API.Common.Utils.getImageBitmap;
 import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -12,6 +11,7 @@ import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
 
 import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.API.Game.GameState;
@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Objects;
 
 // FIXME: if a portal enters/exits range, enable/disable the hack button etc
-public class ActivityPortal extends Activity {
+public class ActivityPortal extends AppCompatActivity {
 
     private final IngressApplication mApp = IngressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
@@ -140,7 +140,12 @@ public class ActivityPortal extends Activity {
 //        ((TextView)findViewById(R.id.agentinfo)).setTextColor(textColor);
 
         setButtonsEnabled(mGame.getLocation().getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng()) <= mActionRadiusM);
-        mGame.connectSignalLocationUpdated(this::onReceiveLocation);
+//        mGame.connectSignalLocationUpdated(this::onReceiveLocation);
+        mApp.getLocationViewModel().getLocationData().observe(this, location -> {
+            if (location != null) {
+                onReceiveLocation(location);
+            }
+        });
     }
 
     private void onReceiveLocation(Location location) {

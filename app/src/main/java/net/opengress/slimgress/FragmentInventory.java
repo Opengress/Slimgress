@@ -33,6 +33,7 @@ import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 
 import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.API.Game.GameState;
@@ -65,6 +66,8 @@ public class FragmentInventory extends Fragment {
     ArrayList<InventoryListItem> mGroupResonators;
     ArrayList<InventoryListItem> mGroupWeapons;
 
+    Observer<Inventory> mObserver;
+
     @Override
     public View onCreateView(final LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
         final View rootView = inflater.inflate(R.layout.fragment_inventory,
@@ -90,19 +93,31 @@ public class FragmentInventory extends Fragment {
         final FragmentInventory thisObject = this;
 
         final Handler handler = new Handler();
-
-        FragmentInventory.this.fillInventory(() -> handler.post(() -> {
+        final Runnable runnable = () -> handler.post(() -> {
             InventoryList inventoryList = new InventoryList(thisObject.requireContext(), mGroupNames, mGroups);
             inventoryList.setInflater(inflater, thisObject.getActivity());
             list.setAdapter(inventoryList);
             list.setVisibility(View.VISIBLE);
             progress.setVisibility(View.INVISIBLE);
-        }));
+        });
+
+        if (!mGame.getInventory().getItems().isEmpty()) {
+            FragmentInventory.this.fillInventory(runnable);
+        } else {
+            mObserver = inventory -> {
+                if (!inventory.getItems().isEmpty()) {
+                    FragmentInventory.this.fillInventory(runnable);
+                }
+            };
+
+            mApp.getInventoryViewModel().getInventory().observe(getViewLifecycleOwner(), mObserver);
+        }
 
         return rootView;
     }
 
     private void fillInventory(final Runnable callback) {
+        mApp.getInventoryViewModel().getInventory().removeObserver(mObserver);
         requireActivity().runOnUiThread(() -> {
             fillMedia();
             fillMods();

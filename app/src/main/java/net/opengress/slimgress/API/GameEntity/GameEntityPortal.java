@@ -200,7 +200,7 @@ public class GameEntityPortal extends GameEntityBase
         if (mPortalResonators.size() < 8) {
             return 0;
         }
-        return (int) Math.pow(getPortalLevel(), 4);
+        return (int) Math.pow(getPortalLevel(), 4) * 160;
     }
 
     public Location getPortalLocation()

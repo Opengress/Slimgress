@@ -21,21 +21,19 @@
 
 package net.opengress.slimgress.API.Game;
 
-import com.github.msteinbeck.sig4j.signal.Signal1;
-import com.github.msteinbeck.sig4j.slot.Slot1;
+import net.opengress.slimgress.API.GameEntity.GameEntityBase;
+import net.opengress.slimgress.API.Interface.GameBasket;
+import net.opengress.slimgress.IngressApplication;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.opengress.slimgress.API.GameEntity.GameEntityBase;
-import net.opengress.slimgress.API.Interface.GameBasket;
-
 public class World {
     private final Map<String, GameEntityBase> mGameEntities;
     private final Map<Long, XMParticle> mXMParticles;
-    private final Signal1<List<String>> mSignalDeletedEntities = new Signal1<>();
+//    private final Signal1<List<String>> mSignalDeletedEntities = new Signal1<>();
 
     public World() {
         mGameEntities = new HashMap<>();
@@ -65,7 +63,8 @@ public class World {
 
         // remove deleted entities
         List<String> deletedEntityGuids = basket.getDeletedEntityGuids();
-        mSignalDeletedEntities.emit(deletedEntityGuids);
+//        mSignalDeletedEntities.emit(deletedEntityGuids);
+        IngressApplication.getInstance().getDeletedEntityGuidsModel().postDeletedEntityGuids(deletedEntityGuids);
         for (String guid : deletedEntityGuids) {
             mGameEntities.remove(guid);
             if (guid.contains(".")) {
@@ -90,8 +89,8 @@ public class World {
         return new ArrayList<>(mXMParticles.values());
     }
 
-    public void connectSignalDeletedEntities(Slot1<List<String>> handler) {
-        mSignalDeletedEntities.connect(handler);
-    }
+//    public void connectSignalDeletedEntities(Slot1<List<String>> handler) {
+//        mSignalDeletedEntities.connect(handler);
+//    }
 
 }

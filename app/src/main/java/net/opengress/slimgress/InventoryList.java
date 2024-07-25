@@ -29,7 +29,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -162,7 +161,7 @@ public class InventoryList extends BaseExpandableListAdapter {
                 ((ImageView) convertView.findViewById(resId)).setImageAlpha(255);
             }
 
-            // TODO??? tint or otherwise modify, to reflect health
+            // add nice, fresh images
             for (var reso : portal.getPortalResonators()) {
                 if (reso == null) {
                     continue;
@@ -170,7 +169,6 @@ public class InventoryList extends BaseExpandableListAdapter {
                 int resId = resoImageIds[reso.slot - 1];
                 ((ImageView) convertView.findViewById(resId)).setImageResource(getImageForResoLevel(reso.level));
                 int alpha = (int) (((float) reso.energyTotal / reso.getMaxEnergy()) * 255); // Convert percentage to alpha value (0-255)
-                Log.d("InventoryFragment", String.format("%d %d %d", reso.energyTotal, reso.getMaxEnergy(), alpha));
                 ((ImageView) convertView.findViewById(resId)).setImageAlpha(alpha);
             }
 
