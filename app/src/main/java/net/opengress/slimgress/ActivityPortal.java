@@ -3,6 +3,7 @@ package net.opengress.slimgress;
 import static net.opengress.slimgress.API.Common.Utils.getImageBitmap;
 import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -11,6 +12,8 @@ import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import net.opengress.slimgress.API.Common.Location;
@@ -32,7 +35,16 @@ public class ActivityPortal extends AppCompatActivity {
     private final GameState mGame = mApp.getGame();
     private final int mActionRadiusM = mGame.getKnobs().getScannerKnobs().getActionRadiusM();
     private Bitmap mBitmap;
-    private final int DEPLOY_INTENT_CODE = 1;
+    private final ActivityResultLauncher<Intent> deployActivityResultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+//                    Intent data = result.getData();
+                    // It might make more sense to just hook up a signal?
+                    setUpView();
+                }
+            }
+    );
 
     @Override
     protected void onDestroy() {
@@ -45,15 +57,15 @@ public class ActivityPortal extends AppCompatActivity {
     private void setUpView() {
         GameEntityPortal portal = mGame.getCurrentPortal();
 
-        ((TextView)findViewById(R.id.portalTitle)).setText(portal.getPortalTitle());
+        ((TextView) findViewById(R.id.portalTitle)).setText(portal.getPortalTitle());
 
         String portalLevel = "L" + Math.max(1, portal.getPortalLevel());
-        ((TextView)findViewById(R.id.portalLevel)).setText(portalLevel);
+        ((TextView) findViewById(R.id.portalLevel)).setText(portalLevel);
         int levelColour = getLevelColor(portal.getPortalLevel());
-        ((TextView)findViewById(R.id.portalLevel)).setTextColor(getResources().getColor(levelColour, null));
+        ((TextView) findViewById(R.id.portalLevel)).setTextColor(getResources().getColor(levelColour, null));
 
         // FIXME: format this nicely
-        ((TextView)findViewById(R.id.portalEnergy)).setText(getString(R.string.portal_energy, portal.getPortalEnergy()));
+        ((TextView) findViewById(R.id.portalEnergy)).setText(getString(R.string.portal_energy, portal.getPortalEnergy()));
 
 
         // TODO: link to photostream with portal description, up/downvotes, whatever
@@ -88,9 +100,9 @@ public class ActivityPortal extends AppCompatActivity {
                 mGame.setAgentNames(names);
                 return false;
             });
-            new Thread(() -> mGame.intGetNicknamesFromUserGUIDs(guids.toArray(new String[0]),ownerResultHandler)).start();
+            new Thread(() -> mGame.intGetNicknamesFromUserGUIDs(guids.toArray(new String[0]), ownerResultHandler)).start();
         }
-        ((TextView)findViewById(R.id.portalOwner)).setTextColor(0xFF000000 + portal.getPortalTeam().getColour());
+        ((TextView) findViewById(R.id.portalOwner)).setTextColor(0xFF000000 + portal.getPortalTeam().getColour());
 
     }
 
@@ -130,7 +142,7 @@ public class ActivityPortal extends AppCompatActivity {
         findViewById(R.id.deployButton).setEnabled(true);
         findViewById(R.id.deployButton).setOnClickListener(v -> {
             Intent myIntent = new Intent(getApplicationContext(), ActivityDeploy.class);
-            startActivityForResult(myIntent, DEPLOY_INTENT_CODE);
+            deployActivityResultLauncher.launch(myIntent);
         });
 //        ((ProgressBar)findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
 //        ((ProgressBar)findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
@@ -243,7 +255,7 @@ public class ActivityPortal extends AppCompatActivity {
                 if (item.getItemLevel() == 0) {
                     level = "";
                 } else {
-                    level = "L"+item.getItemLevel()+" ";
+                    level = "L" + item.getItemLevel() + " ";
                 }
         }
 
