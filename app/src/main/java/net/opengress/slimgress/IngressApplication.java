@@ -28,9 +28,11 @@ import android.os.StrictMode;
 
 import androidx.lifecycle.ViewModelProvider;
 
-import net.opengress.slimgress.API.Common.DeletedEntitiesGuidsModel;
+import net.opengress.slimgress.API.Common.APGainsViewModel;
+import net.opengress.slimgress.API.Common.DeletedEntityGuidsViewModel;
 import net.opengress.slimgress.API.Common.InventoryViewModel;
 import net.opengress.slimgress.API.Common.LocationViewModel;
+import net.opengress.slimgress.API.Common.PlayerDataViewModel;
 import net.opengress.slimgress.API.Game.GameState;
 
 import org.acra.ACRA;
@@ -44,14 +46,19 @@ public class IngressApplication extends Application {
     protected GameState mGame;
     private LocationViewModel mLocationViewModel;
     private InventoryViewModel mInventoryViewModel;
-    private DeletedEntitiesGuidsModel mDeletedEntityGuidsModel;
+    private DeletedEntityGuidsViewModel mDeletedEntityGuidsModel;
+    private APGainsViewModel mAPGainsViewModel;
+    private PlayerDataViewModel mPlayerDataViewModel;
 
     @Override
     public void onCreate() {
         super.onCreate();
         mLocationViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(LocationViewModel.class);
         mInventoryViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(InventoryViewModel.class);
-        mDeletedEntityGuidsModel = new ViewModelProvider.AndroidViewModelFactory(this).create(DeletedEntitiesGuidsModel.class);
+        mDeletedEntityGuidsModel = new ViewModelProvider.AndroidViewModelFactory(this).create(DeletedEntityGuidsViewModel.class);
+        mAPGainsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(APGainsViewModel.class);
+        mPlayerDataViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDataViewModel.class);
+
         mSingleton = this;
         mGame = new GameState();
     }
@@ -140,8 +147,16 @@ public class IngressApplication extends Application {
         return mInventoryViewModel;
     }
 
-    public DeletedEntitiesGuidsModel getDeletedEntityGuidsModel() {
+    public DeletedEntityGuidsViewModel getDeletedEntityGuidsModel() {
         return mDeletedEntityGuidsModel;
+    }
+
+    public APGainsViewModel getAPGainsModel() {
+        return mAPGainsViewModel;
+    }
+
+    public PlayerDataViewModel getPlayerDataViewModel() {
+        return mPlayerDataViewModel;
     }
 
     public boolean isLoggedIn() {

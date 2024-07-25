@@ -24,8 +24,9 @@ package net.opengress.slimgress;
 import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
-import android.view.View;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -53,6 +54,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
         // update agent data
         updateAgent();
+        mApp.getPlayerDataViewModel().getAgent().observe(this, this::updateAgent);
 
         // create ops button callback
         final Button buttonOps = findViewById(R.id.buttonOps);
@@ -81,45 +83,51 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         newDialog.show();
     }
 
-    void updateAgent() {
-        // get agent data
-        Agent agent = mGame.getAgent();
+    private void updateAgent(Agent agent) {
+        Log.d("ActivityMain/updateAgent", "Updating agent in display!");
+// TODO move some of this style info into onCreate
+        int textColor;
+        Team team = agent.getTeam();
+        textColor = 0xff000000 + team.getColour();
+        var levelColor = getResources().getColor(getLevelColor(agent.getLevel()), null);
 
-        // TODO move some of this style info into onCreate
-        if (agent != null) {
-            int textColor;
-            Team team = agent.getTeam();
-            textColor = 0xff000000 + team.getColour();
-            var levelColor = getResources().getColor(getLevelColor(agent.getLevel()), null);
+        ((TextView) findViewById(R.id.agentname)).setText(agent.getNickname());
+        ((TextView) findViewById(R.id.agentname)).setTextColor(textColor);
 
-            ((TextView) findViewById(R.id.agentname)).setText(agent.getNickname());
-            ((TextView) findViewById(R.id.agentname)).setTextColor(textColor);
-
-            String agentlevel = "L" + agent.getLevel();
-            ((TextView) findViewById(R.id.agentLevel)).setText(agentlevel);
-            ((TextView) findViewById(R.id.agentLevel)).setTextColor(levelColor);
+        String agentlevel = "L" + agent.getLevel();
+        ((TextView) findViewById(R.id.agentLevel)).setText(agentlevel);
+        ((TextView) findViewById(R.id.agentLevel)).setTextColor(levelColor);
 
 
-            String nextLevel = String.valueOf(Math.min(agent.getLevel() + 1, 8));
-            int nextLevelAP = mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(nextLevel).getApRequired();
-            ((ProgressBar) findViewById(R.id.agentap)).setMax(nextLevelAP);
-            ((ProgressBar) findViewById(R.id.agentap)).setProgress(agent.getAp());
-            ((ProgressBar) findViewById(R.id.agentap)).getProgressDrawable().setTint(levelColor);
+        String nextLevel = String.valueOf(Math.min(agent.getLevel() + 1, 8));
+        int thisLevelAP = mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(agent.getLevel()).getApRequired();
+        int nextLevelAP = mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(nextLevel).getApRequired();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            ((ProgressBar) findViewById(R.id.agentap)).setMin(thisLevelAP);
+        }
+        ((ProgressBar) findViewById(R.id.agentap)).setMax(nextLevelAP);
+        ((ProgressBar) findViewById(R.id.agentap)).setProgress(agent.getAp());
+        ((ProgressBar) findViewById(R.id.agentap)).getProgressDrawable().setTint(levelColor);
 
-            ((ProgressBar) findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
-            ((ProgressBar) findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
-            ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setTint(textColor);
-            findViewById(R.id.activity_main_header).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    String agentinfo = "AP: " + agent.getAp() + " / " + nextLevelAP + "\nXM: " + agent.getEnergy() + " / " + agent.getEnergyMax();
-                    Toast.makeText(getApplicationContext(), agentinfo, Toast.LENGTH_LONG).show();
-                }
-            });
+        ((ProgressBar) findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
+        ((ProgressBar) findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
+        ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setTint(textColor);
+        findViewById(R.id.activity_main_header).setOnClickListener(view -> {
+            String agentinfo = "AP: " + agent.getAp() + " / " + nextLevelAP + "\nXM: " + agent.getEnergy() + " / " + agent.getEnergyMax();
+            Toast.makeText(getApplicationContext(), agentinfo, Toast.LENGTH_LONG).show();
+        });
 
 //            String agentinfo = "AP: " + agent.getAp() + " / XM: " + (agent.getEnergy() * 100 / agent.getEnergyMax()) + " %";
 //            ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);
 //            ((TextView)findViewById(R.id.agentinfo)).setTextColor(0x99999999);
+    }
+
+    void updateAgent() {
+        // get agent data
+        Agent agent = mGame.getAgent();
+
+        if (agent != null) {
+            updateAgent(agent);
         }
 
     }

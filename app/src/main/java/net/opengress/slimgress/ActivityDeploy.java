@@ -1,6 +1,7 @@
 package net.opengress.slimgress;
 
 import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
+import static net.opengress.slimgress.API.Common.Utils.getPrettyDistanceString;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -64,11 +65,7 @@ public class ActivityDeploy extends AppCompatActivity {
         setContentView(R.layout.activity_deploy);
         setUpView();
 //        mGame.connectSignalLocationUpdated(this::onReceiveLocation);
-        mApp.getLocationViewModel().getLocationData().observe(this, location -> {
-            if (location != null) {
-                onReceiveLocation(location);
-            }
-        });
+        mApp.getLocationViewModel().getLocationData().observe(this, this::onReceiveLocation);
 
     }
 
@@ -203,9 +200,14 @@ public class ActivityDeploy extends AppCompatActivity {
     }
 
     private void onReceiveLocation(Location location) {
-        int dist = (int) location.getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng());
-        setButtonsEnabled(dist <= mActionRadiusM);
-        updateInfoText(dist);
+        if (location != null) {
+            int dist = (int) location.getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng());
+            setButtonsEnabled(dist <= mActionRadiusM);
+            updateInfoText(dist);
+        } else {
+            setButtonsEnabled(false);
+            updateInfoText(999999000);
+        }
     }
 
     private void setButtonsEnabled(boolean shouldEnableButton) {
@@ -216,6 +218,7 @@ public class ActivityDeploy extends AppCompatActivity {
 
     private void updateInfoText(int dist) {
         // FIXME make these into separate fields and set colours
+        String distanceText = getPrettyDistanceString(dist);
         GameEntityPortal portal = mGame.getCurrentPortal();
         String portalInfoText = "LVL: L" + portal.getPortalLevel() + "\n"
                 + "RNG: " + portal.getPortalLinkRange() + "m\n"
@@ -225,7 +228,7 @@ public class ActivityDeploy extends AppCompatActivity {
 //                + "MOD: [unimplemented]\n"
 //                + "MOD: [unimplemented]\n"
 //                + "LNK: 0 in, 0 out (unimplemented)"
-                + "DST: " + dist + "m";
+                + "DST: " + distanceText;
         ((TextView) (findViewById(R.id.deployScreenPortalInfo))).setText(portalInfoText);
     }
 
