@@ -135,7 +135,7 @@ public class InventoryList extends BaseExpandableListAdapter {
 
             // get distance to portal and show ownership in the colour
             ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_distance)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());
-            int dist = 999999900;
+            int dist = 999999000;
             Location loc = mGame.getLocation();
             if (loc != null) {
                 dist = (int) (mGame.getLocation().getS2LatLng().getEarthDistance(item.getLocation()));

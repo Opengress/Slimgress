@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel;
 
 import java.util.List;
 
-public class DeletedEntitiesGuidsModel extends ViewModel {
+public class DeletedEntityGuidsViewModel extends ViewModel {
     private final MutableLiveData<List<String>> mDeletedEntityGuids = new MutableLiveData<>();
 
     public LiveData<List<String>> getDeletedEntityGuids() {

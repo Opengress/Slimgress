@@ -152,16 +152,15 @@ public class ActivityPortal extends AppCompatActivity {
 //        ((TextView)findViewById(R.id.agentinfo)).setTextColor(textColor);
 
         setButtonsEnabled(mGame.getLocation().getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng()) <= mActionRadiusM);
-//        mGame.connectSignalLocationUpdated(this::onReceiveLocation);
-        mApp.getLocationViewModel().getLocationData().observe(this, location -> {
-            if (location != null) {
-                onReceiveLocation(location);
-            }
-        });
+        mApp.getLocationViewModel().getLocationData().observe(this, this::onReceiveLocation);
     }
 
     private void onReceiveLocation(Location location) {
-        setButtonsEnabled(location.getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng()) <= mActionRadiusM);
+        if (location != null) {
+            setButtonsEnabled(location.getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng()) <= mActionRadiusM);
+        } else {
+            setButtonsEnabled(false);
+        }
     }
 
     private void setButtonsEnabled(boolean shouldEnableButton) {

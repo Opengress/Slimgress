@@ -110,18 +110,30 @@ public class GameState
 
     private synchronized void processGameBasket(GameBasket gameBasket)
     {
-        if (gameBasket == null)
+        IngressApplication app = IngressApplication.getInstance();
+        if (gameBasket == null) {
             Log.w("Game", "game basket is invalid");
-        else {
+        } else {
             Log.d("Game", "processing game basket");
             mInventory.processGameBasket(gameBasket);
             mWorld.processGameBasket(gameBasket);
-            IngressApplication.getInstance().getInventoryViewModel().postInventory(mInventory);
+            if (!gameBasket.getInventory().isEmpty() || !gameBasket.getDeletedEntityGuids().isEmpty()) {
+                app.getInventoryViewModel().postInventory(mInventory);
+            }
+            if (!gameBasket.getDeletedEntityGuids().isEmpty()) {
+                app.getDeletedEntityGuidsModel().postDeletedEntityGuids(gameBasket.getDeletedEntityGuids());
+            }
+            if (!gameBasket.getAPGains().isEmpty()) {
+                // FIXME i ... don't need to add this to player data manually, do i???
+                app.getAPGainsModel().postAPGains(gameBasket.getAPGains());
+            }
 
             // update player data
             PlayerEntity playerEntity = gameBasket.getPlayerEntity();
-            if (playerEntity != null && mAgent != null)
+            if (playerEntity != null && mAgent != null) {
                 mAgent.update(playerEntity);
+                app.getPlayerDataViewModel().postAgent(mAgent);
+            }
         }
     }
 
@@ -1099,7 +1111,6 @@ public class GameState
     }
 
     public void intGetModifiedEntitiesByGuid(String[] guids, final Handler handler) {
-        Log.w("Game", "intGetModifiedEntitiesByGuid not yet TESTED");
         try {
             checkInterface();
 

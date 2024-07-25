@@ -85,10 +85,19 @@ public class PlayerLevelKnobs extends Knobs {
 
     }
 
-    public PlayerLevel getLevelUpRequirement(String key)
+    public PlayerLevel getLevelUpRequirement(int which)
     {
+        String key = String.valueOf(which);
         if (!mPlayerLevelsMap.containsKey(key))
             Log.e("PlayerLevelKnobs", "key not found in LevelUpRequirements hash map: " + key);
+
+        return mPlayerLevelsMap.get(key);
+    }
+
+    public PlayerLevel getLevelUpRequirement(String key) {
+        if (!mPlayerLevelsMap.containsKey(key)) {
+            Log.e("PlayerLevelKnobs", "key not found in LevelUpRequirements hash map: " + key);
+        }
 
         return mPlayerLevelsMap.get(key);
     }

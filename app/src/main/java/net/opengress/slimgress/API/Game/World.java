@@ -23,7 +23,6 @@ package net.opengress.slimgress.API.Game;
 
 import net.opengress.slimgress.API.GameEntity.GameEntityBase;
 import net.opengress.slimgress.API.Interface.GameBasket;
-import net.opengress.slimgress.IngressApplication;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,7 +32,6 @@ import java.util.Map;
 public class World {
     private final Map<String, GameEntityBase> mGameEntities;
     private final Map<Long, XMParticle> mXMParticles;
-//    private final Signal1<List<String>> mSignalDeletedEntities = new Signal1<>();
 
     public World() {
         mGameEntities = new HashMap<>();
@@ -46,7 +44,7 @@ public class World {
     }
 
     public void processGameBasket(GameBasket basket) {
-        // only add non-existing game entities
+        // only add non-existing game entities ... should this be a map?
         List<GameEntityBase> entities = basket.getGameEntities();
         for (GameEntityBase entity : entities) {
             mGameEntities.remove(entity.getEntityGuid());
@@ -63,13 +61,12 @@ public class World {
 
         // remove deleted entities
         List<String> deletedEntityGuids = basket.getDeletedEntityGuids();
-//        mSignalDeletedEntities.emit(deletedEntityGuids);
-        IngressApplication.getInstance().getDeletedEntityGuidsModel().postDeletedEntityGuids(deletedEntityGuids);
         for (String guid : deletedEntityGuids) {
-            mGameEntities.remove(guid);
             if (guid.contains(".")) {
                 mXMParticles.remove(Long.parseLong(guid.substring(0, 16), 16));
+                continue;
             }
+            mGameEntities.remove(guid);
         }
     }
 
@@ -88,9 +85,5 @@ public class World {
     public final List<XMParticle> getXMParticlesList() {
         return new ArrayList<>(mXMParticles.values());
     }
-
-//    public void connectSignalDeletedEntities(Slot1<List<String>> handler) {
-//        mSignalDeletedEntities.connect(handler);
-//    }
 
 }

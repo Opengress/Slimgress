@@ -71,6 +71,7 @@ import net.opengress.slimgress.API.GameEntity.GameEntityBase;
 import net.opengress.slimgress.API.GameEntity.GameEntityControlField;
 import net.opengress.slimgress.API.GameEntity.GameEntityLink;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
+import net.opengress.slimgress.API.Interface.APGain;
 import net.opengress.slimgress.API.Item.ItemPortalKey;
 import net.opengress.slimgress.API.Knobs.ScannerKnobs;
 import net.opengress.slimgress.API.Knobs.TeamKnobs;
@@ -319,7 +320,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mSensorManager = (SensorManager) requireActivity().getSystemService(SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mMagnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-//        mGame.getWorld().connectSignalDeletedEntities(this::onReceiveDeletedEntityGuids);
+        mApp.getAPGainsModel().getAPGains().observe(this, this::onReceiveAPGains);
         mApp.getDeletedEntityGuidsModel().getDeletedEntityGuids().observe(this, this::onReceiveDeletedEntityGuids);
         mPortalActivityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -387,6 +388,12 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                     }
                 }
         );
+    }
+
+    private void onReceiveAPGains(List<APGain> apGains) {
+        for (var gain : apGains) {
+            Log.d("ScannerView", String.format("Gained %d AP for %s", gain.getAmount(), gain.getTrigger()));
+        }
     }
 
     public void onReceiveDeletedEntityGuids(List<String> deletedEntityGuids) {
