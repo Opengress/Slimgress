@@ -253,6 +253,16 @@ public class GameEntityPortal extends GameEntityBase
         return mPortalResonators;
     }
 
+    public int getPortalResonatorCount() {
+        int resos = 0;
+        for (LinkedResonator reso : mPortalResonators) {
+            if (reso != null) {
+                resos++;
+            }
+        }
+        return resos;
+    }
+
     public LinkedResonator getPortalResonator(int slot) {
         for (LinkedResonator reso : mPortalResonators) {
             if (reso != null && reso.slot == slot) {

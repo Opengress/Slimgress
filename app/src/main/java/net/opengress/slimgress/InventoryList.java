@@ -47,6 +47,7 @@ import net.opengress.slimgress.API.Item.ItemBase;
 import net.opengress.slimgress.API.Item.ItemPortalKey;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class InventoryList extends BaseExpandableListAdapter {
     public final ArrayList<String> mGroupItem;
@@ -57,6 +58,9 @@ public class InventoryList extends BaseExpandableListAdapter {
     private final Context mContext;
     private final Inventory mInventory;
     private final GameState mGame;
+    private ItemBase.Rarity mRarityFilter = null;
+    private int mLevelFilter = -999;
+    private String mSearchText = "";
 
     public InventoryList(Context context, ArrayList<String> grList, ArrayList<Object> childItem) {
         mGroupItem = grList;
@@ -71,7 +75,76 @@ public class InventoryList extends BaseExpandableListAdapter {
         mActivity = act;
     }
 
-    public void updateKeyLocations(Location location) {
+    public void setSearchText(String text) {
+        mSearchText = text.toLowerCase();
+    }
+
+    public void limitRarities(String rarity) {
+        /// "ALL", "Very Common", "Common", "Less Common", "Rare", "Very Rare", "Extra Rare"
+        switch (rarity) {
+            case "ALL":
+            default:
+                // What is None?
+//                mRarityFilter = ItemBase.Rarity.None;
+                mRarityFilter = null;
+                break;
+            case "Very Common":
+                mRarityFilter = ItemBase.Rarity.VeryCommon;
+                break;
+            case "Common":
+                mRarityFilter = ItemBase.Rarity.Common;
+                break;
+            case "Less Common":
+                mRarityFilter = ItemBase.Rarity.LessCommon;
+                break;
+            case "Rare":
+                mRarityFilter = ItemBase.Rarity.Rare;
+                break;
+            case "Very Rare":
+                mRarityFilter = ItemBase.Rarity.VeryRare;
+                break;
+            case "Extra Rare":
+                mRarityFilter = ItemBase.Rarity.ExtraRare;
+                break;
+        }
+        notifyDataSetChanged();
+    }
+
+    public void limitLevels(String level) {
+        switch (level) {
+            case "ALL":
+            default:
+                // again, is this safe?
+                mLevelFilter = -999;
+                break;
+            case "Level 0":
+                // should never happen because currently nothing is ever 0. portals, tho...
+                mLevelFilter = 0;
+                break;
+            case "Level 1":
+                mLevelFilter = 1;
+                break;
+            case "Level 2":
+                mLevelFilter = 2;
+                break;
+            case "Level 3":
+                mLevelFilter = 3;
+                break;
+            case "Level 4":
+                mLevelFilter = 4;
+                break;
+            case "Level 5":
+                mLevelFilter = 5;
+                break;
+            case "Level 6":
+                mLevelFilter = 6;
+                break;
+            case "Level 7":
+                mLevelFilter = 7;
+                break;
+            case "Level 8":
+                mLevelFilter = 8;
+        }
         notifyDataSetChanged();
     }
 
@@ -93,6 +166,7 @@ public class InventoryList extends BaseExpandableListAdapter {
         TextView text;
         ImageView image;
         var item = mTempChild.get(childPosition);
+
         if (convertView == null) {
             if (item.getType() == ItemBase.ItemType.PortalKey) {
                 convertView = mInflater.inflate(R.layout.inventory_childrow_portalkey, parent, false);
@@ -111,22 +185,17 @@ public class InventoryList extends BaseExpandableListAdapter {
         // Set the tag to the current item type
         convertView.setTag(item.getType());
 
+        // for the filters...
+        int level = item.getLevel();
+        String address = "";
+
         if (item.getType() == ItemBase.ItemType.PortalKey) {
 
             // set portal address, description and cover image
             text = convertView.findViewById(R.id.inventory_childRow_portalKey_prettyDescription);
             text.setText(item.getPrettyDescription());
             image = convertView.findViewById(R.id.inventory_childRow_portalKey_ChildImage);
-//            image.setImageDrawable(item.getIcon());
-            //        image.setImageURI(Uri.parse(mTempChild.get(childPosition).getImage()));
-            // race condition
-//            String uri = item.getImage().replace("t_lim1kstripfaces", "t_lim1kstripfaces_32");
-//            new Thread(() -> {
-//                Bitmap bitmap = getImageBitmap(uri);
-//                if (bitmap != null) {
-//                    mActivity.runOnUiThread(() -> image.setImageBitmap(bitmap));
-//                }
-//            }).start();
+
             Glide.with(mContext)
                     .load(item.getImage())
                     .placeholder(R.drawable.no_image) // Optional placeholder image
@@ -136,7 +205,9 @@ public class InventoryList extends BaseExpandableListAdapter {
             assert key != null;
             GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key.getPortalGuid());
             assert portal != null;
-            ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_address)).setText(key.getPortalAddress());
+            address = key.getPortalAddress();
+            ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_address)).setText(address);
+            level = portal.getPortalLevel();
 
             // show portal level
             ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_level)).setText(String.format("L%d", portal.getPortalLevel()));
@@ -193,6 +264,29 @@ public class InventoryList extends BaseExpandableListAdapter {
             intent.putExtra("item", item);
             mContext.startActivity(intent);
         });
+
+
+        var params = convertView.getLayoutParams();
+        params.height = 0;
+        if (mLevelFilter > -999) {
+            if (level != mLevelFilter) {
+                params.height = 1;
+            }
+        }
+        if (mRarityFilter != null) {
+            if (item.getRarity() != mRarityFilter) {
+                params.height = 1;
+            }
+        }
+        if (!Objects.equals(mSearchText, "")) {
+            if (!item.getPrettyDescription().toLowerCase().contains(mSearchText) &&
+                    !Objects.equals(address, "") &&
+                    !address.toLowerCase().contains(mSearchText)) {
+                params.height = 1;
+            }
+        }
+        convertView.setLayoutParams(params);
+
         return convertView;
     }
 

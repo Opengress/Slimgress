@@ -4,8 +4,8 @@ import android.graphics.drawable.Drawable;
 
 import com.google.common.geometry.S2LatLng;
 
-import net.opengress.slimgress.API.Item.ItemBase.Rarity;
 import net.opengress.slimgress.API.Item.ItemBase.ItemType;
+import net.opengress.slimgress.API.Item.ItemBase.Rarity;
 import net.opengress.slimgress.API.Item.ItemFlipCard.FlipCardType;
 
 import java.io.IOException;
@@ -25,13 +25,33 @@ public class InventoryListItem implements Serializable {
     private Rarity mRarity = Rarity.None;
     private transient S2LatLng mLocation;
     private String mSerializableLocation;
+    private int mLevel = -999;
 
     public InventoryListItem(String description, ItemType type, Drawable icon, int iconID, ArrayList<String> IDs) {
-        this.mDescription = description;
-        this.mType = type;
-        this.mIcon = icon;
-        this.mIDs = IDs;
+        mDescription = description;
+        mType = type;
+        mIcon = icon;
+        mIDs = IDs;
         mIconID = iconID;
+    }
+
+    public InventoryListItem(String description, ItemType type, Drawable icon, int iconID, ArrayList<String> IDs, Rarity rarity) {
+        mDescription = description;
+        mType = type;
+        mIcon = icon;
+        mIDs = IDs;
+        mIconID = iconID;
+        mRarity = rarity;
+    }
+
+    public InventoryListItem(String description, ItemType type, Drawable icon, int iconID, ArrayList<String> IDs, Rarity rarity, int level) {
+        mDescription = description;
+        mType = type;
+        mIcon = icon;
+        mIDs = IDs;
+        mIconID = iconID;
+        mRarity = rarity;
+        mLevel = level;
     }
 
     public String getFirstID() {
@@ -79,7 +99,7 @@ public class InventoryListItem implements Serializable {
     }
 
     public void setDescription(String description) {
-        this.mDescription = description;
+        mDescription = description;
     }
 
     public Drawable getIcon() {
@@ -87,7 +107,7 @@ public class InventoryListItem implements Serializable {
     }
 
     public void setIcon(Drawable image) {
-        this.mIcon = image;
+        mIcon = image;
     }
 
     public int getIconID() {
@@ -95,7 +115,7 @@ public class InventoryListItem implements Serializable {
     }
 
     public void setIconID(int resID) {
-        this.mIconID = resID;
+        mIconID = resID;
     }
 
     public ItemType getType() {
@@ -103,7 +123,7 @@ public class InventoryListItem implements Serializable {
     }
 
     public void setType(ItemType type) {
-        this.mType = type;
+        mType = type;
     }
 
     public FlipCardType getFlipCardType() {
@@ -111,7 +131,7 @@ public class InventoryListItem implements Serializable {
     }
 
     public void setFlipCardType(FlipCardType flipCardType) {
-        this.mFlipCardType = flipCardType;
+        mFlipCardType = flipCardType;
     }
 
     public void setLocation(S2LatLng loc) {
@@ -135,15 +155,19 @@ public class InventoryListItem implements Serializable {
     }
 
     public void setRarity(Rarity rarity) {
-        this.mRarity = rarity;
+        mRarity = rarity;
     }
 
     public String getImage() {
         return mImage;
     }
 
-    public void setImage(String mImage) {
-        this.mImage = mImage;
+    public void setImage(String image) {
+        mImage = image;
+    }
+
+    public int getLevel() {
+        return mLevel;
     }
 
     private void writeObject(ObjectOutputStream oos) throws IOException {
