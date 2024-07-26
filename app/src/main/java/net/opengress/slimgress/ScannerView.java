@@ -48,7 +48,6 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.StrictMode;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -172,10 +171,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             location = (GeoPoint) mMap.getMapCenter();
         }
 
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             mGravity = event.values;
-        else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+        } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
             mGeomagnetic = event.values;
+        }
 
         if (mGravity != null && mGeomagnetic != null) {
             float[] R = new float[9];
@@ -437,9 +437,8 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         // allows map tiles to be cached in SQLite so map draws properly
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitDiskReads().permitDiskWrites().build();
-        StrictMode.setThreadPolicy(policy);
         Configuration.getInstance().load(requireContext(), PreferenceManager.getDefaultSharedPreferences(requireContext()));
+
 
         // set up map tile source before creating map, so we don't download wrong tiles wastefully
         final ITileSource tileSource = new XYTileSource("CartoDB Dark Matter", 3, 18, 256, ".png",
@@ -707,12 +706,13 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
                     uiHandler.post(() -> {
                         assert entity != null;
-                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal)
+                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
                             drawPortal((GameEntityPortal) entity);
-                        else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link)
+                        } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
                             drawLink((GameEntityLink) entity);
-                        else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField)
+                        } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
                             drawField((GameEntityControlField) entity);
+                        }
                     });
                 }
 

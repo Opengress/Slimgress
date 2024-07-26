@@ -85,6 +85,8 @@ public class IngressApplication extends Application {
         if (BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
                     .detectAll()
+                    .permitDiskReads()
+                    .permitDiskWrites()
                     .penaltyLog()
 //                    .penaltyDeath()
                     .build());
