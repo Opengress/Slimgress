@@ -102,9 +102,8 @@ import java.util.Objects;
 import java.util.Set;
 
 public class ScannerView extends Fragment implements SensorEventListener, LocationListener {
-    private final IngressApplication mApp = IngressApplication.getInstance();
-    private final GameState mGame = mApp.getGame();
-    private ScannerKnobs mScannerKnobs;
+    private IngressApplication mApp;
+    private GameState mGame;
     private MapView mMap = null;
 
     private final HashMap<String, Bitmap> mIcons = new HashMap<>();
@@ -311,7 +310,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mScannerKnobs = mGame.getKnobs().getScannerKnobs();
+        mApp = IngressApplication.getInstance();
+        mGame = mApp.getGame();
+        ScannerKnobs mScannerKnobs = mGame.getKnobs().getScannerKnobs();
         mActionRadiusM = mScannerKnobs.getActionRadiusM();
         mUpdateIntervalMS = mScannerKnobs.getUpdateIntervalMS();
         mMinUpdateIntervalMS = mScannerKnobs.getMinUpdateIntervalMS();
