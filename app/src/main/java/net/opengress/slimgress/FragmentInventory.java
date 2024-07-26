@@ -22,6 +22,7 @@
 package net.opengress.slimgress;
 
 import static androidx.core.content.ContextCompat.getDrawable;
+import static net.opengress.slimgress.API.Common.Utils.notBouncing;
 
 import android.os.Build;
 import android.os.Bundle;
@@ -29,16 +30,21 @@ import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 
 import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Game.Inventory;
+import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.API.Item.ItemBase;
 import net.opengress.slimgress.API.Item.ItemBase.ItemType;
 import net.opengress.slimgress.API.Item.ItemBase.Rarity;
@@ -48,6 +54,7 @@ import net.opengress.slimgress.API.Item.ItemMedia;
 import net.opengress.slimgress.API.Item.ItemMod;
 import net.opengress.slimgress.API.Item.ItemPortalKey;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -68,6 +75,7 @@ public class FragmentInventory extends Fragment {
     ArrayList<InventoryListItem> mGroupResonators;
     ArrayList<InventoryListItem> mGroupWeapons;
 
+    InventoryList mInventoryList;
     Observer<Inventory> mObserver;
 
     @Override
@@ -107,7 +115,210 @@ public class FragmentInventory extends Fragment {
         }
 
 
+        String[] rarityNames = {"ALL", "Very Common", "Common", "Less Common", "Rare", "Very Rare", "Extra Rare"};
+        Spinner raritySpinner = setUpSpinner(rarityNames, rootView, R.id.spinnerRarity);
+        raritySpinner.setSelection(0);
+        raritySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (mInventoryList != null) {
+                    mInventoryList.limitRarities(rarityNames[i]);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        String[] levels = {"ALL", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5", "Level 6", "Level 7", "Level 8"};
+        Spinner levelSpinner = setUpSpinner(levels, rootView, R.id.spinnerLevel);
+        levelSpinner.setSelection(0);
+        levelSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (mInventoryList != null) {
+                    mInventoryList.limitLevels(levels[i]);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        String[] sorts = {"Deployment", "Distance", "Level", "Name", "Team"};
+        Spinner sortSpinner = setUpSpinner(sorts, rootView, R.id.spinnerSort);
+        sortSpinner.setSelection(3);
+        sortSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                sortKeys(sorts[i]);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        SearchView searchBox = rootView.findViewById(R.id.editTextSearch);
+        searchBox.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                mInventoryList.setSearchText(newText);
+                notifyDatasetChanged();
+                return false;
+            }
+        });
+
+
         return rootView;
+    }
+
+    private void notifyDatasetChanged() {
+        if (mInventoryList != null && notBouncing("updateInventoryList", 500)) {
+            mInventoryList.notifyDataSetChanged();
+        }
+    }
+
+    private void sortKeys(String by) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            switch (by) {
+                case "Deployment":
+                    mGroupPortalKeys.sort((item1, item2) -> {
+                        ItemPortalKey key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
+                        assert key1 != null;
+                        GameEntityPortal portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
+                        assert portal1 != null;
+                        ItemPortalKey key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
+                        assert key2 != null;
+                        GameEntityPortal portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
+                        assert portal2 != null;
+                        return portal1.getPortalResonatorCount() - portal2.getPortalResonatorCount();
+                    });
+                    break;
+                case "Distance":
+                    mGroupPortalKeys.sort(Comparator.comparingInt(inventoryListItem -> (int) inventoryListItem.getDistance(mGame.getLocation().getS2LatLng())));
+                    break;
+                case "Level":
+                    mGroupPortalKeys.sort((item1, item2) -> {
+                        ItemPortalKey key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
+                        assert key1 != null;
+                        GameEntityPortal portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
+                        assert portal1 != null;
+                        ItemPortalKey key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
+                        assert key2 != null;
+                        GameEntityPortal portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
+                        assert portal2 != null;
+                        return portal1.getPortalLevel() - portal2.getPortalLevel();
+                    });
+                    break;
+                default:
+                case "Name":
+                    mGroupPortalKeys.sort((item1, item2) -> Collator.getInstance().compare(item1.getDescription(), item2.getDescription()));
+                    break;
+                case "Team":
+                    mGroupPortalKeys.sort((item1, item2) -> {
+                        ItemPortalKey key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
+                        assert key1 != null;
+                        GameEntityPortal portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
+                        assert portal1 != null;
+                        ItemPortalKey key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
+                        assert key2 != null;
+                        GameEntityPortal portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
+                        assert portal2 != null;
+                        return portal1.getPortalTeam().getColour() - portal2.getPortalTeam().getColour();
+                    });
+                    break;
+            }
+
+        } else {
+            sortKeysTheOldWay(by);
+        }
+        notifyDatasetChanged();
+    }
+
+    // untested!
+    private void sortKeysTheOldWay(String by) {
+        ItemPortalKey key1;
+        ItemPortalKey key2;
+        GameEntityPortal portal1;
+        GameEntityPortal portal2;
+        for (int i = 0; i < mGroupPortalKeys.size() - 1; i++) {
+            for (int j = 0; j < mGroupPortalKeys.size() - i - 1; j++) {
+                InventoryListItem item1 = mGroupPortalKeys.get(j);
+                InventoryListItem item2 = mGroupPortalKeys.get(j + 1);
+                switch (by) {
+                    case "Deployment":
+                        key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
+                        assert key1 != null;
+                        portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
+                        assert portal1 != null;
+                        key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
+                        assert key2 != null;
+                        portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
+                        assert portal2 != null;
+                        if ((portal1.getPortalResonatorCount() - portal2.getPortalResonatorCount()) > 0) {
+                            mGroupPortalKeys.set(j, item2);
+                            mGroupPortalKeys.set(j + 1, item1);
+                        }
+                        break;
+                    case "Distance":
+                        if ((item1.getDistance(mGame.getLocation().getS2LatLng()) - item2.getDistance(mGame.getLocation().getS2LatLng())) > 0) {
+                            mGroupPortalKeys.set(j, item2);
+                            mGroupPortalKeys.set(j + 1, item1);
+                        }
+                        break;
+                    case "Level":
+                        key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
+                        assert key1 != null;
+                        portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
+                        assert portal1 != null;
+                        key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
+                        assert key2 != null;
+                        portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
+                        assert portal2 != null;
+                        if ((portal1.getPortalLevel() - portal2.getPortalLevel()) > 0) {
+                            mGroupPortalKeys.set(j, item2);
+                            mGroupPortalKeys.set(j + 1, item1);
+                        }
+                        break;
+                    default:
+                    case "Name":
+                        if (Collator.getInstance().compare(item1.getDescription(), item2.getDescription()) > 0) {
+                            mGroupPortalKeys.set(j, item2);
+                            mGroupPortalKeys.set(j + 1, item1);
+                        }
+                        break;
+                    case "Team":
+                        key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
+                        assert key1 != null;
+                        portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
+                        assert portal1 != null;
+                        key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
+                        assert key2 != null;
+                        portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
+                        assert portal2 != null;
+                        if ((portal1.getPortalTeam().getColour() - portal2.getPortalTeam().getColour()) > 0) {
+                            mGroupPortalKeys.set(j, item2);
+                            mGroupPortalKeys.set(j + 1, item1);
+                        }
+                        break;
+                }
+            }
+        }
+    }
+
+    private Spinner setUpSpinner(String[] what, View where, int resource) {
+        Spinner sp = where.findViewById(resource);
+        ArrayAdapter<String> levelAdapter = new ArrayAdapter<>(where.getContext(),
+                android.R.layout.simple_spinner_item, what);
+        levelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sp.setAdapter(levelAdapter);
+        return sp;
     }
 
     private @NonNull Runnable getRunnable(LayoutInflater inflater, ExpandableListView list, ProgressBar progress) {
@@ -115,39 +326,17 @@ public class FragmentInventory extends Fragment {
 
         final Handler handler = new Handler();
         return () -> handler.post(() -> {
-            InventoryList inventoryList = new InventoryList(thisObject.requireContext(), mGroupNames, mGroups);
-            inventoryList.setInflater(inflater, thisObject.getActivity());
-            list.setAdapter(inventoryList);
+            mInventoryList = new InventoryList(thisObject.requireContext(), mGroupNames, mGroups);
+            mInventoryList.setInflater(inflater, thisObject.getActivity());
+            list.setAdapter(mInventoryList);
             list.setVisibility(View.VISIBLE);
             progress.setVisibility(View.INVISIBLE);
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                mGroupPortalKeys.sort(Comparator.comparingInt(inventoryListItem -> inventoryListItem.getDescription().length()));
-                /*
-                  mGroupPortalKeys.sort(new Comparator<InventoryListItem>() {
-        @Override
-        public int compare(InventoryListItem item1, InventoryListItem item2) {
-            return Integer.compare(item1.getDescription().length(), item2.getDescription().length());
-        }
-    });
-                 */
-            } else {
-                for (int i = 0; i < mGroupPortalKeys.size() - 1; i++) {
-                    for (int j = 0; j < mGroupPortalKeys.size() - i - 1; j++) {
-                        InventoryListItem item1 = mGroupPortalKeys.get(j);
-                        InventoryListItem item2 = mGroupPortalKeys.get(j + 1);
-                        if (item1.getDescription().length() > item2.getDescription().length()) {
-                            // Swap items
-                            mGroupPortalKeys.set(j, item2);
-                            mGroupPortalKeys.set(j + 1, item1);
-                        }
-                    }
-                }
-            }
-            inventoryList.notifyDataSetChanged();
+            sortKeys("Name");
+            notifyDatasetChanged();
 
             // Update location display on keys - is this expensive? we could update every 10sec?
-            mApp.getLocationViewModel().getLocationData().observe(getViewLifecycleOwner(), inventoryList::updateKeyLocations);
+            mApp.getLocationViewModel().getLocationData().observe(getViewLifecycleOwner(), location -> notifyDatasetChanged());
         });
     }
 
@@ -179,8 +368,9 @@ public class FragmentInventory extends Fragment {
                 ItemMedia theItem1 = (ItemMedia) item1;
 
                 // skip items that have already been checked
-                if (skipItems.contains(theItem1))
+                if (skipItems.contains(theItem1)) {
                     continue;
+                }
 
                 String descr = "L" + level + " " + theItem1.getMediaDescription();
                 medias.add(item1.getEntityGuid());
@@ -190,8 +380,9 @@ public class FragmentInventory extends Fragment {
                     ItemMedia theItem2 = (ItemMedia) item2;
 
                     // don't check the doubles
-                    if (theItem2 == theItem1)
+                    if (theItem2 == theItem1) {
                         continue;
+                    }
 
                     if (theItem1.getMediaDescription().equals(theItem2.getMediaDescription())) {
                         skipItems.add(theItem2);
@@ -199,11 +390,11 @@ public class FragmentInventory extends Fragment {
                     }
                 }
 
-                if (!theItem1.getMediaHasBeenViewed())
+                if (!theItem1.getMediaHasBeenViewed()) {
                     descr += " [NEW]";
+                }
 
-                InventoryListItem media = new InventoryListItem(descr, ItemType.Media, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, medias);
-                media.setRarity(theItem1.getItemRarity());
+                InventoryListItem media = new InventoryListItem(descr, ItemType.Media, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, medias, items.get(0).getItemRarity());
                 mGroupMedia.add(media);
             }
         }
@@ -329,8 +520,7 @@ public class FragmentInventory extends Fragment {
                         drawable = R.drawable.r8;
                         break;
                 }
-                InventoryListItem reso = new InventoryListItem(descr, ItemType.Resonator, getDrawable(requireContext(), drawable), drawable, resos);
-                reso.setRarity(items.get(0).getItemRarity());
+                InventoryListItem reso = new InventoryListItem(descr, ItemType.Resonator, getDrawable(requireContext(), drawable), drawable, resos, items.get(0).getItemRarity(), level);
                 mGroupResonators.add(reso);
             }
         }
@@ -381,8 +571,7 @@ public class FragmentInventory extends Fragment {
                         drawable = R.drawable.x8;
                         break;
                 }
-                InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponXMP, getDrawable(requireContext(), drawable), drawable, weapons);
-                weapon.setRarity(items.get(0).getItemRarity());
+                InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponXMP, getDrawable(requireContext(), drawable), drawable, weapons, items.get(0).getItemRarity(), level);
                 mGroupWeapons.add(weapon);
             }
         }
@@ -425,8 +614,7 @@ public class FragmentInventory extends Fragment {
                         drawable = R.drawable.u8;
                         break;
                 }
-                InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponUltraStrike, getDrawable(requireContext(), drawable), drawable, weapons);
-                weapon.setRarity(items.get(0).getItemRarity());
+                InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponUltraStrike, getDrawable(requireContext(), drawable), drawable, weapons, items.get(0).getItemRarity(), level);
                 mGroupWeapons.add(weapon);
             }
         }
@@ -439,25 +627,24 @@ public class FragmentInventory extends Fragment {
 
         for (ItemBase item : items) {
             ItemFlipCard theItem = (ItemFlipCard) item;
-            if (theItem.getFlipCardType() == FlipCardType.Ada)
+            if (theItem.getFlipCardType() == FlipCardType.Ada) {
                 adas.add(theItem.getEntityGuid());
-            else if (theItem.getFlipCardType() == FlipCardType.Jarvis)
+            } else if (theItem.getFlipCardType() == FlipCardType.Jarvis) {
                 jarvises.add(theItem.getEntityGuid());
+            }
         }
 
         String descr = "ADA Refactor";
         if (!adas.isEmpty()) {
-            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, adas);
+            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, adas, items.get(0).getItemRarity());
             weapon.setFlipCardType(FlipCardType.Ada);
-            weapon.setRarity(items.get(0).getItemRarity());
             mGroupWeapons.add(weapon);
         }
 
         descr = "Jarvis Virus";
         if (!jarvises.isEmpty()) {
-            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, jarvises);
+            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, jarvises, items.get(0).getItemRarity());
             weapon.setFlipCardType(FlipCardType.Jarvis);
-            weapon.setRarity(items.get(0).getItemRarity());
             mGroupWeapons.add(weapon);
         }
 
@@ -479,8 +666,7 @@ public class FragmentInventory extends Fragment {
                 for (ItemBase item : items) {
                     cubes.add(item.getEntityGuid());
                 }
-                InventoryListItem cube = new InventoryListItem(descr, ItemType.PowerCube, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, cubes);
-                cube.setRarity(items.get(0).getItemRarity());
+                InventoryListItem cube = new InventoryListItem(descr, ItemType.PowerCube, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, cubes, items.get(0).getItemRarity(), level);
                 mGroupResonators.add(cube);
             }
         }
@@ -500,8 +686,9 @@ public class FragmentInventory extends Fragment {
             ArrayList<String> keys = new ArrayList<>();
 
             // skip items that have already been checked
-            if (skipItems.contains(theItem1))
+            if (skipItems.contains(theItem1)) {
                 continue;
+            }
 
             String descr = theItem1.getPortalTitle();
             keys.add(item1.getEntityGuid());
@@ -511,8 +698,9 @@ public class FragmentInventory extends Fragment {
                 ItemPortalKey theItem2 = (ItemPortalKey) item2;
 
                 // don't check the doubles
-                if (theItem2 == theItem1)
+                if (theItem2 == theItem1) {
                     continue;
+                }
 
                 if (theItem1.getPortalGuid().equals(theItem2.getPortalGuid())) {
                     skipItems.add(theItem2);
@@ -520,10 +708,9 @@ public class FragmentInventory extends Fragment {
                 }
             }
 
-            InventoryListItem key = new InventoryListItem(descr, ItemType.PortalKey, getDrawable(requireContext(), R.drawable.portalkey), R.drawable.portalkey, keys);
+            InventoryListItem key = new InventoryListItem(descr, ItemType.PortalKey, getDrawable(requireContext(), R.drawable.portalkey), R.drawable.portalkey, keys, items.get(0).getItemRarity());
             key.setLocation(new Location(theItem1.getPortalLocation()).getS2LatLng());
             key.setImage(theItem1.getPortalImageUrl());
-            key.setRarity(theItem1.getItemRarity());
             portalGUIDs.add(theItem1.getPortalGuid());
             mGroupPortalKeys.add(key);
         }

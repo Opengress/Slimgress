@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
@@ -52,6 +53,7 @@ import okhttp3.Response;
 public class Utils
 {
     private static OkHttpClient mCachedClient;
+    private static HashMap<String, Long> mBouncables = new HashMap<>();
 
     public static String[] getCellIdsFromLocationArea(Location location, double areaM2, int minLevel, int maxLevel)
     {
@@ -211,6 +213,19 @@ public class Utils
         DecimalFormat df = new DecimalFormat("#.#");
         String distKMPretty = df.format(distKM);
         return (dist < 1000 ? dist + "m" : distKMPretty + "km");
+    }
+
+    public static boolean notBouncing(String key, long cooldownMillis) {
+        long currentTime = System.currentTimeMillis();
+        Long lastPing = mBouncables.get(key);
+
+        if (lastPing == null || currentTime - lastPing >= cooldownMillis) {
+            // Either no previous ping or cooldown time has passed
+            mBouncables.put(key, currentTime); // Update the timestamp
+            return true; // Allow the action
+        } else {
+            return false; // Action is still on cooldown
+        }
     }
 
 }

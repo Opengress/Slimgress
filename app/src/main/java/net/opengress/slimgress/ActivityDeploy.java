@@ -156,10 +156,10 @@ public class ActivityDeploy extends AppCompatActivity {
                     break;
                 }
             }
-            Log.e("ActivityDeploy", String.format("Picked resonator: %d on slot %d", which, slot));
+            Log.d("ActivityDeploy", String.format("Picked resonator: %d on slot %d", which, slot));
         });
         builder.show();
-        Log.e("ActivityDeploy", "Resos for upgrade:" + levels);
+        Log.d("ActivityDeploy", "Resos for upgrade:" + levels);
     }
 
     @SuppressLint("DefaultLocale")
@@ -193,7 +193,7 @@ public class ActivityDeploy extends AppCompatActivity {
                     break;
                 }
             }
-            Log.e("ActivityDeploy", String.format("Picked resonator: %d on slot %d", which, slot));
+            Log.d("ActivityDeploy", String.format("Picked resonator: %d on slot %d", which, slot));
         });
         builder.show();
         Log.d("ActivityDeploy", "Resos for deployment:" + levels);
