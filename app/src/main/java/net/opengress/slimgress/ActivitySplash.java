@@ -21,11 +21,8 @@
 
 package net.opengress.slimgress;
 
-import static net.opengress.slimgress.API.Interface.Handshake.*;
-import static net.opengress.slimgress.API.Interface.Handshake.PregameStatus.*;
-
-import net.opengress.slimgress.API.Game.GameState;
-import net.opengress.slimgress.API.Interface.Interface;
+import static net.opengress.slimgress.API.Interface.Handshake.PregameStatus;
+import static net.opengress.slimgress.API.Interface.Handshake.PregameStatus.ClientMustUpgrade;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -42,6 +39,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
+
+import net.opengress.slimgress.API.Game.GameState;
+import net.opengress.slimgress.API.Interface.Interface;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -145,18 +145,7 @@ public class ActivitySplash extends Activity {
                     startActivity(browserIntent);
                     finish();
                 });
-            } /*else if (Objects.equals(mGame.getHandshake().getErrorFromServer(), "NOT_LOGGED_IN")) {
-                SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, 0);
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putString("session_name", null);
-                editor.putString("session_id", null);
-                editor.apply();
-                mGame.invalidateHandshake();
-                System.out.println("CLEARED AUTH DATA");
-//                mApp.setLoggedIn(true);
-//                builder.setMessage("Your session has been invalidated. Restart the application to log in again.");
-//                builder.setNegativeButton("OK", (dialog, which) -> finish());
-            } */else {
+            } else {
                 builder.setMessage(loginBundle.getString("Error"));
                 builder.setNegativeButton("OK", (dialog, which) -> finish());
             }
