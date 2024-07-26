@@ -37,6 +37,8 @@ import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+
 import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Game.Inventory;
@@ -67,6 +69,10 @@ public class InventoryList extends BaseExpandableListAdapter {
     public void setInflater(LayoutInflater inflater, Activity act) {
         mInflater = inflater;
         mActivity = act;
+    }
+
+    public void updateKeyLocations(Location location) {
+        notifyDataSetChanged();
     }
 
     @Override
@@ -105,23 +111,27 @@ public class InventoryList extends BaseExpandableListAdapter {
         // Set the tag to the current item type
         convertView.setTag(item.getType());
 
-//        image.setImageURI(Uri.parse(mTempChild.get(childPosition).getImage()));
-        // race condition
-//        String uri = item.getImage().replace("t_lim1kstripfaces", "t_lim1kstripfaces_32");
-//        new Thread(() -> {
-//            Bitmap bitmap;
-//            bitmap = getImageBitmap(uri, mActivity.getApplicationContext().getCacheDir());
-//            if (bitmap != null) {
-//                mActivity.runOnUiThread(() -> image.setImageBitmap(bitmap));
-//            }
-//        }).start();
         if (item.getType() == ItemBase.ItemType.PortalKey) {
 
             // set portal address, description and cover image
             text = convertView.findViewById(R.id.inventory_childRow_portalKey_prettyDescription);
             text.setText(item.getPrettyDescription());
             image = convertView.findViewById(R.id.inventory_childRow_portalKey_ChildImage);
-            image.setImageDrawable(item.getIcon());
+//            image.setImageDrawable(item.getIcon());
+            //        image.setImageURI(Uri.parse(mTempChild.get(childPosition).getImage()));
+            // race condition
+//            String uri = item.getImage().replace("t_lim1kstripfaces", "t_lim1kstripfaces_32");
+//            new Thread(() -> {
+//                Bitmap bitmap = getImageBitmap(uri);
+//                if (bitmap != null) {
+//                    mActivity.runOnUiThread(() -> image.setImageBitmap(bitmap));
+//                }
+//            }).start();
+            Glide.with(mContext)
+                    .load(item.getImage())
+                    .placeholder(R.drawable.no_image) // Optional placeholder image
+                    .error(item.getIcon()) // Optional error image
+                    .into(image);
             ItemPortalKey key = (ItemPortalKey) mInventory.getItems().get(item.getFirstID());
             assert key != null;
             GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key.getPortalGuid());

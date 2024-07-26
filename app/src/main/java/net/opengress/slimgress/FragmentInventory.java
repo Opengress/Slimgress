@@ -23,6 +23,7 @@ package net.opengress.slimgress;
 
 import static androidx.core.content.ContextCompat.getDrawable;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
@@ -48,6 +49,7 @@ import net.opengress.slimgress.API.Item.ItemMod;
 import net.opengress.slimgress.API.Item.ItemPortalKey;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -90,16 +92,7 @@ public class FragmentInventory extends Fragment {
         mGroupResonators = new ArrayList<>();
         mGroupWeapons = new ArrayList<>();
 
-        final FragmentInventory thisObject = this;
-
-        final Handler handler = new Handler();
-        final Runnable runnable = () -> handler.post(() -> {
-            InventoryList inventoryList = new InventoryList(thisObject.requireContext(), mGroupNames, mGroups);
-            inventoryList.setInflater(inflater, thisObject.getActivity());
-            list.setAdapter(inventoryList);
-            list.setVisibility(View.VISIBLE);
-            progress.setVisibility(View.INVISIBLE);
-        });
+        final Runnable runnable = getRunnable(inflater, list, progress);
 
         if (!mGame.getInventory().getItems().isEmpty()) {
             FragmentInventory.this.fillInventory(runnable);
@@ -113,7 +106,49 @@ public class FragmentInventory extends Fragment {
             mApp.getInventoryViewModel().getInventory().observe(getViewLifecycleOwner(), mObserver);
         }
 
+
         return rootView;
+    }
+
+    private @NonNull Runnable getRunnable(LayoutInflater inflater, ExpandableListView list, ProgressBar progress) {
+        final FragmentInventory thisObject = this;
+
+        final Handler handler = new Handler();
+        return () -> handler.post(() -> {
+            InventoryList inventoryList = new InventoryList(thisObject.requireContext(), mGroupNames, mGroups);
+            inventoryList.setInflater(inflater, thisObject.getActivity());
+            list.setAdapter(inventoryList);
+            list.setVisibility(View.VISIBLE);
+            progress.setVisibility(View.INVISIBLE);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                mGroupPortalKeys.sort(Comparator.comparingInt(inventoryListItem -> inventoryListItem.getDescription().length()));
+                /*
+                  mGroupPortalKeys.sort(new Comparator<InventoryListItem>() {
+        @Override
+        public int compare(InventoryListItem item1, InventoryListItem item2) {
+            return Integer.compare(item1.getDescription().length(), item2.getDescription().length());
+        }
+    });
+                 */
+            } else {
+                for (int i = 0; i < mGroupPortalKeys.size() - 1; i++) {
+                    for (int j = 0; j < mGroupPortalKeys.size() - i - 1; j++) {
+                        InventoryListItem item1 = mGroupPortalKeys.get(j);
+                        InventoryListItem item2 = mGroupPortalKeys.get(j + 1);
+                        if (item1.getDescription().length() > item2.getDescription().length()) {
+                            // Swap items
+                            mGroupPortalKeys.set(j, item2);
+                            mGroupPortalKeys.set(j + 1, item1);
+                        }
+                    }
+                }
+            }
+            inventoryList.notifyDataSetChanged();
+
+            // Update location display on keys - is this expensive? we could update every 10sec?
+            mApp.getLocationViewModel().getLocationData().observe(getViewLifecycleOwner(), inventoryList::updateKeyLocations);
+        });
     }
 
     private void fillInventory(final Runnable callback) {
