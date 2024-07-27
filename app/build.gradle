@@ -18,8 +18,8 @@ android {
         minSdk 23
         targetSdk 35
 //        1112223333
-        versionCode 10001
-        versionName "0.1.1"
+        versionCode 10002
+        versionName "0.1.2"
 
         resConfigs "en"
         buildConfigField "String", "BUILD_TIME", "\"${buildTime()}\""
