@@ -61,15 +61,11 @@
         </activity>
 
         <!-- ops activity with additional information -->
-        <activity
-            android:name="net.opengress.slimgress.ActivityOps"
-            android:theme="@style/AppTheme" >
+        <activity android:name="net.opengress.slimgress.ActivityOps">
         </activity>
 
         <!-- portal view activity with additional information -->
-        <activity
-            android:name="net.opengress.slimgress.ActivityPortal"
-            android:theme="@style/GradientTheme">
+        <activity android:name="net.opengress.slimgress.ActivityPortal">
         </activity>
 
         <!-- resonator deployment activity with additional information -->

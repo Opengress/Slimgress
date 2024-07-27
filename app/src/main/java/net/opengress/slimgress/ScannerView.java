@@ -61,7 +61,6 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.preference.PreferenceManager;
 
 import net.opengress.slimgress.API.Common.Team;
 import net.opengress.slimgress.API.Game.GameState;
@@ -113,14 +112,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
     private ActivityResultLauncher<Intent> mPortalActivityResultLauncher;
 
-    // ===========================================================
-    // Constants
-    // ===========================================================
-
-    private static final String PREFS_NAME = "org.andnav.osm.prefs";
-    private static final String PREFS_LATITUDE_STRING = "latitudeString";
-    private static final String PREFS_LONGITUDE_STRING = "longitudeString";
-    private static final String PREFS_ZOOM_LEVEL_DOUBLE = "zoomLevelDouble";
 
     // ===========================================================
     // Fields and permissions
@@ -437,7 +428,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         // allows map tiles to be cached in SQLite so map draws properly
-        Configuration.getInstance().load(requireContext(), PreferenceManager.getDefaultSharedPreferences(requireContext()));
+        Configuration.getInstance().load(requireContext(), requireContext().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE));
 
 
         // set up map tile source before creating map, so we don't download wrong tiles wastefully
@@ -479,7 +470,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
         final Context context = this.requireActivity();
 
-        mPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        mPrefs = context.getSharedPreferences(Constants.PREFS_OSM_NAME, Context.MODE_PRIVATE);
 
 
         Configuration.getInstance().setUserAgentValue("Slimgress/Openflux (OSMDroid)");
@@ -504,11 +495,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mMap.setTilesScaledToDpi(true);
 
         //the rest of this is restoring the last map location the user looked at
-        final float zoomLevel = mPrefs.getFloat(PREFS_ZOOM_LEVEL_DOUBLE, 18);
+        final float zoomLevel = mPrefs.getFloat(Constants.PREFS_OSM_ZOOM_LEVEL_DOUBLE, 18);
         mMap.getController().setZoom(zoomLevel);
         mMap.setMapOrientation(0, false);
-        final String latitudeString = mPrefs.getString(PREFS_LATITUDE_STRING, "1.0");
-        final String longitudeString = mPrefs.getString(PREFS_LONGITUDE_STRING, "1.0");
+        final String latitudeString = mPrefs.getString(Constants.PREFS_OSM_LATITUDE_STRING, "1.0");
+        final String longitudeString = mPrefs.getString(Constants.PREFS_OSM_LONGITUDE_STRING, "1.0");
         final double latitude = Double.parseDouble(latitudeString);
         final double longitude = Double.parseDouble(longitudeString);
         mMap.setExpectedCenter(new GeoPoint(latitude, longitude));
@@ -535,9 +526,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     public void onPause() {
         //save the current location
         final SharedPreferences.Editor edit = mPrefs.edit();
-        edit.putString(PREFS_LATITUDE_STRING, String.valueOf(mMap.getMapCenter().getLatitude()));
-        edit.putString(PREFS_LONGITUDE_STRING, String.valueOf(mMap.getMapCenter().getLongitude()));
-        edit.putFloat(PREFS_ZOOM_LEVEL_DOUBLE, (float) mMap.getZoomLevelDouble());
+        edit.putString(Constants.PREFS_OSM_LATITUDE_STRING, String.valueOf(mMap.getMapCenter().getLatitude()));
+        edit.putString(Constants.PREFS_OSM_LONGITUDE_STRING, String.valueOf(mMap.getMapCenter().getLongitude()));
+        edit.putFloat(Constants.PREFS_OSM_ZOOM_LEVEL_DOUBLE, (float) mMap.getZoomLevelDouble());
         edit.apply();
 
         mMap.onPause();
