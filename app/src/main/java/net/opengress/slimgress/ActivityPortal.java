@@ -1,6 +1,5 @@
 package net.opengress.slimgress;
 
-import static net.opengress.slimgress.API.Common.Utils.getImageBitmap;
 import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
 
 import android.app.Activity;
@@ -15,6 +14,8 @@ import android.widget.TextView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.bumptech.glide.Glide;
 
 import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.API.Game.GameState;
@@ -69,12 +70,11 @@ public class ActivityPortal extends AppCompatActivity {
 
 
         // TODO: link to photostream with portal description, up/downvotes, whatever
-        new Thread(() -> {
-            mBitmap = getImageBitmap(portal.getPortalImageUrl());
-            if (mBitmap != null) {
-                runOnUiThread(() -> ((ImageView) findViewById(R.id.portalImage)).setImageBitmap(mBitmap));
-            }
-        }).start();
+        Glide.with(this)
+                .load(portal.getPortalImageUrl())
+                .placeholder(R.drawable.no_image)
+                .error(R.drawable.no_image)
+                .into((ImageView) findViewById(R.id.portalImage));
 
         HashSet<String> guids = new HashSet<>();
         for (var reso : portal.getPortalResonators()) {

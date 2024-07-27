@@ -24,9 +24,12 @@ package net.opengress.slimgress;
 import static androidx.core.content.ContextCompat.getDrawable;
 import static net.opengress.slimgress.API.Common.Utils.notBouncing;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -60,31 +63,39 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class FragmentInventory extends Fragment {
     private final IngressApplication mApp = IngressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
+    private SharedPreferences mPrefs;
 
-    ArrayList<String> mGroupNames;
-    ArrayList<Object> mGroups;
-    ArrayList<InventoryListItem> mGroupMedia;
-    ArrayList<InventoryListItem> mGroupMods;
-    ArrayList<InventoryListItem> mGroupPortalKeys;
-    ArrayList<InventoryListItem> mGroupPowerCubes;
-    ArrayList<InventoryListItem> mGroupResonators;
-    ArrayList<InventoryListItem> mGroupWeapons;
+    private ArrayList<String> mGroupNames;
+    private ArrayList<Object> mGroups;
+    private ArrayList<InventoryListItem> mGroupMedia;
+    private ArrayList<InventoryListItem> mGroupMods;
+    private ArrayList<InventoryListItem> mGroupPortalKeys;
+    private ArrayList<InventoryListItem> mGroupPowerCubes;
+    private ArrayList<InventoryListItem> mGroupResonators;
+    private ArrayList<InventoryListItem> mGroupWeapons;
 
-    InventoryList mInventoryList;
-    Observer<Inventory> mObserver;
+    private InventoryList mInventoryList;
+    private Observer<Inventory> mObserver;
+    private View mRootView;
+
+    String[] mSorts = new String[]{"Deployment", "Distance", "Level", "Name", "Team"};
+    int mInventoryKeySort;
 
     @Override
     public View onCreateView(final LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
-        final View rootView = inflater.inflate(R.layout.fragment_inventory,
+        mRootView = inflater.inflate(R.layout.fragment_inventory,
                 container, false);
 
-        final ExpandableListView list = rootView.findViewById(R.id.listView);
-        final ProgressBar progress = rootView.findViewById(R.id.progressBar1);
+        final ExpandableListView list = mRootView.findViewById(R.id.listView);
+        final ProgressBar progress = mRootView.findViewById(R.id.progressBar1);
+        mPrefs = requireActivity().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE);
+        mInventoryKeySort = mPrefs.getInt(Constants.PREFS_INVENTORY_KEY_SORT, 3);
 
         list.setVisibility(View.INVISIBLE);
         progress.setVisibility(View.VISIBLE);
@@ -116,7 +127,7 @@ public class FragmentInventory extends Fragment {
 
 
         String[] rarityNames = {"ALL", "Very Common", "Common", "Less Common", "Rare", "Very Rare", "Extra Rare"};
-        Spinner raritySpinner = setUpSpinner(rarityNames, rootView, R.id.spinnerRarity);
+        Spinner raritySpinner = setUpSpinner(rarityNames, mRootView, R.id.spinnerRarity);
         raritySpinner.setSelection(0);
         raritySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -130,8 +141,9 @@ public class FragmentInventory extends Fragment {
             public void onNothingSelected(AdapterView<?> parent) {
             }
         });
+
         String[] levels = {"ALL", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5", "Level 6", "Level 7", "Level 8"};
-        Spinner levelSpinner = setUpSpinner(levels, rootView, R.id.spinnerLevel);
+        Spinner levelSpinner = setUpSpinner(levels, mRootView, R.id.spinnerLevel);
         levelSpinner.setSelection(0);
         levelSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -145,13 +157,18 @@ public class FragmentInventory extends Fragment {
             public void onNothingSelected(AdapterView<?> parent) {
             }
         });
-        String[] sorts = {"Deployment", "Distance", "Level", "Name", "Team"};
-        Spinner sortSpinner = setUpSpinner(sorts, rootView, R.id.spinnerSort);
-        sortSpinner.setSelection(3);
+
+        Spinner sortSpinner = setUpSpinner(mSorts, mRootView, R.id.spinnerSort);
+        sortSpinner.setSelection(mInventoryKeySort);
         sortSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                sortKeys(sorts[i]);
+                final SharedPreferences.Editor edit = mPrefs.edit();
+                // updating mInventoryKeySort is a purely defensive move since we currently don't use it again after this
+                mInventoryKeySort = i;
+                edit.putInt(Constants.PREFS_INVENTORY_KEY_SORT, i);
+                edit.apply();
+                sortKeys(mSorts[i]);
             }
 
             @Override
@@ -159,7 +176,7 @@ public class FragmentInventory extends Fragment {
             }
         });
 
-        SearchView searchBox = rootView.findViewById(R.id.editTextSearch);
+        SearchView searchBox = mRootView.findViewById(R.id.editTextSearch);
         searchBox.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -174,8 +191,36 @@ public class FragmentInventory extends Fragment {
             }
         });
 
+        // one day i'd like to centralise all this. same defaults repeated on device screen.
+        updateItemVisibilityForPreference(searchBox, Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE, false);
+        updateItemVisibilityForPreference(sortSpinner, Constants.PREFS_INVENTORY_KEY_SORT_VISIBLE, true);
+        updateItemVisibilityForPreference(levelSpinner, Constants.PREFS_INVENTORY_LEVEL_FILTER_VISIBLE, false);
+        updateItemVisibilityForPreference(raritySpinner, Constants.PREFS_INVENTORY_RARITY_FILTER_VISIBLE, false);
 
-        return rootView;
+        mPrefs.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
+            Log.d("FragmentInventory", String.format("PREFENCE CHANGE IN ANOTRHER THING: %s", key));
+            switch (Objects.requireNonNull(key)) {
+                case Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE:
+                    updateItemVisibilityForPreference(searchBox, Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE, false);
+                    break;
+                case Constants.PREFS_INVENTORY_KEY_SORT_VISIBLE:
+                    updateItemVisibilityForPreference(sortSpinner, Constants.PREFS_INVENTORY_KEY_SORT_VISIBLE, true);
+                    break;
+                case Constants.PREFS_INVENTORY_LEVEL_FILTER_VISIBLE:
+                    updateItemVisibilityForPreference(levelSpinner, Constants.PREFS_INVENTORY_LEVEL_FILTER_VISIBLE, false);
+                    break;
+                case Constants.PREFS_INVENTORY_RARITY_FILTER_VISIBLE:
+                    updateItemVisibilityForPreference(raritySpinner, Constants.PREFS_INVENTORY_RARITY_FILTER_VISIBLE, false);
+                    break;
+            }
+        });
+
+        return mRootView;
+    }
+
+    private void updateItemVisibilityForPreference(View item, String preference, boolean defaultValue) {
+        Log.d("FragmentInventory", String.format("%s box says: %b", Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE, mPrefs.getBoolean(preference, defaultValue)));
+        item.setVisibility(mPrefs.getBoolean(preference, defaultValue) ? View.VISIBLE : View.GONE);
     }
 
     private void notifyDatasetChanged() {
@@ -332,7 +377,7 @@ public class FragmentInventory extends Fragment {
             list.setVisibility(View.VISIBLE);
             progress.setVisibility(View.INVISIBLE);
 
-            sortKeys("Name");
+            sortKeys(mSorts[mInventoryKeySort]);
             notifyDatasetChanged();
 
             // Update location display on keys - is this expensive? we could update every 10sec?

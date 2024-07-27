@@ -1,16 +1,16 @@
 package net.opengress.slimgress;
 
-import static net.opengress.slimgress.API.Common.Utils.getImageBitmap;
 import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
 
 import android.annotation.SuppressLint;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
+
+import com.bumptech.glide.Glide;
 
 import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Game.Inventory;
@@ -88,12 +88,11 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 ((ImageView) findViewById(R.id.activity_inventory_item_image)).setImageDrawable(item.getIcon());
             }
         } else {
-            new Thread(() -> {
-                Bitmap mBitmap = getImageBitmap(url);
-                if (mBitmap != null) {
-                    runOnUiThread(() -> ((ImageView) findViewById(R.id.activity_inventory_item_image)).setImageBitmap(mBitmap));
-                }
-            }).start();
+            Glide.with(this)
+                    .load(url)
+                    .placeholder(R.drawable.no_image)
+                    .error(R.drawable.no_image)
+                    .into((ImageView) findViewById(R.id.activity_inventory_item_image));
         }
     }
 }

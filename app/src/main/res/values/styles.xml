@@ -69,6 +69,14 @@
         <item name="android:layout_weight">1</item>
     </style>
 
+    <style name="SectionBodyDominatingStyle" parent="@style/SectionBodyStyle">
+        <item name="android:layout_weight">0.25</item>
+    </style>
+
+    <style name="SectionBodyGutterStyle" parent="@style/SectionBodyStyle">
+        <item name="android:layout_weight">0.75</item>
+    </style>
+
     <style name="ShortButtonStyle" parent="android:Widget.Button">
         <item name="android:background">@drawable/button_background</item>
         <item name="android:textColor">@color/button_text</item>

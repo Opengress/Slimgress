@@ -21,12 +21,6 @@
 
 package net.opengress.slimgress.API.Common;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.TrafficStats;
-import android.os.StrictMode;
-import android.util.Log;
-
 import com.google.common.geometry.S2Cap;
 import com.google.common.geometry.S2CellId;
 import com.google.common.geometry.S2LatLng;
@@ -34,26 +28,16 @@ import com.google.common.geometry.S2LatLngRect;
 import com.google.common.geometry.S2Region;
 import com.google.common.geometry.S2RegionCoverer;
 
-import net.opengress.slimgress.API.Interface.Interface;
-import net.opengress.slimgress.IngressApplication;
 import net.opengress.slimgress.R;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import okhttp3.Cache;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 public class Utils
 {
-    private static OkHttpClient mCachedClient;
-    private static HashMap<String, Long> mBouncables = new HashMap<>();
+    private static final HashMap<String, Long> mBouncables = new HashMap<>();
 
     public static String[] getCellIdsFromLocationArea(Location location, double areaM2, int minLevel, int maxLevel)
     {
@@ -104,51 +88,6 @@ public class Utils
         }
 
         return cellIdsHex;
-    }
-
-    public static OkHttpClient getCachedClient() {
-        if (mCachedClient == null) {
-            int cacheSize = 125 * 1024 * 1024; // 125 MiB
-            Cache cache = new Cache(new File(IngressApplication.getInstance().getCacheDir(), "http-cache"), cacheSize);
-
-            mCachedClient = new OkHttpClient.Builder()
-                    .cache(cache)
-                    .build();
-        }
-        TrafficStats.setThreadStatsTag((int) Thread.currentThread().getId());
-        return mCachedClient;
-    }
-
-    public static Bitmap getImageBitmap(String url) {
-        Bitmap bm = null;
-        try {
-            Request get = new Request.Builder()
-                    .url(url)
-                    .header("User-Agent", Interface.mUserAgent)
-                    .build();
-
-            StrictMode.VmPolicy oldPolicy = StrictMode.getVmPolicy();
-            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().build());
-            // FIXME why does this next line leak??
-            try (Response response = getCachedClient().newCall(get).execute()) {
-                if (!response.isSuccessful()) {
-                    Log.e("Utils.getImageBitmap", "HTTP error code: " + response.code());
-                    return null;
-                }
-
-                try (InputStream content = response.body().byteStream()) {
-                    BitmapFactory.Options options = new BitmapFactory.Options();
-                    // FIXME make this configurable
-                    options.inSampleSize = 2;
-                    bm = BitmapFactory.decodeStream(content, null, options);
-}
-            } finally {
-                StrictMode.setVmPolicy(oldPolicy);
-            }
-        } catch (IOException e) {
-            Log.e("Utils.getImageBitmap", "Error getting bitmap", e);
-        }
-        return bm;
     }
 
     public static int getLevelColor(int level) {
