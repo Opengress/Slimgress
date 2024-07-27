@@ -99,7 +99,7 @@ public class IngressApplication extends Application {
                         .detectLeakedRegistrationObjects()
                         .detectLeakedSqlLiteObjects()
                         .detectContentUriWithoutPermission()
-                        .detectUntaggedSockets()
+//                        .detectUntaggedSockets()
                         .detectFileUriExposure()
                         .detectCleartextNetwork()
                         .penaltyLog()

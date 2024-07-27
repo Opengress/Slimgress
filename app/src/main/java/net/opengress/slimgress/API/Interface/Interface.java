@@ -21,21 +21,21 @@
 
 package net.opengress.slimgress.API.Interface;
 
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Objects;
+import android.net.TrafficStats;
+import android.os.Build;
+import android.util.Log;
+
+import net.opengress.slimgress.API.Common.Location;
+import net.opengress.slimgress.BuildConfig;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import net.opengress.slimgress.API.Common.Location;
-import net.opengress.slimgress.BuildConfig;
-
-import android.net.TrafficStats;
-import android.os.Build;
-import android.util.Log;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Objects;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -148,7 +148,7 @@ public class Interface
                 }
             }
             catch (Exception e) {
-                Log.e("Interface", e.getMessage());
+                Log.e("Interface", Objects.requireNonNull(e.getMessage()));
                 e.printStackTrace();
                 try {
                     callback.handle(new Handshake(new JSONObject()));

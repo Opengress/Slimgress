@@ -21,33 +21,72 @@
 
 package net.opengress.slimgress;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 
+import net.opengress.slimgress.API.Game.GameState;
+
 public class FragmentDevice extends Fragment
 {
+    private final GameState mGame = IngressApplication.getInstance().getGame();
+    private SharedPreferences mPrefs;
+    private View mRootView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
 
-        final View rootView = inflater.inflate(R.layout.fragment_device,
+        mRootView = inflater.inflate(R.layout.fragment_device,
                 container, false);
 
-        rootView.findViewById(R.id.buttonCredits).setEnabled(true);
-        rootView.findViewById(R.id.buttonCredits).setOnClickListener(v -> {
+        mPrefs = requireActivity().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE);
+
+        mRootView.findViewById(R.id.device_button_credits).setEnabled(true);
+        mRootView.findViewById(R.id.device_button_credits).setOnClickListener(v -> {
             Intent myIntent = new Intent(getContext(), ActivityCredits.class);
             startActivity(myIntent);
         });
 
-        ((TextView) rootView.findViewById(R.id.buildNumberText)).setText(String.format("%s %s (%s)", getText(R.string.build_number), BuildConfig.VERSION_NAME, BuildConfig.BUILD_TYPE));
+        /*
+            public static final String PREFS_INVENTORY_SEARCH_BOX_VISIBLE = "InventorySearchBoxVisible";
+    public static final String PREFS_INVENTORY_KEY_SORT_VISIBLE = "InventoryKeySortVisible";
+    public static final String PREFS_INVENTORY_LEVEL_FILTER_VISIBLE = "InventoryLevelFilterVisible";
+    public static final String PREFS_INVENTORY_RARITY_FILTER_VISIBLE = "InventoryRarityFilterVisible";
+         */
 
-        return rootView;
+        mRootView.findViewById(R.id.device_button_profile_link).setEnabled(false);
+        setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_search, Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE, false);
+        setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_key_sort, Constants.PREFS_INVENTORY_KEY_SORT_VISIBLE, true);
+        setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_level_filter, Constants.PREFS_INVENTORY_LEVEL_FILTER_VISIBLE, false);
+        setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_rarity_filter, Constants.PREFS_INVENTORY_RARITY_FILTER_VISIBLE, false);
+        mRootView.findViewById(R.id.device_checkbox_performance_load_images_network).setEnabled(false);
+        mRootView.findViewById(R.id.device_checkbox_performance_load_map_tiles_network).setEnabled(false);
+        ((CheckBox) mRootView.findViewById(R.id.device_checkbox_performance_load_images_network)).setChecked(true);
+        ((CheckBox) mRootView.findViewById(R.id.device_checkbox_performance_load_map_tiles_network)).setChecked(true);
+
+        // FIXME this is probably not how we get this information...
+        ((TextView) mRootView.findViewById(R.id.device_text_user)).setText(String.format("%s (%s)", mGame.getAgent().getNickname(), "Telegram"));
+
+        ((TextView) mRootView.findViewById(R.id.device_build_number_text)).setText(String.format("%s %s %s", BuildConfig.VERSION_NAME, BuildConfig.BUILD_TIME, BuildConfig.BUILD_TYPE));
+
+        return mRootView;
+    }
+
+    void setUpPrefsCheckBox(int resource, String preference, boolean defaultValue) {
+        ((CheckBox) mRootView.findViewById(resource)).setChecked(mPrefs.getBoolean(preference, defaultValue));
+        ((CheckBox) mRootView.findViewById(resource)).setOnCheckedChangeListener((val, val2) -> {
+            SharedPreferences.Editor editor = mPrefs.edit();
+            editor.putBoolean(preference, val2);
+            editor.apply();
+        });
     }
 }

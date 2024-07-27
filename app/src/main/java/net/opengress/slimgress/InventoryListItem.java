@@ -18,7 +18,7 @@ public class InventoryListItem implements Serializable {
     private String mDescription;
     private ItemType mType;
     private transient Drawable mIcon;
-    private int mIconID = 0;
+    private int mIconID;
     private String mImage;
     private final ArrayList<String> mIDs;
     private FlipCardType mFlipCardType;

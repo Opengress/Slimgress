@@ -89,8 +89,8 @@ public class ActivityAuth extends Activity {
         if (isLoggedIn()) {
             // user is already logged in, get login data
             SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, 0);
-            final String sessionName = prefs.getString("session_name", null);
-            final String sessionId = prefs.getString("session_id", null);
+            final String sessionName = prefs.getString(Constants.PREFS_SERVER_SESSION_NAME, null);
+            final String sessionId = prefs.getString(Constants.PREFS_SERVER_SESSION_ID, null);
 
             // update username string
             runOnUiThread(() -> ((TextView) findViewById(R.id.username)).setText(sessionName));
@@ -111,8 +111,8 @@ public class ActivityAuth extends Activity {
         String accountToken;
         // check if login data exists
         SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, 0);
-        accountName = prefs.getString("session_name", null);
-        accountToken = prefs.getString("session_id", null);
+        accountName = prefs.getString(Constants.PREFS_SERVER_SESSION_NAME, null);
+        accountToken = prefs.getString(Constants.PREFS_SERVER_SESSION_ID, null);
 
         return accountName != null && accountToken != null;
     }
@@ -269,8 +269,8 @@ public class ActivityAuth extends Activity {
                 // save login data
                 SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, 0);
                 Editor editor = prefs.edit();
-                editor.putString("session_name", session_name);
-                editor.putString("session_id", session_id);
+                editor.putString(Constants.PREFS_SERVER_SESSION_NAME, session_name);
+                editor.putString(Constants.PREFS_SERVER_SESSION_ID, session_id);
                 editor.apply();
 
                 // switch to main activity and set token result
@@ -295,16 +295,16 @@ public class ActivityAuth extends Activity {
     public void authFailed() {
         // clear login data
         SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, 0);
-        String sessionName = prefs.getString("session_name", null);
-        String sessionId = prefs.getString("session_id", null);
+        String sessionName = prefs.getString(Constants.PREFS_SERVER_SESSION_NAME, null);
+        String sessionId = prefs.getString(Constants.PREFS_SERVER_SESSION_ID, null);
 
         if (sessionName == null || sessionId == null) {
             Editor editor = prefs.edit();
             if (sessionName == null) {
-                editor.remove("session_name");
+                editor.remove(Constants.PREFS_SERVER_SESSION_NAME);
             }
             if (sessionId == null) {
-                editor.remove("session_id");
+                editor.remove(Constants.PREFS_SERVER_SESSION_ID);
             }
             editor.apply();
         }

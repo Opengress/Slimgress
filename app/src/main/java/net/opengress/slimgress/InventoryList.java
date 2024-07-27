@@ -198,8 +198,8 @@ public class InventoryList extends BaseExpandableListAdapter {
 
             Glide.with(mContext)
                     .load(item.getImage())
-                    .placeholder(R.drawable.no_image) // Optional placeholder image
-                    .error(item.getIcon()) // Optional error image
+                    .placeholder(R.drawable.no_image)
+                    .error(item.getIcon())
                     .into(image);
             ItemPortalKey key = (ItemPortalKey) mInventory.getItems().get(item.getFirstID());
             assert key != null;

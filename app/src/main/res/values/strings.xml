@@ -48,7 +48,7 @@
         <ul>
         <li>"Opengress Team" - server code, and client code after 2020</li>
         <li>"Opengress Team" - Logos and player icon</li>
-        <li>Norman0406 - Portal and XM icons</li>
+        <li><a href="https://github.com/Norman0406">Norman0406</a> - Portal and XM icons, app structure, ancient API stubs</li>
         <li>The map in the main activity is sourced from Carto.
         The map data is © <a href="https://www.openstreetmap.org/copyright/">OpenStreetMap</a> contributors and is available under the Open Database License.
         The tiles (images from which represent the map data on-screen) are © <a href="https://carto.com/attribution/">CartoDB</a>.
@@ -57,9 +57,24 @@
         ]]>
     </string>
     <string name="slimgress_version_unknown">Slimgress (Opengress dev client)</string>
-    <string name="button_show_credits">Credits</string>
+    <string name="device_heading_credits">Credits</string>
     <string name="upgd">UPGD</string>
     <string name="dply">DPLY</string>
     <string name="l0">L0</string>
     <string name="item_name_portal_key">Portal Key</string>
+    <string name="device_text_button_show">Show</string>
+    <string name="device_heading_build">Build</string>
+    <string name="device_heading_user">User</string>
+    <string name="device_link_profile">Link Profile</string>
+    <string name="device_telegram_profile_status_unlinked">Telegram profile unlinked</string>
+    <string name="device_telegram_profile_status_linked">Telegram profile linked</string>
+    <string name="device_button_profile_link">Link</string>
+    <string name="device_button_profile_unlink">Unlink</string>
+    <string name="device_string_heading_features">Optional Features</string>
+    <string name="device_description_performance">Performance</string>
+    <string name="fragment_device_show_inventory_search">Show inventory search</string>
+    <string name="fragment_device_show_inventory_sort">Show inventory key sort</string>
+    <string name="fragment_device_show_inventory_level_filter">Show inventory item level filter</string>
+    <string name="fragment_device_show_inventory_rarity_filter">Show inventory rarity filter</string>
+    <string name="these_features_may_require_a_restart">These features MAY require a restart</string>
 </resources>
