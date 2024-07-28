@@ -80,4 +80,11 @@
     <string name="fragment_inventory_hint_search">Search</string>
     <string name="load_images_from_network">Load images from network</string>
     <string name="load_map_tiles_from_network">Load map tiles from network</string>
+    <string name="fragment_device_android_notifications">Android Notifications</string>
+    <string name="device_notification_you_are_mentioned_in_comm">You are mentioned in COMM</string>
+    <string name="device_notification_portal_under_attack">Portal under attack</string>
+    <string name="device_notification_recruiting_and_faction_activity">Recruiting and faction activity</string>
+    <string name="device_notification_news_stories">News stories</string>
+    <string name="telegram_game_notifications_portal_under_attack_etc">Game notifications (Portal under attack, etc)</string>
+    <string name="telegram_game_related_events_offers_and_news_updates">Game-related events, offers and news updates</string>
 </resources>
