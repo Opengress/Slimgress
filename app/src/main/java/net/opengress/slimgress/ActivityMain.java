@@ -21,7 +21,8 @@
 
 package net.opengress.slimgress;
 
-import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
+import static net.opengress.slimgress.ViewHelpers.getLevelColor;
 
 import android.content.Intent;
 import android.graphics.PorterDuff;
@@ -90,12 +91,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         int textColor;
         Team team = agent.getTeam();
         textColor = 0xff000000 + team.getColour();
-        int levelColor = 0;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            levelColor = getResources().getColor(getLevelColor(agent.getLevel()), null);
-        } else {
-            levelColor = getResources().getColor(getLevelColor(agent.getLevel()));
-        }
+        int levelColor = getColorFromResources(getResources(), getLevelColor(agent.getLevel()));
 
         ((TextView) findViewById(R.id.agentname)).setText(agent.getNickname());
         ((TextView) findViewById(R.id.agentname)).setTextColor(textColor);

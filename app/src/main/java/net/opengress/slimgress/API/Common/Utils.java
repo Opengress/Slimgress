@@ -28,9 +28,6 @@ import com.google.common.geometry.S2LatLngRect;
 import com.google.common.geometry.S2Region;
 import com.google.common.geometry.S2RegionCoverer;
 
-import net.opengress.slimgress.R;
-
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -88,70 +85,6 @@ public class Utils
         }
 
         return cellIdsHex;
-    }
-
-    public static int getLevelColor(int level) {
-        int levelColour = R.color.level_one;
-        switch (level) {
-            case 2:
-                levelColour = R.color.level_two;
-                break;
-            case 3:
-                levelColour = R.color.level_three;
-                break;
-            case 4:
-                levelColour = R.color.level_four;
-                break;
-            case 5:
-                levelColour = R.color.level_five;
-                break;
-            case 6:
-                levelColour = R.color.level_six;
-                break;
-            case 7:
-                levelColour = R.color.level_seven;
-                break;
-            case 8:
-                levelColour = R.color.level_eight;
-                break;
-        }
-        return levelColour;
-    }
-
-    public static int getImageForResoLevel(int level) {
-        int levelColour = R.drawable.r1;
-        switch (level) {
-            case 2:
-                levelColour = R.drawable.r2;
-                break;
-            case 3:
-                levelColour = R.drawable.r3;
-                break;
-            case 4:
-                levelColour = R.drawable.r4;
-                break;
-            case 5:
-                levelColour = R.drawable.r5;
-                break;
-            case 6:
-                levelColour = R.drawable.r6;
-                break;
-            case 7:
-                levelColour = R.drawable.r7;
-                break;
-            case 8:
-                levelColour = R.drawable.r8;
-                break;
-        }
-        return levelColour;
-    }
-
-    public static String getPrettyDistanceString(int dist) {
-        // TODO: imperial units?
-        double distKM = (dist < 1000000) ? (Math.ceil((double) dist / 100) / 10) : (Math.ceil((double) dist / 1000));
-        DecimalFormat df = new DecimalFormat("#.#");
-        String distKMPretty = df.format(distKM);
-        return (dist < 1000 ? dist + "m" : distKMPretty + "km");
     }
 
     public static boolean notBouncing(String key, long cooldownMillis) {

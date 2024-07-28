@@ -87,4 +87,9 @@
     <string name="device_notification_news_stories">News stories</string>
     <string name="telegram_game_notifications_portal_under_attack_etc">Game notifications (Portal under attack, etc)</string>
     <string name="telegram_game_related_events_offers_and_news_updates">Game-related events, offers and news updates</string>
+    <string name="inventory_button_recycle">RECYCLE</string>
+    <string name="inventory_button_drop">DROP</string>
+    <string name="inventory_button_recharge">RECHARGE</string>
+    <string name="inventory_button_fire">FIRE</string>
+    <string name="inventory_button_use">USE</string>
 </resources>
