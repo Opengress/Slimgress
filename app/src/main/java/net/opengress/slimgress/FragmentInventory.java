@@ -219,7 +219,6 @@ public class FragmentInventory extends Fragment {
     }
 
     private void updateItemVisibilityForPreference(View item, String preference, boolean defaultValue) {
-        Log.d("FragmentInventory", String.format("%s box says: %b", Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE, mPrefs.getBoolean(preference, defaultValue)));
         item.setVisibility(mPrefs.getBoolean(preference, defaultValue) ? View.VISIBLE : View.GONE);
     }
 
@@ -237,11 +236,15 @@ public class FragmentInventory extends Fragment {
                         ItemPortalKey key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
                         assert key1 != null;
                         GameEntityPortal portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
-                        assert portal1 != null;
+                        if (portal1 == null) {
+                            return 0;
+                        }
                         ItemPortalKey key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
                         assert key2 != null;
                         GameEntityPortal portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
-                        assert portal2 != null;
+                        if (portal2 == null) {
+                            return 0;
+                        }
                         return portal1.getPortalResonatorCount() - portal2.getPortalResonatorCount();
                     });
                     break;
@@ -253,11 +256,15 @@ public class FragmentInventory extends Fragment {
                         ItemPortalKey key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
                         assert key1 != null;
                         GameEntityPortal portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
-                        assert portal1 != null;
+                        if (portal1 == null) {
+                            return 0;
+                        }
                         ItemPortalKey key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
                         assert key2 != null;
                         GameEntityPortal portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
-                        assert portal2 != null;
+                        if (portal2 == null) {
+                            return 0;
+                        }
                         return portal1.getPortalLevel() - portal2.getPortalLevel();
                     });
                     break;
@@ -270,11 +277,15 @@ public class FragmentInventory extends Fragment {
                         ItemPortalKey key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
                         assert key1 != null;
                         GameEntityPortal portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
-                        assert portal1 != null;
+                        if (portal1 == null) {
+                            return 0;
+                        }
                         ItemPortalKey key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
                         assert key2 != null;
                         GameEntityPortal portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
-                        assert portal2 != null;
+                        if (portal2 == null) {
+                            return 0;
+                        }
                         return portal1.getPortalTeam().getColour() - portal2.getPortalTeam().getColour();
                     });
                     break;
@@ -301,11 +312,15 @@ public class FragmentInventory extends Fragment {
                         key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
                         assert key1 != null;
                         portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
-                        assert portal1 != null;
+                        if (portal1 == null) {
+                            break;
+                        }
                         key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
                         assert key2 != null;
                         portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
-                        assert portal2 != null;
+                        if (portal2 == null) {
+                            break;
+                        }
                         if ((portal1.getPortalResonatorCount() - portal2.getPortalResonatorCount()) > 0) {
                             mGroupPortalKeys.set(j, item2);
                             mGroupPortalKeys.set(j + 1, item1);
@@ -321,11 +336,15 @@ public class FragmentInventory extends Fragment {
                         key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
                         assert key1 != null;
                         portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
-                        assert portal1 != null;
+                        if (portal1 == null) {
+                            break;
+                        }
                         key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
                         assert key2 != null;
                         portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
-                        assert portal2 != null;
+                        if (portal2 == null) {
+                            break;
+                        }
                         if ((portal1.getPortalLevel() - portal2.getPortalLevel()) > 0) {
                             mGroupPortalKeys.set(j, item2);
                             mGroupPortalKeys.set(j + 1, item1);
@@ -342,11 +361,15 @@ public class FragmentInventory extends Fragment {
                         key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
                         assert key1 != null;
                         portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
-                        assert portal1 != null;
+                        if (portal1 == null) {
+                            break;
+                        }
                         key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
                         assert key2 != null;
                         portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
-                        assert portal2 != null;
+                        if (portal2 == null) {
+                            break;
+                        }
                         if ((portal1.getPortalTeam().getColour() - portal2.getPortalTeam().getColour()) > 0) {
                             mGroupPortalKeys.set(j, item2);
                             mGroupPortalKeys.set(j + 1, item1);
@@ -377,6 +400,7 @@ public class FragmentInventory extends Fragment {
             list.setVisibility(View.VISIBLE);
             progress.setVisibility(View.INVISIBLE);
 
+            // FIXME keys may not be sorted if you hit inventory before game data updates in scanner
             sortKeys(mSorts[mInventoryKeySort]);
             notifyDatasetChanged();
 

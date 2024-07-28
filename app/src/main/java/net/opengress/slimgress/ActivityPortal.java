@@ -5,6 +5,7 @@ import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -63,7 +64,11 @@ public class ActivityPortal extends AppCompatActivity {
         String portalLevel = "L" + Math.max(1, portal.getPortalLevel());
         ((TextView) findViewById(R.id.portalLevel)).setText(portalLevel);
         int levelColour = getLevelColor(portal.getPortalLevel());
-        ((TextView) findViewById(R.id.portalLevel)).setTextColor(getResources().getColor(levelColour, null));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            ((TextView) findViewById(R.id.portalLevel)).setTextColor(getResources().getColor(levelColour, null));
+        } else {
+            ((TextView) findViewById(R.id.portalLevel)).setTextColor(getResources().getColor(levelColour));
+        }
 
         // FIXME: format this nicely
         ((TextView) findViewById(R.id.portalEnergy)).setText(getString(R.string.portal_energy, portal.getPortalEnergy()));

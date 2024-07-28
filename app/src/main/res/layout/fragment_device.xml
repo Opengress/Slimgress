@@ -173,13 +173,13 @@
                     android:id="@+id/device_checkbox_performance_load_images_network"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Load images from network" />
+                    android:text="@string/load_images_from_network" />
 
                 <CheckBox
                     android:id="@+id/device_checkbox_performance_load_map_tiles_network"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Load map tiles from network" />
+                    android:text="@string/load_map_tiles_from_network" />
 
 
             </LinearLayout>
