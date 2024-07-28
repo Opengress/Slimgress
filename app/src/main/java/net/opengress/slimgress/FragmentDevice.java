@@ -64,14 +64,34 @@ public class FragmentDevice extends Fragment
          */
 
         mRootView.findViewById(R.id.device_button_profile_link).setEnabled(false);
+
+        // features
         setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_search, Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE, false);
         setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_key_sort, Constants.PREFS_INVENTORY_KEY_SORT_VISIBLE, true);
         setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_level_filter, Constants.PREFS_INVENTORY_LEVEL_FILTER_VISIBLE, false);
         setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_rarity_filter, Constants.PREFS_INVENTORY_RARITY_FILTER_VISIBLE, false);
+
+        // performance
         mRootView.findViewById(R.id.device_checkbox_performance_load_images_network).setEnabled(false);
         mRootView.findViewById(R.id.device_checkbox_performance_load_map_tiles_network).setEnabled(false);
         ((CheckBox) mRootView.findViewById(R.id.device_checkbox_performance_load_images_network)).setChecked(true);
         ((CheckBox) mRootView.findViewById(R.id.device_checkbox_performance_load_map_tiles_network)).setChecked(true);
+
+        // telegram notifications
+        mRootView.findViewById(R.id.device_checkbox_telegram_game_notifications).setEnabled(false);
+        mRootView.findViewById(R.id.device_checkbox_telegram_news).setEnabled(false);
+        ((CheckBox) mRootView.findViewById(R.id.device_checkbox_telegram_game_notifications)).setChecked(true);
+        ((CheckBox) mRootView.findViewById(R.id.device_checkbox_telegram_news)).setChecked(true);
+
+        // android notifications
+        mRootView.findViewById(R.id.device_checkbox_notification_mentioned_comm).setEnabled(false);
+        mRootView.findViewById(R.id.device_checkbox_notification_attack).setEnabled(false);
+        mRootView.findViewById(R.id.device_checkbox_notification_recruiting).setEnabled(false);
+        mRootView.findViewById(R.id.device_checkbox_notification_news).setEnabled(false);
+        ((CheckBox) mRootView.findViewById(R.id.device_checkbox_notification_mentioned_comm)).setChecked(true);
+        ((CheckBox) mRootView.findViewById(R.id.device_checkbox_notification_attack)).setChecked(true);
+        ((CheckBox) mRootView.findViewById(R.id.device_checkbox_notification_recruiting)).setChecked(true);
+        ((CheckBox) mRootView.findViewById(R.id.device_checkbox_notification_news)).setChecked(true);
 
         // FIXME this is probably not how we get this information...
         ((TextView) mRootView.findViewById(R.id.device_text_user)).setText(String.format("%s (%s)", mGame.getAgent().getNickname(), "Telegram"));

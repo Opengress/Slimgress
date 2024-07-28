@@ -1,257 +1,376 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="wrap_content">
 
-    <!-- USER -->
-    <LinearLayout style="@style/SectionStyle">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-        <LinearLayout style="@style/SectionHeaderStyle">
+        <!-- USER -->
+        <LinearLayout style="@style/SectionStyle">
 
-            <LinearLayout
-                android:id="@+id/device_description_user"
-                style="@style/SectionTitleStyle">
+            <LinearLayout style="@style/SectionHeaderStyle">
+
+                <LinearLayout
+                    android:id="@+id/device_description_user"
+                    style="@style/SectionTitleStyle">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_heading_user" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/device_text_user"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/gap_margin"
+                    android:text=""
+                    android:textIsSelectable="false" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- LINK PROFILE -->
+        <LinearLayout style="@style/SectionStyle">
+
+            <LinearLayout style="@style/SectionHeaderStyle">
+
+                <LinearLayout
+                    android:id="@+id/device_description_link_profile"
+                    style="@style/SectionTitleStyle">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_link_profile" />
+
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/device_heading_user" />
+                    android:layout_marginLeft="@dimen/gap_margin"
+                    android:text="@string/device_telegram_profile_status_unlinked"
+                    android:textIsSelectable="false" />
 
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/device_text_user"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/gap_margin"
-                android:text=""
-                android:textIsSelectable="false" />
+            <LinearLayout style="@style/SectionBodyStyle">
+
+                <LinearLayout style="@style/SectionBodySplitStyle" />
+
+                <LinearLayout style="@style/SectionBodySplitStyle">
+
+                    <Button
+                        android:id="@+id/device_button_profile_link"
+                        style="@style/ButtonStyle"
+                        android:text="@string/device_button_profile_link" />
+
+                </LinearLayout>
+
+            </LinearLayout>
 
         </LinearLayout>
 
-    </LinearLayout>
-
-    <!-- LINK PROFILE -->
-    <LinearLayout style="@style/SectionStyle">
-
-        <LinearLayout style="@style/SectionHeaderStyle">
+        <!-- FEATURES -->
+        <LinearLayout style="@style/SectionStyle">
 
             <LinearLayout
-                android:id="@+id/device_description_link_profile"
-                style="@style/SectionTitleStyle">
+                style="@style/SectionHeaderStyle"
+                android:layout_marginBottom="0dp">
+
+                <LinearLayout
+                    android:id="@+id/device_description_features"
+                    style="@style/SectionTitleStyle">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_string_heading_features" />
+
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/device_link_profile" />
+                    android:layout_marginLeft="@dimen/gap_margin"
+                    android:text="@string/these_features_may_require_a_restart"
+                    android:textIsSelectable="false" />
 
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/gap_margin"
-                android:text="@string/device_telegram_profile_status_unlinked"
-                android:textIsSelectable="false" />
-
-        </LinearLayout>
-
-        <LinearLayout style="@style/SectionBodyStyle">
-
-            <LinearLayout style="@style/SectionBodySplitStyle" />
 
             <LinearLayout style="@style/SectionBodySplitStyle">
 
-                <Button
-                    android:id="@+id/device_button_profile_link"
-                    style="@style/ButtonStyle"
-                    android:text="@string/device_button_profile_link" />
+                <LinearLayout style="@style/SectionBodyGutterStyle" />
+
+                <LinearLayout
+                    style="@style/SectionBodyDominatingStyle"
+                    android:orientation="vertical">
+
+                    <CheckBox
+                        android:id="@+id/device_checkbox_features_inventory_search"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fragment_device_show_inventory_search" />
+
+                    <CheckBox
+                        android:id="@+id/device_checkbox_features_inventory_key_sort"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fragment_device_show_inventory_sort" />
+
+                    <CheckBox
+                        android:id="@+id/device_checkbox_features_inventory_level_filter"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fragment_device_show_inventory_level_filter" />
+
+                    <CheckBox
+                        android:id="@+id/device_checkbox_features_inventory_rarity_filter"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fragment_device_show_inventory_rarity_filter" />
+
+                </LinearLayout>
 
             </LinearLayout>
-
         </LinearLayout>
 
-    </LinearLayout>
-
-    <!-- FEATURES -->
-    <LinearLayout style="@style/SectionStyle">
-
-        <LinearLayout
-            style="@style/SectionHeaderStyle"
-            android:layout_marginBottom="0dp">
+        <!-- PERFORMANCE -->
+        <LinearLayout style="@style/SectionStyle">
 
             <LinearLayout
-                android:id="@+id/device_description_features"
-                style="@style/SectionTitleStyle">
+                style="@style/SectionHeaderStyle"
+                android:layout_marginBottom="0dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/device_string_heading_features" />
+                <LinearLayout
+                    android:id="@+id/device_section_performance"
+                    style="@style/SectionTitleStyle">
 
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/gap_margin"
-                android:text="@string/these_features_may_require_a_restart"
-                android:textIsSelectable="false" />
-
-        </LinearLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_description_performance" />
 
 
-        <LinearLayout style="@style/SectionBodySplitStyle">
-
-            <LinearLayout style="@style/SectionBodyGutterStyle" />
-
-            <LinearLayout
-                style="@style/SectionBodyDominatingStyle"
-                android:orientation="vertical">
-
-                <CheckBox
-                    android:id="@+id/device_checkbox_features_inventory_search"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/fragment_device_show_inventory_search" />
-
-                <CheckBox
-                    android:id="@+id/device_checkbox_features_inventory_key_sort"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/fragment_device_show_inventory_sort" />
-
-                <CheckBox
-                    android:id="@+id/device_checkbox_features_inventory_level_filter"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/fragment_device_show_inventory_level_filter" />
-
-                <CheckBox
-                    android:id="@+id/device_checkbox_features_inventory_rarity_filter"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/fragment_device_show_inventory_rarity_filter" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- PERFORMANCE -->
-    <LinearLayout style="@style/SectionStyle">
-
-        <LinearLayout
-            style="@style/SectionHeaderStyle"
-            android:layout_marginBottom="0dp">
-
-            <LinearLayout
-                android:id="@+id/device_section_performance"
-                style="@style/SectionTitleStyle">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/device_description_performance" />
-
-
-            </LinearLayout>
-
-
-        </LinearLayout>
-
-        <LinearLayout style="@style/SectionBodySplitStyle">
-
-            <LinearLayout style="@style/SectionBodyGutterStyle" />
-
-            <LinearLayout
-                style="@style/SectionBodyDominatingStyle"
-                android:orientation="vertical">
-
-                <CheckBox
-                    android:id="@+id/device_checkbox_performance_load_images_network"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/load_images_from_network" />
-
-                <CheckBox
-                    android:id="@+id/device_checkbox_performance_load_map_tiles_network"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/load_map_tiles_from_network" />
-
-
-            </LinearLayout>
-
-            <LinearLayout style="@style/SectionBodySplitStyle" />
-
-        </LinearLayout>
-
-    </LinearLayout>
-
-
-    <!-- CREDITS -->
-    <LinearLayout style="@style/SectionStyle">
-
-        <LinearLayout style="@style/SectionHeaderStyle">
-
-            <LinearLayout style="@style/SectionTitleStyle">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/device_heading_credits" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <LinearLayout style="@style/SectionBodyStyle">
-
-            <LinearLayout style="@style/SectionBodySplitStyle">
+                </LinearLayout>
 
 
             </LinearLayout>
 
             <LinearLayout style="@style/SectionBodySplitStyle">
 
-                <Button
-                    android:id="@+id/device_button_credits"
-                    style="@style/ButtonStyle"
-                    android:text="@string/device_text_button_show" />
+                <LinearLayout style="@style/SectionBodyGutterStyle" />
+
+                <LinearLayout
+                    style="@style/SectionBodyDominatingStyle"
+                    android:orientation="vertical">
+
+                    <CheckBox
+                        android:id="@+id/device_checkbox_performance_load_images_network"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/load_images_from_network" />
+
+                    <CheckBox
+                        android:id="@+id/device_checkbox_performance_load_map_tiles_network"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/load_map_tiles_from_network" />
+
+
+                </LinearLayout>
+
+                <LinearLayout style="@style/SectionBodySplitStyle" />
 
             </LinearLayout>
 
         </LinearLayout>
 
-    </LinearLayout>
 
-    <!-- BUILD -->
-    <LinearLayout style="@style/SectionStyle">
-
-        <LinearLayout style="@style/SectionHeaderStyle">
+        <!-- EXTERNAL NOTIFICATIONS -->
+        <LinearLayout style="@style/SectionStyle">
 
             <LinearLayout
-                android:id="@+id/description_module"
-                style="@style/SectionTitleStyle">
+                style="@style/SectionHeaderStyle"
+                android:layout_marginBottom="0dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/device_heading_build" />
+                <LinearLayout
+                    android:id="@+id/device_section_notifications_external"
+                    style="@style/SectionTitleStyle">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Telegram Notifications" />
+
+
+                </LinearLayout>
+
 
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/device_build_number_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/gap_margin"
-                android:textIsSelectable="false" />
+            <LinearLayout style="@style/SectionBodySplitStyle">
+
+                <LinearLayout style="@style/SectionBodyGutterStyle" />
+
+                <LinearLayout
+                    style="@style/SectionBodyDominatingStyle"
+                    android:orientation="vertical">
+
+                    <CheckBox
+                        android:id="@+id/device_checkbox_telegram_game_notifications"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/telegram_game_notifications_portal_under_attack_etc" />
+
+                    <CheckBox
+                        android:id="@+id/device_checkbox_telegram_news"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/telegram_game_related_events_offers_and_news_updates" />
+
+
+                </LinearLayout>
+
+                <LinearLayout style="@style/SectionBodySplitStyle" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ANDROID NOTIFICATIONS -->
+        <LinearLayout style="@style/SectionStyle">
+
+            <LinearLayout
+                style="@style/SectionHeaderStyle"
+                android:layout_marginBottom="0dp">
+
+                <LinearLayout
+                    android:id="@+id/device_section_notifications"
+                    style="@style/SectionTitleStyle">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fragment_device_android_notifications" />
+
+
+                </LinearLayout>
+
+
+            </LinearLayout>
+
+            <LinearLayout style="@style/SectionBodySplitStyle">
+
+                <LinearLayout style="@style/SectionBodyGutterStyle" />
+
+                <LinearLayout
+                    style="@style/SectionBodyDominatingStyle"
+                    android:orientation="vertical">
+
+                    <CheckBox
+                        android:id="@+id/device_checkbox_notification_mentioned_comm"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_notification_you_are_mentioned_in_comm" />
+
+                    <CheckBox
+                        android:id="@+id/device_checkbox_notification_attack"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_notification_portal_under_attack" />
+
+                    <CheckBox
+                        android:id="@+id/device_checkbox_notification_recruiting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_notification_recruiting_and_faction_activity" />
+
+                    <CheckBox
+                        android:id="@+id/device_checkbox_notification_news"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_notification_news_stories" />
+
+
+                </LinearLayout>
+
+                <LinearLayout style="@style/SectionBodySplitStyle" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- CREDITS -->
+        <LinearLayout style="@style/SectionStyle">
+
+            <LinearLayout style="@style/SectionHeaderStyle">
+
+                <LinearLayout style="@style/SectionTitleStyle">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_heading_credits" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout style="@style/SectionBodyStyle">
+
+                <LinearLayout style="@style/SectionBodySplitStyle">
+
+
+                </LinearLayout>
+
+                <LinearLayout style="@style/SectionBodySplitStyle">
+
+                    <Button
+                        android:id="@+id/device_button_credits"
+                        style="@style/ButtonStyle"
+                        android:text="@string/device_text_button_show" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- BUILD -->
+        <LinearLayout style="@style/SectionStyle">
+
+            <LinearLayout style="@style/SectionHeaderStyle">
+
+                <LinearLayout
+                    android:id="@+id/description_module"
+                    style="@style/SectionTitleStyle">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_heading_build" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/device_build_number_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/gap_margin"
+                    android:textIsSelectable="false" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
     </LinearLayout>
-
-</LinearLayout>
+</ScrollView>
