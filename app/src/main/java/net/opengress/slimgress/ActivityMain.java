@@ -24,6 +24,7 @@ package net.opengress.slimgress;
 import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
 
 import android.content.Intent;
+import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -84,12 +85,17 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     private void updateAgent(Agent agent) {
-        Log.d("ActivityMain/updateAgent", "Updating agent in display!");
+        Log.d("Main/updateAgent", "Updating agent in display!");
 // TODO move some of this style info into onCreate
         int textColor;
         Team team = agent.getTeam();
         textColor = 0xff000000 + team.getColour();
-        var levelColor = getResources().getColor(getLevelColor(agent.getLevel()), null);
+        int levelColor = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            levelColor = getResources().getColor(getLevelColor(agent.getLevel()), null);
+        } else {
+            levelColor = getResources().getColor(getLevelColor(agent.getLevel()));
+        }
 
         ((TextView) findViewById(R.id.agentname)).setText(agent.getNickname());
         ((TextView) findViewById(R.id.agentname)).setTextColor(textColor);
@@ -107,11 +113,19 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         }
         ((ProgressBar) findViewById(R.id.agentap)).setMax(nextLevelAP);
         ((ProgressBar) findViewById(R.id.agentap)).setProgress(agent.getAp());
-        ((ProgressBar) findViewById(R.id.agentap)).getProgressDrawable().setTint(levelColor);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ((ProgressBar) findViewById(R.id.agentap)).getProgressDrawable().setTint(levelColor);
+        } else {
+            ((ProgressBar) findViewById(R.id.agentap)).getProgressDrawable().setColorFilter(levelColor, PorterDuff.Mode.SRC_IN);
+        }
 
         ((ProgressBar) findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
         ((ProgressBar) findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
-        ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setTint(textColor);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setTint(textColor);
+        } else {
+            ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setColorFilter(textColor, PorterDuff.Mode.SRC_IN);
+        }
         findViewById(R.id.activity_main_header).setOnClickListener(view -> {
             String agentinfo = "AP: " + agent.getAp() + " / " + nextLevelAP + "\nXM: " + agent.getEnergy() + " / " + agent.getEnergyMax();
             Toast.makeText(getApplicationContext(), agentinfo, Toast.LENGTH_LONG).show();

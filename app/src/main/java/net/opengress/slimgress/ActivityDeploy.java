@@ -5,6 +5,8 @@ import static net.opengress.slimgress.API.Common.Utils.getPrettyDistanceString;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.graphics.PorterDuff;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -97,7 +99,11 @@ public class ActivityDeploy extends AppCompatActivity {
             var widget = findViewById(resoSlotToLayoutId(reso.slot));
             ((TextView) widget.findViewById(R.id.resoLevelText)).setText(String.format("L%d", reso.level));
             int levelColour = getLevelColor(reso.level);
-            ((TextView) widget.findViewById(R.id.resoLevelText)).setTextColor(getResources().getColor(levelColour, null));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                ((TextView) widget.findViewById(R.id.resoLevelText)).setTextColor(getResources().getColor(levelColour, null));
+            } else {
+                ((TextView) widget.findViewById(R.id.resoLevelText)).setTextColor(getResources().getColor(levelColour));
+            }
             ((TextView) widget.findViewById(R.id.positionText)).setText(String.format("%dm %s", reso.distanceToPortal, resoSlotToOctantText(reso.slot)));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setText(mGame.getAgentName(reso.ownerGuid));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());
@@ -116,7 +122,11 @@ public class ActivityDeploy extends AppCompatActivity {
             }
             ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).setMax(reso.getMaxEnergy());
             ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).setProgress(reso.energyTotal);
-            ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).getProgressDrawable().setTint(0xff000000 + portal.getPortalTeam().getColour());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).getProgressDrawable().setTint(0xff000000 + portal.getPortalTeam().getColour());
+            } else {
+                ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).getProgressDrawable().setColorFilter(0xff000000 + portal.getPortalTeam().getColour(), PorterDuff.Mode.SRC_IN);
+            }
         }
 
         int dist = (int) mGame.getLocation().getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng());

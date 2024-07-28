@@ -26,11 +26,11 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
@@ -39,8 +39,6 @@ import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Interface.Interface;
 
 import org.json.JSONObject;
-
-import java.util.Objects;
 
 public class ActivityAuth extends Activity {
     private final IngressApplication mApp = IngressApplication.getInstance();
@@ -117,7 +115,7 @@ public class ActivityAuth extends Activity {
         return accountName != null && accountToken != null;
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
+    @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     private void authenticateUser() {
 
         WebView myWebView = new WebView(getLayoutInflater().getContext());
@@ -125,14 +123,16 @@ public class ActivityAuth extends Activity {
         myWebView.getSettings().setJavaScriptCanOpenWindowsAutomatically(false);
         myWebView.getSettings().setSupportMultipleWindows(false);
         CookieManager.getInstance().setAcceptCookie(true);
-        CookieManager.getInstance().setAcceptThirdPartyCookies(myWebView, true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            CookieManager.getInstance().setAcceptThirdPartyCookies(myWebView, true);
+        }
         myWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         myWebView.addJavascriptInterface(new MyJavaScriptInterface(), "textClaimer");
 
         myWebView.setWebViewClient(new WebViewClient() {
             @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                return !Objects.requireNonNull(request.getUrl().getPath()).startsWith("/embed") && !request.getUrl().getPath().startsWith("/login") && !request.getUrl().getPath().startsWith("/auth");
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return !url.startsWith("/embed") && !url.startsWith("/login") && !url.startsWith("/auth");
             }
 
             @Override

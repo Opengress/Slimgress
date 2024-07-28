@@ -29,6 +29,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -212,7 +213,11 @@ public class InventoryList extends BaseExpandableListAdapter {
             // show portal level
             ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_level)).setText(String.format("L%d", portal.getPortalLevel()));
             int levelColour = getLevelColor(portal.getPortalLevel());
-            ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_level)).setTextColor(convertView.getResources().getColor(levelColour, null));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_level)).setTextColor(convertView.getResources().getColor(levelColour, null));
+            } else {
+                ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_level)).setTextColor(convertView.getResources().getColor(levelColour));
+            }
 
             // get distance to portal and show ownership in the colour
             ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_distance)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());

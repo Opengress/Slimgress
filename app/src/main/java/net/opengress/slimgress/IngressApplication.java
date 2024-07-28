@@ -91,7 +91,6 @@ public class IngressApplication extends Application {
 //                    .penaltyDeath()
                     .build());
 
-            // FIXME learn how to not leak activities...
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
                         .detectActivityLeaks()
@@ -100,17 +99,6 @@ public class IngressApplication extends Application {
                         .detectLeakedSqlLiteObjects()
                         .detectContentUriWithoutPermission()
 //                        .detectUntaggedSockets()
-                        .detectFileUriExposure()
-                        .detectCleartextNetwork()
-                        .penaltyLog()
-//                        .penaltyDeath()
-                        .build());
-            } else {
-                StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
-                        .detectActivityLeaks()
-                        .detectLeakedClosableObjects()
-                        .detectLeakedRegistrationObjects()
-                        .detectLeakedSqlLiteObjects()
                         .detectFileUriExposure()
                         .detectCleartextNetwork()
                         .penaltyLog()

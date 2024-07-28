@@ -201,12 +201,12 @@ public class ActivitySplash extends Activity {
                     try {
                         startActivityForResult(intent, 500);
                     } catch (Exception e) {
-                        Log.e("ActivitySplash/Installer", Objects.requireNonNull(e.getMessage()));
+                        Log.e("Splash/Installer", Objects.requireNonNull(e.getMessage()));
                         e.printStackTrace();
                     }
 
                 } catch (Exception e) {
-                    Log.e("ActivitySplash/Installer", Objects.requireNonNull(e.getMessage()));
+                    Log.e("Splash/Installer", Objects.requireNonNull(e.getMessage()));
                     e.printStackTrace();
                 }
 
@@ -226,7 +226,7 @@ public class ActivitySplash extends Activity {
 
     private void onDownloadUpdateProgress(double v) {
         // TODO find some way to report progress - notification?
-        Log.d("ActivitySplash/DownloadProgress", String.valueOf(v));
+        Log.i("Splash/DownloadProgress", String.valueOf(v));
     }
 
     private void showValidateUsernameDialog(String error) {

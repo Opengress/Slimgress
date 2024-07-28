@@ -3,6 +3,7 @@ package net.opengress.slimgress;
 import static net.opengress.slimgress.API.Common.Utils.getLevelColor;
 
 import android.annotation.SuppressLint;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -56,7 +57,12 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 itemDescription.setText(((ItemPortalKey) actual).getPortalAddress());
                 itemLevel.setText(String.format("L%d", portal.getPortalLevel()));
                 levelColour = getLevelColor(portal.getPortalLevel());
-                itemLevel.setTextColor(getResources().getColor(levelColour, null));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    itemLevel.setTextColor(getResources().getColor(levelColour, null));
+                } else {
+
+                    itemLevel.setTextColor(getResources().getColor(levelColour));
+                }
 
                 break;
             case Media:
@@ -76,7 +82,11 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 itemDescription.setText(item.getDescription());
                 itemLevel.setText(String.format("L%d", actual.getItemLevel()));
                 levelColour = getLevelColor(actual.getItemLevel());
-                itemLevel.setTextColor(getResources().getColor(levelColour, null));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    itemLevel.setTextColor(getResources().getColor(levelColour, null));
+                } else {
+                    itemLevel.setTextColor(getResources().getColor(levelColour));
+                }
         }
 
 
