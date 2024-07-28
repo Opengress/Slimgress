@@ -89,6 +89,19 @@
         <item name="android:textSize">@dimen/text_size_button</item>
     </style>
 
+    <style name="ShortButtonStyleYellow" parent="android:Widget.Button">
+        <item name="android:background">@drawable/button_background_yellow</item>
+        <item name="android:textColor">@color/button_text_yellow</item>
+    </style>
+
+    <style name="ButtonStyleYellow" parent="@style/ShortButtonStyleYellow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="android:layout_marginLeft">@dimen/gap_margin</item>
+        <item name="android:padding">1dp</item>
+        <item name="android:textSize">@dimen/text_size_button</item>
+    </style>
+
     <!--
     not sniped from XGlyph2: ShowcaseView styles. Might be useful later.
     amlcurran/showcaseview puts a mask over the screen to place a widget of interest in a ""target""

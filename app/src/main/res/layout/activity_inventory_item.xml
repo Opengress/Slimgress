@@ -1,56 +1,161 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="16dp">
-
-    <TextView
-        android:id="@+id/activity_inventory_item_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical|left" />
 
     <ImageView
         android:id="@+id/activity_inventory_item_image"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_height="match_parent"
         android:importantForAccessibility="no"
-        android:scaleType="centerCrop"
+        android:scaleType="fitCenter"
         android:src="@drawable/no_image" />
 
     <LinearLayout
+        android:id="@+id/activity_inventory_item_root"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/activity_inventory_item_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|left"
-            android:layout_weight="1"
-            android:ellipsize="middle"
-            android:singleLine="true"
-            android:text="" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:orientation="vertical"
+            android:layout_weight="1">
 
-        <TextView
-            android:id="@+id/activity_inventory_item_level"
-            android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/activity_inventory_item_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical|left"
+                    android:layout_weight="1"
+                    android:textSize="@dimen/text_size_header" />
+
+
+                <TextView
+                    android:id="@+id/activity_inventory_item_level"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical|right"
+                    android:layout_weight="0"
+                    android:textSize="@dimen/text_size_header" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/activity_inventory_item_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical|left"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/activity_inventory_item_distance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical|right"
+                    android:layout_weight="0"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/activity_inventory_item_address"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/activity_inventory_item_rarity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|right"
-            android:layout_weight="1"
-            android:text="" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/activity_inventory_item_description"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <Button
+                    android:id="@+id/activity_inventory_item_recharge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/inventory_button_recharge"
+                    style="@style/ButtonStyleYellow"
+                    android:layout_gravity="center_vertical|left"
+                    android:visibility="gone" />
+
+                <Button
+                    android:id="@+id/activity_inventory_item_use"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/inventory_button_use"
+                    style="@style/ButtonStyleYellow"
+                    android:layout_gravity="center_vertical|left"
+                    android:visibility="gone" />
+
+                <Button
+                    android:id="@+id/activity_inventory_item_fire"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/inventory_button_fire"
+                    style="@style/ButtonStyleYellow"
+                    android:layout_gravity="center_vertical|left"
+                    android:visibility="gone" />
+
+                <!-- problem if we want to go earlier than kitkat -->
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/activity_inventory_item_drop"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/inventory_button_drop"
+                    style="@style/ButtonStyle"
+                    android:layout_gravity="center_vertical|right"
+                    android:enabled="false" />
+
+                <Button
+                    android:id="@+id/activity_inventory_item_recycle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/inventory_button_recycle"
+                    style="@style/ButtonStyle"
+                    android:layout_gravity="center_vertical|right"
+                    android:enabled="false" />
+
+            </LinearLayout>
+        </LinearLayout>
+
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/activity_inventory_item_description"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:ellipsize="end"
-        android:maxLines="1" />
-
-
-</LinearLayout>
-
+</FrameLayout>

@@ -2,6 +2,9 @@
 <resources>
     <color name="rectangle_yellow">#FFD752</color>         <!-- correct -->
     <color name="rectangle_yellow_fill">#082D3A</color>    <!-- one of 2 colors (dotted) -->
+    <color name="rectangle_yellow_fill_2">#999900</color>    <!-- one of 2 colors (dotted) -->
+    <color name="rectangle_yellow_fill_disabled">#333300
+    </color>    <!-- one of 2 colors (dotted) -->
     <color name="rectangle_cyan">#00F3FF</color>           <!-- correct -->
     <color name="rectangle_cyan_fill">#19454A</color>      <!-- one of 3 colors (dotted) -->
     <color name="rectangle_orange">#FF813A</color>         <!-- correct -->
@@ -22,4 +25,22 @@
     <color name="level_six">#FF0E82</color>
     <color name="level_seven">#B400FF</color>
     <color name="level_eight">#5200FF</color>
+    <!--
+        Also pretty much guesses
+    -->
+    <!-- one i made up -->
+    <color name="rarity_very_common">#BBBBBB</color>
+
+    <!-- from fandom wiki -->
+    <color name="rarity_common">#49EBC3</color>
+    <!--    <color name="rarity_rare">#B68BFF</color>-->
+    <color name="rarity_very_rare">#F781FF</color>
+    <color name="rarity_extra_rare">#DD1E25</color>
+
+    <!-- ios versions -->
+    <!--    <color name="rarity_common">#38FFBF</color>-->
+    <color name="rarity_less_common">#3698FF</color>
+    <color name="rarity_rare">#8963FE</color>
+    <!--    <color name="rarity_very_rare">#FF3DFF</color>-->
+    <!--    <color name="rarity_extra_rare">#FF3232</color>-->
 </resources>
