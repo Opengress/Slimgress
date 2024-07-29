@@ -1,5 +1,6 @@
 package net.opengress.slimgress;
 
+import static net.opengress.slimgress.API.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColor;
 import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
@@ -7,8 +8,11 @@ import static net.opengress.slimgress.ViewHelpers.getRarityColor;
 import static net.opengress.slimgress.ViewHelpers.getRarityText;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -152,6 +156,46 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     .error(R.drawable.no_image)
                     .into((ImageView) findViewById(R.id.activity_inventory_item_image));
         }
+
+        if (mGame.getAgent().getNickname().startsWith("MT")) {
+            findViewById(R.id.activity_inventory_item_drop).setEnabled(true);
+            ((Button) findViewById(R.id.activity_inventory_item_drop)).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mGame.intDropItem(actual, new Handler(msg -> {
+                        var data = msg.getData();
+                        String error = getErrorStringFromAPI(data);
+                        if (error != null && !error.isEmpty()) {
+                            AlertDialog.Builder builder = new AlertDialog.Builder(ActivityInventoryItem.this);
+                            builder.setMessage(error).setTitle("Error");
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
+                        }
+
+                        return false;
+                    }));
+                }
+            });
+            findViewById(R.id.activity_inventory_item_recycle).setEnabled(true);
+            ((Button) findViewById(R.id.activity_inventory_item_recycle)).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mGame.intRecycleItem(actual, new Handler(msg -> {
+                        var data = msg.getData();
+                        String error = getErrorStringFromAPI(data);
+                        if (error != null && !error.isEmpty()) {
+                            AlertDialog.Builder builder = new AlertDialog.Builder(ActivityInventoryItem.this);
+                            builder.setMessage(error).setTitle("Error");
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
+                        }
+
+                        return false;
+                    }));
+                }
+            });
+        }
+
     }
 
     private void updateDistance() {

@@ -21,6 +21,8 @@
 
 package net.opengress.slimgress.API.Common;
 
+import android.os.Bundle;
+
 import com.google.common.geometry.S2Cap;
 import com.google.common.geometry.S2CellId;
 import com.google.common.geometry.S2LatLng;
@@ -98,6 +100,14 @@ public class Utils
         } else {
             return false; // Action is still on cooldown
         }
+    }
+
+    public static String getErrorStringFromAPI(Bundle data) {
+        String error = data.getString("Exception");
+        if (error == null) {
+            error = data.getString("Error");
+        }
+        return error;
     }
 
 }
