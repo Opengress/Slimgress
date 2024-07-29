@@ -1,5 +1,6 @@
 package net.opengress.slimgress;
 
+import static net.opengress.slimgress.API.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColor;
 import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
@@ -46,10 +47,7 @@ public class ActivityDeploy extends AppCompatActivity {
 
     private final Handler deployResultHandler = new Handler(msg -> {
         var data = msg.getData();
-        String error = data.getString("Exception");
-        if (error == null) {
-            error = data.getString("Error");
-        }
+        String error = getErrorStringFromAPI(data);
         if (error != null && !error.isEmpty()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage(error).setTitle("Error");

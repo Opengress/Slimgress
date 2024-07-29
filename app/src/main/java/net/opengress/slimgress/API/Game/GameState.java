@@ -912,6 +912,30 @@ public class GameState
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
                 }
+
+                @Override
+                public void handleError(String error) {
+                    switch (error) {
+                        // based on Recycling, probably DOES_NOT_EXIST
+                        // however, we return ITEM_DOES_NOT_EXIST for consistency
+                        case "DOES_NOT_EXIST":
+                        case "ITEM_DOES_NOT_EXIST":
+                        case "RESOURCE_NOT_AVAILABLE":
+                            super.handleError("Item is not in your inventory.");
+                            break;
+                        case "SPEED_LOCKED": // new!
+                            super.handleError("You are moving too fast");
+                            break;
+                        case "SPEED_LOCKED_": // new!
+                            // TODO: maybe format this as "x hours, x minutes, x seconds"
+                            String t = error.substring(error.lastIndexOf("_") + 1);
+                            super.handleError("You are moving too fast! You will be ready to play in " + t + "seconds");
+                            break;
+                        default:
+                            super.handleError("Unknown error: " + error);
+                            break;
+                    }
+                }
             });
         }
         catch (JSONException | InterruptedException e) {
