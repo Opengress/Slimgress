@@ -81,8 +81,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
     private void showInfoBox(String message) {
         DialogInfo newDialog = new DialogInfo(this);
-        newDialog.setMessage(message);
-        newDialog.show();
+        newDialog.setMessage(message).setDismissDelay().show();
     }
 
     private void updateAgent(Agent agent) {

@@ -5,7 +5,6 @@ import static net.opengress.slimgress.ViewHelpers.getLevelColor;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -36,7 +35,6 @@ public class ActivityPortal extends AppCompatActivity {
     private final IngressApplication mApp = IngressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private final int mActionRadiusM = mGame.getKnobs().getScannerKnobs().getActionRadiusM();
-    private Bitmap mBitmap;
     private final ActivityResultLauncher<Intent> deployActivityResultLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -47,14 +45,6 @@ public class ActivityPortal extends AppCompatActivity {
                 }
             }
     );
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (mBitmap != null) {
-            mBitmap.recycle();
-        }
-    }
 
     private void setUpView() {
         GameEntityPortal portal = mGame.getCurrentPortal();

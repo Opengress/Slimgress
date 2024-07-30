@@ -21,15 +21,15 @@
 
 package net.opengress.slimgress.API.Game;
 
+import net.opengress.slimgress.API.Interface.GameBasket;
+import net.opengress.slimgress.API.Item.ItemBase;
+import net.opengress.slimgress.API.Item.ItemResonator;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import net.opengress.slimgress.API.Interface.GameBasket;
-import net.opengress.slimgress.API.Item.ItemBase;
-import net.opengress.slimgress.API.Item.ItemResonator;
 
 public class Inventory
 {
@@ -93,6 +93,19 @@ public class Inventory
         }
 
         return items;
+    }
+
+    public final void removeItem(String guid) {
+        mItems.remove(guid);
+    }
+
+    public final void removeItem(ItemBase item) {
+        for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
+            ItemBase item2 = pair.getValue();
+            if (item == item2) {
+                mItems.remove(pair.getKey());
+            }
+        }
     }
 
     public final List<ItemBase> getItems(ItemBase.ItemType type, int accessLevel)

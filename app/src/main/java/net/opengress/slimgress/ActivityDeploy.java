@@ -49,10 +49,8 @@ public class ActivityDeploy extends AppCompatActivity {
         var data = msg.getData();
         String error = getErrorStringFromAPI(data);
         if (error != null && !error.isEmpty()) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage(error).setTitle("Error");
-            AlertDialog dialog = builder.create();
-            dialog.show();
+            DialogInfo dialog = new DialogInfo(this);
+            dialog.setMessage(error).setDismissDelay(1500).show();
         }
 
         setUpView();

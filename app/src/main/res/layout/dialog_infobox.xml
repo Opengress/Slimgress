@@ -2,8 +2,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#6400FFFF"
-    android:orientation="vertical" >
+    android:background="#CC00FFFF"
+    android:orientation="vertical"
+    android:layout_margin="@dimen/button_height"
+    android:paddingBottom="10dp">
 
     <!-- android:background="@android:color/transparent" -->
 
@@ -13,6 +15,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="top|center_horizontal"
         android:text="Large Text"
+        android:textColor="@android:color/black"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <TextView
@@ -21,6 +24,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="Medium Text"
+        android:textColor="@android:color/black"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
 </LinearLayout>

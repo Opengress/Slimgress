@@ -82,24 +82,14 @@ public class FragmentInventory extends Fragment {
 
     private InventoryList mInventoryList;
     private Observer<Inventory> mObserver;
-    private View mRootView;
 
     String[] mSorts = new String[]{"Deployment", "Distance", "Level", "Name", "Team"};
     int mInventoryKeySort;
 
     @Override
-    public View onCreateView(final LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
-        mRootView = inflater.inflate(R.layout.fragment_inventory,
-                container, false);
-
-        final ExpandableListView list = mRootView.findViewById(R.id.listView);
-        final ProgressBar progress = mRootView.findViewById(R.id.progressBar1);
-        mPrefs = requireActivity().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE);
-        mInventoryKeySort = mPrefs.getInt(Constants.PREFS_INVENTORY_KEY_SORT, 3);
-
-        list.setVisibility(View.INVISIBLE);
-        progress.setVisibility(View.VISIBLE);
-
+    public void onResume() {
+        final ExpandableListView list = getView().findViewById(R.id.listView);
+        final ProgressBar progress = getView().findViewById(R.id.progressBar1);
         // create group names
         mGroupNames = new ArrayList<>();
         mGroups = new ArrayList<>();
@@ -111,7 +101,7 @@ public class FragmentInventory extends Fragment {
         mGroupResonators = new ArrayList<>();
         mGroupWeapons = new ArrayList<>();
 
-        final Runnable runnable = getRunnable(inflater, list, progress);
+        final Runnable runnable = getRunnable(getLayoutInflater(), list, progress);
 
         if (!mGame.getInventory().getItems().isEmpty()) {
             FragmentInventory.this.fillInventory(runnable);
@@ -124,7 +114,21 @@ public class FragmentInventory extends Fragment {
 
             mApp.getInventoryViewModel().getInventory().observe(getViewLifecycleOwner(), mObserver);
         }
+        super.onResume();
+    }
 
+    @Override
+    public View onCreateView(final LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
+        View mRootView = inflater.inflate(R.layout.fragment_inventory,
+                container, false);
+
+        final ExpandableListView list = mRootView.findViewById(R.id.listView);
+        final ProgressBar progress = mRootView.findViewById(R.id.progressBar1);
+        mPrefs = requireActivity().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE);
+        mInventoryKeySort = mPrefs.getInt(Constants.PREFS_INVENTORY_KEY_SORT, 3);
+
+        list.setVisibility(View.INVISIBLE);
+        progress.setVisibility(View.VISIBLE);
 
         String[] rarityNames = {"ALL", "Very Common", "Common", "Less Common", "Rare", "Very Rare", "Extra Rare"};
         Spinner raritySpinner = setUpSpinner(rarityNames, mRootView, R.id.spinnerRarity);

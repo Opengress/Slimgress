@@ -911,6 +911,7 @@ public class GameState
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
+                    getData().putStringArray("dropped", gameBasket.getDeletedEntityGuids().toArray(new String[0]));
                 }
 
                 @Override
@@ -971,6 +972,7 @@ public class GameState
 
     public void intRecycleItem(ItemBase item, final Handler handler)
     {
+        // TODO: Bulk recycling
         try {
             checkInterface();
 
@@ -981,17 +983,37 @@ public class GameState
                 @Override
                 public void handleError(String error) {
                     // DOES_NOT_EXIST
+                    switch (error) {
+                        case "DOES_NOT_EXIST":
+                        case "ITEM_DOES_NOT_EXIST":
+                        case "RESOURCE_NOT_AVAILABLE":
+                            super.handleError("Item is not in your inventory.");
+                            break;
+                        case "SPEED_LOCKED": // new!
+                            super.handleError("You are moving too fast");
+                            break;
+                        case "SPEED_LOCKED_": // new!
+                            // TODO: maybe format this as "x hours, x minutes, x seconds"
+                            String t = error.substring(error.lastIndexOf("_") + 1);
+                            super.handleError("You are moving too fast! You will be ready to play in " + t + "seconds");
+                            break;
+                        default:
+                            super.handleError("Unknown error: " + error);
+                            break;
+                    }
                     super.handleError(error);
                 }
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
+                    getData().putStringArray("recycled", gameBasket.getDeletedEntityGuids().toArray(new String[0]));
                 }
 
                 @Override
                 public void handleResult(String result) {
-                    // TODO: result contains the gained xm value, put into msg
+                    getData().putString("result", result);
+                    super.handleResult(result);
                 }
             });
         }

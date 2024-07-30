@@ -27,16 +27,22 @@ import org.json.JSONObject;
 public class ClientFeatureKnobs extends Knobs
 {
     private final boolean mEnableRecycle;
+    private final boolean mEnableRecycleConfirmationDialog;
 
     public ClientFeatureKnobs(JSONObject json) throws JSONException
     {
         super(json);
 
         mEnableRecycle = json.getBoolean("enableRecycle");
+        mEnableRecycleConfirmationDialog = json.getInt("enableRecycleConfirmationDialog") != 0;
     }
 
     public boolean isEnableRecycle()
     {
         return mEnableRecycle;
+    }
+
+    public boolean isEnableRecycleConfirmationDialog() {
+        return mEnableRecycleConfirmationDialog;
     }
 }

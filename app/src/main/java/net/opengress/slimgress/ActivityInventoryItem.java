@@ -11,8 +11,8 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -28,17 +28,15 @@ import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.API.Item.ItemBase;
 import net.opengress.slimgress.API.Item.ItemPortalKey;
 
+import java.util.Objects;
+
 public class ActivityInventoryItem extends AppCompatActivity {
 
     private GameState mGame;
     private Inventory mInventory;
-    private TextView mItemTitle;
     private TextView mItemRarity;
-    private TextView mItemName;
-    private TextView mItemDescription;
     private TextView mItemLevel;
     private int mLevelColour;
-    private int mRarityColor;
     private InventoryListItem mItem;
 
     @SuppressLint({"DefaultLocale", "SetTextI18n"})
@@ -52,10 +50,10 @@ public class ActivityInventoryItem extends AppCompatActivity {
         mGame = IngressApplication.getInstance().getGame();
         mInventory = mGame.getInventory();
 
-        mItemTitle = findViewById(R.id.activity_inventory_item_title);
+        TextView itemTitle = findViewById(R.id.activity_inventory_item_title);
         mItemRarity = findViewById(R.id.activity_inventory_item_rarity);
-        mItemName = findViewById(R.id.activity_inventory_item_name);
-        mItemDescription = findViewById(R.id.activity_inventory_item_description);
+        TextView itemName = findViewById(R.id.activity_inventory_item_name);
+        TextView itemDescription = findViewById(R.id.activity_inventory_item_description);
         mItemLevel = findViewById(R.id.activity_inventory_item_level);
 
         // Set the item details
@@ -73,16 +71,16 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 mItemRarity.setVisibility(View.GONE);
 
                 // Portal Key L1
-                mItemTitle.setText(R.string.item_name_portal_key);
+                itemTitle.setText(R.string.item_name_portal_key);
                 mItemLevel.setText(String.format("L%d", portal.getPortalLevel()));
                 mLevelColour = getLevelColor(portal.getPortalLevel());
                 mItemLevel.setTextColor(getColorFromResources(getResources(), mLevelColour));
 
 
                 // bonanza at south beach
-                mItemName.setText(mItem.getPrettyDescription());
-                mItemName.setTextColor(0xFF000000 + portal.getPortalTeam().getColour());
-                mItemName.setVisibility(View.VISIBLE);
+                itemName.setText(mItem.getPrettyDescription());
+                itemName.setTextColor(0xFF000000 + portal.getPortalTeam().getColour());
+                itemName.setVisibility(View.VISIBLE);
 
                 // 12.4km
                 updateDistance();
@@ -100,27 +98,27 @@ public class ActivityInventoryItem extends AppCompatActivity {
 
                 break;
             case Resonator:
-                mItemTitle.setText("Resonator");
-                mItemDescription.setText("XM object used to power up a portal and align it to a faction");
+                itemTitle.setText("Resonator");
+                itemDescription.setText("XM object used to power up a portal and align it to a faction");
                 inflateResourceWithLevels(mItem, actual);
                 break;
             case PowerCube:
-                mItemTitle.setText("Power Cube");
-                mItemDescription.setText("Store of XM which can be used to recharge Scanner");
+                itemTitle.setText("Power Cube");
+                itemDescription.setText("Store of XM which can be used to recharge Scanner");
                 inflateResourceWithLevels(mItem, actual);
                 findViewById(R.id.activity_inventory_item_use).setVisibility(View.VISIBLE);
                 findViewById(R.id.activity_inventory_item_use).setEnabled(false);
                 break;
             case WeaponXMP:
-                mItemTitle.setText("XMP Burster");
-                mItemDescription.setText("Exotic Matter Pulse weapons which can destroy enemy resonators and Mods and neutralize enemy portals");
+                itemTitle.setText("XMP Burster");
+                itemDescription.setText("Exotic Matter Pulse weapons which can destroy enemy resonators and Mods and neutralize enemy portals");
                 inflateResourceWithLevels(mItem, actual);
                 findViewById(R.id.activity_inventory_item_fire).setVisibility(View.VISIBLE);
                 findViewById(R.id.activity_inventory_item_fire).setEnabled(false);
                 break;
             case WeaponUltraStrike:
-                mItemTitle.setText("Ultra Strike");
-                mItemDescription.setText("A variation of the Exotic Matter Pulse weapon with a more powerful blast that occurs within a smaller radius");
+                itemTitle.setText("Ultra Strike");
+                itemDescription.setText("A variation of the Exotic Matter Pulse weapon with a more powerful blast that occurs within a smaller radius");
                 inflateResourceWithLevels(mItem, actual);
                 findViewById(R.id.activity_inventory_item_fire).setVisibility(View.VISIBLE);
                 findViewById(R.id.activity_inventory_item_fire).setEnabled(false);
@@ -134,8 +132,8 @@ public class ActivityInventoryItem extends AppCompatActivity {
             case ModTurret:
             case FlipCard:
             default:
-                mItemName.setText(mItem.getPrettyDescription());
-                mItemDescription.setText(mItem.getDescription());
+                itemName.setText(mItem.getPrettyDescription());
+                itemDescription.setText(mItem.getDescription());
                 mItemLevel.setText(String.format("L%d", actual.getItemLevel()));
                 mLevelColour = getLevelColor(actual.getItemLevel());
                 mItemLevel.setTextColor(getColorFromResources(getResources(), mLevelColour));
@@ -157,43 +155,13 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     .into((ImageView) findViewById(R.id.activity_inventory_item_image));
         }
 
-        if (mGame.getAgent().getNickname().startsWith("MT")) {
-            findViewById(R.id.activity_inventory_item_drop).setEnabled(true);
-            ((Button) findViewById(R.id.activity_inventory_item_drop)).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mGame.intDropItem(actual, new Handler(msg -> {
-                        var data = msg.getData();
-                        String error = getErrorStringFromAPI(data);
-                        if (error != null && !error.isEmpty()) {
-                            AlertDialog.Builder builder = new AlertDialog.Builder(ActivityInventoryItem.this);
-                            builder.setMessage(error).setTitle("Error");
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                        }
-
-                        return false;
-                    }));
-                }
-            });
+        findViewById(R.id.activity_inventory_item_drop).setEnabled(true);
+        findViewById(R.id.activity_inventory_item_drop).setOnClickListener(this::onDropItemClicked);
+        if (mGame.getKnobs().getClientFeatureKnobs().isEnableRecycle()) {
             findViewById(R.id.activity_inventory_item_recycle).setEnabled(true);
-            ((Button) findViewById(R.id.activity_inventory_item_recycle)).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mGame.intRecycleItem(actual, new Handler(msg -> {
-                        var data = msg.getData();
-                        String error = getErrorStringFromAPI(data);
-                        if (error != null && !error.isEmpty()) {
-                            AlertDialog.Builder builder = new AlertDialog.Builder(ActivityInventoryItem.this);
-                            builder.setMessage(error).setTitle("Error");
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                        }
-
-                        return false;
-                    }));
-                }
-            });
+            findViewById(R.id.activity_inventory_item_recycle).setOnClickListener(this::onRecycleItemClicked);
+        } else {
+            findViewById(R.id.activity_inventory_item_recycle).setVisibility(View.INVISIBLE);
         }
 
     }
@@ -210,11 +178,92 @@ public class ActivityInventoryItem extends AppCompatActivity {
     @SuppressLint("DefaultLocale")
     private void inflateResourceWithLevels(InventoryListItem item, ItemBase actual) {
         mItemRarity.setText(getRarityText(item.getRarity()));
-        mRarityColor = getRarityColor(item.getRarity());
-        mItemRarity.setTextColor(getColorFromResources(getResources(), mRarityColor));
+        int rarityColor = getRarityColor(item.getRarity());
+        mItemRarity.setTextColor(getColorFromResources(getResources(), rarityColor));
         mItemLevel.setText(String.format("L%d", actual.getItemLevel()));
         mLevelColour = getLevelColor(actual.getItemLevel());
         mItemLevel.setTextColor(getColorFromResources(getResources(), mLevelColour));
     }
 
+    private void onDropItemClicked(View v) {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(ActivityInventoryItem.this);
+        builder.setTitle("DROP: " + mItem.getDescription());
+        builder.setMessage(String.format("This %s will be removed from your inventory and you will not be able to see it for a VERY LONG TIME!", mItem.getDescription()));
+
+        builder.setPositiveButton(R.string.ok, (d, which) -> {
+            mGame.intDropItem(Objects.requireNonNull(mInventory.getItems().get(mItem.getFirstID())), new Handler(msg -> {
+                var data = msg.getData();
+                String error = getErrorStringFromAPI(data);
+                // FIXME why is my error text funny?
+                if (error != null && !error.isEmpty()) {
+                    DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
+                    dialog.setMessage(error).setDismissDelay(1500).show();
+                } else {
+                    for (var id : Objects.requireNonNull(data.getStringArray("dropped"))) {
+                        mItem.remove(id);
+                        mInventory.removeItem(id);
+                    }
+                    if (mItem.getQuantity() == 0) {
+                        new Handler(Looper.getMainLooper()).postDelayed(this::finish, 1500);
+                    }
+                }
+                return false;
+            }));
+            d.dismiss();
+        });
+
+        builder.setNegativeButton(R.string.cancel, (d, which) -> {
+            d.dismiss();
+        });
+
+        AlertDialog d = builder.create();
+        d.show();
+    }
+
+    private void onRecycleItemClicked(View v) {
+        if (mGame.getKnobs().getClientFeatureKnobs().isEnableRecycleConfirmationDialog()) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(ActivityInventoryItem.this);
+            builder.setTitle("RECYCLE: " + mItem.getDescription());
+            builder.setMessage(String.format("This %s will be destroyed. This cannot be undone!", mItem.getDescription()));
+
+            builder.setPositiveButton(R.string.ok, (d, which) -> {
+                recycleItem();
+                d.dismiss();
+            });
+
+            builder.setNegativeButton(R.string.cancel, (d, which) -> {
+                d.dismiss();
+            });
+
+            AlertDialog d = builder.create();
+            d.show();
+        } else {
+            recycleItem();
+        }
+    }
+
+    private void recycleItem() {
+        mGame.intRecycleItem(Objects.requireNonNull(mInventory.getItems().get(mItem.getFirstID())), new Handler(msg -> {
+            var data = msg.getData();
+            String error = getErrorStringFromAPI(data);
+            // FIXME why is my error text funny?
+            if (error != null && !error.isEmpty()) {
+                DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
+                dialog.setMessage(error).setDismissDelay(1500).show();
+            } else {
+                var res = data.getString("result");
+                DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
+                dialog.setMessage(String.format("Gained %s XM from recycling a %s", res, mItem.getDescription())).setDismissDelay(1500).show();
+                for (var id : Objects.requireNonNull(data.getStringArray("recycled"))) {
+                    mItem.remove(id);
+                    mInventory.removeItem(id);
+                }
+                if (mItem.getQuantity() == 0) {
+                    new Handler(Looper.getMainLooper()).postDelayed(this::finish, 1500);
+                }
+            }
+            return false;
+        }));
+    }
 }
