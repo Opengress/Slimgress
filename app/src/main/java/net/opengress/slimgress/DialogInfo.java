@@ -54,10 +54,11 @@ public class DialogInfo extends Dialog
         findViewById(R.id.title).setVisibility(View.INVISIBLE);
     }
 
-    public void setMessage(String msg)
+    public DialogInfo setMessage(String msg)
     {
         ((TextView)findViewById(R.id.message)).setText(msg);
         findViewById(R.id.message).setVisibility(View.VISIBLE);
+        return this;
     }
 
     public DialogInfo setTitle(String title)
