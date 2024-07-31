@@ -31,6 +31,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
@@ -39,6 +40,8 @@ import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Interface.Interface;
 
 import org.json.JSONObject;
+
+import java.util.Objects;
 
 public class ActivityAuth extends Activity {
     private final IngressApplication mApp = IngressApplication.getInstance();
@@ -130,6 +133,11 @@ public class ActivityAuth extends Activity {
         myWebView.addJavascriptInterface(new MyJavaScriptInterface(), "textClaimer");
 
         myWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                return !Objects.requireNonNull(request.getUrl().getPath()).startsWith("/embed") && !request.getUrl().getPath().startsWith("/login") && !request.getUrl().getPath().startsWith("/auth");
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 return !url.startsWith("/embed") && !url.startsWith("/login") && !url.startsWith("/auth");
