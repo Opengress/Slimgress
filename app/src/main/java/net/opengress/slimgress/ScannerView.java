@@ -768,7 +768,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
                 final net.opengress.slimgress.API.Common.Location location = particle.getCellLocation();
 
-                requireActivity().runOnUiThread(() -> {
+                Activity activity = getActivity();
+                if (activity == null) {
+                    return;
+                }
+                activity.runOnUiThread(() -> {
                     Bitmap portalIcon;
                     // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
                     // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
@@ -799,7 +803,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             }
             final net.opengress.slimgress.API.Common.Location location = portal.getPortalLocation();
 
-            requireActivity().runOnUiThread(() -> {
+            Activity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
+            activity.runOnUiThread(() -> {
                 Bitmap portalIcon;
                 // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
                 // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
@@ -843,7 +851,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 final net.opengress.slimgress.API.Common.Location dest = link.getLinkDestinationLocation();
 
                 // TODO: decay link per portal health
-                requireActivity().runOnUiThread(() -> {
+                Activity activity = getActivity();
+                if (activity == null) {
+                    return;
+                }
+                activity.runOnUiThread(() -> {
                     Team team = link.getLinkControllingTeam();
                     int color = 0xff000000 + team.getColour(); // adding opacity
 
@@ -872,7 +884,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 final net.opengress.slimgress.API.Common.Location vB = field.getFieldVertexB().getPortalLocation();
                 final net.opengress.slimgress.API.Common.Location vC = field.getFieldVertexC().getPortalLocation();
 
-                requireActivity().runOnUiThread(() -> {
+                Activity activity = getActivity();
+                if (activity == null) {
+                    return;
+                }
+                activity.runOnUiThread(() -> {
 
                     // todo: decay field per portal health
                     Team team = field.getFieldControllingTeam();
@@ -904,20 +920,40 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     }
 
     public String getQuickMessage() {
-        return (String) ((TextView) requireActivity().findViewById(R.id.quickMessage)).getText();
+        // not essential so not guaranteed to do anything useful
+        Activity activity = getActivity();
+        if (activity == null) {
+            return null;
+        }
+        return ((TextView) activity.findViewById(R.id.quickMessage)).getText().toString();
     }
 
     public void displayQuickMessage(String message) {
-        ((TextView) requireActivity().findViewById(R.id.quickMessage)).setText(message);
-        requireActivity().findViewById(R.id.quickMessage).setVisibility(View.VISIBLE);
+        // not essential so not guaranteed to do anything useful
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+        TextView quickMessageView = activity.findViewById(R.id.quickMessage);
+        quickMessageView.setText(message);
+        quickMessageView.setVisibility(View.VISIBLE);
     }
 
     public void hideQuickMessage() {
-
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+        activity.findViewById(R.id.quickMessage).setVisibility(View.GONE);
     }
 
     public void setQuickMessageTimeout() {
-        new Handler(Looper.getMainLooper()).postDelayed(() -> requireActivity().runOnUiThread(() -> requireActivity().findViewById(R.id.quickMessage).setVisibility(View.GONE)), 3000);
+        // not essential so not guaranteed to do anything useful
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+        new Handler(Looper.getMainLooper()).postDelayed(() -> activity.runOnUiThread(() -> activity.findViewById(R.id.quickMessage).setVisibility(View.GONE)), 3000);
     }
 
 }
