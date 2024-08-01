@@ -170,7 +170,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
         int dist = 999999000;
         Location loc = mGame.getLocation();
         if (loc != null) {
-            dist = (int) (mGame.getLocation().getS2LatLng().getEarthDistance(mItem.getLocation()));
+            dist = (int) (loc.getS2LatLng().getEarthDistance(mItem.getLocation()));
         }
         ((TextView) findViewById(R.id.activity_inventory_item_distance)).setText(getPrettyDistanceString(dist));
     }
