@@ -92,4 +92,6 @@
     <string name="inventory_button_recharge">RECHARGE</string>
     <string name="inventory_button_fire">FIRE</string>
     <string name="inventory_button_use">USE</string>
+    <string name="telegram_notifications">Telegram Notifications</string>
+    <string name="use_high_precision_compass">Use high precision compass</string>
 </resources>

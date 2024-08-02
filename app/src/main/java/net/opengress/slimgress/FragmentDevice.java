@@ -56,13 +56,6 @@ public class FragmentDevice extends Fragment
             startActivity(myIntent);
         });
 
-        /*
-            public static final String PREFS_INVENTORY_SEARCH_BOX_VISIBLE = "InventorySearchBoxVisible";
-    public static final String PREFS_INVENTORY_KEY_SORT_VISIBLE = "InventoryKeySortVisible";
-    public static final String PREFS_INVENTORY_LEVEL_FILTER_VISIBLE = "InventoryLevelFilterVisible";
-    public static final String PREFS_INVENTORY_RARITY_FILTER_VISIBLE = "InventoryRarityFilterVisible";
-         */
-
         mRootView.findViewById(R.id.device_button_profile_link).setEnabled(false);
 
         // features
@@ -74,8 +67,11 @@ public class FragmentDevice extends Fragment
         // performance
         mRootView.findViewById(R.id.device_checkbox_performance_load_images_network).setEnabled(false);
         mRootView.findViewById(R.id.device_checkbox_performance_load_map_tiles_network).setEnabled(false);
+        mRootView.findViewById(R.id.device_checkbox_performance_high_precision_compass).setEnabled(false);
         ((CheckBox) mRootView.findViewById(R.id.device_checkbox_performance_load_images_network)).setChecked(true);
         ((CheckBox) mRootView.findViewById(R.id.device_checkbox_performance_load_map_tiles_network)).setChecked(true);
+        // Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR or Sensor.TYPE_ROTATION_VECTOR
+        ((CheckBox) mRootView.findViewById(R.id.device_checkbox_performance_high_precision_compass)).setChecked(true);
 
         // telegram notifications
         mRootView.findViewById(R.id.device_checkbox_telegram_game_notifications).setEnabled(false);
