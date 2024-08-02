@@ -185,6 +185,12 @@
                         android:layout_height="wrap_content"
                         android:text="@string/load_map_tiles_from_network" />
 
+                    <CheckBox
+                        android:id="@+id/device_checkbox_performance_high_precision_compass"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/use_high_precision_compass" />
+
 
                 </LinearLayout>
 
@@ -209,7 +215,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Telegram Notifications" />
+                        android:text="@string/telegram_notifications" />
 
 
                 </LinearLayout>

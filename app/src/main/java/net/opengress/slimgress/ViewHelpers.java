@@ -48,78 +48,39 @@ public class ViewHelpers {
     }
 
     public static int getLevelColor(int level) {
-        int levelColour = R.color.level_one;
-        switch (level) {
-            case 2:
-                levelColour = R.color.level_two;
-                break;
-            case 3:
-                levelColour = R.color.level_three;
-                break;
-            case 4:
-                levelColour = R.color.level_four;
-                break;
-            case 5:
-                levelColour = R.color.level_five;
-                break;
-            case 6:
-                levelColour = R.color.level_six;
-                break;
-            case 7:
-                levelColour = R.color.level_seven;
-                break;
-            case 8:
-                levelColour = R.color.level_eight;
-                break;
-        }
-        return levelColour;
+        return switch (level) {
+            case 2 -> R.color.level_two;
+            case 3 -> R.color.level_three;
+            case 4 -> R.color.level_four;
+            case 5 -> R.color.level_five;
+            case 6 -> R.color.level_six;
+            case 7 -> R.color.level_seven;
+            case 8 -> R.color.level_eight;
+            default -> R.color.level_one;
+        };
     }
 
     public static int getRarityColor(@NonNull ItemBase.Rarity rarity) {
-        int rarityColor = R.color.rarity_very_common;
-        switch (rarity) {
-            case Common:
-                rarityColor = R.color.rarity_common;
-                break;
-            case LessCommon:
-                rarityColor = R.color.rarity_less_common;
-                break;
-            case Rare:
-                rarityColor = R.color.rarity_rare;
-                break;
-            case VeryRare:
-                rarityColor = R.color.rarity_very_rare;
-                break;
-            case ExtraRare:
-                rarityColor = R.color.rarity_extra_rare;
-                break;
-
-        }
-        return rarityColor;
+        return switch (rarity) {
+            case Common -> R.color.rarity_common;
+            case LessCommon -> R.color.rarity_less_common;
+            case Rare -> R.color.rarity_rare;
+            case VeryRare -> R.color.rarity_very_rare;
+            case ExtraRare -> R.color.rarity_extra_rare;
+            default -> R.color.rarity_very_common;
+        };
     }
 
 
     public static String getRarityText(ItemBase.Rarity rarity) {
-        String text = "Very Common";
-        switch (rarity) {
-            case Common:
-                text = "Common";
-                break;
-            case LessCommon:
-                text = "Less Common";
-                break;
-            case Rare:
-                text = "Rare";
-                break;
-            case VeryRare:
-                text = "Very Rare";
-                break;
-            case ExtraRare:
-                text = "Extra Rare";
-                break;
-
-        }
-        return text;
+        return switch (rarity) {
+            case Common -> "Common";
+            case LessCommon -> "Less Common";
+            case Rare -> "Rare";
+            case VeryRare -> "Very Rare";
+            case ExtraRare -> "Extra Rare";
+            default -> "Very Common";
+        };
     }
 
     public static int getImageForResoLevel(int level) {

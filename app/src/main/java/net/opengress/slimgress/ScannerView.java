@@ -35,9 +35,11 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -144,11 +146,12 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
     // device sensor manager
     private SensorManager mSensorManager;
-    private Sensor mAccelerometer;
-    private Sensor mMagnetometer;
-    private float[] mGravity;
-    private float[] mGeomagnetic;
     private float mBearing = 0;
+    private Sensor mRotationVectorSensor;
+
+    private final int MAP_ROTATION_ARBITRARY = 2;
+    private final int MAP_ROTATION_FLOATING = 3;
+    private int CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -162,32 +165,19 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             location = (GeoPoint) mMap.getMapCenter();
         }
 
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            mGravity = event.values;
-        } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-            mGeomagnetic = event.values;
-        }
+        if (event.sensor.getType() == Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR) {
+            float[] rotationMatrix = new float[9];
+            SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values);
 
-        if (mGravity != null && mGeomagnetic != null) {
-            float[] R = new float[9];
-            float[] I = new float[9];
-            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
-            if (success) {
-                float[] orientation = new float[3];
-                SensorManager.getOrientation(R, orientation);
-                // FIXME somewhere in this screen we must make an adjustment from OPS
-                float z = (float) (Math.toDegrees(orientation[0]) + 360) % 360;
-                // flip this so it works on my device
-                float x = (float) (Math.toDegrees(orientation[1]) + 180) % 360;
-                /*
-                If x is 0, y should give correct info. but i can't get it from [2] so idk.
-                Then again, who holds their phone perfectly vertically?
-                 */
-                if (Math.abs(x) > 0) {
-                    z = (z + 180) % 360;
-                }
-                mBearing = z;
-            }
+            float[] orientation = new float[3];
+            SensorManager.getOrientation(rotationMatrix, orientation);
+
+            float azimuth = (float) Math.toDegrees(orientation[0]);
+            mBearing = (azimuth + 360) % 360;
+
+        }
+        if (CURRENT_MAP_ORIENTATION_SCHEME == MAP_ROTATION_FLOATING) {
+            mMap.setMapOrientation(-mBearing);
         }
         drawPlayerCursor(location, mBearing);
     }
@@ -264,7 +254,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     private void displayMyCurrentLocationOverlay(GeoPoint currentLocation, float bearing) {
 
         mMap.getOverlayManager().remove(mActionRadius);
-        if (mAccelerometer == null && mMagnetometer == null) {
+        if (mRotationVectorSensor == null) {
             drawPlayerCursor(currentLocation, bearing);
         }
         mActionRadius.setPosition(currentLocation.destinationPoint(56.57, 315), currentLocation.destinationPoint(56.57, 135));
@@ -291,9 +281,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mLastLocationAcquired = new Date();
         mLastLocation = currentLocation;
 
-        // TODO test this: lock scroll/pan so that user can't pan/zoom away
-//        mMap.setScrollableAreaLimitDouble(mMap.getBoundingBox());
-
         setLocationInaccurate(false);
 
     }
@@ -310,8 +297,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mUpdateDistanceM = mScannerKnobs.getUpdateDistanceM();
 
         mSensorManager = (SensorManager) requireActivity().getSystemService(SENSOR_SERVICE);
-        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mMagnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        mRotationVectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR);
         mApp.getAPGainsModel().getAPGains().observe(this, this::onReceiveAPGains);
         mApp.getDeletedEntityGuidsModel().getDeletedEntityGuids().observe(this, this::onReceiveDeletedEntityGuids);
         mPortalActivityResultLauncher = registerForActivityResult(
@@ -438,14 +424,48 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
         // Note! we are programmatically construction the map view
         // be sure to handle application lifecycle correct (see onPause)
-        mMap = new MapView(inflater.getContext(), tileProvider);
+        mMap = new MapView(inflater.getContext(), tileProvider) {
+            private double mCurrAngle = 0;
+            private double mPrevAngle = 0;
+
+            @Override
+            public boolean onTouchEvent(MotionEvent event) {
+
+                if (event.getPointerCount() == 1) {
+                    final float xc = (float) getWidth() / 2;
+                    final float yc = (float) getHeight() / 2;
+                    final float x = event.getX();
+                    final float y = event.getY();
+                    double angrad = Math.atan2(x - xc, yc - y);
+
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            mCurrAngle = Math.toDegrees(angrad);
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
+                            mPrevAngle = mCurrAngle;
+                            mCurrAngle = Math.toDegrees(angrad);
+                            setMapOrientation(getMapOrientation() - (float) (mPrevAngle - mCurrAngle));
+                            return true;
+                        case MotionEvent.ACTION_UP:
+                            mPrevAngle = mCurrAngle = 0;
+                            break;
+                    }
+                } else {
+                    // i assume you're doing a pinch zoom/rotate
+                    CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
+                }
+                return super.onTouchEvent(event);
+            }
+        };
+
         mMap.getMapOverlay().setLoadingBackgroundColor(Color.BLACK);
         mMap.setDestroyMode(false);
         mMap.setMinZoomLevel(16d);
         mMap.setMaxZoomLevel(22d);
         mMap.setFlingEnabled(false);
-        // TODO: rewrite MultiTouchController to NOT change map position on pinch
-        //  (if that's the right way)
+        //needed for pinch zooms
         mMap.setMultiTouchControls(true);
 
         loadAssets();
@@ -488,9 +508,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mMap.getOverlays().add(mRotationGestureOverlay);
 
 
-        //needed for pinch zooms
-        mMap.setMultiTouchControls(true);
-
         //scales tiles to the current screen's DPI, helps with readability of labels
         mMap.setTilesScaledToDpi(true);
 
@@ -509,12 +526,32 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     }
 
     private @NonNull CompassOverlay getCompassOverlay(Context context) {
+
         CompassOverlay mCompassOverlay = new CompassOverlay(context, new InternalCompassOrientationProvider(context),
                 mMap) {
             @Override
             public boolean onSingleTapConfirmed(final MotionEvent e, final MapView mapView) {
                 // FIXME set auto/manual rotation (may need to reset to north)
-                return true;
+                Point reuse = new Point();
+                mapView.getProjection().rotateAndScalePoint((int) e.getX(), (int) e.getY(), reuse);
+                if (reuse.x < mCompassFrameBitmap.getWidth() && reuse.y < mCompassFrameCenterY + mCompassFrameBitmap.getHeight()) {
+                    Log.d("Scanner", "Got tap!");
+                    if (CURRENT_MAP_ORIENTATION_SCHEME == MAP_ROTATION_FLOATING) {
+                        CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
+                        mapView.setMapOrientation(0);
+                    } else {
+                        CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_FLOATING;
+                    }
+                    return true;
+                }
+
+                return super.onSingleTapConfirmed(e, mapView);
+            }
+
+            @Override
+            public void draw(Canvas canvas, MapView mapView, boolean shadow) {
+                // Adjust the compass orientation to always point north
+                drawCompass(canvas, -mapView.getMapOrientation(), mapView.getProjection().getScreenRect());
             }
         };
         mCompassOverlay.enableCompass();
@@ -559,12 +596,8 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             displayMyCurrentLocationOverlay(mCurrentLocation, 0);
         }
 
-        if (mAccelerometer != null) {
-            mSensorManager.registerListener(this, mAccelerometer,
-                    SensorManager.SENSOR_DELAY_GAME);
-        }
-        if (mMagnetometer != null) {
-            mSensorManager.registerListener(this, mMagnetometer,
+        if (mRotationVectorSensor != null) {
+            mSensorManager.registerListener(this, mRotationVectorSensor,
                     SensorManager.SENSOR_DELAY_GAME);
         }
 
