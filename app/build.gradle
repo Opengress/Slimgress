@@ -18,8 +18,8 @@ android {
         minSdk 21
         targetSdk 35
 //        1112223333
-        versionCode 10006
-        versionName "0.1.6"
+        versionCode 10007
+        versionName "0.1.7"
 
         resConfigs "en"
         buildConfigField "String", "BUILD_TIME", "\"${buildTime()}\""
@@ -61,8 +61,8 @@ android {
         }
     }
 
-
     namespace 'net.opengress.slimgress'
+
     buildFeatures {
         buildConfig true
     }
@@ -74,8 +74,6 @@ android {
         targetCompatibility JavaVersion.VERSION_17
         sourceCompatibility JavaVersion.VERSION_17
     }
-    buildToolsVersion '35.0.0'
-
 }
 
 // NEEDED FOR DEPLOYMENT SCRIPT
