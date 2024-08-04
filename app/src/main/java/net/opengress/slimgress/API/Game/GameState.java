@@ -127,6 +127,10 @@ public class GameState
                 // FIXME i ... don't need to add this to player data manually, do i???
                 app.getAPGainsModel().postAPGains(gameBasket.getAPGains());
             }
+            if (!gameBasket.getPlayerDamages().isEmpty()) {
+                // FIXME i ... don't need to add this to player data manually, do i???
+                app.getPlayerDamagesModel().postPlayerDamages(gameBasket.getPlayerDamages());
+            }
 
             // update player data
             PlayerEntity playerEntity = gameBasket.getPlayerEntity();
