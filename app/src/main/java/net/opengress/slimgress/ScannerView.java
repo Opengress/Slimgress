@@ -72,6 +72,7 @@ import net.opengress.slimgress.API.GameEntity.GameEntityControlField;
 import net.opengress.slimgress.API.GameEntity.GameEntityLink;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.API.Interface.APGain;
+import net.opengress.slimgress.API.Interface.PlayerDamage;
 import net.opengress.slimgress.API.Item.ItemPortalKey;
 import net.opengress.slimgress.API.Knobs.ScannerKnobs;
 import net.opengress.slimgress.API.Knobs.TeamKnobs;
@@ -88,7 +89,6 @@ import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
-import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
@@ -299,6 +299,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mSensorManager = (SensorManager) requireActivity().getSystemService(SENSOR_SERVICE);
         mRotationVectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR);
         mApp.getAPGainsModel().getAPGains().observe(this, this::onReceiveAPGains);
+        mApp.getPlayerDamagesModel().getPlayerDamages().observe(this, this::onReceivePlayerDamages);
         mApp.getDeletedEntityGuidsModel().getDeletedEntityGuids().observe(this, this::onReceiveDeletedEntityGuids);
         mPortalActivityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -369,8 +370,20 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     }
 
     private void onReceiveAPGains(List<APGain> apGains) {
+        TextView quickMessageView = getActivity().findViewById(R.id.commsFragment);
+        quickMessageView.setVisibility(View.VISIBLE);
         for (var gain : apGains) {
             Log.d("ScannerView", String.format("Gained %d AP for %s", gain.getAmount(), gain.getTrigger()));
+            quickMessageView.setText(String.format("Gained %d AP for %s", gain.getAmount(), gain.getTrigger()));
+        }
+    }
+
+    private void onReceivePlayerDamages(List<PlayerDamage> playerDamages) {
+        TextView quickMessageView = getActivity().findViewById(R.id.commsFragment);
+        quickMessageView.setVisibility(View.VISIBLE);
+        for (var dam : playerDamages) {
+            Log.d("ScannerView", String.format("Lost %d XM after being attacked by %s", dam.getAmount(), dam.getWeaponSerializationTag()));
+            quickMessageView.setText(String.format("Lost %d XM after being attacked by %s", dam.getAmount(), dam.getWeaponSerializationTag()));
         }
     }
 
@@ -415,7 +428,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
         // allows map tiles to be cached in SQLite so map draws properly
         Configuration.getInstance().load(requireContext(), requireContext().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE));
-
 
         // set up map tile source before creating map, so we don't download wrong tiles wastefully
         final ITileSource tileSource = new XYTileSource("CartoDB Dark Matter", 3, 18, 256, ".png",
@@ -500,13 +512,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         //On screen compass
         CompassOverlay mCompassOverlay = getCompassOverlay(context);
         mMap.getOverlays().add(mCompassOverlay);
-
-
-        //support for map rotation
-        RotationGestureOverlay mRotationGestureOverlay = new RotationGestureOverlay(mMap);
-        mRotationGestureOverlay.setEnabled(true);
-        mMap.getOverlays().add(mRotationGestureOverlay);
-
 
         //scales tiles to the current screen's DPI, helps with readability of labels
         mMap.setTilesScaledToDpi(true);

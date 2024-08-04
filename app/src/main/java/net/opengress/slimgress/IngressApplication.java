@@ -32,6 +32,7 @@ import net.opengress.slimgress.API.Common.APGainsViewModel;
 import net.opengress.slimgress.API.Common.DeletedEntityGuidsViewModel;
 import net.opengress.slimgress.API.Common.InventoryViewModel;
 import net.opengress.slimgress.API.Common.LocationViewModel;
+import net.opengress.slimgress.API.Common.PlayerDamagesViewModel;
 import net.opengress.slimgress.API.Common.PlayerDataViewModel;
 import net.opengress.slimgress.API.Game.GameState;
 
@@ -48,6 +49,7 @@ public class IngressApplication extends Application {
     private InventoryViewModel mInventoryViewModel;
     private DeletedEntityGuidsViewModel mDeletedEntityGuidsModel;
     private APGainsViewModel mAPGainsViewModel;
+    private PlayerDamagesViewModel mPlayerDamagesViewModel;
     private PlayerDataViewModel mPlayerDataViewModel;
 
     @Override
@@ -57,6 +59,7 @@ public class IngressApplication extends Application {
         mInventoryViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(InventoryViewModel.class);
         mDeletedEntityGuidsModel = new ViewModelProvider.AndroidViewModelFactory(this).create(DeletedEntityGuidsViewModel.class);
         mAPGainsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(APGainsViewModel.class);
+        mPlayerDamagesViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDamagesViewModel.class);
         mPlayerDataViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDataViewModel.class);
 
         mSingleton = this;
@@ -143,6 +146,10 @@ public class IngressApplication extends Application {
 
     public APGainsViewModel getAPGainsModel() {
         return mAPGainsViewModel;
+    }
+
+    public PlayerDamagesViewModel getPlayerDamagesModel() {
+        return mPlayerDamagesViewModel;
     }
 
     public PlayerDataViewModel getPlayerDataViewModel() {

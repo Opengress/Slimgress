@@ -5,9 +5,9 @@
     android:layout_height="match_parent"
     tools:ignore="RtlHardcoded,ContentDescription,RelativeOverlap">
 
-    <fragment
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/map"
-        class="net.opengress.slimgress.ScannerView"
+        android:name="net.opengress.slimgress.ScannerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
@@ -99,22 +99,23 @@
 
                 </LinearLayout>
 
-                <!--                style="@style/ButtonStyle"-->
                 <Button
                     android:id="@+id/buttonOps"
                     android:layout_width="wrap_content"
                     android:layout_height="@dimen/button_height"
-                    android:text="@string/main_ops" />
+                    android:text="@string/main_ops"
+                    android:layout_marginTop="@dimen/activity_margin"
+                    style="@style/ButtonStyleBlack" />
             </LinearLayout>
 
-<!--            style="@style/ShortButtonStyle"-->
             <Button
                 android:id="@+id/buttonComm"
                 android:layout_width="wrap_content"
                 android:layout_height="@dimen/button_height"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentBottom="true"
-                android:text="@string/main_comm" />
+                android:text="@string/main_comm"
+                style="@style/ButtonStyleBlack" />
 
             <LinearLayout
                 android:layout_width="match_parent"

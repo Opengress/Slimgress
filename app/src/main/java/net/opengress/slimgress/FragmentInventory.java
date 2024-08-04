@@ -85,35 +85,39 @@ public class FragmentInventory extends Fragment {
 
     String[] mSorts = new String[]{"Deployment", "Distance", "Level", "Name", "Team"};
     int mInventoryKeySort;
+    int mInventoryCount = 0;
+    boolean mFirstRun = true;
 
     @Override
     public void onResume() {
+        // FIXME monkeypatch
+        int inventoryCount = mApp.getGame().getInventory().getItems().size();
+        if (inventoryCount == mInventoryCount && mInventoryCount != 0) {
+            super.onResume();
+            return;
+        }
+        mInventoryCount = inventoryCount;
+
         final ExpandableListView list = getView().findViewById(R.id.listView);
         final ProgressBar progress = getView().findViewById(R.id.progressBar1);
-        // create group names
-        mGroupNames = new ArrayList<>();
-        mGroups = new ArrayList<>();
-
-        mGroupMedia = new ArrayList<>();
-        mGroupMods = new ArrayList<>();
-        mGroupPortalKeys = new ArrayList<>();
-        mGroupPowerCubes = new ArrayList<>();
-        mGroupResonators = new ArrayList<>();
-        mGroupWeapons = new ArrayList<>();
 
         final Runnable runnable = getRunnable(getLayoutInflater(), list, progress);
 
-        if (!mGame.getInventory().getItems().isEmpty()) {
+        if (mFirstRun && !mGame.getInventory().getItems().isEmpty()) {
             FragmentInventory.this.fillInventory(runnable);
-        } else {
-            mObserver = inventory -> {
-                if (!inventory.getItems().isEmpty()) {
+        }
+        mObserver = inventory -> {
+            // FIXME monkeypatch
+            int c = mApp.getGame().getInventory().getItems().size();
+            if (c != mInventoryCount || mInventoryCount == 0) {
                     FragmentInventory.this.fillInventory(runnable);
                 }
-            };
+            mInventoryCount = c;
+        };
 
-            mApp.getInventoryViewModel().getInventory().observe(getViewLifecycleOwner(), mObserver);
-        }
+        mApp.getInventoryViewModel().getInventory().observe(getViewLifecycleOwner(), mObserver);
+
+        mFirstRun = false;
         super.onResume();
     }
 
@@ -202,7 +206,7 @@ public class FragmentInventory extends Fragment {
         updateItemVisibilityForPreference(raritySpinner, Constants.PREFS_INVENTORY_RARITY_FILTER_VISIBLE, false);
 
         mPrefs.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
-            Log.d("FragmentInventory", String.format("PREFENCE CHANGE IN ANOTRHER THING: %s", key));
+            Log.d("FragmentInventory", String.format("PREFENCE CHANGE IN ANOTHER THING: %s", key));
             switch (Objects.requireNonNull(key)) {
                 case Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE:
                     updateItemVisibilityForPreference(searchBox, Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE, false);
@@ -233,6 +237,10 @@ public class FragmentInventory extends Fragment {
     }
 
     private void sortKeys(String by) {
+        if (mGroupPortalKeys == null) {
+            // we get here when keys haven't been set up
+            return;
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             switch (by) {
                 case "Deployment":
@@ -414,8 +422,19 @@ public class FragmentInventory extends Fragment {
     }
 
     private void fillInventory(final Runnable callback) {
-        mApp.getInventoryViewModel().getInventory().removeObserver(mObserver);
+        // FIXME: I can't see the sense in the below
+//        mApp.getInventoryViewModel().getInventory().removeObserver(mObserver);
         requireActivity().runOnUiThread(() -> {
+            // create group names
+            mGroupNames = new ArrayList<>();
+            mGroups = new ArrayList<>();
+
+            mGroupMedia = new ArrayList<>();
+            mGroupMods = new ArrayList<>();
+            mGroupPortalKeys = new ArrayList<>();
+            mGroupPowerCubes = new ArrayList<>();
+            mGroupResonators = new ArrayList<>();
+            mGroupWeapons = new ArrayList<>();
             fillMedia();
             fillMods();
             fillResonators();
