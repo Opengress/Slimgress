@@ -68,7 +68,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
         // create comm button callback
         final Button buttonComm = findViewById(R.id.buttonComm);
-        buttonComm.setOnClickListener(v -> showInfoBox("Info"));
+        buttonComm.setOnClickListener(v -> showInfoBox());
     }
 
     @Override
@@ -79,9 +79,9 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         Objects.requireNonNull(scanner).requestLocationUpdates();
     }
 
-    private void showInfoBox(String message) {
-        DialogInfo newDialog = new DialogInfo(this);
-        newDialog.setMessage(message).setDismissDelay().show();
+    private void showInfoBox() {
+        DialogComms bottomSheet = new DialogComms();
+        bottomSheet.show(getSupportFragmentManager(), bottomSheet.getTag());
     }
 
     private void updateAgent(Agent agent) {

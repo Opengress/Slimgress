@@ -102,15 +102,25 @@ import java.util.Objects;
 import java.util.Set;
 
 public class ScannerView extends Fragment implements SensorEventListener, LocationListener {
-    private IngressApplication mApp;
-    private GameState mGame;
+    private final IngressApplication mApp = IngressApplication.getInstance();
+    private final GameState mGame = mApp.getGame();
     private MapView mMap = null;
 
+    // ===========================================================
+    // Knobs quick reference
+    // ===========================================================
+    ScannerKnobs mScannerKnobs = mGame.getKnobs().getScannerKnobs();
+    private final int mActionRadiusM = mScannerKnobs.getActionRadiusM();
+    private final int mUpdateIntervalMS = mScannerKnobs.getUpdateIntervalMS();
+    private final int mMinUpdateIntervalMS = mScannerKnobs.getMinUpdateIntervalMS();
+    private final int mUpdateDistanceM = mScannerKnobs.getUpdateDistanceM();
+
+
     private final HashMap<String, Bitmap> mIcons = new HashMap<>();
-    private HashMap<String, GroundOverlay> mMarkers = null;
-    private HashMap<Long, GroundOverlay> mXMMarkers = null;
-    private HashMap<String, Polyline> mLines = null;
-    private HashMap<String, Polygon> mPolygons = null;
+    private final HashMap<String, GroundOverlay> mPortalMarkers = new HashMap<>();
+    private final HashMap<Long, GroundOverlay> mXMMarkers = new HashMap<>();
+    private final HashMap<String, Polyline> mLines = new HashMap<>();
+    private final HashMap<String, Polygon> mPolygons = new HashMap<>();
 
     private ActivityResultLauncher<Intent> mPortalActivityResultLauncher;
 
@@ -129,14 +139,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     private final GroundOverlay mActionRadius = new GroundOverlay();
     private final GroundOverlay mPlayerCursor = new GroundOverlay();
 
-
-    // ===========================================================
-    // Knobs quick reference
-    // ===========================================================
-    private int mActionRadiusM;
-    private int mUpdateIntervalMS;
-    private int mMinUpdateIntervalMS;
-    private int mUpdateDistanceM;
 
     // ===========================================================
     // Other (location)
@@ -288,19 +290,14 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mApp = IngressApplication.getInstance();
-        mGame = mApp.getGame();
-        ScannerKnobs mScannerKnobs = mGame.getKnobs().getScannerKnobs();
-        mActionRadiusM = mScannerKnobs.getActionRadiusM();
-        mUpdateIntervalMS = mScannerKnobs.getUpdateIntervalMS();
-        mMinUpdateIntervalMS = mScannerKnobs.getMinUpdateIntervalMS();
-        mUpdateDistanceM = mScannerKnobs.getUpdateDistanceM();
 
         mSensorManager = (SensorManager) requireActivity().getSystemService(SENSOR_SERVICE);
         mRotationVectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR);
+
         mApp.getAPGainsModel().getAPGains().observe(this, this::onReceiveAPGains);
         mApp.getPlayerDamagesModel().getPlayerDamages().observe(this, this::onReceivePlayerDamages);
         mApp.getDeletedEntityGuidsModel().getDeletedEntityGuids().observe(this, this::onReceiveDeletedEntityGuids);
+
         mPortalActivityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -400,9 +397,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             }
 
             // for portals
-            if (mMarkers.containsKey(guid)) {
-                mMap.getOverlays().remove(mMarkers.get(guid));
-                mMarkers.remove(guid);
+            if (mPortalMarkers.containsKey(guid)) {
+                mMap.getOverlays().remove(mPortalMarkers.get(guid));
+                mPortalMarkers.remove(guid);
             }
 
             // for links
@@ -481,11 +478,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mMap.setMultiTouchControls(true);
 
         loadAssets();
-
-        mMarkers = new HashMap<>();
-        mXMMarkers = new HashMap<>();
-        mLines = new HashMap<>();
-        mPolygons = new HashMap<>();
 
         return mMap;
     }
@@ -835,9 +827,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         if (mMap != null) {
             // if marker already exists, remove it so it can be updated
             String guid = portal.getEntityGuid();
-            if (mMarkers.containsKey(guid)) {
-                mMap.getOverlays().remove(mMarkers.get(guid));
-                mMarkers.remove(guid);
+            if (mPortalMarkers.containsKey(guid)) {
+                mMap.getOverlays().remove(mPortalMarkers.get(guid));
+                mPortalMarkers.remove(guid);
             }
             final net.opengress.slimgress.API.Common.Location location = portal.getPortalLocation();
 
@@ -875,7 +867,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 marker.setImage(portalIcon);
 
                 mMap.getOverlays().add(marker);
-                mMarkers.put(guid, marker);
+                mPortalMarkers.put(guid, marker);
             });
 
         }
