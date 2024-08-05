@@ -28,13 +28,14 @@ import android.os.StrictMode;
 
 import androidx.lifecycle.ViewModelProvider;
 
-import net.opengress.slimgress.API.Common.APGainsViewModel;
-import net.opengress.slimgress.API.Common.DeletedEntityGuidsViewModel;
-import net.opengress.slimgress.API.Common.InventoryViewModel;
-import net.opengress.slimgress.API.Common.LocationViewModel;
-import net.opengress.slimgress.API.Common.PlayerDamagesViewModel;
-import net.opengress.slimgress.API.Common.PlayerDataViewModel;
 import net.opengress.slimgress.API.Game.GameState;
+import net.opengress.slimgress.API.ViewModels.APGainsViewModel;
+import net.opengress.slimgress.API.ViewModels.CommsViewModel;
+import net.opengress.slimgress.API.ViewModels.DeletedEntityGuidsViewModel;
+import net.opengress.slimgress.API.ViewModels.InventoryViewModel;
+import net.opengress.slimgress.API.ViewModels.LocationViewModel;
+import net.opengress.slimgress.API.ViewModels.PlayerDamagesViewModel;
+import net.opengress.slimgress.API.ViewModels.PlayerDataViewModel;
 
 import org.acra.ACRA;
 import org.acra.config.CoreConfigurationBuilder;
@@ -51,6 +52,7 @@ public class IngressApplication extends Application {
     private APGainsViewModel mAPGainsViewModel;
     private PlayerDamagesViewModel mPlayerDamagesViewModel;
     private PlayerDataViewModel mPlayerDataViewModel;
+    private CommsViewModel mCommsViewModel;
 
     @Override
     public void onCreate() {
@@ -61,6 +63,7 @@ public class IngressApplication extends Application {
         mAPGainsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(APGainsViewModel.class);
         mPlayerDamagesViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDamagesViewModel.class);
         mPlayerDataViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDataViewModel.class);
+        mCommsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(CommsViewModel.class);
 
         mSingleton = this;
         mGame = new GameState();
@@ -154,6 +157,10 @@ public class IngressApplication extends Application {
 
     public PlayerDataViewModel getPlayerDataViewModel() {
         return mPlayerDataViewModel;
+    }
+
+    public CommsViewModel getCommsViewModel() {
+        return mCommsViewModel;
     }
 
     public boolean isLoggedIn() {

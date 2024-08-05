@@ -1,4 +1,4 @@
-package net.opengress.slimgress.API.Common;
+package net.opengress.slimgress.API.ViewModels;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;

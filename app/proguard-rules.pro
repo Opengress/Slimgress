@@ -11,6 +11,11 @@
 #-keepclassmembers class net.opengress.slimgress.ActivityAuth$MyJavaScriptInterface {
 #   public *;
 #}
+# there's a crash in ActivityInventoryItem ONLY appearing in minified builds
+# TODO: See if I can refine these rules a bit - these rules are what makes it not crash
+-keep class net.opengress.slimgress.** { *; }
+-keepclassmembers class net.opengress.slimgress.** { *; }
+-keep class com.google.common.geometry.** { *; }
 
 # Uncomment this to preserve the line number information for
 # debugging stack traces.
