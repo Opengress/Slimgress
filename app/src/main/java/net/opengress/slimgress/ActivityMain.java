@@ -41,7 +41,12 @@ import androidx.fragment.app.FragmentActivity;
 import net.opengress.slimgress.API.Common.Team;
 import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Player.Agent;
+import net.opengress.slimgress.API.Plext.PlextBase;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public class ActivityMain extends FragmentActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
@@ -68,7 +73,19 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
         // create comm button callback
         final Button buttonComm = findViewById(R.id.buttonComm);
-        buttonComm.setOnClickListener(v -> showInfoBox());
+        buttonComm.setOnClickListener(v -> showComms());
+
+        mApp.getCommsViewModel().getAllMessages().observe(this, this::getCommsMessages);
+    }
+
+    private void getCommsMessages(List<PlextBase> plexts) {
+        PlextBase plext = plexts.get(plexts.size() - 1);
+        WidgetCommsLine commsLine = findViewById(R.id.commsOneLiner);
+        ((TextView) commsLine.findViewById(R.id.plext_text)).setText(plext.getFormattedText());
+
+        SimpleDateFormat sdf = new SimpleDateFormat("h:mm a", Locale.getDefault());
+        String formattedTime = sdf.format(new Date(Long.parseLong(plext.getEntityTimestamp())));
+        ((TextView) commsLine.findViewById(R.id.plext_time)).setText(formattedTime);
     }
 
     @Override
@@ -79,7 +96,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         Objects.requireNonNull(scanner).requestLocationUpdates();
     }
 
-    private void showInfoBox() {
+    private void showComms() {
         DialogComms bottomSheet = new DialogComms();
         bottomSheet.show(getSupportFragmentManager(), bottomSheet.getTag());
     }
@@ -108,6 +125,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         }
         ((ProgressBar) findViewById(R.id.agentap)).setMax(nextLevelAP);
         ((ProgressBar) findViewById(R.id.agentap)).setProgress(agent.getAp());
+        Log.d("Main/updateAgent", "New AP: " + agent.getAp());
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             ((ProgressBar) findViewById(R.id.agentap)).getProgressDrawable().setTint(levelColor);
         } else {
@@ -116,6 +134,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
         ((ProgressBar) findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
         ((ProgressBar) findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
+        Log.d("Main/updateAgent", "New XM: " + agent.getEnergy());
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setTint(textColor);
         } else {

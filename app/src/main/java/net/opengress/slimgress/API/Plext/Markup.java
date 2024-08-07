@@ -21,11 +21,12 @@
 
 package net.opengress.slimgress.API.Plext;
 
+import android.annotation.SuppressLint;
+import android.util.Log;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import android.util.Log;
 
 public abstract class Markup
 {
@@ -36,7 +37,8 @@ public abstract class Markup
         Player,
         ATPlayer,
         Portal,
-        Text
+        Text,
+        Score
     }
 
     private final MarkupType mType;
@@ -55,27 +57,15 @@ public abstract class Markup
 
         String markupString = json.getString(0);
         switch (markupString) {
-            case "SECURE":
-                newMarkup = new MarkupSecure(markupObj);
-                break;
-            case "SENDER":
-                newMarkup = new MarkupSender(markupObj);
-                break;
-            case "PLAYER":
-                newMarkup = new MarkupPlayer(markupObj);
-                break;
-            case "AT_PLAYER":
-                newMarkup = new MarkupATPlayer(markupObj);
-                break;
-            case "PORTAL":
-                newMarkup = new MarkupPortal(markupObj);
-                break;
-            case "TEXT":
-                newMarkup = new MarkupText(markupObj);
-                break;
-            default:
-                Log.w("Markup", "unknown markup type: " + markupString);
-                break;
+            case "SECURE" -> newMarkup = new MarkupSecure(markupObj);
+            case "SENDER" -> newMarkup = new MarkupSender(markupObj);
+            case "PLAYER" -> newMarkup = new MarkupPlayer(markupObj);
+            case "AT_PLAYER" -> newMarkup = new MarkupATPlayer(markupObj);
+            case "PORTAL" -> newMarkup = new MarkupPortal(markupObj);
+            case "TEXT" -> newMarkup = new MarkupText(markupObj);
+            case "SCORE" ->  // new, internal
+                    newMarkup = new MarkupScore(markupObj);
+            default -> Log.w("Markup", "unknown markup type: " + markupString);
         }
 
         return newMarkup;
@@ -84,7 +74,21 @@ public abstract class Markup
     public Markup(MarkupType type, JSONObject json) throws JSONException
     {
         mType = type;
-        mPlain = json.getString("plain");
+        mPlain = json.optString("plain");
+    }
+
+    // shortcut for plain text
+    public Markup(String text) {
+        mType = MarkupType.Text;
+        mPlain = text;
+    }
+
+    // markup for score objects
+    @SuppressLint("DefaultLocale")
+    public Markup(long alienScore, long resistanceScore) {
+        mType = MarkupType.Score;
+        // FIXME teams
+        mPlain = String.format("Enlightened: %d - Resistance: %d", alienScore, resistanceScore);
     }
 
     public String getPlain()

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="@dimen/activity_margin"
     style="@style/GradientTheme">
 
     <!--    <RelativeLayout-->
@@ -23,7 +23,8 @@
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabs"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true">
 
         <com.google.android.material.tabs.TabItem
             android:id="@+id/tab_all"
@@ -54,24 +55,32 @@
         android:id="@+id/seekBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@id/tabs"
+        android:layout_margin="@dimen/activity_margin"
         android:max="100" />
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="16dp" />
+        android:layout_height="wrap_content"
+        android:layout_below="@id/seekBar"
+        android:layout_above="@id/bottomLayout"
+        android:layout_marginTop="@dimen/activity_margin" />
 
     <LinearLayout
+        android:id="@+id/bottomLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true">
 
         <EditText
             android:id="@+id/input"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:importantForAutofill="no"
             android:maxLines="1"
             android:hint="Start broadcasting here" />
 
@@ -82,4 +91,4 @@
             android:layout_height="wrap_content"
             android:text="Transmit" />
     </LinearLayout>
-</LinearLayout>
+</RelativeLayout>

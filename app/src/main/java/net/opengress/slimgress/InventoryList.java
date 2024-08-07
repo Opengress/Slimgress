@@ -83,68 +83,36 @@ public class InventoryList extends BaseExpandableListAdapter {
     public void limitRarities(String rarity) {
         /// "ALL", "Very Common", "Common", "Less Common", "Rare", "Very Rare", "Extra Rare"
         switch (rarity) {
-            case "ALL":
-            default:
+            default ->
                 // What is None?
 //                mRarityFilter = ItemBase.Rarity.None;
-                mRarityFilter = null;
-                break;
-            case "Very Common":
-                mRarityFilter = ItemBase.Rarity.VeryCommon;
-                break;
-            case "Common":
-                mRarityFilter = ItemBase.Rarity.Common;
-                break;
-            case "Less Common":
-                mRarityFilter = ItemBase.Rarity.LessCommon;
-                break;
-            case "Rare":
-                mRarityFilter = ItemBase.Rarity.Rare;
-                break;
-            case "Very Rare":
-                mRarityFilter = ItemBase.Rarity.VeryRare;
-                break;
-            case "Extra Rare":
-                mRarityFilter = ItemBase.Rarity.ExtraRare;
-                break;
+                    mRarityFilter = null;
+            case "Very Common" -> mRarityFilter = ItemBase.Rarity.VeryCommon;
+            case "Common" -> mRarityFilter = ItemBase.Rarity.Common;
+            case "Less Common" -> mRarityFilter = ItemBase.Rarity.LessCommon;
+            case "Rare" -> mRarityFilter = ItemBase.Rarity.Rare;
+            case "Very Rare" -> mRarityFilter = ItemBase.Rarity.VeryRare;
+            case "Extra Rare" -> mRarityFilter = ItemBase.Rarity.ExtraRare;
         }
         notifyDataSetChanged();
     }
 
     public void limitLevels(String level) {
         switch (level) {
-            case "ALL":
-            default:
+            default ->
                 // again, is this safe?
-                mLevelFilter = -999;
-                break;
-            case "Level 0":
+                    mLevelFilter = -999;
+            case "Level 0" ->
                 // should never happen because currently nothing is ever 0. portals, tho...
-                mLevelFilter = 0;
-                break;
-            case "Level 1":
-                mLevelFilter = 1;
-                break;
-            case "Level 2":
-                mLevelFilter = 2;
-                break;
-            case "Level 3":
-                mLevelFilter = 3;
-                break;
-            case "Level 4":
-                mLevelFilter = 4;
-                break;
-            case "Level 5":
-                mLevelFilter = 5;
-                break;
-            case "Level 6":
-                mLevelFilter = 6;
-                break;
-            case "Level 7":
-                mLevelFilter = 7;
-                break;
-            case "Level 8":
-                mLevelFilter = 8;
+                    mLevelFilter = 0;
+            case "Level 1" -> mLevelFilter = 1;
+            case "Level 2" -> mLevelFilter = 2;
+            case "Level 3" -> mLevelFilter = 3;
+            case "Level 4" -> mLevelFilter = 4;
+            case "Level 5" -> mLevelFilter = 5;
+            case "Level 6" -> mLevelFilter = 6;
+            case "Level 7" -> mLevelFilter = 7;
+            case "Level 8" -> mLevelFilter = 8;
         }
         notifyDataSetChanged();
     }

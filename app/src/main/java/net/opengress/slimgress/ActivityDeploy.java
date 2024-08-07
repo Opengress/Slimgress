@@ -238,76 +238,53 @@ public class ActivityDeploy extends AppCompatActivity {
     private int resoSlotToLayoutId(int slot) {
         // FIXME not sure if correct - cf intel.js eastAnticlockwiseToNorthClockwise
         // also window.OCTANTS = ['E', 'NE', 'N', 'NW', 'W', 'SW', 'S', 'SE'];
-        switch (slot) {
-            case 1:
-                return R.id.deployScreenResonatorE;
-            case 2:
-                return R.id.deployScreenResonatorNE;
-            case 3:
-                return R.id.deployScreenResonatorN;
-            case 4:
-                return R.id.deployScreenResonatorNW;
-            case 5:
-                return R.id.deployScreenResonatorW;
-            case 6:
-                return R.id.deployScreenResonatorSW;
-            case 7:
-                return R.id.deployScreenResonatorS;
-            case 8:
-                return R.id.deployScreenResonatorSE;
-            default:
+        return switch (slot) {
+            case 1 -> R.id.deployScreenResonatorE;
+            case 2 -> R.id.deployScreenResonatorNE;
+            case 3 -> R.id.deployScreenResonatorN;
+            case 4 -> R.id.deployScreenResonatorNW;
+            case 5 -> R.id.deployScreenResonatorW;
+            case 6 -> R.id.deployScreenResonatorSW;
+            case 7 -> R.id.deployScreenResonatorS;
+            case 8 -> R.id.deployScreenResonatorSE;
+            default -> {
                 Log.e("ActivityDeploy", "Unknown resonator slot: " + slot);
+                yield -99999;
                 // FIXME: maybe this should be a throw
-                return -99999;
-        }
+            }
+        };
     }
 
     // doesn't matter that these are non-constant because this project isn't a library. caveat.
     @SuppressLint("NonConstantResourceId")
     private int layoutIdToResoSlot(int id) {
-        switch (id) {
-            case R.id.deployScreenResonatorE:
-                return 1;
-            case R.id.deployScreenResonatorNE:
-                return 2;
-            case R.id.deployScreenResonatorN:
-                return 3;
-            case R.id.deployScreenResonatorNW:
-                return 4;
-            case R.id.deployScreenResonatorW:
-                return 5;
-            case R.id.deployScreenResonatorSW:
-                return 6;
-            case R.id.deployScreenResonatorS:
-                return 7;
-            case R.id.deployScreenResonatorSE:
-                return 8;
-            default:
+        return switch (id) {
+            case R.id.deployScreenResonatorE -> 1;
+            case R.id.deployScreenResonatorNE -> 2;
+            case R.id.deployScreenResonatorN -> 3;
+            case R.id.deployScreenResonatorNW -> 4;
+            case R.id.deployScreenResonatorW -> 5;
+            case R.id.deployScreenResonatorSW -> 6;
+            case R.id.deployScreenResonatorS -> 7;
+            case R.id.deployScreenResonatorSE -> 8;
+            default -> {
                 Log.e("ActivityDeploy", "Unknown resonator widget id: " + id);
+                yield -99999;
                 // FIXME: maybe this should be a throw
-                return -99999;
-        }
+            }
+        };
     }
 
     private String resoSlotToOctantText(int slot) {
         // FIXME not sure if correct - cf intel.js eastAnticlockwiseToNorthClockwise
         // also window.OCTANTS = ['E', 'NE', 'N', 'NW', 'W', 'SW', 'S', 'SE'];
-        switch (slot) {
-            case 1:
-                return "E";
-            case 3:
-                return "N";
-            case 5:
-                return "W";
-            case 7:
-                return "S";
-            case 2:
-            case 4:
-            case 6:
-            case 8:
-            default:
-                return "";
-        }
+        return switch (slot) {
+            case 1 -> "E";
+            case 3 -> "N";
+            case 5 -> "W";
+            case 7 -> "S";
+            default -> "";
+        };
     }
 
 }

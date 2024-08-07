@@ -124,12 +124,18 @@ public class GameState
                 app.getDeletedEntityGuidsModel().postDeletedEntityGuids(gameBasket.getDeletedEntityGuids());
             }
             if (!gameBasket.getAPGains().isEmpty()) {
-                // FIXME i ... don't need to add this to player data manually, do i???
+                // FIXME i ... don't need to add this to player data manually, do i??? yes
                 app.getAPGainsModel().postAPGains(gameBasket.getAPGains());
+                for (var gain : gameBasket.getAPGains()) {
+                    app.getCommsViewModel().addMessage(PlextBase.createByAPGain(gain), "INFO");
+                }
             }
             if (!gameBasket.getPlayerDamages().isEmpty()) {
-                // FIXME i ... don't need to add this to player data manually, do i???
+                // FIXME i ... don't need to add this to player data manually, do i??? yes
                 app.getPlayerDamagesModel().postPlayerDamages(gameBasket.getPlayerDamages());
+                for (var dam : gameBasket.getPlayerDamages()) {
+                    app.getCommsViewModel().addMessage(PlextBase.createByPlayerDamage(dam), "INFO");
+                }
             }
 
             // update player data
@@ -348,18 +354,11 @@ public class GameState
                 @Override
                 public void handleError(String error) {
                     switch (error) {
-                        case "INVALID_PASSCODE":
-                            super.handleError("Passcode invalid");
-                            break;
-                        case "ALREADY_REDEEMED":
-                            super.handleError("Passcode already redemmed");
-                            break;
-                        case "ALREADY_REDEEMED_BY_PLAYER":
-                            super.handleError("Passcode already redemmed by you");
-                            break;
-                        default:
-                            super.handleError("Unknown error: " + error);
-                            break;
+                        case "INVALID_PASSCODE" -> super.handleError("Passcode invalid");
+                        case "ALREADY_REDEEMED" -> super.handleError("Passcode already redemmed");
+                        case "ALREADY_REDEEMED_BY_PLAYER" ->
+                                super.handleError("Passcode already redemmed by you");
+                        default -> super.handleError("Unknown error: " + error);
                     }
 
                     super.handleError(error);
@@ -440,27 +439,14 @@ public class GameState
                 @Override
                 public void handleError(String error) {
                     switch (error) {
-                        case "INVALID_CHARACTERS":
-                            super.handleError("Agent name contains invalid characters.");
-                            break;
-                        case "TOO_SHORT":
-                            super.handleError("Agent name is too short.");
-                            break;
-                        case "TOO_LONG":
-                            super.handleError("Agent name is too long.");
-                            break;
-                        case "BAD_WORDS":
-                            super.handleError("Agent name contains bad words.");
-                            break;
-                        case "NOT_UNIQUE":
-                            super.handleError("Agent name is already in use.");
-                            break;
-                        case "CANNOT_EDIT":
-                            super.handleError("Cannot edit agent name.");
-                            break;
-                        default:
-                            super.handleError("Unknown error: " + error);
-                            break;
+                        case "INVALID_CHARACTERS" ->
+                                super.handleError("Agent name contains invalid characters.");
+                        case "TOO_SHORT" -> super.handleError("Agent name is too short.");
+                        case "TOO_LONG" -> super.handleError("Agent name is too long.");
+                        case "BAD_WORDS" -> super.handleError("Agent name contains bad words.");
+                        case "NOT_UNIQUE" -> super.handleError("Agent name is already in use.");
+                        case "CANNOT_EDIT" -> super.handleError("Cannot edit agent name.");
+                        default -> super.handleError("Unknown error: " + error);
                     }
                 }
             });
@@ -596,51 +582,41 @@ public class GameState
                     // some may be obvious.
                     // i really like xeruf's solution: it makes "5 minutes and 20 seconds" possible
 
-                    String pretty_error;
-                    switch (error.replaceAll("\\d", "")) {
-                        case "TOO_SOON_BIG":
+                    String pretty_error = switch (error.replaceAll("\\d", "")) {
+                        case "TOO_SOON_BIG" ->
                             // issue: this only makes sense as a separate thing if it's a default.
                             // it might not be such a default
-                            pretty_error = "Portal running hot! Unsafe to acquire items. Estimated time to cooldown: 300 seconds";
-                            break;
-                        case "TOO_SOON_":
+                                "Portal running hot! Unsafe to acquire items. Estimated time to cooldown: 300 seconds";
+                        case "TOO_SOON_", "TOO_SOON__SECS" -> {
                             // TODO: maybe format this as "x minutes, x seconds"
-                            String seconds = error.substring(error.lastIndexOf("_")+1);
-                            pretty_error = "Portal running hot! Unsafe to acquire items. Estimated time to cooldown: "+seconds+" seconds";
-                            break;
-                        case "TOO_OFTEN":
-                            pretty_error = "Portal burned out! It may take significant time for the Portal to reset";
-                            break;
-                        case "TOO_OFTEN_": // new and unimplemented
+                            String seconds = error.replaceAll("[^\\d]", "");
+                            yield "Portal running hot! Unsafe to acquire items. Estimated time to cooldown: " + seconds + " seconds";
+                        }
+                        case "TOO_OFTEN" ->
+                                "Portal burned out! It may take significant time for the Portal to reset";
+                        case "TOO_OFTEN_" -> {
                             // TODO: maybe format this as "x hours, x minutes, x seconds"
-                            String ends = error.substring(error.lastIndexOf("_")+1);
-                            pretty_error = "Portal burned out! Estimated time for the Portal to reset: "+ends+" seconds";
-                            break;
-                        case "OUT_OF_RANGE":
-                            pretty_error = "Portal is out of range";
-                            break;
-                        case "NEED_MORE_ENERGY":
-                            pretty_error = "You don't have enough XM";
-                            break;
-                        case "SERVER_ERROR":
-                            pretty_error = "Server error";
-                            break;
-                        case "SPEED_LOCKED": // new!
-                            pretty_error = "You are moving too fast";
-                            break;
-                        case "SPEED_LOCKED_": // new!
+                            String ends = error.substring(error.lastIndexOf("_") + 1);
+                            yield "Portal burned out! Estimated time for the Portal to reset: " + ends + " seconds"; // new and unimplemented
+                        }
+                        case "OUT_OF_RANGE" -> "Portal is out of range";
+                        case "NEED_MORE_ENERGY" -> "You don't have enough XM";
+                        case "SERVER_ERROR" -> "Server error";
+                        case "SPEED_LOCKED" -> // new!
+                                "You are moving too fast";
+                        case "SPEED_LOCKED_" -> {
                             // TODO: maybe format this as "x hours, x minutes, x seconds"
-                            String t = error.substring(error.lastIndexOf("_")+1);
-                            pretty_error = "You are moving too fast! You will be ready to play in "+t+"seconds";
-                            break;
-                        case "INVENTORY_FULL": // new!
-                            pretty_error = "Hack failed! Your inventory is already full";
-                            break;
-                        default:
+                            String t = error.substring(error.lastIndexOf("_") + 1);
+                            yield "You are moving too fast! You will be ready to play in " + t + "seconds"; // new!
+                        }
+                        case "INVENTORY_FULL" -> // new!
+                                "Too many items in Inventory. Your Inventory can have no more than 2000 items";
+                        default -> {
 //                            pretty_error = "An unknown error occurred";
-                            pretty_error = "Hack acquired no items";
-                            break;
-                    }
+                            Log.d("GameState/Hack", error);
+                            yield "Hack acquired no items";
+                        }
+                    };
                     super.handleError(pretty_error);
                 }
 
@@ -705,38 +681,27 @@ public class GameState
                 @Override
                 public void handleError(String error) {
                     // PORTAL_OUT_OF_RANGE, TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER, PORTAL_AT_MAX_RESONATORS, ITEM_DOES_NOT_EXIST, SERVER_ERROR
-                    String pretty_error;
-                    // some of these error message strings might be a bit clumsy
-                    switch (error.replaceAll("\\d", "")) {
-                        case "PORTAL_OUT_OF_RANGE":
-                            pretty_error = "Portal is out of range";
-                            break;
-                        case "TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER":
+                    String pretty_error = switch (error.replaceAll("\\d", "")) {
+                        case "PORTAL_OUT_OF_RANGE" -> "Portal is out of range";
+                        case "PLAYER_LIMIT_REACHED", "TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER" ->
                             // You already have the maximum number of resonators of that level on the portal
-                            pretty_error = "Too many resonators with same level by you";
-                            break;
-                        case "PORTAL_AT_MAX_RESONATORS":
+                                "Too many resonators with same level by you";
+                        case "PORTAL_AT_MAX_RESONATORS" ->
                             // Portal is already fully deployed
-                            pretty_error = "Portal already has all resonators";
-                            break;
-                        case "ITEM_DOES_NOT_EXIST":
-                            pretty_error = "The resonator you tried to deploy is not in your inventory";
-                            break;
-                        case "SERVER_ERROR":
-                            pretty_error = "Server error";
-                            break;
-                        case "SPEED_LOCKED": // new!
-                            pretty_error = "You are moving too fast";
-                            break;
-                        case "SPEED_LOCKED_": // new!
+                                "Portal already has all resonators";
+                        case "ITEM_DOES_NOT_EXIST" ->
+                                "The resonator you tried to deploy is not in your inventory";
+                        case "SERVER_ERROR" -> "Server error";
+                        case "SPEED_LOCKED" -> // new!
+                                "You are moving too fast";
+                        case "SPEED_LOCKED_" -> {
                             // TODO: maybe format this as "x hours, x minutes, x seconds"
-                            String t = error.substring(error.lastIndexOf("_")+1);
-                            pretty_error = "You are moving too fast! You will be ready to play in "+t+"seconds";
-                            break;
-                        default:
-                            pretty_error = "Deployment failed: unknown error: "+error;
-                            break;
-                    }
+                            String t = error.substring(error.lastIndexOf("_") + 1);
+                            yield "You are moving too fast! You will be ready to play in " + t + "seconds"; // new!
+                        }
+                        default -> "Deployment failed: unknown error: " + error;
+                    };
+                    // some of these error message strings might be a bit clumsy
                     super.handleError(pretty_error);
                 }
 
@@ -783,38 +748,28 @@ public class GameState
                 @Override
                 public void handleError(String error) {
                     // PORTAL_OUT_OF_RANGE, CAN_ONLY_UPGRADE_TO_HIGHER_LEVEL, TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER
-                    String pretty_error;
-                    // some of these error message strings might be a bit clumsy
-                    switch (error.replaceAll("\\d", "")) {
-                        case "PORTAL_OUT_OF_RANGE":
-                            pretty_error = "Portal is out of range";
-                            break;
-                        case "TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER":
+                    String pretty_error = switch (error.replaceAll("\\d", "")) {
+                        case "OUT_OF_RANGE", "PORTAL_OUT_OF_RANGE" -> "Portal is out of range";
+                        case "PLAYER_LIMIT_REACHED", "TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER" ->
                             // You already have the maximum number of resonators of that level on the portal
-                            pretty_error = "Too many resonators with same level by you";
-                            break;
-                        case "CAN_ONLY_UPGRADE_TO_HIGHER_LEVEL":
+                                "Too many resonators with same level by you";
+                        case "CAN_ONLY_UPGRADE_TO_HIGHER_LEVEL" ->
                             // Resonator is already upgraded
-                            pretty_error = "You can't upgrade that resonator as it's already upgraded";
-                            break;
-                        case "ITEM_DOES_NOT_EXIST": // new!
-                            pretty_error = "The resonator you tried to deploy is not in your inventory";
-                            break;
-                        case "SERVER_ERROR": // new!
-                            pretty_error = "Server error";
-                            break;
-                        case "SPEED_LOCKED": // new!
-                            pretty_error = "You are moving too fast";
-                            break;
-                        case "SPEED_LOCKED_": // new!
+                                "You can't upgrade that resonator as it's already upgraded";
+                        case "ITEM_DOES_NOT_EXIST" -> // new!
+                                "The resonator you tried to deploy is not in your inventory";
+                        case "SERVER_ERROR" -> // new!
+                                "Server error";
+                        case "SPEED_LOCKED" -> // new!
+                                "You are moving too fast";
+                        case "SPEED_LOCKED_" -> {
                             // TODO: maybe format this as "x hours, x minutes, x seconds"
-                            String t = error.substring(error.lastIndexOf("_")+1);
-                            pretty_error = "You are moving too fast! You will be ready to play in "+t+"seconds";
-                            break;
-                        default:
-                            pretty_error = "Upgrade failed: unknown error: "+error;
-                            break;
-                    }
+                            String t = error.substring(error.lastIndexOf("_") + 1);
+                            yield "You are moving too fast! You will be ready to play in " + t + "seconds"; // new!
+                        }
+                        default -> "Upgrade failed: unknown error: " + error;
+                    };
+                    // some of these error message strings might be a bit clumsy
                     super.handleError(pretty_error);
                 }
 
@@ -861,7 +816,7 @@ public class GameState
             mInterface.request(mHandshake, "gameplay/addMod", mLocation, params, new RequestResult(handler) {
                 @Override
                 public void handleError(String error) {
-                    // PORTAL_OUT_OF_RANGE, (there must be others)
+                    // PORTAL_OUT_OF_RANGE, OUT_OF_RANGE, PLAYER_LIMIT_REACHED, ITEM_DOES_NOT_EXIST (there must be others)
                     super.handleError(error);
                 }
 
@@ -923,22 +878,16 @@ public class GameState
                     switch (error) {
                         // based on Recycling, probably DOES_NOT_EXIST
                         // however, we return ITEM_DOES_NOT_EXIST for consistency
-                        case "DOES_NOT_EXIST":
-                        case "ITEM_DOES_NOT_EXIST":
-                        case "RESOURCE_NOT_AVAILABLE":
-                            super.handleError("Item is not in your inventory.");
-                            break;
-                        case "SPEED_LOCKED": // new!
-                            super.handleError("You are moving too fast");
-                            break;
-                        case "SPEED_LOCKED_": // new!
+                        case "DOES_NOT_EXIST", "ITEM_DOES_NOT_EXIST", "RESOURCE_NOT_AVAILABLE" ->
+                                super.handleError("Item is not in your inventory.");
+                        case "SPEED_LOCKED" -> // new!
+                                super.handleError("You are moving too fast");
+                        case "SPEED_LOCKED_" -> {
                             // TODO: maybe format this as "x hours, x minutes, x seconds"
                             String t = error.substring(error.lastIndexOf("_") + 1);
-                            super.handleError("You are moving too fast! You will be ready to play in " + t + "seconds");
-                            break;
-                        default:
-                            super.handleError("Unknown error: " + error);
-                            break;
+                            super.handleError("You are moving too fast! You will be ready to play in " + t + "seconds"); // new!
+                        }
+                        default -> super.handleError("Unknown error: " + error);
                     }
                 }
             });
@@ -988,22 +937,16 @@ public class GameState
                 public void handleError(String error) {
                     // DOES_NOT_EXIST
                     switch (error) {
-                        case "DOES_NOT_EXIST":
-                        case "ITEM_DOES_NOT_EXIST":
-                        case "RESOURCE_NOT_AVAILABLE":
-                            super.handleError("Item is not in your inventory.");
-                            break;
-                        case "SPEED_LOCKED": // new!
-                            super.handleError("You are moving too fast");
-                            break;
-                        case "SPEED_LOCKED_": // new!
+                        case "DOES_NOT_EXIST", "ITEM_DOES_NOT_EXIST", "RESOURCE_NOT_AVAILABLE" ->
+                                super.handleError("Item is not in your inventory.");
+                        case "SPEED_LOCKED" -> // new!
+                                super.handleError("You are moving too fast");
+                        case "SPEED_LOCKED_" -> {
                             // TODO: maybe format this as "x hours, x minutes, x seconds"
                             String t = error.substring(error.lastIndexOf("_") + 1);
-                            super.handleError("You are moving too fast! You will be ready to play in " + t + "seconds");
-                            break;
-                        default:
-                            super.handleError("Unknown error: " + error);
-                            break;
+                            super.handleError("You are moving too fast! You will be ready to play in " + t + "seconds"); // new!
+                        }
+                        default -> super.handleError("Unknown error: " + error);
                     }
                     super.handleError(error);
                 }

@@ -37,7 +37,7 @@ public class APGain
         DestroyedLink,
         DestroyedField,
         DeployedMod,
-        FullyDevloyedPortal,
+        FullyDeployedPortal,
         HackingEnemyPortal,
         RedeemedAP,
         RechargeResonator,
@@ -53,51 +53,21 @@ public class APGain
         mAmount = Integer.parseInt(json.getString("apGainAmount"));
         String trigger = json.getString("apTrigger");
         switch (trigger) {
-            case "DEPLOYED_RESONATOR":
-                mTrigger = Trigger.DeployedResonator;
-                break;
-            case "CAPTURED_PORTAL":
-                mTrigger = Trigger.CapturedPortal;
-                break;
-            case "CREATED_PORTAL_LINK":
-                mTrigger = Trigger.CreatedLink;
-                break;
-            case "CREATED_A_PORTAL_REGION":
-                mTrigger = Trigger.CreatedField;
-                break;
-            case "DESTROYED_A_RESONATOR":
-                mTrigger = Trigger.DestroyedResonator;
-                break;
-            case "DESTROYED_A_PORTAL_LINK":
-                mTrigger = Trigger.DestroyedLink;
-                break;
-            case "DESTROYED_PORTAL_REGION":
-                mTrigger = Trigger.DestroyedField;
-                break;
-            case "DEPLOYED_RESONATOR_MOD":
-                mTrigger = Trigger.DeployedMod;
-                break;
-            case "PORTAL_FULLY_POPULATED_WITH_RESONATORS":
-                mTrigger = Trigger.FullyDevloyedPortal;
-                break;
-            case "HACKING_ENEMY_PORTAL":
-                mTrigger = Trigger.HackingEnemyPortal;
-                break;
-            case "REDEEMED_AP":
-                mTrigger = Trigger.RedeemedAP;
-                break;
-            case "RECHARGE_RESONATOR":
-                mTrigger = Trigger.RechargeResonator;
-                break;
-            case "REMOTE_RECHARGE_RESONATOR":
-                mTrigger = Trigger.RemoteRechargeResonator;
-                break;
-            case "INVITED_PLAYER_JOINED":
-                mTrigger = Trigger.InvitedPlayerJoined;
-                break;
-            default:
-                mTrigger = Trigger.Unknown;
-                break;
+            case "DEPLOYED_RESONATOR" -> mTrigger = Trigger.DeployedResonator;
+            case "CAPTURED_PORTAL" -> mTrigger = Trigger.CapturedPortal;
+            case "CREATED_PORTAL_LINK" -> mTrigger = Trigger.CreatedLink;
+            case "CREATED_A_PORTAL_REGION" -> mTrigger = Trigger.CreatedField;
+            case "DESTROYED_A_RESONATOR" -> mTrigger = Trigger.DestroyedResonator;
+            case "DESTROYED_A_PORTAL_LINK" -> mTrigger = Trigger.DestroyedLink;
+            case "DESTROYED_PORTAL_REGION" -> mTrigger = Trigger.DestroyedField;
+            case "DEPLOYED_RESONATOR_MOD" -> mTrigger = Trigger.DeployedMod;
+            case "PORTAL_FULLY_POPULATED_WITH_RESONATORS" -> mTrigger = Trigger.FullyDeployedPortal;
+            case "HACKING_ENEMY_PORTAL" -> mTrigger = Trigger.HackingEnemyPortal;
+            case "REDEEMED_AP" -> mTrigger = Trigger.RedeemedAP;
+            case "RECHARGE_RESONATOR" -> mTrigger = Trigger.RechargeResonator;
+            case "REMOTE_RECHARGE_RESONATOR" -> mTrigger = Trigger.RemoteRechargeResonator;
+            case "INVITED_PLAYER_JOINED" -> mTrigger = Trigger.InvitedPlayerJoined;
+            default -> mTrigger = Trigger.Unknown;
         }
     }
 

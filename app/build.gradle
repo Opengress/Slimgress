@@ -85,6 +85,7 @@ tasks.register('printVersionName') {
 
 
 dependencies {
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'junit:junit:4.13.2'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'ch.acra:acra-http:5.11.3'

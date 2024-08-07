@@ -223,31 +223,19 @@ public class ActivityPortal extends AppCompatActivity {
         String level;
         // rarity will maybe eventually expressed by colour, not text. that's why html
         switch (item.getItemRarity()) {
-            case VeryCommon:
-                level = "VC ";
-                break;
-            case Common:
-                level = "";
-                break;
-            case LessCommon:
-                level = "LC ";
-                break;
-            case Rare:
-                level = "R ";
-                break;
-            case VeryRare:
-                level = "VR ";
-                break;
-            case ExtraRare:
-                level = "ER ";
-                break;
-            case None:
-            default:
+            case VeryCommon -> level = "VC ";
+            case Common -> level = "";
+            case LessCommon -> level = "LC ";
+            case Rare -> level = "R ";
+            case VeryRare -> level = "VR ";
+            case ExtraRare -> level = "ER ";
+            default -> {
                 if (item.getItemLevel() == 0) {
                     level = "";
                 } else {
                     level = "L" + item.getItemLevel() + " ";
                 }
+            }
         }
 
         return level + item.getDisplayName();
