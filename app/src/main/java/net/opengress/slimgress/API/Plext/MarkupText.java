@@ -30,4 +30,8 @@ public class MarkupText extends Markup
     {
         super(MarkupType.Text, json);
     }
+
+    public MarkupText(String message) {
+        super(message);
+    }
 }

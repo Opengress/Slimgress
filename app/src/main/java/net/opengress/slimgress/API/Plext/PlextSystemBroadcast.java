@@ -24,9 +24,9 @@ package net.opengress.slimgress.API.Plext;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-public class PlextSystem extends PlextBase
+public class PlextSystemBroadcast extends PlextBase
 {
-    public PlextSystem(JSONArray json) throws JSONException
+    public PlextSystemBroadcast(JSONArray json) throws JSONException
     {
         super(PlextType.SystemBroadcast, json);
     }

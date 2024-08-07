@@ -21,12 +21,12 @@
 
 package net.opengress.slimgress.API.Interface;
 
+import net.opengress.slimgress.API.Knobs.KnobsBundle;
+import net.opengress.slimgress.API.Player.Agent;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import net.opengress.slimgress.API.Knobs.KnobsBundle;
-import net.opengress.slimgress.API.Player.Agent;
 
 public class Handshake
 {
@@ -63,20 +63,13 @@ public class Handshake
             if (pregameStatus != null) {
                 String pregameStatusString = pregameStatus.optString("action");
                 switch (pregameStatusString) {
-                    case "CLIENT_MUST_UPGRADE":
-                        mPregameStatus = PregameStatus.ClientMustUpgrade;
-                        break;
-                    case "NO_ACTIONS_REQUIRED":
-                        mPregameStatus = PregameStatus.NoActionsRequired;
-                        break;
-                    case "USER_REQUIRES_ACTIVATION":
-                        mPregameStatus = PregameStatus.UserRequiresActivation;
-                        break;
-                    case "USER_MUST_ACCEPT_TOS":
-                        mPregameStatus = PregameStatus.UserMustAcceptTOS;
-                        break;
-                    default:
-                        throw new RuntimeException("unknown pregame status " + pregameStatus);
+                    case "CLIENT_MUST_UPGRADE" -> mPregameStatus = PregameStatus.ClientMustUpgrade;
+                    case "NO_ACTIONS_REQUIRED" -> mPregameStatus = PregameStatus.NoActionsRequired;
+                    case "USER_REQUIRES_ACTIVATION" ->
+                            mPregameStatus = PregameStatus.UserRequiresActivation;
+                    case "USER_MUST_ACCEPT_TOS" -> mPregameStatus = PregameStatus.UserMustAcceptTOS;
+                    default ->
+                            throw new RuntimeException("unknown pregame status " + pregameStatus);
                 }
             }
 

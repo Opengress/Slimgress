@@ -64,7 +64,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
 
         // handle items with levels etc differently? need to check old stuff...
         switch (type) {
-            case PortalKey:
+            case PortalKey -> {
                 GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(((ItemPortalKey) actual).getPortalGuid());
                 assert portal != null;
 
@@ -95,48 +95,40 @@ public class ActivityInventoryItem extends AppCompatActivity {
 
                 findViewById(R.id.activity_inventory_item_recharge).setVisibility(View.VISIBLE);
                 findViewById(R.id.activity_inventory_item_recharge).setEnabled(false);
-
-                break;
-            case Resonator:
+            }
+            case Resonator -> {
                 itemTitle.setText("Resonator");
                 itemDescription.setText("XM object used to power up a portal and align it to a faction");
                 inflateResourceWithLevels(mItem, actual);
-                break;
-            case PowerCube:
+            }
+            case PowerCube -> {
                 itemTitle.setText("Power Cube");
                 itemDescription.setText("Store of XM which can be used to recharge Scanner");
                 inflateResourceWithLevels(mItem, actual);
                 findViewById(R.id.activity_inventory_item_use).setVisibility(View.VISIBLE);
                 findViewById(R.id.activity_inventory_item_use).setEnabled(false);
-                break;
-            case WeaponXMP:
+            }
+            case WeaponXMP -> {
                 itemTitle.setText("XMP Burster");
                 itemDescription.setText("Exotic Matter Pulse weapons which can destroy enemy resonators and Mods and neutralize enemy portals");
                 inflateResourceWithLevels(mItem, actual);
                 findViewById(R.id.activity_inventory_item_fire).setVisibility(View.VISIBLE);
                 findViewById(R.id.activity_inventory_item_fire).setEnabled(false);
-                break;
-            case WeaponUltraStrike:
+            }
+            case WeaponUltraStrike -> {
                 itemTitle.setText("Ultra Strike");
                 itemDescription.setText("A variation of the Exotic Matter Pulse weapon with a more powerful blast that occurs within a smaller radius");
                 inflateResourceWithLevels(mItem, actual);
                 findViewById(R.id.activity_inventory_item_fire).setVisibility(View.VISIBLE);
                 findViewById(R.id.activity_inventory_item_fire).setEnabled(false);
-                break;
-            case Media:
-            case ModForceAmp:
-            case ModHeatsink:
-            case ModLinkAmp:
-            case ModMultihack:
-            case ModShield:
-            case ModTurret:
-            case FlipCard:
-            default:
+            }
+            default -> {
                 itemName.setText(mItem.getPrettyDescription());
                 itemDescription.setText(mItem.getDescription());
                 mItemLevel.setText(String.format("L%d", actual.getItemLevel()));
                 mLevelColour = getLevelColor(actual.getItemLevel());
                 mItemLevel.setTextColor(getColorFromResources(getResources(), mLevelColour));
+            }
         }
 
 

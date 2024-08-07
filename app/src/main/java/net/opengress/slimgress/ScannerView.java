@@ -71,11 +71,11 @@ import net.opengress.slimgress.API.GameEntity.GameEntityBase;
 import net.opengress.slimgress.API.GameEntity.GameEntityControlField;
 import net.opengress.slimgress.API.GameEntity.GameEntityLink;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
-import net.opengress.slimgress.API.Interface.APGain;
-import net.opengress.slimgress.API.Interface.PlayerDamage;
 import net.opengress.slimgress.API.Item.ItemPortalKey;
 import net.opengress.slimgress.API.Knobs.ScannerKnobs;
 import net.opengress.slimgress.API.Knobs.TeamKnobs;
+import net.opengress.slimgress.API.Plext.PlextBase;
+import net.opengress.slimgress.API.ViewModels.CommsViewModel;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.MapTileProviderBasic;
@@ -104,6 +104,7 @@ import java.util.Set;
 public class ScannerView extends Fragment implements SensorEventListener, LocationListener {
     private final IngressApplication mApp = IngressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
+    private final CommsViewModel mCommsViewModel = mApp.getCommsViewModel();
     private MapView mMap = null;
 
     // ===========================================================
@@ -294,8 +295,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mSensorManager = (SensorManager) requireActivity().getSystemService(SENSOR_SERVICE);
         mRotationVectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR);
 
-        mApp.getAPGainsModel().getAPGains().observe(this, this::onReceiveAPGains);
-        mApp.getPlayerDamagesModel().getPlayerDamages().observe(this, this::onReceivePlayerDamages);
         mApp.getDeletedEntityGuidsModel().getDeletedEntityGuids().observe(this, this::onReceiveDeletedEntityGuids);
 
         mPortalActivityResultLauncher = registerForActivityResult(
@@ -366,24 +365,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         );
     }
 
-    private void onReceiveAPGains(List<APGain> apGains) {
-        TextView quickMessageView = getActivity().findViewById(R.id.commsFragment);
-        quickMessageView.setVisibility(View.VISIBLE);
-        for (var gain : apGains) {
-            Log.d("ScannerView", String.format("Gained %d AP for %s", gain.getAmount(), gain.getTrigger()));
-            quickMessageView.setText(String.format("Gained %d AP for %s", gain.getAmount(), gain.getTrigger()));
-        }
-    }
-
-    private void onReceivePlayerDamages(List<PlayerDamage> playerDamages) {
-        TextView quickMessageView = getActivity().findViewById(R.id.commsFragment);
-        quickMessageView.setVisibility(View.VISIBLE);
-        for (var dam : playerDamages) {
-            Log.d("ScannerView", String.format("Lost %d XM after being attacked by %s", dam.getAmount(), dam.getWeaponSerializationTag()));
-            quickMessageView.setText(String.format("Lost %d XM after being attacked by %s", dam.getAmount(), dam.getWeaponSerializationTag()));
-        }
-    }
-
     public void onReceiveDeletedEntityGuids(List<String> deletedEntityGuids) {
         for (String guid : deletedEntityGuids) {
 
@@ -394,24 +375,28 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                     mMap.getOverlays().remove(mXMMarkers.get(particle));
                     mXMMarkers.remove(particle);
                 }
+                continue;
             }
 
             // for portals
             if (mPortalMarkers.containsKey(guid)) {
                 mMap.getOverlays().remove(mPortalMarkers.get(guid));
                 mPortalMarkers.remove(guid);
+                continue;
             }
 
             // for links
             if (mLines.containsKey(guid)) {
                 mMap.getOverlays().remove(mLines.get(guid));
                 mLines.remove(guid);
+                continue;
             }
 
             // for fields
             if (mPolygons.containsKey(guid)) {
                 mMap.getOverlays().remove(mPolygons.get(guid));
                 mPolygons.remove(guid);
+                continue;
             }
 
             // for dropped items .... not done yet...
@@ -448,18 +433,15 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                     double angrad = Math.atan2(x - xc, yc - y);
 
                     switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN:
-                            mCurrAngle = Math.toDegrees(angrad);
-                            break;
-                        case MotionEvent.ACTION_MOVE:
+                        case MotionEvent.ACTION_DOWN -> mCurrAngle = Math.toDegrees(angrad);
+                        case MotionEvent.ACTION_MOVE -> {
                             CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
                             mPrevAngle = mCurrAngle;
                             mCurrAngle = Math.toDegrees(angrad);
                             setMapOrientation(getMapOrientation() - (float) (mPrevAngle - mCurrAngle));
                             return true;
-                        case MotionEvent.ACTION_UP:
-                            mPrevAngle = mCurrAngle = 0;
-                            break;
+                        }
+                        case MotionEvent.ACTION_UP -> mPrevAngle = mCurrAngle = 0;
                     }
                 } else {
                     // i assume you're doing a pinch zoom/rotate
@@ -616,7 +598,16 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         } else {
             requestLocationUpdates();
         }
-
+// i am doing a lot of this. handlerthread? something like this?
+        new Thread(() -> {
+            Handler mainHandler = new Handler(Looper.getMainLooper());
+            mainHandler.post(() -> mGame.intGetGameScore(new Handler(msg -> {
+                var enl = msg.getData().getInt("EnlightenedScore");
+                var res = msg.getData().getInt("ResistanceScore");
+                mCommsViewModel.addMessage(PlextBase.createByScores(enl, res), "INFO");
+                return true;
+            })));
+        }).start();
     }
 
     @SuppressLint("MissingPermission")
@@ -680,6 +671,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mIcons.put("playercursor", ViewHelpers.getTintedImage("playercursor.png", 0xff000000 + Objects.requireNonNull(mGame.getAgent().getTeam()).getColour(), assetManager));
     }
 
+    @SuppressLint("DefaultLocale")
     private synchronized void updateWorld(final Handler uiHandler) {
         displayQuickMessage(getStringSafely(R.string.scanning_local_area));
 
@@ -838,13 +830,12 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 return;
             }
             activity.runOnUiThread(() -> {
-                Bitmap portalIcon;
                 // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
                 // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
                 // ... maybe i can at least write the portal level on the portal, like in iitc
                 // it's quite possible that resonators can live in a separate Hash of markers,
                 //   as long as the guids are stored with the portal info
-                portalIcon = mIcons.get(team.toString());
+                Bitmap portalIcon = mIcons.get(team.toString());
 
                 GroundOverlay marker = new GroundOverlay() {
                     public boolean touchedBy(@NonNull final MotionEvent event) {
@@ -863,7 +854,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                         return false;
                     }
                 };
-                marker.setPosition(location.getLatLng().destinationPoint(25, 315), location.getLatLng().destinationPoint(25, 135));
+                marker.setPosition(location.getLatLng().destinationPoint(20, 315), location.getLatLng().destinationPoint(20, 135));
                 marker.setImage(portalIcon);
 
                 mMap.getOverlays().add(marker);

@@ -29,6 +29,11 @@ public abstract class EntityBase
     private final String mEntityGuid;
     private final String mEntityTimestamp;
 
+    public EntityBase(String guid, String timestamp) {
+        mEntityGuid = guid;
+        mEntityTimestamp = timestamp;
+    }
+
     public EntityBase(JSONArray json) throws JSONException
     {
         if (json.length() != 3)

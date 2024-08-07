@@ -4,71 +4,65 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import java.util.AbstractMap.SimpleEntry;
+import net.opengress.slimgress.API.Plext.PlextBase;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class CommsViewModel extends ViewModel {
-    private final MutableLiveData<List<SimpleEntry<Long, String>>> mAllMessages = new MutableLiveData<>();
-    private final MutableLiveData<List<SimpleEntry<Long, String>>> mFactionMessages = new MutableLiveData<>();
-    private final MutableLiveData<List<SimpleEntry<Long, String>>> mAlertMessages = new MutableLiveData<>();
-    private final MutableLiveData<List<SimpleEntry<Long, String>>> mInfoMessages = new MutableLiveData<>();
+    private final MutableLiveData<List<PlextBase>> mAllMessages = new MutableLiveData<>();
+    private final MutableLiveData<List<PlextBase>> mFactionMessages = new MutableLiveData<>();
+    private final MutableLiveData<List<PlextBase>> mAlertMessages = new MutableLiveData<>();
+    private final MutableLiveData<List<PlextBase>> mInfoMessages = new MutableLiveData<>();
 
-    public LiveData<List<SimpleEntry<Long, String>>> getAllMessages() {
+    public LiveData<List<PlextBase>> getAllMessages() {
         return mAllMessages;
     }
 
-    public LiveData<List<SimpleEntry<Long, String>>> getFactionMessages() {
+    public LiveData<List<PlextBase>> getFactionMessages() {
         return mFactionMessages;
     }
 
-    public LiveData<List<SimpleEntry<Long, String>>> getAlertMessages() {
+    public LiveData<List<PlextBase>> getAlertMessages() {
         return mAlertMessages;
     }
 
-    public LiveData<List<SimpleEntry<Long, String>>> getInfoMessages() {
+    public LiveData<List<PlextBase>> getInfoMessages() {
         return mInfoMessages;
     }
 
-    public void setMessages(List<SimpleEntry<Long, String>> newMessages, String category) {
+    public void setMessages(List<PlextBase> newMessages, String category) {
         switch (category) {
-            case "ALL":
-                mAllMessages.setValue(newMessages);
-                break;
-            case "FACTION":
-                mFactionMessages.setValue(newMessages);
-                break;
-            case "ALERT":
-                mAlertMessages.setValue(newMessages);
-                break;
-            case "INFO":
-                mInfoMessages.setValue(newMessages);
-                break;
+            case "ALL" -> mAllMessages.setValue(newMessages);
+            case "FACTION" -> mFactionMessages.setValue(newMessages);
+            case "ALERT" -> mAlertMessages.setValue(newMessages);
+            case "INFO" -> mInfoMessages.setValue(newMessages);
         }
     }
 
-    public void addMessage(SimpleEntry<Long, String> message, String category) {
-        List<SimpleEntry<Long, String>> currentMessages;
+    public void addMessage(PlextBase message, String category) {
+        // NB updates are posted and may not appear instantly
+        List<PlextBase> currentMessages;
         switch (category) {
-            case "FACTION":
+            case "FACTION" -> {
                 currentMessages = mFactionMessages.getValue() != null ? mFactionMessages.getValue() : new ArrayList<>();
                 currentMessages.add(message);
-                mFactionMessages.setValue(currentMessages);
-                break;
-            case "ALERT":
+                mFactionMessages.postValue(currentMessages);
+            }
+            case "ALERT" -> {
                 currentMessages = mAlertMessages.getValue() != null ? mAlertMessages.getValue() : new ArrayList<>();
                 currentMessages.add(message);
-                mAlertMessages.setValue(currentMessages);
-                break;
-            case "INFO":
+                mAlertMessages.postValue(currentMessages);
+            }
+            case "INFO" -> {
                 currentMessages = mInfoMessages.getValue() != null ? mInfoMessages.getValue() : new ArrayList<>();
                 currentMessages.add(message);
-                mInfoMessages.setValue(currentMessages);
-                break;
+                mInfoMessages.postValue(currentMessages);
+            }
         }
         // Update ALL category
-        List<SimpleEntry<Long, String>> allCurrentMessages = mAllMessages.getValue() != null ? mAllMessages.getValue() : new ArrayList<>();
+        List<PlextBase> allCurrentMessages = mAllMessages.getValue() != null ? mAllMessages.getValue() : new ArrayList<>();
         allCurrentMessages.add(message);
-        mAllMessages.setValue(allCurrentMessages);
+        mAllMessages.postValue(allCurrentMessages);
     }
 }

@@ -21,19 +21,19 @@
 
 package net.opengress.slimgress.API.Plext;
 
+import net.opengress.slimgress.API.Common.Location;
+import net.opengress.slimgress.API.Common.Team;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import net.opengress.slimgress.API.Common.Location;
-import net.opengress.slimgress.API.Common.Team;
-
-public class PlextPlayer extends PlextBase
+public class PlextPlayerGenerated extends PlextBase
 {
     private final Location mLocation;
     private final Team mTeam;
 
-    public PlextPlayer(JSONArray json) throws JSONException
+    public PlextPlayerGenerated(JSONArray json) throws JSONException
     {
         super(PlextType.PlayerGenerated, json);
 

@@ -13,6 +13,7 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import net.opengress.slimgress.API.Interface.APGain;
 import net.opengress.slimgress.API.Item.ItemBase;
 
 import java.io.IOException;
@@ -86,27 +87,13 @@ public class ViewHelpers {
     public static int getImageForResoLevel(int level) {
         int levelColour = R.drawable.r1;
         switch (level) {
-            case 2:
-                levelColour = R.drawable.r2;
-                break;
-            case 3:
-                levelColour = R.drawable.r3;
-                break;
-            case 4:
-                levelColour = R.drawable.r4;
-                break;
-            case 5:
-                levelColour = R.drawable.r5;
-                break;
-            case 6:
-                levelColour = R.drawable.r6;
-                break;
-            case 7:
-                levelColour = R.drawable.r7;
-                break;
-            case 8:
-                levelColour = R.drawable.r8;
-                break;
+            case 2 -> levelColour = R.drawable.r2;
+            case 3 -> levelColour = R.drawable.r3;
+            case 4 -> levelColour = R.drawable.r4;
+            case 5 -> levelColour = R.drawable.r5;
+            case 6 -> levelColour = R.drawable.r6;
+            case 7 -> levelColour = R.drawable.r7;
+            case 8 -> levelColour = R.drawable.r8;
         }
         return levelColour;
     }
@@ -126,5 +113,27 @@ public class ViewHelpers {
         DecimalFormat df = new DecimalFormat("#.#");
         String distKMPretty = df.format(distKM);
         return (dist < 1000 ? dist + "m" : distKMPretty + "km");
+    }
+
+    public static String getAPGainTriggerReason(APGain.Trigger trigger) {
+        String what;
+        switch (trigger) {
+            case DeployedResonator -> what = "deploying a resonator";
+            case CapturedPortal -> what = "capturing a portal";
+            case CreatedLink -> what = "creating a link";
+            case CreatedField -> what = "creating a control field";
+            case DestroyedResonator -> what = "destroying a resonator";
+            case DestroyedLink -> what = "destroying a link";
+            case DestroyedField -> what = "destroying a control field";
+            case DeployedMod -> what = "deploying a portal mod";
+            case FullyDeployedPortal -> what = "fully deploying a portal";
+            case HackingEnemyPortal -> what = "hacking a portal";
+            case RedeemedAP -> what = "redeeming a passcode";
+            case RechargeResonator -> what = "recharging a resonator";
+            case RemoteRechargeResonator -> what = "recharging a remote resonator";
+            case InvitedPlayerJoined -> what = "a player you invited joining the game";
+            default -> what = "doing something";
+        }
+        return what;
     }
 }

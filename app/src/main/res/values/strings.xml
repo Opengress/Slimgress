@@ -94,4 +94,5 @@
     <string name="inventory_button_use">USE</string>
     <string name="telegram_notifications">Telegram Notifications</string>
     <string name="use_high_precision_compass">Use high precision compass</string>
+    <string name="nothing_to_display">Nothing to display...</string>
 </resources>

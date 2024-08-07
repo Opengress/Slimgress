@@ -21,13 +21,13 @@
 
 package net.opengress.slimgress.API.Item;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import android.util.Log;
 
 import net.opengress.slimgress.API.Common.EntityBase;
 
-import android.util.Log;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.Objects;
 
@@ -159,24 +159,12 @@ public abstract class ItemBase extends EntityBase
 
             if (mItemRarity != null) {
                 switch (rarity) {
-                    case "VERY_COMMON":
-                        mItemRarity = Rarity.VeryCommon;
-                        break;
-                    case "COMMON":
-                        mItemRarity = Rarity.Common;
-                        break;
-                    case "LESS_COMMON":
-                        mItemRarity = Rarity.LessCommon;
-                        break;
-                    case "RARE":
-                        mItemRarity = Rarity.Rare;
-                        break;
-                    case "VERY_RARE":
-                        mItemRarity = Rarity.VeryRare;
-                        break;
-                    case "EXTREMELY_RARE":
-                        mItemRarity = Rarity.ExtraRare;
-                        break;
+                    case "VERY_COMMON" -> mItemRarity = Rarity.VeryCommon;
+                    case "COMMON" -> mItemRarity = Rarity.Common;
+                    case "LESS_COMMON" -> mItemRarity = Rarity.LessCommon;
+                    case "RARE" -> mItemRarity = Rarity.Rare;
+                    case "VERY_RARE" -> mItemRarity = Rarity.VeryRare;
+                    case "EXTREMELY_RARE" -> mItemRarity = Rarity.ExtraRare;
                 }
             }
         }

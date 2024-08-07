@@ -2,6 +2,7 @@ package net.opengress.slimgress;
 
 import android.app.Dialog;
 import android.os.Bundle;
+import android.text.method.LinkMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,16 +17,18 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.tabs.TabLayout;
 
+import net.opengress.slimgress.API.Plext.PlextBase;
 import net.opengress.slimgress.API.ViewModels.CommsViewModel;
 
-import java.util.AbstractMap.SimpleEntry;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public class DialogComms extends BottomSheetDialogFragment {
 
-    private RecyclerView mRecyclerView;
     private YourAdapter mAdaptor;
     private CommsViewModel mCommsViewModel;
 
@@ -40,16 +43,17 @@ public class DialogComms extends BottomSheetDialogFragment {
         dialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
 
         TabLayout tabLayout = dialog.findViewById(R.id.tabs);
-        mRecyclerView = dialog.findViewById(R.id.recyclerView);
-        assert mRecyclerView != null;
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        RecyclerView view = dialog.findViewById(R.id.recyclerView);
+        assert view != null;
+        view.setLayoutManager(new LinearLayoutManager(getContext()));
+        view.setNestedScrollingEnabled(true);
 
         // Initialize ViewModel
         mCommsViewModel = IngressApplication.getInstance().getCommsViewModel();
 
         // Set initial data
         mAdaptor = new YourAdapter(new ArrayList<>());
-        mRecyclerView.setAdapter(mAdaptor);
+        view.setAdapter(mAdaptor);
 
         assert tabLayout != null;
 
@@ -79,18 +83,10 @@ public class DialogComms extends BottomSheetDialogFragment {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 switch (tab.getPosition()) {
-                    case 0:
-                        mAdaptor.updateData(mCommsViewModel.getAllMessages().getValue());
-                        break;
-                    case 1:
-                        mAdaptor.updateData(mCommsViewModel.getFactionMessages().getValue());
-                        break;
-                    case 2:
-                        mAdaptor.updateData(mCommsViewModel.getAlertMessages().getValue());
-                        break;
-                    case 3:
-                        mAdaptor.updateData(mCommsViewModel.getInfoMessages().getValue());
-                        break;
+                    case 0 -> mAdaptor.updateData(mCommsViewModel.getAllMessages().getValue());
+                    case 1 -> mAdaptor.updateData(mCommsViewModel.getFactionMessages().getValue());
+                    case 2 -> mAdaptor.updateData(mCommsViewModel.getAlertMessages().getValue());
+                    case 3 -> mAdaptor.updateData(mCommsViewModel.getInfoMessages().getValue());
                 }
             }
 
@@ -105,42 +101,54 @@ public class DialogComms extends BottomSheetDialogFragment {
         return dialog;
     }
 
-    public class YourAdapter extends RecyclerView.Adapter<YourAdapter.ViewHolder> {
-        private List<SimpleEntry<Long, String>> data;
+    public static class YourAdapter extends RecyclerView.Adapter<YourAdapter.ViewHolder> {
+        private List<PlextBase> data;
 
-        public YourAdapter(List<SimpleEntry<Long, String>> data) {
+        public YourAdapter(List<PlextBase> data) {
             this.data = data;
         }
 
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.comms_line, parent, false);
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.widget_comms_line, parent, false);
             return new ViewHolder(view);
         }
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            SimpleEntry<Long, String> entry = data.get(position);
-            holder.textView.setText(entry.getValue());
+            if (data == null) {
+                holder.textView.setText(R.string.nothing_to_display);
+                holder.timeView.setText("");
+                return;
+            }
+            PlextBase plext = data.get(position);
+            holder.textView.setText(plext.getFormattedText());
+            holder.textView.setMovementMethod(LinkMovementMethod.getInstance());
+
+            SimpleDateFormat sdf = new SimpleDateFormat("h:mm a", Locale.getDefault());
+            String formattedTime = sdf.format(new Date(Long.parseLong(plext.getEntityTimestamp())));
+            holder.timeView.setText(formattedTime);
         }
 
         @Override
         public int getItemCount() {
-            return data == null ? 0 : data.size();
+            return data == null ? 1 : data.size();
         }
 
-        public void updateData(List<SimpleEntry<Long, String>> newData) {
+        public void updateData(List<PlextBase> newData) {
             this.data = newData;
             notifyDataSetChanged();
         }
 
         public static class ViewHolder extends RecyclerView.ViewHolder {
             TextView textView;
+            TextView timeView;
 
             public ViewHolder(@NonNull View itemView) {
                 super(itemView);
                 textView = itemView.findViewById(R.id.plext_text);
+                timeView = itemView.findViewById(R.id.plext_time);
             }
         }
     }

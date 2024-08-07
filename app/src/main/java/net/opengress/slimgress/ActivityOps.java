@@ -60,15 +60,9 @@ public class ActivityOps extends AppCompatActivity implements TabLayout.OnTabSel
         new TabLayoutMediator(tabLayout, mViewPager,
                 (tab, position) -> {
                     switch (position) {
-                        case 0:
-                            tab.setText(R.string.ops_inventory);
-                            break;
-                        case 1:
-                            tab.setText(R.string.ops_user);
-                            break;
-                        case 2:
-                            tab.setText(R.string.ops_device);
-                            break;
+                        case 0 -> tab.setText(R.string.ops_inventory);
+                        case 1 -> tab.setText(R.string.ops_user);
+                        case 2 -> tab.setText(R.string.ops_device);
                     }
                 }).attach();
         tabLayout.addOnTabSelectedListener(this);
