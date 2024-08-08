@@ -67,7 +67,7 @@ public class InventoryList extends BaseExpandableListAdapter {
         mGroupItem = grList;
         mChildItem = childItem;
         mContext = context;
-        mGame = IngressApplication.getInstance().getGame();
+        mGame = SlimgressApplication.getInstance().getGame();
         mInventory = mGame.getInventory();
     }
 

@@ -50,7 +50,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class ActivityMain extends FragmentActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
-    private final IngressApplication mApp = IngressApplication.getInstance();
+    private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
 
     @Override

@@ -30,7 +30,7 @@ import java.util.HashMap;
 // maybe resonators should show PORTAL team colour instead of owner team colour
 public class ActivityDeploy extends AppCompatActivity {
 
-    private final IngressApplication mApp = IngressApplication.getInstance();
+    private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private final int mActionRadiusM = mGame.getKnobs().getScannerKnobs().getActionRadiusM();
     private final Inventory inventory = mGame.getInventory();

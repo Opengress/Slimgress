@@ -55,7 +55,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class ActivitySplash extends Activity {
-    private final IngressApplication mApp = IngressApplication.getInstance();
+    private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private Bundle loginBundle;
 

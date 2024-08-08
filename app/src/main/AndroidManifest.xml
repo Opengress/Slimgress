@@ -21,7 +21,7 @@
     <!-- If I'm right, clear traffic will work from N on but silently fail from M down -->
     <application
         android:allowBackup="true"
-        android:name="net.opengress.slimgress.IngressApplication"
+        android:name="net.opengress.slimgress.SlimgressApplication"
         android:icon="@drawable/ic_launcher"
         android:theme="@style/GradientTheme"
         android:label="@string/appname"

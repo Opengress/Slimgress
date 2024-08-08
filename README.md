@@ -32,39 +32,44 @@ third-party documentation published online, other third-party client code, scree
 # Implemented in client
 - Log in
 - View map with portals (tested), links and fields (not tested)
-- View basic portal details (picture, title, level)
+- View BASIC portal details (picture, title, level)
 - Hack portal (incomplete implementation, but it works)
-- View inventory (can't do anything with it, but you can view it)
-- View and slurp energy globs on map
+- View inventory (mostly works but needs overhaul)
+- View and slurp energy globs on map (but map needs to update on slurp)
 - Auto update detection
 - Deploy and upgrade resonators on portals
+- Drop and recycle
 
 # To do soon (almost all of it needing further serverside work)
 - Finish polishing hacking
-- Drop and recycle
+- Bulk recycle
+- Update XM and AP in the client (eg on recycling, hacking etc)
 - Fire weapons
 - Link portals
 - Log out (Workaround: clear data)
 - Toggle switches for things like loading portal images and maybe even map tiles (save data)
 - Deploy mods to portals
+- Custom CompassOverlay which might draw onto an external widget and not the MapView, and should
+  lock scanner rotation to IRL orientation when clicked
+- View and pick up items from map
+- Send/view comms stuff if/as appropriate
+- Create a variety of game item types
 
 # To do (but it's technical etc)
-- Custom player cursor overlay which sizes like a GroundOverlay but rotates to match orientation
-- Custom CompassOverlay which might draw onto an external widget and not the MapView, and should lock scanner rotation to IRL orientation when clicked
-- Keep scanner's map centred (etc)
-- 3D map
 
-# To do eventually (again, needs serverside stuff)
-- View and pick up items from map
-- Create a variety of game item types
-- View players'/own stats/profiles
+- Better portal and deploy screens
+- Custom player cursor overlay which sizes like a GroundOverlay but rotates to match orientation
+- Keep scanner's map centred (etc)
 - Full set of log in and account setup stuff (name changes, training, stale cookie...)
-- View scoring information/checkpoints/whatever
-- Send/view comms stuff if/as appropriate
 - Invite system support??
 - More types of logins support?
+
+# To do eventually (again, needs serverside stuff)
+- View players'/own stats/profiles
+- View scoring information/checkpoints/whatever
 - Catch-up iOS client etc
 - Notifications.... Harder because we are saying NO to fcm/gcm and friends
+- 3D map
 
 # Out of scope
 - A perfect, 1:1 reimplementation of gameplay logic or protocol of other software
@@ -78,7 +83,7 @@ The Slimgress client at this point is imagined as really mostly a client for tes
 research and development.
 I'd hope that eventually there will be a client codebase which can be deployed on Android, iOS,
 maybe even Sailfish and future versions of Ubuntu Phone.
-To reach all these platforms, we have to eventually let go of Java.
+To reach all these platforms, we have to eventually let go of Java (probably).
 But that's moot right now, when Android development is easy to pick up and has a head start and a
 big audience of possible testers.
 
@@ -104,8 +109,9 @@ Another thing we don't want is to ever make a client which:
 - Complete UI for hacking (done)
 - Auto update detection (done)
 - View and slurp energy globs (done)
-- Drop and recycle items
-- Lock map to compass
+- Drop and recycle items (done, except bulk recycle)
+- Lock map to compass (done for single-finger gestures...)
+- Level up and get a field kit
 
 ## v0.3 - by which time players should be able to leave marks on the world and play by game rules
 - Deploy on to portals to power them up (done)

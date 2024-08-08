@@ -34,7 +34,7 @@ import android.util.Log;
 import net.opengress.slimgress.API.Common.EntityBase;
 import net.opengress.slimgress.API.Interface.APGain;
 import net.opengress.slimgress.API.Interface.PlayerDamage;
-import net.opengress.slimgress.IngressApplication;
+import net.opengress.slimgress.SlimgressApplication;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -147,7 +147,7 @@ public class PlextBase extends EntityBase {
     }
 
     public SpannableStringBuilder getFormattedText() {
-        var teams = IngressApplication.getInstance().getGame().getKnobs().getTeamKnobs().getTeams();
+        var teams = SlimgressApplication.getInstance().getGame().getKnobs().getTeamKnobs().getTeams();
         int textColour = 0xFFFFFFFF;
         switch (mPlextType) {
             case PlayerGenerated -> textColour = 0xFFCFE5E5;

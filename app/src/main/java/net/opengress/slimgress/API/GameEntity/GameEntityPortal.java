@@ -24,7 +24,7 @@ package net.opengress.slimgress.API.GameEntity;
 import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.API.Common.Team;
 import net.opengress.slimgress.API.Knobs.PortalKnobs;
-import net.opengress.slimgress.IngressApplication;
+import net.opengress.slimgress.SlimgressApplication;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -73,7 +73,7 @@ public class GameEntityPortal extends GameEntityBase
     private final List<LinkedEdge> mPortalEdges;
     private final List<LinkedMod> mPortalMods;
     private final List<LinkedResonator> mPortalResonators;
-    private final PortalKnobs mPortalKnobs = IngressApplication.getInstance().getGame().getKnobs().getPortalKnobs();
+    private final PortalKnobs mPortalKnobs = SlimgressApplication.getInstance().getGame().getKnobs().getPortalKnobs();
 
     GameEntityPortal(JSONArray json) throws JSONException
     {

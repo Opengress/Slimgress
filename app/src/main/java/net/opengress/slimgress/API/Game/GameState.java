@@ -52,7 +52,7 @@ import net.opengress.slimgress.API.Knobs.KnobsBundle;
 import net.opengress.slimgress.API.Player.Agent;
 import net.opengress.slimgress.API.Player.PlayerEntity;
 import net.opengress.slimgress.API.Plext.PlextBase;
-import net.opengress.slimgress.IngressApplication;
+import net.opengress.slimgress.SlimgressApplication;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -76,6 +76,7 @@ public class GameState
     private final World mWorld;
     private Agent mAgent;
     private final List<PlextBase> mPlexts;
+    // todo: actually use this, and consider whether it needs split for globs/agent/etc
     private String mLastSyncTimestamp;
     private Location mLocation;
     private GameEntityPortal mPortal;
@@ -110,7 +111,7 @@ public class GameState
 
     private synchronized void processGameBasket(GameBasket gameBasket)
     {
-        IngressApplication app = IngressApplication.getInstance();
+        SlimgressApplication app = SlimgressApplication.getInstance();
         if (gameBasket == null) {
             Log.w("Game", "game basket is invalid");
         } else {
