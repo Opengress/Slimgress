@@ -127,6 +127,7 @@ public class ActivitySplash extends Activity {
             // start main activity
             ActivitySplash.this.finish();
             ActivitySplash.this.startActivity(new Intent(ActivitySplash.this, ActivityMain.class));
+            mApp.setUpGameScoreTimer();
         } else {
             mApp.setLoggedIn(false);
 

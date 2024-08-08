@@ -74,7 +74,6 @@ import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.API.Item.ItemPortalKey;
 import net.opengress.slimgress.API.Knobs.ScannerKnobs;
 import net.opengress.slimgress.API.Knobs.TeamKnobs;
-import net.opengress.slimgress.API.Plext.PlextBase;
 import net.opengress.slimgress.API.ViewModels.CommsViewModel;
 
 import org.osmdroid.config.Configuration;
@@ -598,16 +597,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         } else {
             requestLocationUpdates();
         }
-// i am doing a lot of this. handlerthread? something like this?
-        new Thread(() -> {
-            Handler mainHandler = new Handler(Looper.getMainLooper());
-            mainHandler.post(() -> mGame.intGetGameScore(new Handler(msg -> {
-                var enl = msg.getData().getInt("EnlightenedScore");
-                var res = msg.getData().getInt("ResistanceScore");
-                mCommsViewModel.addMessage(PlextBase.createByScores(enl, res), "INFO");
-                return true;
-            })));
-        }).start();
+
     }
 
     @SuppressLint("MissingPermission")

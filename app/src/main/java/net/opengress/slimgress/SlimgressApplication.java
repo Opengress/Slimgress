@@ -24,11 +24,14 @@ package net.opengress.slimgress;
 import android.app.Application;
 import android.content.Context;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.StrictMode;
 
 import androidx.lifecycle.ViewModelProvider;
 
 import net.opengress.slimgress.API.Game.GameState;
+import net.opengress.slimgress.API.Plext.PlextBase;
 import net.opengress.slimgress.API.ViewModels.APGainsViewModel;
 import net.opengress.slimgress.API.ViewModels.CommsViewModel;
 import net.opengress.slimgress.API.ViewModels.DeletedEntityGuidsViewModel;
@@ -53,6 +56,8 @@ public class SlimgressApplication extends Application {
     private PlayerDamagesViewModel mPlayerDamagesViewModel;
     private PlayerDataViewModel mPlayerDataViewModel;
     private CommsViewModel mCommsViewModel;
+
+    private final Handler mSepticycleHander = new Handler();
 
     @Override
     public void onCreate() {
@@ -125,6 +130,37 @@ public class SlimgressApplication extends Application {
 //        ACRA.getErrorReporter().handleSilentException(null);
 //        ACRA.getErrorReporter().clearCustomData();
 
+    }
+
+    public void setUpGameScoreTimer() {
+        // Calculate the delay until the next 5-hour interval
+        long currentTimeMillis = System.currentTimeMillis();
+        long unixEpochMillis = 0; // Unix epoch time in milliseconds
+        long fiveHoursMillis = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
+
+        long timeDifferenceMillis = currentTimeMillis - unixEpochMillis;
+        long remainingMillis = fiveHoursMillis - (timeDifferenceMillis % fiveHoursMillis);
+
+        // Call your function after the remaining time
+        mSepticycleHander.postDelayed(this::schedulePostingGameScore, remainingMillis);
+        postGameScore();
+    }
+
+    private void postGameScore() {
+        new Thread(() -> {
+            Handler mainHandler = new Handler(Looper.getMainLooper());
+            mainHandler.post(() -> mGame.intGetGameScore(new Handler(msg -> {
+                var enl = msg.getData().getInt("EnlightenedScore");
+                var res = msg.getData().getInt("ResistanceScore");
+                mCommsViewModel.addMessage(PlextBase.createByScores(enl, res), "INFO");
+                return true;
+            })));
+        }).start();
+    }
+
+    private void schedulePostingGameScore() {
+        postGameScore();
+        mSepticycleHander.postDelayed(this::schedulePostingGameScore, 5 * 60 * 60 * 1000);
     }
 
     public static SlimgressApplication getInstance() {

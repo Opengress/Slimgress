@@ -194,7 +194,7 @@ public class PlextBase extends EntityBase {
                 case Score -> {
                     // FIXME team names
                     String texte = String.format(Locale.getDefault(), "Enlightened: %d", ((MarkupScore) mark).getAliensScore());
-                    String textr = String.format(Locale.getDefault(), "Resistance: %d", ((MarkupScore) mark).getAliensScore());
+                    String textr = String.format(Locale.getDefault(), "Resistance: %d", ((MarkupScore) mark).getResistanceScore());
                     spannable.append(texte);
                     spannable.append(" - ");
                     spannable.append(textr);
