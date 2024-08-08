@@ -44,7 +44,7 @@ import org.json.JSONObject;
 import java.util.Objects;
 
 public class ActivityAuth extends Activity {
-    private final IngressApplication mApp = IngressApplication.getInstance();
+    private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private int mNumAttempts = 0;
     private static final int mMaxNumAttempts = 2;

@@ -21,10 +21,10 @@
 
 package net.opengress.slimgress.API.Common;
 
-import net.opengress.slimgress.API.Knobs.TeamKnobs;
-import net.opengress.slimgress.IngressApplication;
-
 import androidx.annotation.NonNull;
+
+import net.opengress.slimgress.API.Knobs.TeamKnobs;
+import net.opengress.slimgress.SlimgressApplication;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -52,12 +52,12 @@ public class Team
         if (!json.has("team"))
             throw new RuntimeException("invalid json object");
 
-        mTeam = IngressApplication.getInstance().getGame().getKnobs().getTeamKnobs().fromString(json.getString("team"));
+        mTeam = SlimgressApplication.getInstance().getGame().getKnobs().getTeamKnobs().fromString(json.getString("team"));
     }
 
     public Team(String teamString)
     {
-        mTeam = IngressApplication.getInstance().getGame().getKnobs().getTeamKnobs().fromString(teamString);
+        mTeam = SlimgressApplication.getInstance().getGame().getKnobs().getTeamKnobs().fromString(teamString);
     }
 
     public Team(TeamKnobs.TeamType teamType)

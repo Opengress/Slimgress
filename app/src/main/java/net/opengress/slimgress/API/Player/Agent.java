@@ -23,7 +23,7 @@ package net.opengress.slimgress.API.Player;
 
 import net.opengress.slimgress.API.Knobs.PlayerLevelKnobs;
 import net.opengress.slimgress.API.Knobs.TeamKnobs;
-import net.opengress.slimgress.IngressApplication;
+import net.opengress.slimgress.SlimgressApplication;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -64,7 +64,7 @@ public class Agent extends PlayerEntity
         // TODO: CHECK: is this right - what about levelUp? Seems the server DOES know your level.
         //  Check ancient handshakes!
 
-        Map<String, PlayerLevelKnobs.PlayerLevel> playerLevels = IngressApplication.getInstance().getGame().getKnobs().getPlayerLevelKnobs().getPlayerLevelsMap();
+        Map<String, PlayerLevelKnobs.PlayerLevel> playerLevels = SlimgressApplication.getInstance().getGame().getKnobs().getPlayerLevelKnobs().getPlayerLevelsMap();
 
         for (int i = playerLevels.size() - 1; i >= 0; i--) {
             if (this.getAp() >= Objects.requireNonNull(playerLevels.get(String.valueOf(i))).getApRequired())
@@ -76,7 +76,7 @@ public class Agent extends PlayerEntity
 
     public int getEnergyMax()
     {
-        return IngressApplication.getInstance().getGame().getKnobs().getPlayerLevelKnobs().getXmCapacityForLevel(getLevel());
+        return SlimgressApplication.getInstance().getGame().getKnobs().getPlayerLevelKnobs().getXmCapacityForLevel(getLevel());
     }
 
     public void addEnergy(int energyAmount) {

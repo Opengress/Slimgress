@@ -67,7 +67,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class FragmentInventory extends Fragment {
-    private final IngressApplication mApp = IngressApplication.getInstance();
+    private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private SharedPreferences mPrefs;
 

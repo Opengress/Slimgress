@@ -47,7 +47,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
         // Get the item from the intent
         mItem = (InventoryListItem) getIntent().getSerializableExtra("item");
 
-        mGame = IngressApplication.getInstance().getGame();
+        mGame = SlimgressApplication.getInstance().getGame();
         mInventory = mGame.getInventory();
 
         TextView itemTitle = findViewById(R.id.activity_inventory_item_title);
@@ -85,7 +85,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 // 12.4km
                 updateDistance();
                 findViewById(R.id.activity_inventory_item_distance).setVisibility(View.VISIBLE);
-                IngressApplication.getInstance().getLocationViewModel().getLocationData().observe(this, unused -> updateDistance());
+                SlimgressApplication.getInstance().getLocationViewModel().getLocationData().observe(this, unused -> updateDistance());
 
                 // Domain Terrace, Karoro
                 ((TextView) findViewById(R.id.activity_inventory_item_address)).setText(((ItemPortalKey) actual).getPortalAddress());

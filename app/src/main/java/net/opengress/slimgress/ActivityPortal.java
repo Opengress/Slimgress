@@ -32,7 +32,7 @@ import java.util.Objects;
 // FIXME: if a portal enters/exits range, enable/disable the hack button etc
 public class ActivityPortal extends AppCompatActivity {
 
-    private final IngressApplication mApp = IngressApplication.getInstance();
+    private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private final int mActionRadiusM = mGame.getKnobs().getScannerKnobs().getActionRadiusM();
     private final ActivityResultLauncher<Intent> deployActivityResultLauncher = registerForActivityResult(

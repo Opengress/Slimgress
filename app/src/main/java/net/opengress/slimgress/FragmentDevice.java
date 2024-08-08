@@ -37,7 +37,7 @@ import net.opengress.slimgress.API.Game.GameState;
 
 public class FragmentDevice extends Fragment
 {
-    private final GameState mGame = IngressApplication.getInstance().getGame();
+    private final GameState mGame = SlimgressApplication.getInstance().getGame();
     private SharedPreferences mPrefs;
     private View mRootView;
 

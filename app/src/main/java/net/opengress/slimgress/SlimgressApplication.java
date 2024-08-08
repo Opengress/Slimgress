@@ -42,8 +42,8 @@ import org.acra.config.CoreConfigurationBuilder;
 import org.acra.config.HttpSenderConfigurationBuilder;
 import org.acra.data.StringFormat;
 
-public class IngressApplication extends Application {
-    private static IngressApplication mSingleton;
+public class SlimgressApplication extends Application {
+    private static SlimgressApplication mSingleton;
     private boolean mLoggedIn = false;
     protected GameState mGame;
     private LocationViewModel mLocationViewModel;
@@ -127,7 +127,7 @@ public class IngressApplication extends Application {
 
     }
 
-    public static IngressApplication getInstance() {
+    public static SlimgressApplication getInstance() {
         return mSingleton;
     }
 

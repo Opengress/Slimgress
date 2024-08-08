@@ -49,7 +49,7 @@ public class DialogComms extends BottomSheetDialogFragment {
         view.setNestedScrollingEnabled(true);
 
         // Initialize ViewModel
-        mCommsViewModel = IngressApplication.getInstance().getCommsViewModel();
+        mCommsViewModel = SlimgressApplication.getInstance().getCommsViewModel();
 
         // Set initial data
         mAdaptor = new YourAdapter(new ArrayList<>());
