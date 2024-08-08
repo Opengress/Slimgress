@@ -960,6 +960,7 @@ public class GameState
 
                 @Override
                 public void handleResult(String result) {
+                    mAgent.addEnergy(Integer.parseInt(result));
                     getData().putString("result", result);
                     super.handleResult(result);
                 }
@@ -1246,6 +1247,9 @@ public class GameState
 
     public void setSlurpableXMParticles(ArrayList<String> slurpableParticles) {
         mInterface.setSlurpableParticles(slurpableParticles);
+        for (var particle : slurpableParticles) {
+            mWorld.getXMParticles().remove(Long.parseLong(particle.substring(0, 16), 16));
+        }
     }
 
     public void setAgentNames(HashMap<String, String> agentNames) {

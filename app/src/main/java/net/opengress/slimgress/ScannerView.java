@@ -752,21 +752,30 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         Set<Long> keys = xmParticles.keySet();
         ArrayList<String> slurpableParticles = new ArrayList<>();
 
+        int oldXM = mGame.getAgent().getEnergy();
+        int maxXM = mGame.getAgent().getEnergyMax();
         int newXM = 0;
 
         for (Long key : keys) {
             XMParticle particle = xmParticles.get(key);
 
+            // FIXME this is honestly the worst imaginable solution, but for now it's what i have...
             assert particle != null;
             final net.opengress.slimgress.API.Common.Location location = particle.getCellLocation();
             if (location.getLatLng().distanceToAsDouble(mGame.getLocation().getLatLng()) < mActionRadiusM) {
+                if (oldXM + newXM >= maxXM) {
+                    break;
+                }
                 slurpableParticles.add(particle.getGuid());
                 newXM += particle.getAmount();
+                var marker = mXMMarkers.remove(key);
+                mMap.getOverlays().remove(marker);
             }
         }
 
         mGame.setSlurpableXMParticles(slurpableParticles);
         mGame.getAgent().addEnergy(newXM);
+
     }
 
     private void drawXMParticles() {
