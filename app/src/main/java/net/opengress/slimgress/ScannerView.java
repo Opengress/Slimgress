@@ -628,7 +628,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         }
     }
 
-    private void setLocationInaccurate(boolean bool) {
+    private void setLocationInaccurate(boolean isInaccurate) {
         // unresearched workaround for crash on exit
         if (getActivity() == null || getActivity().findViewById(R.id.quickMessage) == null) {
             return;
@@ -636,13 +636,16 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         // FIXME this is fine, but really the game state needs to know about it.
         //  for example, if i'm about to hack a portal and i switch my GPS off, that shouldn't work!
 
-        // FIXME this MIGHT be able to fire before activity/view exists, need to maybe wrap it up
-        if (bool) {
-            setMapEnabled(false);
+        // FIXME this MIGHT all be able to fire before view exists, need to maybe wrap it up
+        getActivity().findViewById(R.id.buttonComm).setEnabled(!isInaccurate);
+        getActivity().findViewById(R.id.buttonOps).setEnabled(!isInaccurate);
+        setMapEnabled(!isInaccurate);
+        // FIXME this also needs to consider XM levels
+        getActivity().findViewById(R.id.scannerDisabledOverlay).setVisibility(isInaccurate ? View.VISIBLE : View.GONE);
+        if (isInaccurate) {
             displayQuickMessage(getStringSafely(R.string.location_inaccurate));
             mMap.getOverlayManager().remove(mActionRadius);
         } else {
-            setMapEnabled(true);
             if (Objects.equals(getQuickMessage(), getStringSafely(R.string.location_inaccurate))) {
                 hideQuickMessage();
             }
