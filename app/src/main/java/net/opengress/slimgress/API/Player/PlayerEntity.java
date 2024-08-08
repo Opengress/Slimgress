@@ -21,13 +21,13 @@
 
 package net.opengress.slimgress.API.Player;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import net.opengress.slimgress.API.Common.EntityBase;
 import net.opengress.slimgress.API.Common.Team;
 import net.opengress.slimgress.API.Knobs.TeamKnobs;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class PlayerEntity extends EntityBase
 {
@@ -117,6 +117,10 @@ public class PlayerEntity extends EntityBase
     public int getAp()
     {
         return mAP;
+    }
+
+    public void setAP(int newAP) {
+        mAP = newAP;
     }
 
     public int getEnergy()

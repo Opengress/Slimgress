@@ -21,20 +21,25 @@
 
 package net.opengress.slimgress.API.Knobs;
 
-import java.util.ArrayList;
-import java.util.List;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.util.Log;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PortalKnobs extends Knobs
 {
     public class Band
     {
         List<Integer> applicableLevels;
+
+        public int getRemaining() {
+            return remaining;
+        }
+
         int remaining;
     }
 

@@ -325,7 +325,16 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
                         if (error != null) {
                             // FIXME magic number and possibly (hopefully) handled by server
-                            mGame.getAgent().setEnergy(mGame.getAgent().getEnergy() - 50);
+                            int portalLevel = mGame.getCurrentPortal().getPortalLevel();
+                            Team portalTeam = mGame.getCurrentPortal().getPortalTeam();
+                            if (portalTeam.toString().equalsIgnoreCase(mGame.getAgent().getTeam().toString())) {
+                                mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackFriendlyCostByLevel().get(portalLevel));
+                            } else if (portalTeam.toString().equalsIgnoreCase("neutral")) {
+                                mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackNeutralCostByLevel().get(portalLevel));
+                            } else {
+                                mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackEnemyCostByLevel().get(portalLevel));
+                            }
+
                             var main = ((ActivityMain) getActivity());
                             if (main != null) {
                                 main.updateAgent();

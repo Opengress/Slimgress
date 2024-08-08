@@ -129,6 +129,7 @@ public class GameState
                 app.getAPGainsModel().postAPGains(gameBasket.getAPGains());
                 for (var gain : gameBasket.getAPGains()) {
                     app.getCommsViewModel().addMessage(PlextBase.createByAPGain(gain), "INFO");
+                    mAgent.addAP(gain.getAmount());
                 }
             }
             if (!gameBasket.getPlayerDamages().isEmpty()) {
@@ -136,6 +137,7 @@ public class GameState
                 app.getPlayerDamagesModel().postPlayerDamages(gameBasket.getPlayerDamages());
                 for (var dam : gameBasket.getPlayerDamages()) {
                     app.getCommsViewModel().addMessage(PlextBase.createByPlayerDamage(dam), "INFO");
+                    mAgent.subtractEnergy(dam.getAmount());
                 }
             }
 

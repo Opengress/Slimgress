@@ -23,8 +23,12 @@ import net.opengress.slimgress.API.Common.Location;
 import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.Game.Inventory;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
+import net.opengress.slimgress.API.Item.ItemResonator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 // FIXME user can't deploy on portal if portal belongs to wrong team!
 // maybe resonators should show PORTAL team colour instead of owner team colour
@@ -51,6 +55,22 @@ public class ActivityDeploy extends AppCompatActivity {
         if (error != null && !error.isEmpty()) {
             DialogInfo dialog = new DialogInfo(this);
             dialog.setMessage(error).setDismissDelay(1500).show();
+        } else {
+            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getResonatorDeployCostByLevel().get(mGame.getCurrentPortal().getPortalLevel()));
+        }
+
+        setUpView();
+        return false;
+    });
+
+    private final Handler upgradeResultHandler = new Handler(msg -> {
+        var data = msg.getData();
+        String error = getErrorStringFromAPI(data);
+        if (error != null && !error.isEmpty()) {
+            DialogInfo dialog = new DialogInfo(this);
+            dialog.setMessage(error).setDismissDelay(1500).show();
+        } else {
+            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getResonatorUpgradeCostByLevel().get(mGame.getCurrentPortal().getPortalLevel()));
         }
 
         setUpView();
@@ -89,7 +109,20 @@ public class ActivityDeploy extends AppCompatActivity {
             ((TextView) findViewById(id).findViewById(R.id.resoLevelText)).setText(R.string.l0);
         }
 
-        for (var reso : portal.getPortalResonators()) {
+        var resos = portal.getPortalResonators();
+
+        HashMap<Integer, Integer> resoCountForLevel = new HashMap<>();
+        for (int i = 1; i <= 8; i++) {
+            resoCountForLevel.put(i, 0);
+        }
+
+        for (var reso : resos) {
+            if (Objects.equals(reso.ownerGuid, mGame.getAgent().getEntityGuid())) {
+                resoCountForLevel.put(reso.level, resoCountForLevel.get(reso.level) + 1);
+            }
+        }
+
+        for (var reso : resos) {
             if (reso == null) {
                 continue;
             }
@@ -103,7 +136,10 @@ public class ActivityDeploy extends AppCompatActivity {
 
             // TODO don't offer upgrade button if user can't upgrade
             // maybe put this into the button's tag with setTag?
-            var resosForUpgrade = inventory.getResosForUpgrade(reso.level);
+            List<ItemResonator> resosForUpgrade = new ArrayList<>();
+            if (mGame.getKnobs().getPortalKnobs().getBandForLevel(reso.level + 1).getRemaining() > resoCountForLevel.get(reso.level + 1)) {
+                resosForUpgrade = inventory.getResosForUpgrade(reso.level);
+            }
             if (resosForUpgrade.isEmpty()) {
                 widget.findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
                 widget.findViewById(R.id.widgetActionButton).setEnabled(false);
@@ -155,7 +191,7 @@ public class ActivityDeploy extends AppCompatActivity {
             var which = levels.keySet().toArray(new Integer[0])[i];
             for (var r : resosForUpgrade) {
                 if (r.getItemAccessLevel() == which) {
-                    mGame.intUpgradeResonator(r, mGame.getCurrentPortal(), slot, deployResultHandler);
+                    mGame.intUpgradeResonator(r, mGame.getCurrentPortal(), slot, upgradeResultHandler);
                     break;
                 }
             }
@@ -190,12 +226,7 @@ public class ActivityDeploy extends AppCompatActivity {
 
         builder.setItems(levels.values().toArray(new String[0]), (dialogInterface, i) -> {
             var which = levels.keySet().toArray(new Integer[0])[i];
-            for (var r : resosForUpgrade) {
-                if (r.getItemAccessLevel() == which) {
-                    mGame.intDeployResonator(r, mGame.getCurrentPortal(), slot, deployResultHandler);
-                    break;
-                }
-            }
+            mGame.intDeployResonator(mGame.getInventory().getResoForDeployment(which), mGame.getCurrentPortal(), slot, deployResultHandler);
             Log.d("ActivityDeploy", String.format("Picked resonator: %d on slot %d", which, slot));
         });
         builder.show();
