@@ -104,6 +104,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="@dimen/button_height"
                     android:text="@string/main_ops"
+                    android:enabled="false"
                     android:layout_marginTop="@dimen/activity_margin"
                     style="@style/ButtonStyleBlack" />
             </LinearLayout>
@@ -115,6 +116,7 @@
                 android:layout_alignParentRight="true"
                 android:layout_alignParentBottom="true"
                 android:text="@string/main_comm"
+                android:enabled="false"
                 style="@style/ButtonStyleBlack" />
 
             <LinearLayout
@@ -138,6 +140,12 @@
             </LinearLayout>
 
         </RelativeLayout>
+
+    <View
+        android:id="@+id/scannerDisabledOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#66600000" /> <!-- 80% black -->
 
 
 </RelativeLayout>
