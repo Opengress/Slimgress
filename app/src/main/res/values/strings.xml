@@ -38,11 +38,12 @@
         <![CDATA[
         <h1>Assets, libraries and services used in this application</h1>
         <ul>
-        <li>AppCompat and Material Design components for most widgets (Apache 2.0)</li>
-        <li><a href="https://github.com/google/guava">Guava</a> for various android utilities (Apache 2.0)</li>
-        <li><a href="https://github.com/square/okhttp">OkHttp</a> for HTTP(s) requests, generally (Apache 2.0)</li>
-        <li><a href="https://github.com/osmdroid/osmdroid">OSMDroid</a> for the map taking centre stage in the scanner (Apache 2.0)</li>
+        <li>AppCompat and Material Design components for most widgets (Apache 2)</li>
+        <li><a href="https://github.com/google/guava">Guava</a> for various android utilities (Apache 2)</li>
+        <li><a href="https://github.com/square/okhttp">OkHttp</a> for HTTP(s) requests, generally (Apache 2)</li>
+        <li><a href="https://github.com/osmdroid/osmdroid">OSMDroid</a> for the map taking centre stage in the scanner (Apache 2)</li>
         <li><a href="https://github.com/ACRA/acra">ACRA</a> for crash reporting (Apache 2)</li>
+        <li><a href="https://github.com/bumptech/glide">Glide</a> for making image loading much simpler (Apache 2)</li>
         </ul>
         <h1>Authors</h1>
         <ul>
