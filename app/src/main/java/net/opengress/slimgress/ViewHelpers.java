@@ -118,20 +118,21 @@ public class ViewHelpers {
     public static String getAPGainTriggerReason(APGain.Trigger trigger) {
         String what;
         switch (trigger) {
-            case DeployedResonator -> what = "deploying a resonator";
             case CapturedPortal -> what = "capturing a portal";
-            case CreatedLink -> what = "creating a link";
             case CreatedField -> what = "creating a control field";
-            case DestroyedResonator -> what = "destroying a resonator";
-            case DestroyedLink -> what = "destroying a link";
-            case DestroyedField -> what = "destroying a control field";
+            case CreatedLink -> what = "creating a link";
             case DeployedMod -> what = "deploying a portal mod";
+            case DeployedResonator -> what = "deploying a resonator";
+            case DestroyedField -> what = "destroying a control field";
+            case DestroyedLink -> what = "destroying a link";
+            case DestroyedResonator -> what = "destroying a resonator";
             case FullyDeployedPortal -> what = "fully deploying a portal";
             case HackingEnemyPortal -> what = "hacking a portal";
-            case RedeemedAP -> what = "redeeming a passcode";
-            case RechargeResonator -> what = "recharging a resonator";
-            case RemoteRechargeResonator -> what = "recharging a remote resonator";
             case InvitedPlayerJoined -> what = "a player you invited joining the game";
+            case RechargeResonator -> what = "recharging a resonator";
+            case RedeemedAP -> what = "redeeming a passcode";
+            case RemoteRechargeResonator -> what = "recharging a remote resonator";
+            case UpgradeResonator -> what = "upgrading someone else's resonator";
             default -> what = "doing something";
         }
         return what;

@@ -21,15 +21,15 @@
 
 package net.opengress.slimgress.API.Knobs;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.util.Log;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class XMCostKnobs extends Knobs
 {
@@ -52,19 +52,19 @@ public class XMCostKnobs extends Knobs
     {
         super(json);
 
-        mHeatsinkDeployCostByLevel = getIntArray(json, "heatsinkDeployCostByLevel");
         mFlipCardCostByLevel = getIntArray(json, "flipCardCostByLevel");
-        mTurretDeployCostByLevel = getIntArray(json, "turretDeployCostByLevel");
-        mPortalHackNeutralCostByLevel = getIntArray(json, "portalHackNeutralCostByLevel");
-        mShieldDeployCostByLevel = getIntArray(json, "shieldDeployCostByLevel");
-        mXmpFiringCostByLevel = getIntArray(json, "xmpFiringCostByLevel");
-        mResonatorUpgradeCostByLevel = getIntArray(json, "resonatorUpgradeCostByLevel");
-        mPortalHackFriendlyCostByLevel = getIntArray(json, "portalHackFriendlyCostByLevel");
+        mForceAmplifierDeployCostByLevel = getIntArray(json, "forceAmplifierDeployCostByLevel");
+        mHeatsinkDeployCostByLevel = getIntArray(json, "heatsinkDeployCostByLevel");
+        mLinkAmplifierDeployCostByLevel = getIntArray(json, "linkAmplifierDeployCostByLevel");
         mMultihackDeployCostByLevel = getIntArray(json, "multihackDeployCostByLevel");
         mPortalHackEnemyCostByLevel = getIntArray(json, "portalHackEnemyCostByLevel");
+        mPortalHackFriendlyCostByLevel = getIntArray(json, "portalHackFriendlyCostByLevel");
+        mPortalHackNeutralCostByLevel = getIntArray(json, "portalHackNeutralCostByLevel");
         mResonatorDeployCostByLevel = getIntArray(json, "resonatorDeployCostByLevel");
-        mForceAmplifierDeployCostByLevel = getIntArray(json, "forceAmplifierDeployCostByLevel");
-        mLinkAmplifierDeployCostByLevel = getIntArray(json, "linkAmplifierDeployCostByLevel");
+        mResonatorUpgradeCostByLevel = getIntArray(json, "resonatorUpgradeCostByLevel");
+        mShieldDeployCostByLevel = getIntArray(json, "shieldDeployCostByLevel");
+        mTurretDeployCostByLevel = getIntArray(json, "turretDeployCostByLevel");
+        mXmpFiringCostByLevel = getIntArray(json, "xmpFiringCostByLevel");
 
         mPortalModByLevel = new HashMap<>();
         JSONObject portalModByLevel = json.getJSONObject("portalModByLevel");
