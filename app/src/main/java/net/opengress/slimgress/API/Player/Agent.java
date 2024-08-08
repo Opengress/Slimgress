@@ -79,7 +79,15 @@ public class Agent extends PlayerEntity
         return SlimgressApplication.getInstance().getGame().getKnobs().getPlayerLevelKnobs().getXmCapacityForLevel(getLevel());
     }
 
+    public void addAP(int AP) {
+        setAP(getAp() + AP);
+    }
+
     public void addEnergy(int energyAmount) {
         setEnergy(Math.min(getEnergy() + energyAmount, getEnergyMax()));
+    }
+
+    public void subtractEnergy(int energyAmount) {
+        setEnergy(Math.max(getEnergy() - energyAmount, 0));
     }
 }
