@@ -100,6 +100,7 @@ public class Inventory
     }
 
     public final void removeItem(ItemBase item) {
+        // FIXME - CRASH - lol modifying list during iteration
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
             ItemBase item2 = pair.getValue();
             if (item == item2) {

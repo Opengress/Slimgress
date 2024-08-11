@@ -132,21 +132,14 @@ public class SlimgressApplication extends Application {
 
     }
 
-    public void setUpGameScoreTimer() {
-        // Calculate the delay until the next 5-hour interval
+    void postGameScore() {
         long currentTimeMillis = System.currentTimeMillis();
         long unixEpochMillis = 0; // Unix epoch time in milliseconds
         long fiveHoursMillis = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
 
         long timeDifferenceMillis = currentTimeMillis - unixEpochMillis;
         long remainingMillis = fiveHoursMillis - (timeDifferenceMillis % fiveHoursMillis);
-
-        // Call your function after the remaining time
-        mSepticycleHander.postDelayed(this::schedulePostingGameScore, remainingMillis);
-        postGameScore();
-    }
-
-    private void postGameScore() {
+        mSepticycleHander.postDelayed(this::postGameScore, remainingMillis);
         new Thread(() -> {
             Handler mainHandler = new Handler(Looper.getMainLooper());
             mainHandler.post(() -> mGame.intGetGameScore(new Handler(msg -> {
@@ -156,11 +149,6 @@ public class SlimgressApplication extends Application {
                 return true;
             })));
         }).start();
-    }
-
-    private void schedulePostingGameScore() {
-        postGameScore();
-        mSepticycleHander.postDelayed(this::schedulePostingGameScore, 5 * 60 * 60 * 1000);
     }
 
     public static SlimgressApplication getInstance() {

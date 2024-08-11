@@ -116,6 +116,7 @@ public class GameState
             Log.w("Game", "game basket is invalid");
         } else {
             Log.d("Game", "processing game basket");
+            // really we should get info back about what changed
             mInventory.processGameBasket(gameBasket);
             mWorld.processGameBasket(gameBasket);
             if (!gameBasket.getInventory().isEmpty() || !gameBasket.getDeletedEntityGuids().isEmpty()) {
