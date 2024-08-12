@@ -48,6 +48,8 @@ public abstract class ItemBase extends EntityBase
         FlipCard,
         WeaponXMP,
         WeaponUltraStrike,
+        Capsule,
+        PlayerPowerup,
     }
 
     public enum Rarity
@@ -116,7 +118,11 @@ public abstract class ItemBase extends EntityBase
             newItem = new ItemModHeatsink(json);
         else if (itemType.equals(ItemFlipCard.getNameStatic()))
             newItem = new ItemFlipCard(json);
-        else {
+        else if (itemType.equals(ItemPlayerPowerup.getNameStatic())) {
+            newItem = new ItemPlayerPowerup(json);
+        } else if (itemType.equals(ItemCapsule.getNameStatic())) {
+            newItem = new ItemCapsule(json);
+        } else {
             // unknown resource type
             Log.w("Item", "unknown resource type: " + itemType);
         }

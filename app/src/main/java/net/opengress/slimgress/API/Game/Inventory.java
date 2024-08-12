@@ -31,27 +31,24 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class Inventory
-{
+public class Inventory {
     private final Map<String, ItemBase> mItems;
 
-    public Inventory()
-    {
+    public Inventory() {
         mItems = new HashMap<>();
     }
 
-    public void clear()
-    {
+    public void clear() {
         mItems.clear();
     }
 
-    public void processGameBasket(GameBasket basket)
-    {
+    public void processGameBasket(GameBasket basket) {
         // add new inventory items
         List<ItemBase> entities = basket.getInventory();
         for (ItemBase entity : entities) {
-            if (!mItems.containsKey(entity.getEntityGuid()))
+            if (!mItems.containsKey(entity.getEntityGuid())) {
                 mItems.put(entity.getEntityGuid(), entity);
+            }
         }
 
         // remove deleted entities
@@ -61,35 +58,33 @@ public class Inventory
         }
     }
 
-    public final Map<String, ItemBase> getItems()
-    {
+    public final Map<String, ItemBase> getItems() {
         return mItems;
     }
 
-    public final List<ItemBase> getItemsList()
-    {
+    public final List<ItemBase> getItemsList() {
         return new ArrayList<>(mItems.values());
     }
 
-    public final List<ItemBase> getItems(ItemBase.ItemType type)
-    {
+    public final List<ItemBase> getItems(ItemBase.ItemType type) {
         List<ItemBase> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> item : mItems.entrySet()) {
-            if (item.getValue().getItemType() == type)
+            if (item.getValue().getItemType() == type) {
                 items.add(item.getValue());
+            }
         }
 
         return items;
     }
 
-    public final List<ItemBase> getItems(ItemBase.ItemType type, ItemBase.Rarity rarity)
-    {
+    public final List<ItemBase> getItems(ItemBase.ItemType type, ItemBase.Rarity rarity) {
         List<ItemBase> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
             ItemBase item = pair.getValue();
             if (item.getItemType() == type &&
-                    item.getItemRarity() == rarity)
+                    item.getItemRarity() == rarity) {
                 items.add(item);
+            }
         }
 
         return items;
@@ -100,48 +95,42 @@ public class Inventory
     }
 
     public final void removeItem(ItemBase item) {
-        // FIXME - CRASH - lol modifying list during iteration
-        for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
-            ItemBase item2 = pair.getValue();
-            if (item == item2) {
-                mItems.remove(pair.getKey());
-            }
-        }
+        removeItem(item.getEntityGuid());
     }
 
-    public final List<ItemBase> getItems(ItemBase.ItemType type, int accessLevel)
-    {
+    public final List<ItemBase> getItems(ItemBase.ItemType type, int accessLevel) {
         List<ItemBase> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
             ItemBase item = pair.getValue();
             if (item.getItemType() == type &&
-                    item.getItemAccessLevel() == accessLevel)
+                    item.getItemAccessLevel() == accessLevel) {
                 items.add(item);
+            }
         }
 
         return items;
     }
 
     // probably not applicable at this point
-    public final List<ItemBase> getItems(ItemBase.ItemType type, ItemBase.Rarity rarity, int accessLevel)
-    {
+    public final List<ItemBase> getItems(ItemBase.ItemType type, ItemBase.Rarity rarity, int accessLevel) {
         List<ItemBase> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
             ItemBase item = pair.getValue();
             if (item.getItemType() == type &&
                     item.getItemRarity() == rarity &&
-                    item.getItemAccessLevel() == accessLevel)
+                    item.getItemAccessLevel() == accessLevel) {
                 items.add(item);
+            }
         }
 
         return items;
     }
 
-    public final ItemBase findItem(String guid)
-    {
+    public final ItemBase findItem(String guid) {
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
-            if (pair.getKey().equals(guid))
+            if (pair.getKey().equals(guid)) {
                 return pair.getValue();
+            }
         }
 
         return null;
@@ -153,23 +142,24 @@ public class Inventory
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
             ItemBase item = pair.getValue();
             if (item.getItemType() == ItemBase.ItemType.Resonator &&
-                    item.getItemAccessLevel() == accessLevel)
+                    item.getItemAccessLevel() == accessLevel) {
                 return (ItemResonator) item;
+            }
         }
 
         return null;
     }
 
     // FIXME don't return resos above your level (also server) or above limits
-    public final List<ItemResonator> getResosForUpgrade(int accessLevel)
-    {
+    public final List<ItemResonator> getResosForUpgrade(int accessLevel) {
         List<ItemResonator> items = new LinkedList<>();
 
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
             ItemBase item = pair.getValue();
             if (item.getItemType() == ItemBase.ItemType.Resonator &&
-                    item.getItemAccessLevel() > accessLevel)
+                    item.getItemAccessLevel() > accessLevel) {
                 items.add((ItemResonator) item);
+            }
         }
 
         return items;

@@ -99,28 +99,68 @@ public class ActivityInventoryItem extends AppCompatActivity {
             case Resonator -> {
                 itemTitle.setText("Resonator");
                 itemDescription.setText("XM object used to power up a portal and align it to a faction");
-                inflateResourceWithLevels(mItem, actual);
+                inflateResource(mItem, actual);
             }
             case PowerCube -> {
                 itemTitle.setText("Power Cube");
                 itemDescription.setText("Store of XM which can be used to recharge Scanner");
-                inflateResourceWithLevels(mItem, actual);
+                inflateResource(mItem, actual);
                 findViewById(R.id.activity_inventory_item_use).setVisibility(View.VISIBLE);
                 findViewById(R.id.activity_inventory_item_use).setEnabled(false);
             }
             case WeaponXMP -> {
                 itemTitle.setText("XMP Burster");
                 itemDescription.setText("Exotic Matter Pulse weapons which can destroy enemy resonators and Mods and neutralize enemy portals");
-                inflateResourceWithLevels(mItem, actual);
+                inflateResource(mItem, actual);
                 findViewById(R.id.activity_inventory_item_fire).setVisibility(View.VISIBLE);
                 findViewById(R.id.activity_inventory_item_fire).setEnabled(false);
             }
             case WeaponUltraStrike -> {
                 itemTitle.setText("Ultra Strike");
                 itemDescription.setText("A variation of the Exotic Matter Pulse weapon with a more powerful blast that occurs within a smaller radius");
-                inflateResourceWithLevels(mItem, actual);
+                inflateResource(mItem, actual);
                 findViewById(R.id.activity_inventory_item_fire).setVisibility(View.VISIBLE);
                 findViewById(R.id.activity_inventory_item_fire).setEnabled(false);
+            }
+            case ModShield -> {
+                itemTitle.setText(actual.getDisplayName());
+                itemDescription.setText("Mod which shields Portal from attacks.");
+                inflateResource(mItem, actual);
+            }
+            case ModMultihack -> {
+                itemTitle.setText(actual.getDisplayName());
+                itemDescription.setText("Mod that increases hacking capacity of a Portal.");
+                inflateResource(mItem, actual);
+            }
+            case ModHeatsink -> {
+                itemTitle.setText(actual.getDisplayName());
+                itemDescription.setText("Mod that reduces cooldown time between Portal hacks.");
+                inflateResource(mItem, actual);
+            }
+            case ModForceAmp -> {
+                itemTitle.setText(actual.getDisplayName());
+                itemDescription.setText("Mod that increases power of Portal attacks against enemy agents.");
+                inflateResource(mItem, actual);
+            }
+            case ModTurret -> {
+                itemTitle.setText(actual.getDisplayName());
+                itemDescription.setText("Mod that increases frequency of Portal attacks against enemy agents.");
+                inflateResource(mItem, actual);
+            }
+            case ModLinkAmp -> {
+                itemTitle.setText(actual.getDisplayName());
+                itemDescription.setText("Mod that increases Portal link range.");
+                inflateResource(mItem, actual);
+            }
+            case Capsule -> {
+                itemTitle.setText(actual.getDisplayName());
+                itemDescription.setText("Object which can hold other objects.");
+                inflateResource(mItem, actual);
+            }
+            case PlayerPowerup -> {
+                itemTitle.setText(actual.getDisplayName());
+                itemDescription.setText("Player Powerup which doubles AP for thirty minutes.");
+                inflateResource(mItem, actual);
             }
             default -> {
                 itemName.setText(mItem.getPrettyDescription());
@@ -169,13 +209,15 @@ public class ActivityInventoryItem extends AppCompatActivity {
     }
 
     @SuppressLint("DefaultLocale")
-    private void inflateResourceWithLevels(InventoryListItem item, ItemBase actual) {
+    private void inflateResource(InventoryListItem item, ItemBase actual) {
         mItemRarity.setText(getRarityText(item.getRarity()));
         int rarityColor = getRarityColor(item.getRarity());
         mItemRarity.setTextColor(getColorFromResources(getResources(), rarityColor));
-        mItemLevel.setText(String.format("L%d", actual.getItemLevel()));
-        mLevelColour = getLevelColor(actual.getItemLevel());
-        mItemLevel.setTextColor(getColorFromResources(getResources(), mLevelColour));
+        if (actual.getItemLevel() > 0) {
+            mItemLevel.setText(String.format("L%d", actual.getItemLevel()));
+            mLevelColour = getLevelColor(actual.getItemLevel());
+            mItemLevel.setTextColor(getColorFromResources(getResources(), mLevelColour));
+        }
     }
 
     private void onDropItemClicked(View v) {

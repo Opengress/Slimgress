@@ -194,7 +194,7 @@ public class ActivityDeploy extends AppCompatActivity {
             var which = levels.keySet().toArray(new Integer[0])[i];
             for (var r : resosForUpgrade) {
                 if (r.getItemAccessLevel() == which) {
-                    mGame.getInventory().removeItem(r.getEntityGuid());
+                    mGame.getInventory().removeItem(r);
                     mGame.intUpgradeResonator(r, mGame.getCurrentPortal(), slot, upgradeResultHandler);
                     break;
                 }
@@ -231,7 +231,7 @@ public class ActivityDeploy extends AppCompatActivity {
         builder.setItems(levels.values().toArray(new String[0]), (dialogInterface, i) -> {
             var which = levels.keySet().toArray(new Integer[0])[i];
             ItemResonator r = mGame.getInventory().getResoForDeployment(which);
-            mGame.getInventory().removeItem(r.getEntityGuid());
+            mGame.getInventory().removeItem(r);
             mGame.intDeployResonator(r, mGame.getCurrentPortal(), slot, deployResultHandler);
             Log.d("ActivityDeploy", String.format("Picked resonator: %d on slot %d", which, slot));
         });

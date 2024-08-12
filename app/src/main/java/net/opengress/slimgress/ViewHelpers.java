@@ -85,17 +85,59 @@ public class ViewHelpers {
     }
 
     public static int getImageForResoLevel(int level) {
-        int levelColour = R.drawable.r1;
+        int drawable = R.drawable.r1;
         switch (level) {
-            case 2 -> levelColour = R.drawable.r2;
-            case 3 -> levelColour = R.drawable.r3;
-            case 4 -> levelColour = R.drawable.r4;
-            case 5 -> levelColour = R.drawable.r5;
-            case 6 -> levelColour = R.drawable.r6;
-            case 7 -> levelColour = R.drawable.r7;
-            case 8 -> levelColour = R.drawable.r8;
+            case 2 -> drawable = R.drawable.r2;
+            case 3 -> drawable = R.drawable.r3;
+            case 4 -> drawable = R.drawable.r4;
+            case 5 -> drawable = R.drawable.r5;
+            case 6 -> drawable = R.drawable.r6;
+            case 7 -> drawable = R.drawable.r7;
+            case 8 -> drawable = R.drawable.r8;
         }
-        return levelColour;
+        return drawable;
+    }
+
+    public static int getImageForCubeLevel(int level) {
+        int drawable = R.drawable.c1;
+        switch (level) {
+            case 2 -> drawable = R.drawable.c2;
+            case 3 -> drawable = R.drawable.c3;
+            case 4 -> drawable = R.drawable.c4;
+            case 5 -> drawable = R.drawable.c5;
+            case 6 -> drawable = R.drawable.c6;
+            case 7 -> drawable = R.drawable.c7;
+            case 8 -> drawable = R.drawable.c8;
+        }
+        return drawable;
+    }
+
+    public static int getImageForXMPLevel(int level) {
+        int drawable = R.drawable.x1;
+        switch (level) {
+            case 2 -> drawable = R.drawable.x2;
+            case 3 -> drawable = R.drawable.x3;
+            case 4 -> drawable = R.drawable.x4;
+            case 5 -> drawable = R.drawable.x5;
+            case 6 -> drawable = R.drawable.x6;
+            case 7 -> drawable = R.drawable.x7;
+            case 8 -> drawable = R.drawable.x8;
+        }
+        return drawable;
+    }
+
+    public static int getImageForUltrastrikeLevel(int level) {
+        int drawable = R.drawable.u1;
+        switch (level) {
+            case 2 -> drawable = R.drawable.u2;
+            case 3 -> drawable = R.drawable.u3;
+            case 4 -> drawable = R.drawable.u4;
+            case 5 -> drawable = R.drawable.u5;
+            case 6 -> drawable = R.drawable.u6;
+            case 7 -> drawable = R.drawable.u7;
+            case 8 -> drawable = R.drawable.u8;
+        }
+        return drawable;
     }
 
     public static int getColorFromResources(Resources r, int id) {
