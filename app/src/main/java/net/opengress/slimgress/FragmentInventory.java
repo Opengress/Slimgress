@@ -23,6 +23,10 @@ package net.opengress.slimgress;
 
 import static androidx.core.content.ContextCompat.getDrawable;
 import static net.opengress.slimgress.API.Common.Utils.notBouncing;
+import static net.opengress.slimgress.ViewHelpers.getImageForCubeLevel;
+import static net.opengress.slimgress.ViewHelpers.getImageForResoLevel;
+import static net.opengress.slimgress.ViewHelpers.getImageForUltrastrikeLevel;
+import static net.opengress.slimgress.ViewHelpers.getImageForXMPLevel;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -51,10 +55,12 @@ import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.API.Item.ItemBase;
 import net.opengress.slimgress.API.Item.ItemBase.ItemType;
 import net.opengress.slimgress.API.Item.ItemBase.Rarity;
+import net.opengress.slimgress.API.Item.ItemCapsule;
 import net.opengress.slimgress.API.Item.ItemFlipCard;
 import net.opengress.slimgress.API.Item.ItemFlipCard.FlipCardType;
 import net.opengress.slimgress.API.Item.ItemMedia;
 import net.opengress.slimgress.API.Item.ItemMod;
+import net.opengress.slimgress.API.Item.ItemPlayerPowerup;
 import net.opengress.slimgress.API.Item.ItemPortalKey;
 
 import java.text.Collator;
@@ -73,12 +79,15 @@ public class FragmentInventory extends Fragment {
 
     private ArrayList<String> mGroupNames;
     private ArrayList<Object> mGroups;
+    private ArrayList<InventoryListItem> mGroupCapsules;
     private ArrayList<InventoryListItem> mGroupMedia;
     private ArrayList<InventoryListItem> mGroupMods;
     private ArrayList<InventoryListItem> mGroupPortalKeys;
     private ArrayList<InventoryListItem> mGroupPowerCubes;
     private ArrayList<InventoryListItem> mGroupResonators;
     private ArrayList<InventoryListItem> mGroupWeapons;
+
+    private ArrayList<InventoryListItem> mGroupOther;
 
     private InventoryList mInventoryList;
     private Observer<Inventory> mObserver;
@@ -415,18 +424,22 @@ public class FragmentInventory extends Fragment {
             mGroupNames = new ArrayList<>();
             mGroups = new ArrayList<>();
 
+            mGroupCapsules = new ArrayList<>();
             mGroupMedia = new ArrayList<>();
             mGroupMods = new ArrayList<>();
+            mGroupOther = new ArrayList<>();
             mGroupPortalKeys = new ArrayList<>();
             mGroupPowerCubes = new ArrayList<>();
             mGroupResonators = new ArrayList<>();
             mGroupWeapons = new ArrayList<>();
+            fillCapsules();
             fillMedia();
             fillMods();
             fillResonators();
             fillPortalKeys();
             fillWeapons();
             fillPowerCubes();
+            fillOther();
 
             callback.run();
         });
@@ -540,7 +553,37 @@ public class FragmentInventory extends Fragment {
             mods.add(item.getEntityGuid());
         }
 
-        var mod = new InventoryListItem(descr, type, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, mods);
+        int drawable = switch (theFirstItem.getItemType()) {
+            case ModForceAmp -> R.drawable.force_amp; // always rare
+            case ModHeatsink -> switch (rarity) {
+                case Common -> R.drawable.heatsink_common;
+                case Rare -> R.drawable.heatsink_rare;
+                case VeryRare -> R.drawable.heatsink_very_rare;
+                default -> R.drawable.no_image;
+            };
+            case ModLinkAmp -> switch (rarity) { // always rare or very rare, for now
+                case Rare -> R.drawable.linkamp_rare;
+                case VeryRare -> R.drawable.linkamp_very_rare;
+                default -> R.drawable.no_image;
+            };
+            case ModMultihack -> switch (rarity) {
+                case Common -> R.drawable.multihack_common;
+                case Rare -> R.drawable.multihack_rare;
+                case VeryRare -> R.drawable.multihack_very_rare;
+                default -> R.drawable.no_image;
+            };
+            case ModShield -> switch (rarity) {
+                case Common -> R.drawable.shield_common;
+                case Rare -> R.drawable.shield_rare;
+                case VeryRare -> R.drawable.shield_very_rare;
+                default -> R.drawable.no_image;
+            };
+            case ModTurret -> R.drawable.turret; // always rare
+            case Capsule -> R.drawable.capsule; // always rare?
+            default -> R.drawable.no_image;
+        };
+
+        var mod = new InventoryListItem(descr, type, getDrawable(requireContext(), drawable), drawable, mods);
         mod.setRarity(rarity);
         return mod;
     }
@@ -559,17 +602,7 @@ public class FragmentInventory extends Fragment {
                 for (ItemBase item : items) {
                     resos.add(item.getEntityGuid());
                 }
-                int drawable = R.drawable.no_image;
-                switch (level) {
-                    case 1 -> drawable = R.drawable.r1;
-                    case 2 -> drawable = R.drawable.r2;
-                    case 3 -> drawable = R.drawable.r3;
-                    case 4 -> drawable = R.drawable.r4;
-                    case 5 -> drawable = R.drawable.r5;
-                    case 6 -> drawable = R.drawable.r6;
-                    case 7 -> drawable = R.drawable.r7;
-                    case 8 -> drawable = R.drawable.r8;
-                }
+                int drawable = getImageForResoLevel(level);
                 InventoryListItem reso = new InventoryListItem(descr, ItemType.Resonator, getDrawable(requireContext(), drawable), drawable, resos, items.get(0).getItemRarity(), level);
                 mGroupResonators.add(reso);
             }
@@ -594,17 +627,7 @@ public class FragmentInventory extends Fragment {
                 for (ItemBase item : items) {
                     weapons.add(item.getEntityGuid());
                 }
-                int drawable = R.drawable.no_image;
-                switch (level) {
-                    case 1 -> drawable = R.drawable.x1;
-                    case 2 -> drawable = R.drawable.x2;
-                    case 3 -> drawable = R.drawable.x3;
-                    case 4 -> drawable = R.drawable.x4;
-                    case 5 -> drawable = R.drawable.x5;
-                    case 6 -> drawable = R.drawable.x6;
-                    case 7 -> drawable = R.drawable.x7;
-                    case 8 -> drawable = R.drawable.x8;
-                }
+                int drawable = getImageForXMPLevel(level);
                 InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponXMP, getDrawable(requireContext(), drawable), drawable, weapons, items.get(0).getItemRarity(), level);
                 mGroupWeapons.add(weapon);
             }
@@ -621,17 +644,7 @@ public class FragmentInventory extends Fragment {
                 for (ItemBase item : items) {
                     weapons.add(item.getEntityGuid());
                 }
-                int drawable = R.drawable.no_image;
-                switch (level) {
-                    case 1 -> drawable = R.drawable.u1;
-                    case 2 -> drawable = R.drawable.u2;
-                    case 3 -> drawable = R.drawable.u3;
-                    case 4 -> drawable = R.drawable.u4;
-                    case 5 -> drawable = R.drawable.u5;
-                    case 6 -> drawable = R.drawable.u6;
-                    case 7 -> drawable = R.drawable.u7;
-                    case 8 -> drawable = R.drawable.u8;
-                }
+                int drawable = getImageForUltrastrikeLevel(level);
                 InventoryListItem weapon = new InventoryListItem(descr, ItemType.WeaponUltraStrike, getDrawable(requireContext(), drawable), drawable, weapons, items.get(0).getItemRarity(), level);
                 mGroupWeapons.add(weapon);
             }
@@ -684,8 +697,9 @@ public class FragmentInventory extends Fragment {
                 for (ItemBase item : items) {
                     cubes.add(item.getEntityGuid());
                 }
-                InventoryListItem cube = new InventoryListItem(descr, ItemType.PowerCube, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, cubes, items.get(0).getItemRarity(), level);
-                mGroupResonators.add(cube);
+                int drawable = getImageForCubeLevel(level);
+                InventoryListItem cube = new InventoryListItem(descr, ItemType.PowerCube, getDrawable(requireContext(), drawable), drawable, cubes, items.get(0).getItemRarity(), level);
+                mGroupPowerCubes.add(cube);
             }
         }
         mGroupNames.add("PowerCubes (" + count + ")");
@@ -735,6 +749,49 @@ public class FragmentInventory extends Fragment {
         mGroupNames.add("PortalKeys (" + items.size() + ")");
         mGroups.add(mGroupPortalKeys);
         mGame.intGetModifiedEntitiesByGuid(portalGUIDs.toArray(new String[0]), new Handler(msg -> true));
+    }
+
+    void fillCapsules() {
+        Inventory inv = mGame.getInventory();
+
+        List<ItemBase> items = inv.getItems(ItemType.Capsule);
+        for (ItemBase item1 : items) {
+            ItemCapsule theItem1 = (ItemCapsule) item1;
+
+            // oof. this is a bit different to all the other types of items - i don't want to collapse them.
+            ArrayList<String> capsules = new ArrayList<>();
+
+            String differentiator = theItem1.getDifferentiator();
+            capsules.add(theItem1.getEntityGuid());
+
+            InventoryListItem key = new InventoryListItem(differentiator, ItemType.Capsule, getDrawable(requireContext(), R.drawable.capsule), R.drawable.capsule, capsules, items.get(0).getItemRarity());
+            mGroupCapsules.add(key);
+        }
+        mGroupNames.add("Capsules (" + items.size() + ")");
+        mGroups.add(mGroupCapsules);
+        // might be useful if we nest the capsule stuff in the inventory. think about it later.
+//        mGame.intGetModifiedEntitiesByGuid(portalGUIDs.toArray(new String[0]), new Handler(msg -> true));
+    }
+
+    void fillOther() {
+        Inventory inv = mGame.getInventory();
+
+        List<ItemBase> items = inv.getItems(ItemType.PlayerPowerup);
+
+        ArrayList<String> ids = new ArrayList<>();
+        for (ItemBase item1 : items) {
+            ItemPlayerPowerup theItem1 = (ItemPlayerPowerup) item1;
+
+            String differentiator = theItem1.getDisplayName();
+            ids.add(theItem1.getEntityGuid());
+
+            InventoryListItem key = new InventoryListItem(differentiator, ItemType.PlayerPowerup, getDrawable(requireContext(), R.drawable.dap), R.drawable.dap, ids, items.get(0).getItemRarity());
+            mGroupOther.add(key);
+        }
+        mGroupNames.add("Other (" + items.size() + ")");
+        mGroups.add(mGroupOther);
+        // might be useful if we nest the capsule stuff in the inventory. think about it later.
+//        mGame.intGetModifiedEntitiesByGuid(portalGUIDs.toArray(new String[0]), new Handler(msg -> true));
     }
 
 }
