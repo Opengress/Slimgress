@@ -1,12 +1,17 @@
 package net.opengress.slimgress;
 
+import static net.opengress.slimgress.API.Common.Utils.getErrorStringFromAPI;
+
 import android.app.Dialog;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.method.LinkMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -98,6 +103,31 @@ public class DialogComms extends BottomSheetDialogFragment {
             public void onTabReselected(TabLayout.Tab tab) {
             }
         });
+
+        Button sendButton = dialog.findViewById(R.id.button);
+        EditText input = dialog.findViewById(R.id.input);
+        assert sendButton != null;
+        sendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Handler handler = new Handler(msg -> {
+                    var data = msg.getData();
+                    String error = getErrorStringFromAPI(data);
+                    if (error != null && !error.isEmpty()) {
+                        DialogInfo dialog = new DialogInfo(getContext());
+                        dialog.setMessage(error).setDismissDelay(1500).show();
+                    } else {
+                        // get plexts, probably, and...
+                        assert input != null;
+                        input.setText("");
+                    }
+                    return false;
+                });
+                assert input != null;
+                SlimgressApplication.getInstance().getGame().intSendMessage(input.getText().toString(), tabLayout.getSelectedTabPosition() == 1, handler);
+            }
+        });
+
         return dialog;
     }
 
