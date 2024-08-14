@@ -74,7 +74,6 @@ import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.API.Item.ItemPortalKey;
 import net.opengress.slimgress.API.Knobs.ScannerKnobs;
 import net.opengress.slimgress.API.Knobs.TeamKnobs;
-import net.opengress.slimgress.API.ViewModels.CommsViewModel;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.MapTileProviderBasic;
@@ -103,7 +102,6 @@ import java.util.Set;
 public class ScannerView extends Fragment implements SensorEventListener, LocationListener {
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
-    private final CommsViewModel mCommsViewModel = mApp.getCommsViewModel();
     private MapView mMap = null;
 
     // ===========================================================

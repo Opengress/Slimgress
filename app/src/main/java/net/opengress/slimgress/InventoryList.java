@@ -171,56 +171,58 @@ public class InventoryList extends BaseExpandableListAdapter {
                     .error(item.getIcon())
                     .into(image);
             ItemPortalKey key = (ItemPortalKey) mInventory.getItems().get(item.getFirstID());
-            assert key != null;
-            GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key.getPortalGuid());
-            assert portal != null;
-            address = key.getPortalAddress();
-            ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_address)).setText(address);
-            level = portal.getPortalLevel();
+            if (key != null) {
+                GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key.getPortalGuid());
+                if (portal != null) {
+                    address = key.getPortalAddress();
+                    ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_address)).setText(address);
+                    level = portal.getPortalLevel();
 
-            // show portal level
-            ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_level)).setText(String.format("L%d", portal.getPortalLevel()));
-            int levelColour = getLevelColor(portal.getPortalLevel());
-            ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_level)).setTextColor(getColorFromResources(convertView.getResources(), levelColour));
+                    // show portal level
+                    ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_level)).setText(String.format("L%d", portal.getPortalLevel()));
+                    int levelColour = getLevelColor(portal.getPortalLevel());
+                    ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_level)).setTextColor(getColorFromResources(convertView.getResources(), levelColour));
 
 
-            // get distance to portal and show ownership in the colour
-            ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_distance)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());
-            int dist = 999999000;
-            Location loc = mGame.getLocation();
-            if (loc != null) {
-                dist = (int) (mGame.getLocation().getS2LatLng().getEarthDistance(item.getLocation()));
-            }
-            String distanceText = getPrettyDistanceString(dist);
-            ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_distance)).setText(distanceText);
+                    // get distance to portal and show ownership in the colour
+                    ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_distance)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());
+                    int dist = 999999000;
+                    Location loc = mGame.getLocation();
+                    if (loc != null) {
+                        dist = (int) (mGame.getLocation().getS2LatLng().getEarthDistance(item.getLocation()));
+                    }
+                    String distanceText = getPrettyDistanceString(dist);
+                    ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_distance)).setText(distanceText);
 
-            // set up resonator graphics
-            // Clear existing images
-            int[] resoImageIds = {
-                    R.id.inventory_childRow_portalKey_r1Image,
-                    R.id.inventory_childRow_portalKey_r2Image,
-                    R.id.inventory_childRow_portalKey_r3Image,
-                    R.id.inventory_childRow_portalKey_r4Image,
-                    R.id.inventory_childRow_portalKey_r5Image,
-                    R.id.inventory_childRow_portalKey_r6Image,
-                    R.id.inventory_childRow_portalKey_r7Image,
-                    R.id.inventory_childRow_portalKey_r8Image
-            };
+                    // set up resonator graphics
+                    // Clear existing images
+                    int[] resoImageIds = {
+                            R.id.inventory_childRow_portalKey_r1Image,
+                            R.id.inventory_childRow_portalKey_r2Image,
+                            R.id.inventory_childRow_portalKey_r3Image,
+                            R.id.inventory_childRow_portalKey_r4Image,
+                            R.id.inventory_childRow_portalKey_r5Image,
+                            R.id.inventory_childRow_portalKey_r6Image,
+                            R.id.inventory_childRow_portalKey_r7Image,
+                            R.id.inventory_childRow_portalKey_r8Image
+                    };
 
-            for (int resId : resoImageIds) {
-                ((ImageView) convertView.findViewById(resId)).setImageResource(R.drawable.no_image);
-                ((ImageView) convertView.findViewById(resId)).setImageAlpha(255);
-            }
+                    for (int resId : resoImageIds) {
+                        ((ImageView) convertView.findViewById(resId)).setImageResource(R.drawable.no_image);
+                        ((ImageView) convertView.findViewById(resId)).setImageAlpha(255);
+                    }
 
-            // add nice, fresh images
-            for (var reso : portal.getPortalResonators()) {
-                if (reso == null) {
-                    continue;
+                    // add nice, fresh images
+                    for (var reso : portal.getPortalResonators()) {
+                        if (reso == null) {
+                            continue;
+                        }
+                        int resId = resoImageIds[reso.slot - 1];
+                        ((ImageView) convertView.findViewById(resId)).setImageResource(getImageForResoLevel(reso.level));
+                        int alpha = (int) (((float) reso.energyTotal / reso.getMaxEnergy()) * 255); // Convert percentage to alpha value (0-255)
+                        ((ImageView) convertView.findViewById(resId)).setImageAlpha(alpha);
+                    }
                 }
-                int resId = resoImageIds[reso.slot - 1];
-                ((ImageView) convertView.findViewById(resId)).setImageResource(getImageForResoLevel(reso.level));
-                int alpha = (int) (((float) reso.energyTotal / reso.getMaxEnergy()) * 255); // Convert percentage to alpha value (0-255)
-                ((ImageView) convertView.findViewById(resId)).setImageAlpha(alpha);
             }
 
         } else {

@@ -169,7 +169,7 @@ public class ViewHelpers {
             case DestroyedLink -> what = "destroying a link";
             case DestroyedResonator -> what = "destroying a resonator";
             case FullyDeployedPortal -> what = "fully deploying a portal";
-            case HackingEnemyPortal -> what = "hacking a portal";
+            case HackingEnemyPortal -> what = "hacking an enemy portal";
             case InvitedPlayerJoined -> what = "a player you invited joining the game";
             case RechargeResonator -> what = "recharging a resonator";
             case RedeemedAP -> what = "redeeming a passcode";
