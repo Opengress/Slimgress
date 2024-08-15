@@ -344,6 +344,51 @@ public class GameState
         }
     }
 
+    public void intLevelUp(int level, final Handler handler) {
+        try {
+            checkInterface();
+
+
+            // create params
+            JSONObject params = new JSONObject();
+            params.put("newLevelUpMsgId", level);
+
+            // request basket
+            mInterface.request(mHandshake, "gameplay/levelUp", mLocation, params, new RequestResult(handler) {
+                @Override
+                public void handleGameBasket(GameBasket gameBasket) {
+                    // TODO handle all this
+                    processGameBasket(gameBasket);
+                    // maybe something like this:
+                    initBundle();
+                    HashMap<String, ItemBase> items = new HashMap<>();
+                    for (ItemBase item : gameBasket.getInventory()) {
+                        items.put(item.getEntityGuid(), item);
+                        getData().putSerializable("items", items);
+                    }
+                    // and then...?
+                    var player = gameBasket.getPlayerEntity();
+                    Log.d("GAME", "Got level: " + player.getVerifiedLevel());
+                }
+
+                @Override
+                public void handleError(String error) {
+                    String pretty_error;
+                    if (error.equals("DENIED")) {
+                        pretty_error = "LevelUp request was denied!";
+                    } else {
+                        Log.d("GameState/LevelUp", error);
+                        pretty_error = error;
+                    }
+                    super.handleError(pretty_error);
+                }
+            });
+        } catch (JSONException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+    }
+
     public void intRedeemReward(String passcode, final Handler handler)
     {
         try {
@@ -929,7 +974,7 @@ public class GameState
 
     public void intRecycleItem(ItemBase item, final Handler handler)
     {
-        // TODO: Bulk recycling
+        // now unused, but probably still connected in backend
         try {
             checkInterface();
 
@@ -970,6 +1015,54 @@ public class GameState
             });
         }
         catch (JSONException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void intRecycleItems(List<ItemBase> items, final Handler handler) {
+        try {
+            checkInterface();
+
+            JSONObject params = new JSONObject();
+            JSONArray itemGuids = new JSONArray();
+            for (var item : items) {
+                itemGuids.put(item.getEntityGuid());
+            }
+            params.put("itemGuids", itemGuids);
+
+            mInterface.request(mHandshake, "gameplay/recycleItem", mLocation, params, new RequestResult(handler) {
+                @Override
+                public void handleError(String error) {
+                    // DOES_NOT_EXIST
+                    switch (error) {
+                        case "DOES_NOT_EXIST", "ITEM_DOES_NOT_EXIST", "RESOURCE_NOT_AVAILABLE" ->
+                                super.handleError("Item is not in your inventory.");
+                        case "SPEED_LOCKED" -> // new!
+                                super.handleError("You are moving too fast");
+                        case "SPEED_LOCKED_" -> {
+                            // TODO: maybe format this as "x hours, x minutes, x seconds"
+                            String t = error.substring(error.lastIndexOf("_") + 1);
+                            super.handleError("You are moving too fast! You will be ready to play in " + t + "seconds"); // new!
+                        }
+                        default -> super.handleError("Unknown error: " + error);
+                    }
+                    super.handleError(error);
+                }
+
+                @Override
+                public void handleGameBasket(GameBasket gameBasket) {
+                    processGameBasket(gameBasket);
+                    getData().putStringArray("recycled", gameBasket.getDeletedEntityGuids().toArray(new String[0]));
+                }
+
+                @Override
+                public void handleResult(String result) {
+                    mAgent.addEnergy(Integer.parseInt(result));
+                    getData().putString("result", result);
+                    super.handleResult(result);
+                }
+            });
+        } catch (InterruptedException | JSONException e) {
             e.printStackTrace();
         }
     }

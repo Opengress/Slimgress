@@ -47,6 +47,17 @@ public class DialogComms extends BottomSheetDialogFragment {
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
         dialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
 
+
+//        View bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+//        BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
+//
+//        DisplayMetrics displayMetrics = new DisplayMetrics();
+//        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+//        int screenHeight = displayMetrics.heightPixels;
+//
+//        behavior.setPeekHeight(screenHeight / 2);
+//        behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
         TabLayout tabLayout = dialog.findViewById(R.id.tabs);
         RecyclerView view = dialog.findViewById(R.id.recyclerView);
         assert view != null;
