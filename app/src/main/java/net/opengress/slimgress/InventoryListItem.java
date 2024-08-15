@@ -10,10 +10,12 @@ import net.opengress.slimgress.API.Item.ItemFlipCard.FlipCardType;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 
 public class InventoryListItem implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
     private String mDescription;
     private ItemType mType;
@@ -170,6 +172,7 @@ public class InventoryListItem implements Serializable {
         return mLevel;
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream oos) throws IOException {
         if (mLocation != null) {
             mSerializableLocation = mLocation.toStringDegrees();

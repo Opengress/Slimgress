@@ -202,6 +202,10 @@ public class FragmentInventory extends Fragment {
 
             @Override
             public boolean onQueryTextChange(String newText) {
+                if (mInventoryList == null) {
+                    // try to fight a bug which is probably a ghost
+                    return false;
+                }
                 mInventoryList.setSearchText(newText);
                 notifyDatasetChanged();
                 return false;
