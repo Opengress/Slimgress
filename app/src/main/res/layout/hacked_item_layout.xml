@@ -7,11 +7,7 @@
 
     <TextView
         android:id="@+id/itemQuantity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAlignment="textEnd"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:paddingHorizontal="10dp" />
+        style="@style/QuantityTextStyle" />
 
     <TextView
         android:id="@+id/itemDescription"

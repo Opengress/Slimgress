@@ -322,7 +322,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                         String error = hackResultBundle.getString("error");
 
                         if (error != null) {
-                            // FIXME magic number and possibly (hopefully) handled by server
                             int portalLevel = mGame.getCurrentPortal().getPortalLevel();
                             Team portalTeam = mGame.getCurrentPortal().getPortalTeam();
                             if (portalTeam.toString().equalsIgnoreCase(mGame.getAgent().getTeam().toString())) {

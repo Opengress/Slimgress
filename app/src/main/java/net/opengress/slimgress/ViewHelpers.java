@@ -1,5 +1,6 @@
 package net.opengress.slimgress;
 
+import android.annotation.SuppressLint;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -178,5 +179,28 @@ public class ViewHelpers {
             default -> what = "doing something";
         }
         return what;
+    }
+
+    @SuppressLint("DefaultLocale")
+    @NonNull
+    static String getPrettyItemName(@NonNull ItemBase item, Resources resources) {
+        String html;
+        // rarity will maybe eventually expressed by colour, not text. that's why html
+        switch (item.getItemRarity()) {
+            case VeryCommon, Common, LessCommon, Rare, VeryRare, ExtraRare -> {
+                String hexColor = String.format("#%06X", (0xFFFFFF & resources.getColor(getRarityColor(item.getItemRarity()))));
+                html = String.format("<span style='color: %s'>%s</span>", hexColor, item.getDisplayName());
+            }
+            default -> {
+                if (item.getItemLevel() == 0) {
+                    html = item.getDisplayName();
+                } else {
+                    String hexColor = String.format("#%06X", (0xFFFFFF & resources.getColor(getLevelColor(item.getItemLevel()))));
+                    html = String.format("<span style='color: %s'>L%d</span> %s", hexColor, item.getItemLevel(), item.getDisplayName());
+                }
+            }
+        }
+
+        return html;
     }
 }

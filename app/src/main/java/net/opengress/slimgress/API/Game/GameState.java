@@ -374,7 +374,7 @@ public class GameState
                 @Override
                 public void handleError(String error) {
                     String pretty_error;
-                    if (error.equals("DENIED")) {
+                    if (error.contains("DENIED")) {
                         pretty_error = "LevelUp request was denied!";
                     } else {
                         Log.d("GameState/LevelUp", error);

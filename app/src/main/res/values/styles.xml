@@ -21,10 +21,26 @@
         <item name="android:windowBackground">@drawable/gradient</item>
     </style>
 
-
     <style name="FadeAnimation">
         <item name="android:windowEnterAnimation">@anim/fade_in</item>
         <item name="android:windowExitAnimation">@anim/fade_out</item>
+    </style>
+
+    <style name="QuantityTextStyle">
+        <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+        <item name="android:textColor">@color/rectangle_cyan</item>
+        <item name="android:paddingLeft">10dp</item>
+        <item name="android:paddingRight">10dp</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="ReceivedItemDialogStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:paddingBottom">10dp</item>
+        <item name="android:background">@drawable/rectangle_cyan_translucent</item>
     </style>
 
     <!-- borrowed from XGlyph2 -->
