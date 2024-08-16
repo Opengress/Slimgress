@@ -1077,13 +1077,34 @@ public class GameState
 
             mInterface.request(mHandshake, "gameplay/dischargePowerCube", mLocation, params, new RequestResult(handler) {
                 @Override
+                public void handleError(String error) {
+                    // DOES_NOT_EXIST
+                    switch (error) {
+                        case "DOES_NOT_EXIST", "ITEM_DOES_NOT_EXIST", "RESOURCE_NOT_AVAILABLE" ->
+                                super.handleError("Item is not in your inventory.");
+                        case "SPEED_LOCKED" -> // new!
+                                super.handleError("You are moving too fast");
+                        case "SPEED_LOCKED_" -> {
+                            // TODO: maybe format this as "x hours, x minutes, x seconds"
+                            String t = error.substring(error.lastIndexOf("_") + 1);
+                            super.handleError("You are moving too fast! You will be ready to play in " + t + "seconds"); // new!
+                        }
+                        default -> super.handleError("Unknown error: " + error);
+                    }
+                    super.handleError(error);
+                }
+
+                @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
+                    getData().putStringArray("consumed", gameBasket.getDeletedEntityGuids().toArray(new String[0]));
                 }
 
                 @Override
                 public void handleResult(String result) {
-                    // TODO: result contains the gained xm value, put into msg
+                    mAgent.addEnergy(Integer.parseInt(result));
+                    getData().putString("result", result);
+                    super.handleResult(result);
                 }
             });
         }
