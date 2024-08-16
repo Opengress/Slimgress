@@ -53,7 +53,7 @@ public class ActivityDeploy extends AppCompatActivity {
         var data = msg.getData();
         String error = getErrorStringFromAPI(data);
         if (error != null && !error.isEmpty()) {
-            DialogInfo dialog = new DialogInfo(this);
+            DialogInfo dialog = new DialogInfo(getApplicationContext());
             dialog.setMessage(error).setDismissDelay(1500).show();
         } else {
             mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getResonatorDeployCostByLevel().get(mGame.getCurrentPortal().getPortalLevel()));
@@ -67,7 +67,7 @@ public class ActivityDeploy extends AppCompatActivity {
         var data = msg.getData();
         String error = getErrorStringFromAPI(data);
         if (error != null && !error.isEmpty()) {
-            DialogInfo dialog = new DialogInfo(this);
+            DialogInfo dialog = new DialogInfo(getApplicationContext());
             dialog.setMessage(error).setDismissDelay(1500).show();
         } else {
             mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getResonatorUpgradeCostByLevel().get(mGame.getCurrentPortal().getPortalLevel()));
