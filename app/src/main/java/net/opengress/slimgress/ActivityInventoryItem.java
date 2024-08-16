@@ -29,6 +29,7 @@ import net.opengress.slimgress.API.Game.Inventory;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.API.Item.ItemBase;
 import net.opengress.slimgress.API.Item.ItemPortalKey;
+import net.opengress.slimgress.API.Item.ItemPowerCube;
 
 import java.util.Objects;
 
@@ -108,7 +109,8 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 itemDescription.setText("Store of XM which can be used to recharge Scanner");
                 inflateResource(mItem, actual);
                 findViewById(R.id.activity_inventory_item_use).setVisibility(View.VISIBLE);
-                findViewById(R.id.activity_inventory_item_use).setEnabled(false);
+                findViewById(R.id.activity_inventory_item_use).setEnabled(true);
+                findViewById(R.id.activity_inventory_item_use).setOnClickListener(this::onUseItemClicked);
             }
             case WeaponXMP -> {
                 itemTitle.setText("XMP Burster");
@@ -196,6 +198,9 @@ public class ActivityInventoryItem extends AppCompatActivity {
             findViewById(R.id.activity_inventory_item_recycle).setOnClickListener(this::onRecycleItemClicked);
             findViewById(R.id.activity_inventory_item_drop).setEnabled(true);
             findViewById(R.id.activity_inventory_item_drop).setOnClickListener(this::onDropItemClicked);
+        } else if (!isRecyclable) {
+            findViewById(R.id.activity_inventory_item_recycle).setEnabled(false);
+            findViewById(R.id.activity_inventory_item_drop).setEnabled(false);
         } else {
             findViewById(R.id.activity_inventory_item_recycle).setVisibility(View.INVISIBLE);
         }
@@ -258,6 +263,34 @@ public class ActivityInventoryItem extends AppCompatActivity {
 
         AlertDialog d = builder.create();
         d.show();
+    }
+
+    private void onUseItemClicked(View v) {
+        if (mItem.getType() == ItemBase.ItemType.PowerCube) {
+            mGame.intUsePowerCube((ItemPowerCube) Objects.requireNonNull(mInventory.getItems().get(mItem.getFirstID())), new Handler(msg -> {
+                var data = msg.getData();
+                String error = getErrorStringFromAPI(data);
+                if (error != null && !error.isEmpty()) {
+                    DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
+                    dialog.setMessage(error).setDismissDelay(1500).show();
+                } else {
+                    var res = data.getString("result");
+                    DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
+                    String message = "Gained %s XM from using a powercube";
+                    dialog.setMessage(String.format(message, res, mItem.getDescription())).setDismissDelay(1500).show();
+
+
+                    for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
+                        mItem.remove(id);
+                        mInventory.removeItem(id);
+                    }
+                    if (mItem.getQuantity() == 0) {
+                        new Handler(Looper.getMainLooper()).postDelayed(this::finish, 1500);
+                    }
+                }
+                return false;
+            }));
+        }
     }
 
     @SuppressLint("DefaultLocale")
