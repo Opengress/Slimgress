@@ -2,6 +2,7 @@ package net.opengress.slimgress;
 
 import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getPrettyItemName;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
@@ -22,14 +24,11 @@ import net.opengress.slimgress.API.Game.GameState;
 import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.API.Item.ItemBase;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
 
-// FIXME: if a portal enters/exits range, enable/disable the hack button etc
 public class ActivityPortal extends AppCompatActivity {
 
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
@@ -130,7 +129,6 @@ public class ActivityPortal extends AppCompatActivity {
         });
 
         // FIXME make this work OK
-        // tough luck if you don't have the agent names loaded up yet :thinking_face:
         findViewById(R.id.deployButton).setEnabled(true);
         findViewById(R.id.deployButton).setOnClickListener(v -> {
             Intent myIntent = new Intent(getApplicationContext(), ActivityDeploy.class);
@@ -191,7 +189,7 @@ public class ActivityPortal extends AppCompatActivity {
             for (String guid : guids) {
                 assert rawItems != null;
                 ItemBase item = Objects.requireNonNull(rawItems.get(guid));
-                String name = getPrettyItemName(item);
+                String name = getPrettyItemName(item, getResources());
                 putItemInMap(items, name);
                 bundle.putSerializable("items", items);
             }
@@ -201,7 +199,7 @@ public class ActivityPortal extends AppCompatActivity {
             for (String guid : bonusGuids) {
                 assert rawItems != null;
                 ItemBase item = Objects.requireNonNull(rawItems.get(guid));
-                String name = getPrettyItemName(item);
+                String name = getPrettyItemName(item, getResources());
                 putItemInMap(bonusItems, name);
                 bundle.putSerializable("bonusItems", items);
             }
@@ -216,29 +214,6 @@ public class ActivityPortal extends AppCompatActivity {
         } else {
             items.put(name, Objects.requireNonNull(items.get(name)));
         }
-    }
-
-    @NonNull
-    private String getPrettyItemName(@NonNull ItemBase item) {
-        String level;
-        // rarity will maybe eventually expressed by colour, not text. that's why html
-        switch (item.getItemRarity()) {
-            case VeryCommon -> level = "VC ";
-            case Common -> level = "";
-            case LessCommon -> level = "LC ";
-            case Rare -> level = "R ";
-            case VeryRare -> level = "VR ";
-            case ExtraRare -> level = "ER ";
-            default -> {
-                if (item.getItemLevel() == 0) {
-                    level = "";
-                } else {
-                    level = "L" + item.getItemLevel() + " ";
-                }
-            }
-        }
-
-        return level + item.getDisplayName();
     }
 
 }
