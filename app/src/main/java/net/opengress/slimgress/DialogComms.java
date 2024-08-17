@@ -118,25 +118,22 @@ public class DialogComms extends BottomSheetDialogFragment {
         Button sendButton = dialog.findViewById(R.id.button);
         EditText input = dialog.findViewById(R.id.input);
         assert sendButton != null;
-        sendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Handler handler = new Handler(msg -> {
-                    var data = msg.getData();
-                    String error = getErrorStringFromAPI(data);
-                    if (error != null && !error.isEmpty()) {
-                        DialogInfo dialog = new DialogInfo(getContext());
-                        dialog.setMessage(error).setDismissDelay(1500).show();
-                    } else {
-                        // get plexts, probably, and...
-                        assert input != null;
-                        input.setText("");
-                    }
-                    return false;
-                });
-                assert input != null;
-                SlimgressApplication.getInstance().getGame().intSendMessage(input.getText().toString(), tabLayout.getSelectedTabPosition() == 1, handler);
-            }
+        sendButton.setOnClickListener(v -> {
+            Handler handler = new Handler(msg -> {
+                var data = msg.getData();
+                String error = getErrorStringFromAPI(data);
+                if (error != null && !error.isEmpty()) {
+                    DialogInfo dialog1 = new DialogInfo(getContext());
+                    dialog1.setMessage(error).setDismissDelay(1500).show();
+                } else {
+                    // get plexts, probably, and...
+                    assert input != null;
+                    input.setText("");
+                }
+                return false;
+            });
+            assert input != null;
+            SlimgressApplication.getInstance().getGame().intSendMessage(input.getText().toString(), tabLayout.getSelectedTabPosition() == 1, handler);
         });
 
         return dialog;
@@ -183,8 +180,8 @@ public class DialogComms extends BottomSheetDialogFragment {
         }
 
         public static class ViewHolder extends RecyclerView.ViewHolder {
-            TextView textView;
-            TextView timeView;
+            final TextView textView;
+            final TextView timeView;
 
             public ViewHolder(@NonNull View itemView) {
                 super(itemView);

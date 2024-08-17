@@ -88,7 +88,7 @@ public class ActivityDeploy extends AppCompatActivity {
 
     }
 
-    @SuppressLint("DefaultLocale")
+    @SuppressLint({"DefaultLocale", "ObsoleteSdkInt"})
     public void setUpView() {
         GameEntityPortal portal = mGame.getCurrentPortal();
 

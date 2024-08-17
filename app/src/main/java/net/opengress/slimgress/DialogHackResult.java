@@ -86,7 +86,7 @@ public class DialogHackResult extends Dialog
     {
         ((TextView)findViewById(R.id.title)).setText(title);
         if (title.charAt(0) == 'B') {
-            ((TextView) findViewById(R.id.title)).setTextColor(0xff660000);
+            ((TextView) findViewById(R.id.title)).setTextColor(0xffCC0000);
         }
         findViewById(R.id.title).setVisibility(View.VISIBLE);
         return this;

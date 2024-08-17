@@ -31,6 +31,7 @@ import net.opengress.slimgress.API.Item.ItemBase;
 import net.opengress.slimgress.API.Item.ItemPortalKey;
 import net.opengress.slimgress.API.Item.ItemPowerCube;
 
+import java.text.MessageFormat;
 import java.util.Objects;
 
 public class ActivityInventoryItem extends AppCompatActivity {
@@ -229,7 +230,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
         }
     }
 
-    private void onDropItemClicked(View v) {
+    private void onDropItemClicked(View ignoredV) {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(ActivityInventoryItem.this);
         builder.setTitle("DROP: " + mItem.getDescription());
@@ -257,15 +258,13 @@ public class ActivityInventoryItem extends AppCompatActivity {
             d.dismiss();
         });
 
-        builder.setNegativeButton(R.string.cancel, (d, which) -> {
-            d.dismiss();
-        });
+        builder.setNegativeButton(R.string.cancel, (d, which) -> d.dismiss());
 
         AlertDialog d = builder.create();
         d.show();
     }
 
-    private void onUseItemClicked(View v) {
+    private void onUseItemClicked(View ignoredV) {
         if (mItem.getType() == ItemBase.ItemType.PowerCube) {
             mGame.intUsePowerCube((ItemPowerCube) Objects.requireNonNull(mInventory.getItems().get(mItem.getFirstID())), new Handler(msg -> {
                 var data = msg.getData();
@@ -294,7 +293,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
     }
 
     @SuppressLint("DefaultLocale")
-    private void onRecycleItemClicked(View v) {
+    private void onRecycleItemClicked(View ignoredV) {
         if (mGame.getKnobs().getClientFeatureKnobs().isEnableRecycleConfirmationDialog()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(ActivityInventoryItem.this);
             LayoutInflater inflater = getLayoutInflater();
@@ -309,7 +308,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
             quantityDisplay.setText(String.format("%d/%d", 1, mItem.getQuantity()));
             updateRecoveryInfo(1, recoveryInfo);
 
-            itemDescription.setText("RECYCLE: " + mItem.getDescription());
+            itemDescription.setText(MessageFormat.format("{0}{1}", getString(R.string.recycle_something), mItem.getDescription()));
 
             buttonIncrement.setOnClickListener(v1 -> {
                 String quantityText = quantityDisplay.getText().toString();
@@ -351,9 +350,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 d.dismiss();
             });
 
-            builder.setNegativeButton(R.string.cancel, (d, which) -> {
-                d.dismiss();
-            });
+            builder.setNegativeButton(R.string.cancel, (d, which) -> d.dismiss());
 
             AlertDialog dialog = builder.create();
             dialog.show();
@@ -368,6 +365,9 @@ public class ActivityInventoryItem extends AppCompatActivity {
         recoveryInfo.setText(String.format("+%dXM", recoveryAmount));
     }
 
+    /**
+     * @noinspection BusyWait
+     */
     @SuppressLint("DefaultLocale")
     private void incrementQuantity(Button buttonIncrement, TextView quantityDisplay, TextView recoveryInfo) {
         new Thread(() -> {
@@ -392,6 +392,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
         }).start();
     }
 
+    /** @noinspection BusyWait*/
     @SuppressLint("DefaultLocale")
     private void decrementQuantity(Button buttonDecrement, TextView quantityDisplay, TextView recoveryInfo) {
         new Thread(() -> {

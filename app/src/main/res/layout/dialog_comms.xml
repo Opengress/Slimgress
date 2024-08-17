@@ -30,25 +30,25 @@
             android:id="@+id/tab_all"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ALL" />
+            android:text="@string/comms_tab_all" />
 
         <com.google.android.material.tabs.TabItem
             android:id="@+id/tab_faction"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="FACTION" />
+            android:text="@string/comms_tab_faction" />
 
         <com.google.android.material.tabs.TabItem
             android:id="@+id/tab_alert"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ALERT" />
+            android:text="@string/comms_tab_alert" />
 
         <com.google.android.material.tabs.TabItem
             android:id="@+id/tab_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="INFO" />
+            android:text="@string/comms_tab_info" />
     </com.google.android.material.tabs.TabLayout>
 
     <SeekBar
@@ -81,14 +81,15 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:importantForAutofill="no"
+            android:inputType="textShortMessage|textLongMessage"
             android:maxLines="1"
-            android:hint="Start broadcasting here" />
+            android:hint="@string/start_broadcasting_here" />
 
         <Button
             android:id="@+id/button"
             style="@style/ShortButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Transmit" />
+            android:text="@string/comms_transmit" />
     </LinearLayout>
 </RelativeLayout>

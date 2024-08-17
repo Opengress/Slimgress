@@ -36,6 +36,7 @@ import net.opengress.slimgress.API.ViewModels.APGainsViewModel;
 import net.opengress.slimgress.API.ViewModels.CommsViewModel;
 import net.opengress.slimgress.API.ViewModels.DeletedEntityGuidsViewModel;
 import net.opengress.slimgress.API.ViewModels.InventoryViewModel;
+import net.opengress.slimgress.API.ViewModels.LevelUpViewModel;
 import net.opengress.slimgress.API.ViewModels.LocationViewModel;
 import net.opengress.slimgress.API.ViewModels.PlayerDamagesViewModel;
 import net.opengress.slimgress.API.ViewModels.PlayerDataViewModel;
@@ -56,6 +57,7 @@ public class SlimgressApplication extends Application {
     private PlayerDamagesViewModel mPlayerDamagesViewModel;
     private PlayerDataViewModel mPlayerDataViewModel;
     private CommsViewModel mCommsViewModel;
+    private LevelUpViewModel mLevelUpViewModel;
 
     private final Handler mSepticycleHander = new Handler();
 
@@ -69,6 +71,7 @@ public class SlimgressApplication extends Application {
         mPlayerDamagesViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDamagesViewModel.class);
         mPlayerDataViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDataViewModel.class);
         mCommsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(CommsViewModel.class);
+        mLevelUpViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(LevelUpViewModel.class);
 
         mSingleton = this;
         mGame = new GameState();
@@ -185,6 +188,10 @@ public class SlimgressApplication extends Application {
 
     public CommsViewModel getCommsViewModel() {
         return mCommsViewModel;
+    }
+
+    public LevelUpViewModel getLevelUpViewModel() {
+        return mLevelUpViewModel;
     }
 
     public boolean isLoggedIn() {

@@ -92,7 +92,7 @@ public class FragmentInventory extends Fragment {
     private InventoryList mInventoryList;
     private Observer<Inventory> mObserver;
 
-    String[] mSorts = new String[]{"Deployment", "Distance", "Level", "Name", "Team"};
+    final String[] mSorts = new String[]{"Deployment", "Distance", "Level", "Name", "Team"};
     int mInventoryKeySort;
     int mInventoryCount = 0;
     boolean mFirstRun = true;

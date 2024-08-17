@@ -118,7 +118,7 @@ public class ActivityAuth extends Activity {
         return accountName != null && accountToken != null;
     }
 
-    @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
+    @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface", "ObsoleteSdkInt"})
     private void authenticateUser() {
 
         WebView myWebView = new WebView(getLayoutInflater().getContext());

@@ -21,19 +21,18 @@
 
 package net.opengress.slimgress.API.Interface;
 
-import java.util.LinkedList;
-import java.util.List;
+import net.opengress.slimgress.API.Game.XMParticle;
+import net.opengress.slimgress.API.GameEntity.GameEntityBase;
+import net.opengress.slimgress.API.Item.ItemBase;
+import net.opengress.slimgress.API.Player.PlayerEntity;
+import net.opengress.slimgress.SlimgressApplication;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import net.opengress.slimgress.API.Game.XMParticle;
-import net.opengress.slimgress.API.GameEntity.GameEntityBase;
-import net.opengress.slimgress.API.Item.ItemBase;
-import net.opengress.slimgress.API.Player.PlayerEntity;
-
-import android.util.Log;
+import java.util.LinkedList;
+import java.util.List;
 
 public class GameBasket
 {
@@ -109,9 +108,12 @@ public class GameBasket
     }
 
     private void processLevelUp(JSONObject levelUp) {
-        // TODO: UNDONE
         if (levelUp != null) {
-            Log.e("GameBasket", "level up: " + levelUp);
+            try {
+                SlimgressApplication.getInstance().getLevelUpViewModel().postLevelUpMsgId(levelUp.getInt("newLevelUpMsgId"));
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

@@ -17,9 +17,16 @@ import androidx.annotation.Nullable;
 import net.opengress.slimgress.API.Interface.APGain;
 import net.opengress.slimgress.API.Item.ItemBase;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ViewHelpers {
     @Nullable
@@ -141,6 +148,9 @@ public class ViewHelpers {
         return drawable;
     }
 
+    /**
+     * @noinspection deprecation
+     */
     public static int getColorFromResources(Resources r, int id) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             return r.getColor(id, null);
@@ -202,5 +212,27 @@ public class ViewHelpers {
         }
 
         return html;
+    }
+
+    public static void putItemInMap(@NonNull HashMap<String, Integer> items, String name) {
+        if (!items.containsKey(name)) {
+            items.put(name, 1);
+        } else {
+            items.put(name, Objects.requireNonNull(items.get(name)) + 1);
+        }
+    }
+
+    public static @NonNull File saveScreenshot(File cacheDir, Bitmap combinedBitmap) {
+        // Save the screenshot to a file
+        File screenshotFile = new File(cacheDir, "screenshot.png");
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(screenshotFile))) {
+                combinedBitmap.compress(Bitmap.CompressFormat.PNG, 100, bos);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        return screenshotFile;
     }
 }

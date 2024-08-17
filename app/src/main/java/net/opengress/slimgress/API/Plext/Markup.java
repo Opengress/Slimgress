@@ -71,8 +71,7 @@ public abstract class Markup
         return newMarkup;
     }
 
-    public Markup(MarkupType type, JSONObject json) throws JSONException
-    {
+    public Markup(MarkupType type, JSONObject json) {
         mType = type;
         mPlain = json.optString("plain");
     }

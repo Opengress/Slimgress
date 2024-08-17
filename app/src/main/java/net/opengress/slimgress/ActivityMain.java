@@ -21,37 +21,58 @@
 
 package net.opengress.slimgress;
 
+import static net.opengress.slimgress.API.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getPrettyItemName;
+import static net.opengress.slimgress.ViewHelpers.putItemInMap;
+import static net.opengress.slimgress.ViewHelpers.saveScreenshot;
 
+import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.PorterDuff;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.FragmentActivity;
 
 import net.opengress.slimgress.API.Common.Team;
 import net.opengress.slimgress.API.Game.GameState;
+import net.opengress.slimgress.API.Item.ItemBase;
 import net.opengress.slimgress.API.Player.Agent;
 import net.opengress.slimgress.API.Plext.PlextBase;
 
+import java.io.File;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 public class ActivityMain extends FragmentActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
+    private static boolean isInForeground = false;
+    private boolean isLevellingUp = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -76,6 +97,77 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         buttonComm.setOnClickListener(v -> showComms());
 
         mApp.getCommsViewModel().getAllMessages().observe(this, this::getCommsMessages);
+        mApp.getLevelUpViewModel().getLevelUpMsgId().observe(this, this::levelUp);
+    }
+
+    private synchronized void levelUp(Integer level) {
+        if (isLevellingUp) {
+            Log.d("Main", "Not levelling up, because we are ALREADY DOING THAT");
+            return; // Exit if the function is already running
+        }
+        if (!isActivityInForeground()) {
+            Log.d("Main", "Not levelling up, because we are not in the foreground");
+            return;
+        }
+        if (mGame.getLocation() == null) {
+            Log.d("Main", "Not levelling up, to be safe, because we have no location");
+            return;
+        }
+        if (mGame.getAgent() == null) {
+            Log.d("Main", "Not levelling up, because we can't remember who we are!");
+            return;
+        }
+        isLevellingUp = true;
+        try {
+            Log.d("Main", "Levelling up! New level: " + level);
+            mGame.intLevelUp(level, new Handler(msg -> {
+                var data = msg.getData();
+                String error = getErrorStringFromAPI(data);
+                if (error != null && !error.isEmpty()) {
+                    DialogInfo dialog = new DialogInfo(this);
+                    dialog.setMessage(error).setDismissDelay(1500).show();
+                } else {
+                    showLevelUpDialog(generateFieldKitMap(data));
+                }
+                return false;
+            }));
+        } finally {
+            isLevellingUp = false;
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isInForeground = true;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isInForeground = false;
+    }
+
+    public static boolean isActivityInForeground() {
+        return isInForeground;
+    }
+
+    @SuppressWarnings("unchecked")
+    @NonNull
+    private HashMap<String, Integer> generateFieldKitMap(@NonNull Bundle data) {
+        HashMap<String, Integer> items = new HashMap<>();
+        Serializable serializable = data.getSerializable("items");
+
+        if (serializable instanceof HashMap) {
+            HashMap<String, ItemBase> rawItems = (HashMap<String, ItemBase>) serializable;
+
+            for (Map.Entry<String, ItemBase> entry : rawItems.entrySet()) {
+                String name = getPrettyItemName(entry.getValue(), getResources());
+                putItemInMap(items, name);
+            }
+        }
+
+        return items;
     }
 
     private void getCommsMessages(List<PlextBase> plexts) {
@@ -101,9 +193,10 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         bottomSheet.show(getSupportFragmentManager(), bottomSheet.getTag());
     }
 
+    @SuppressLint("ObsoleteSdkInt")
     private void updateAgent(Agent agent) {
         Log.d("Main/updateAgent", "Updating agent in display!");
-// TODO move some of this style info into onCreate
+        // TODO move some of this style info into onCreate
         int textColor;
         Team team = agent.getTeam();
         textColor = 0xff000000 + team.getColour();
@@ -118,7 +211,17 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
 
         String nextLevel = String.valueOf(Math.min(agent.getLevel() + 1, 8));
-        int thisLevelAP = mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(agent.getLevel()).getApRequired();
+        int thisLevelAP;
+        try {
+            thisLevelAP = mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(agent.getLevel()).getApRequired();
+        } catch (Exception ignored) {
+            /*
+            there's a race condition which can cause a crash here,
+            but if we won the race with the wrong code path we can just bail and it should be fine
+            :-)
+             */
+            return;
+        }
         int nextLevelAP = mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(nextLevel).getApRequired();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             ((ProgressBar) findViewById(R.id.agentap)).setMin(thisLevelAP);
@@ -158,5 +261,62 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             updateAgent(agent);
         }
 
+    }
+
+
+    public void showLevelUpDialog(HashMap<String, Integer> items) {
+        DialogLevelUp dialog = new DialogLevelUp(this);
+        int level = mGame.getAgent().getVerifiedLevel();
+        dialog.setMessage("LEVEL " + level, getColorFromResources(getResources(), getLevelColor(level)));
+        dialog.setCancelable(true); // Allow dialog to be dismissed by tapping outside
+
+        dialog.setOnDismissListener(dialog1 -> showNextDialog(items));
+
+        // Add a share button
+        ImageButton shareButton = dialog.findViewById(R.id.share_button);
+        shareButton.setOnClickListener(v -> screenshotDialog(dialog));
+
+        dialog.show();
+    }
+
+    @SuppressLint("DefaultLocale")
+    private void screenshotDialog(Dialog dialog) {
+        // Capture the main activity's view
+        View mainView = getWindow().getDecorView().findViewById(android.R.id.content);
+        mainView.setDrawingCacheEnabled(true);
+        Bitmap mainBitmap = Bitmap.createBitmap(mainView.getDrawingCache());
+        mainView.setDrawingCacheEnabled(false);
+
+        // Capture the dialog's view
+        View dialogView = dialog.getWindow().getDecorView();
+        dialogView.setDrawingCacheEnabled(true);
+        Bitmap dialogBitmap = Bitmap.createBitmap(dialogView.getDrawingCache());
+        dialogView.setDrawingCacheEnabled(false);
+
+        // Combine both bitmaps
+        Bitmap combinedBitmap = Bitmap.createBitmap(mainBitmap.getWidth(), mainBitmap.getHeight(), mainBitmap.getConfig());
+        Canvas canvas = new Canvas(combinedBitmap);
+        canvas.drawBitmap(mainBitmap, new Matrix(), null);
+        int[] dialogLocation = new int[2];
+        dialogView.getLocationOnScreen(dialogLocation);
+        canvas.drawBitmap(dialogBitmap, dialogLocation[0], dialogLocation[1], null);
+
+        File screenshotFile = saveScreenshot(getExternalCacheDir(), combinedBitmap);
+
+        // Share the screenshot
+        Uri screenshotUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", screenshotFile);
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("image/png");
+        shareIntent.putExtra(Intent.EXTRA_STREAM, screenshotUri);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, String.format("I've reached level %d in #opengress!", mGame.getAgent().getVerifiedLevel()));
+        startActivity(Intent.createChooser(shareIntent, "Share via"));
+    }
+
+    @SuppressLint("DefaultLocale")
+    public void showNextDialog(HashMap<String, Integer> items) {
+        DialogHackResult newDialog1 = new DialogHackResult(this);
+        newDialog1.setTitle(String.format("Receiving Level %d field kit...", mGame.getAgent().getVerifiedLevel()));
+        newDialog1.setItems(items);
+        newDialog1.show();
     }
 }
