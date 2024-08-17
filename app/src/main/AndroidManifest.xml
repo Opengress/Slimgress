@@ -30,9 +30,10 @@
         tools:targetApi="n">
 
         <!-- to be allowed to "install software" - self-updates -->
+        <!-- ... also share screenshots ... -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.provider"
+            android:authorities="${applicationId}.provider;${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

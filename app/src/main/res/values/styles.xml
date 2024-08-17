@@ -73,6 +73,10 @@
         <item name="android:layout_gravity">top</item>
     </style>
 
+    <style name="LevelUpDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="android:background">@drawable/rectangle_orange_translucent</item>
+    </style>
+
     <style name="SectionBodyStyle">
         <item name="android:orientation">horizontal</item>
         <item name="android:layout_width">match_parent</item>

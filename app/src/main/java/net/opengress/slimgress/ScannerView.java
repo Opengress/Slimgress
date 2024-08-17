@@ -107,7 +107,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     // ===========================================================
     // Knobs quick reference
     // ===========================================================
-    ScannerKnobs mScannerKnobs = mGame.getKnobs().getScannerKnobs();
+    final ScannerKnobs mScannerKnobs = mGame.getKnobs().getScannerKnobs();
     private final int mActionRadiusM = mScannerKnobs.getActionRadiusM();
     private final int mUpdateIntervalMS = mScannerKnobs.getUpdateIntervalMS();
     private final int mMinUpdateIntervalMS = mScannerKnobs.getMinUpdateIntervalMS();
@@ -401,7 +401,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             if (mPolygons.containsKey(guid)) {
                 mMap.getOverlays().remove(mPolygons.get(guid));
                 mPolygons.remove(guid);
-                continue;
             }
 
             // for dropped items .... not done yet...
@@ -728,7 +727,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                     });
                 }
 
-                mLastScan = new Date();
+                mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
                 Log.d("ScannerView", "world updated");
                 displayQuickMessage(getStringSafely(R.string.scan_complete));
                 setQuickMessageTimeout();

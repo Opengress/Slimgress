@@ -214,8 +214,7 @@ public class GameState
                     processGameBasket(gameBasket);
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -251,8 +250,7 @@ public class GameState
                     processGameBasket(gameBasket);
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -299,8 +297,7 @@ public class GameState
                     }
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -315,39 +312,31 @@ public class GameState
             params.put("factionOnly", factionOnly);
 
             mInterface.request(mHandshake, "player/say", mLocation, params, new RequestResult(handler));
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
     public void intGetGameScore(final Handler handler)
     {
-        try {
-            checkInterface();
+        checkInterface();
 
-            mInterface.request(mHandshake, "playerUndecorated/getGameScore", null, null, new RequestResult(handler) {
-                @Override
-                public void handleResult(JSONObject result) {
-                    try {
-                        getData().putInt("ResistanceScore", result.getInt("resistanceScore"));
-                        getData().putInt("EnlightenedScore", result.getInt("alienScore"));
-                    }
-                    catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+        mInterface.request(mHandshake, "playerUndecorated/getGameScore", null, null, new RequestResult(handler) {
+            @Override
+            public void handleResult(JSONObject result) {
+                try {
+                    getData().putInt("ResistanceScore", result.getInt("resistanceScore"));
+                    getData().putInt("EnlightenedScore", result.getInt("alienScore"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-            });
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            }
+        });
     }
 
     public void intLevelUp(int level, final Handler handler) {
         try {
             checkInterface();
-
 
             // create params
             JSONObject params = new JSONObject();
@@ -364,8 +353,8 @@ public class GameState
                     HashMap<String, ItemBase> items = new HashMap<>();
                     for (ItemBase item : gameBasket.getInventory()) {
                         items.put(item.getEntityGuid(), item);
-                        getData().putSerializable("items", items);
                     }
+                    getData().putSerializable("items", items);
                     // and then...?
                     var player = gameBasket.getPlayerEntity();
                     Log.d("GAME", "Got level: " + player.getVerifiedLevel());
@@ -376,14 +365,16 @@ public class GameState
                     String pretty_error;
                     if (error.contains("DENIED")) {
                         pretty_error = "LevelUp request was denied!";
+                    } else if (error.contains("INSUFFICIENT_AP")) {
+                        pretty_error = "Not enough AP to level up that high!";
                     } else {
-                        Log.d("GameState/LevelUp", error);
+                        Log.e("GameState/LevelUp", error);
                         pretty_error = error;
                     }
                     super.handleError(pretty_error);
                 }
             });
-        } catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
 
@@ -419,33 +410,26 @@ public class GameState
                 }
             });
 
-        }
-        catch (InterruptedException | JSONException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
     public void intGetNumberOfInvites(final Handler handler)
     {
-        try {
-            checkInterface();
+        checkInterface();
 
-            mInterface.request(mHandshake, "playerUndecorated/getInviteInfo", null, null, new RequestResult(handler) {
-                @Override
-                public void handleResult(JSONObject result) {
-                    try {
-                        getData().putInt("NumInvites", result.getInt("numAvailableInvites"));
-                    }
-                    catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+        mInterface.request(mHandshake, "playerUndecorated/getInviteInfo", null, null, new RequestResult(handler) {
+            @Override
+            public void handleResult(JSONObject result) {
+                try {
+                    getData().putInt("NumInvites", result.getInt("numAvailableInvites"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-            });
+            }
+        });
 
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     public void intInviteUser(final String email, final String customMessage, final Handler handler)
@@ -468,8 +452,7 @@ public class GameState
                     }
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -499,8 +482,7 @@ public class GameState
                     }
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -516,8 +498,7 @@ public class GameState
             params.put("params", nicknames);
 
             mInterface.request(mHandshake, "playerUndecorated/persistNickname", null, params, new RequestResult(handler));
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -533,8 +514,7 @@ public class GameState
             params.put("params", factions);
 
             mInterface.request(mHandshake, "playerUndecorated/chooseFaction", null, params, new RequestResult(handler));
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -578,8 +558,7 @@ public class GameState
                     }
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -605,8 +584,7 @@ public class GameState
                     processGameBasket(gameBasket);
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -677,8 +655,8 @@ public class GameState
                     HashMap<String, ItemBase> items = new HashMap<>();
                     for (ItemBase item: gameBasket.getInventory()) {
                         items.put(item.getEntityGuid(), item);
-                        getData().putSerializable("items", items);
                     }
+                    getData().putSerializable("items", items);
                 }
 
                 @Override
@@ -707,8 +685,7 @@ public class GameState
                 }
 
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -777,8 +754,7 @@ public class GameState
                     super.finished();
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -846,8 +822,7 @@ public class GameState
                 }
 
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -874,8 +849,7 @@ public class GameState
                     processGameBasket(gameBasket);
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -901,8 +875,7 @@ public class GameState
                     processGameBasket(gameBasket);
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -940,8 +913,7 @@ public class GameState
                     }
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -966,8 +938,7 @@ public class GameState
                     processGameBasket(gameBasket);
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -1013,8 +984,7 @@ public class GameState
                     super.handleResult(result);
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -1062,7 +1032,7 @@ public class GameState
                     super.handleResult(result);
                 }
             });
-        } catch (InterruptedException | JSONException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -1107,8 +1077,7 @@ public class GameState
                     super.handleResult(result);
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -1133,8 +1102,7 @@ public class GameState
                     processGameBasket(gameBasket);
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -1159,8 +1127,7 @@ public class GameState
                     processGameBasket(gameBasket);
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -1183,8 +1150,7 @@ public class GameState
                     // TODO: don't know the result yet
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -1205,8 +1171,7 @@ public class GameState
                     processGameBasket(gameBasket);
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -1240,7 +1205,7 @@ public class GameState
                     processGameBasket(gameBasket);
                 }
             });
-        } catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -1260,8 +1225,7 @@ public class GameState
                     processGameBasket(gameBasket);
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -1273,19 +1237,14 @@ public class GameState
 
     public void intGetUploadUrl(final Handler handler)
     {
-        try {
-            checkInterface();
+        checkInterface();
 
-            mInterface.request(mHandshake, "playerUndecorated/getUploadUrl", null, null, new RequestResult(handler) {
-                @Override
-                public void handleResult(String result) {
-                    getData().putString("Url", result);
-                }
-            });
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        mInterface.request(mHandshake, "playerUndecorated/getUploadUrl", null, null, new RequestResult(handler) {
+            @Override
+            public void handleResult(String result) {
+                getData().putString("Url", result);
+            }
+        });
     }
 
     public void intUploadPortalPhotoByUrl(String requestId, String imageUrl, final Handler handler)
@@ -1312,8 +1271,7 @@ public class GameState
                     // TODO: UNDONE
                 }
             });
-        }
-        catch (JSONException | InterruptedException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }

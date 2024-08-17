@@ -160,8 +160,7 @@ public class Interface
     }
 
     public void request(final Handshake handshake, final String requestString, final Location playerLocation,
-            final JSONObject requestParams, final RequestResult result) throws InterruptedException
-    {
+                        final JSONObject requestParams, final RequestResult result) {
         if (!handshake.isValid())
             throw new RuntimeException("handshake is not valid");
 

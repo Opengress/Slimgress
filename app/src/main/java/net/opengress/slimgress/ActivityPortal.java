@@ -3,12 +3,14 @@ package net.opengress.slimgress;
 import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColor;
 import static net.opengress.slimgress.ViewHelpers.getPrettyItemName;
+import static net.opengress.slimgress.ViewHelpers.putItemInMap;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -121,9 +123,15 @@ public class ActivityPortal extends AppCompatActivity {
             return false;
         });
 
-        findViewById(R.id.hackButton).setOnClickListener(v -> mGame.intHackPortal(portal, hackResultHandler));
+        findViewById(R.id.hackButton).setOnClickListener(v -> {
+            findViewById(R.id.hackButton).setEnabled(false);
+            ((Button) findViewById(R.id.hackButton)).setText(R.string.hacking_in_progress);
+            mGame.intHackPortal(portal, hackResultHandler);
+        });
         findViewById(R.id.hackButton).setOnLongClickListener(v -> {
             // TODO: upgrade to glyph hacking stuff
+            findViewById(R.id.hackButton).setEnabled(false);
+            ((Button) findViewById(R.id.hackButton)).setText(R.string.hacking_in_progress);
             mGame.intHackPortal(portal, hackResultHandler);
             return false;
         });
@@ -206,14 +214,6 @@ public class ActivityPortal extends AppCompatActivity {
         }
 
         return bundle;
-    }
-
-    private void putItemInMap(@NonNull HashMap<String, Integer> items, String name) {
-        if (!items.containsKey(name)) {
-            items.put(name, 1);
-        } else {
-            items.put(name, Objects.requireNonNull(items.get(name)));
-        }
     }
 
 }

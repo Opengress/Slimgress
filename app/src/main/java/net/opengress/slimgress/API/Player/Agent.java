@@ -21,15 +21,11 @@
 
 package net.opengress.slimgress.API.Player;
 
-import net.opengress.slimgress.API.Knobs.PlayerLevelKnobs;
 import net.opengress.slimgress.API.Knobs.TeamKnobs;
 import net.opengress.slimgress.SlimgressApplication;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-
-import java.util.Map;
-import java.util.Objects;
 
 public class Agent extends PlayerEntity
 {
@@ -59,19 +55,20 @@ public class Agent extends PlayerEntity
 
     public int getLevel()
     {
-        // TODO: more efficient?
-        // also TODO: badges and stuff. levels currently capped at 8 because badges not implemented
-        // TODO: CHECK: is this right - what about levelUp? Seems the server DOES know your level.
-        //  Check ancient handshakes!
-
-        Map<String, PlayerLevelKnobs.PlayerLevel> playerLevels = SlimgressApplication.getInstance().getGame().getKnobs().getPlayerLevelKnobs().getPlayerLevelsMap();
-
-        for (int i = playerLevels.size() - 1; i >= 0; i--) {
-            if (this.getAp() >= Objects.requireNonNull(playerLevels.get(String.valueOf(i))).getApRequired())
-                return Math.min(i, 8);
-        }
-
-        throw new IndexOutOfBoundsException("agent level could not be retrieved");
+        return getVerifiedLevel();
+//        // TODO: more efficient?
+//        // also TODO: badges and stuff. levels currently capped at 8 because badges not implemented
+//        // TODO: CHECK: is this right - what about levelUp? Seems the server DOES know your level.
+//        //  Check ancient handshakes!
+//
+//        Map<String, PlayerLevelKnobs.PlayerLevel> playerLevels = SlimgressApplication.getInstance().getGame().getKnobs().getPlayerLevelKnobs().getPlayerLevelsMap();
+//
+//        for (int i = playerLevels.size() - 1; i >= 0; i--) {
+//            if (this.getAp() >= Objects.requireNonNull(playerLevels.get(String.valueOf(i))).getApRequired())
+//                return Math.min(i, 8);
+//        }
+//
+//        throw new IndexOutOfBoundsException("agent level could not be retrieved");
     }
 
     public int getEnergyMax()
