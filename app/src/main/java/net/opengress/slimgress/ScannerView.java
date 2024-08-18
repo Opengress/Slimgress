@@ -750,6 +750,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     }
 
     private void setSlurpableXMParticles() {
+        if (mGame.getAgent() == null) {
+            return;
+        }
         // FIXME maybe don't try to slurp particles that aren't needed to fill the tank
         //  -- note that we may need to sort the particles and pick out the optimal configuration
         //  -- also note that if we're really cheeky we may want/be able to do that serverside

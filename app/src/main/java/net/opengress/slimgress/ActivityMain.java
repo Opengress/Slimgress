@@ -22,6 +22,7 @@
 package net.opengress.slimgress;
 
 import static net.opengress.slimgress.API.Common.Utils.getErrorStringFromAPI;
+import static net.opengress.slimgress.API.Common.Utils.notBouncing;
 import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColor;
 import static net.opengress.slimgress.ViewHelpers.getPrettyItemName;
@@ -101,7 +102,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     private synchronized void levelUp(Integer level) {
-        if (isLevellingUp) {
+        if (isLevellingUp || !notBouncing("levelUp", 10000)) {
             Log.d("Main", "Not levelling up, because we are ALREADY DOING THAT");
             return; // Exit if the function is already running
         }
@@ -126,13 +127,15 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 if (error != null && !error.isEmpty()) {
                     DialogInfo dialog = new DialogInfo(this);
                     dialog.setMessage(error).setDismissDelay(1500).show();
+                    isLevellingUp = false;
                 } else {
                     showLevelUpDialog(generateFieldKitMap(data));
                 }
                 return false;
             }));
-        } finally {
+        } catch (Exception e) {
             isLevellingUp = false;
+            throw e;
         }
     }
 
@@ -264,13 +267,17 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
 
+    @SuppressLint("DefaultLocale")
     public void showLevelUpDialog(HashMap<String, Integer> items) {
         DialogLevelUp dialog = new DialogLevelUp(this);
         int level = mGame.getAgent().getVerifiedLevel();
-        dialog.setMessage("LEVEL " + level, getColorFromResources(getResources(), getLevelColor(level)));
+        dialog.setMessage(String.format("LEVEL %d", level), getColorFromResources(getResources(), getLevelColor(level)));
         dialog.setCancelable(true); // Allow dialog to be dismissed by tapping outside
 
-        dialog.setOnDismissListener(dialog1 -> showNextDialog(items));
+        dialog.setOnDismissListener(dialog1 -> {
+            showNextDialog(items);
+            isLevellingUp = false;
+        });
 
         // Add a share button
         ImageButton shareButton = dialog.findViewById(R.id.share_button);
@@ -315,6 +322,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     @SuppressLint("DefaultLocale")
     public void showNextDialog(HashMap<String, Integer> items) {
         DialogHackResult newDialog1 = new DialogHackResult(this);
+        Log.d("Main", "Seeing level " + mGame.getAgent().getVerifiedLevel());
         newDialog1.setTitle(String.format("Receiving Level %d field kit...", mGame.getAgent().getVerifiedLevel()));
         newDialog1.setItems(items);
         newDialog1.show();

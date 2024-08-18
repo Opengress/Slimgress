@@ -783,11 +783,33 @@ public class FragmentInventory extends Fragment {
         List<ItemBase> items = inv.getItems(ItemType.PlayerPowerup);
 
         ArrayList<String> ids = new ArrayList<>();
+
+        LinkedList<ItemPlayerPowerup> skipItems = new LinkedList<>();
         for (ItemBase item1 : items) {
             ItemPlayerPowerup theItem1 = (ItemPlayerPowerup) item1;
 
+            // skip items that have already been checked
+            if (skipItems.contains(theItem1)) {
+                continue;
+            }
+
             String differentiator = theItem1.getDisplayName();
             ids.add(theItem1.getEntityGuid());
+
+            // check for multiple powerups with the same type
+            for (ItemBase item2 : items) {
+                ItemPlayerPowerup theItem2 = (ItemPlayerPowerup) item2;
+
+                // don't check the doubles
+                if (theItem2 == theItem1) {
+                    continue;
+                }
+
+                if (theItem1.getPlayerPowerupType().equals(theItem2.getPlayerPowerupType())) {
+                    skipItems.add(theItem2);
+                    ids.add(item2.getEntityGuid());
+                }
+            }
 
             InventoryListItem key = new InventoryListItem(differentiator, ItemType.PlayerPowerup, getDrawable(requireContext(), R.drawable.dap), R.drawable.dap, ids, items.get(0).getItemRarity());
             mGroupOther.add(key);

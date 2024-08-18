@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class Inventory {
     private final Map<String, ItemBase> mItems;
@@ -58,12 +59,12 @@ public class Inventory {
         }
     }
 
-    public final Map<String, ItemBase> getItems() {
-        return mItems;
-    }
-
     public final List<ItemBase> getItemsList() {
         return new ArrayList<>(mItems.values());
+    }
+
+    public final Map<String, ItemBase> getItems() {
+        return mItems;
     }
 
     public final List<ItemBase> getItems(ItemBase.ItemType type) {
@@ -90,12 +91,19 @@ public class Inventory {
         return items;
     }
 
-    public final void removeItem(String guid) {
-        mItems.remove(guid);
-    }
 
-    public final void removeItem(ItemBase item) {
-        removeItem(item.getEntityGuid());
+    public final List<ItemBase> getItems(ItemBase.ItemType type, String displayName) {
+        // currently seems like a reasonavble way to fetch DoubleAP objects from DB
+        List<ItemBase> items = new LinkedList<>();
+        for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
+            ItemBase item = pair.getValue();
+            if (item.getItemType() == type &&
+                    Objects.equals(item.getDisplayName(), displayName)) {
+                items.add(item);
+            }
+        }
+
+        return items;
     }
 
     public final List<ItemBase> getItems(ItemBase.ItemType type, int accessLevel) {
@@ -163,5 +171,13 @@ public class Inventory {
         }
 
         return items;
+    }
+
+    public final void removeItem(String guid) {
+        mItems.remove(guid);
+    }
+
+    public final void removeItem(ItemBase item) {
+        removeItem(item.getEntityGuid());
     }
 }
