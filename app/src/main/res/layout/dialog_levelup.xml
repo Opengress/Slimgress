@@ -51,7 +51,7 @@
             android:layout_gravity="bottom|right"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/share"
-            android:src="@drawable/person" />
+            android:src="@drawable/share_icon" />
     </LinearLayout>
 </LinearLayout>
 
