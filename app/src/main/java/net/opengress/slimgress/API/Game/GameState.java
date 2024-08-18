@@ -334,7 +334,7 @@ public class GameState
         });
     }
 
-    public void intLevelUp(int level, final Handler handler) {
+    public synchronized void intLevelUp(int level, final Handler handler) {
         try {
             checkInterface();
 
