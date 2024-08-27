@@ -30,16 +30,17 @@ import android.os.StrictMode;
 
 import androidx.lifecycle.ViewModelProvider;
 
-import net.opengress.slimgress.API.Game.GameState;
-import net.opengress.slimgress.API.Plext.PlextBase;
-import net.opengress.slimgress.API.ViewModels.APGainsViewModel;
-import net.opengress.slimgress.API.ViewModels.CommsViewModel;
-import net.opengress.slimgress.API.ViewModels.DeletedEntityGuidsViewModel;
-import net.opengress.slimgress.API.ViewModels.InventoryViewModel;
-import net.opengress.slimgress.API.ViewModels.LevelUpViewModel;
-import net.opengress.slimgress.API.ViewModels.LocationViewModel;
-import net.opengress.slimgress.API.ViewModels.PlayerDamagesViewModel;
-import net.opengress.slimgress.API.ViewModels.PlayerDataViewModel;
+import net.opengress.slimgress.activity.ActivityMain;
+import net.opengress.slimgress.api.Game.GameState;
+import net.opengress.slimgress.api.Plext.PlextBase;
+import net.opengress.slimgress.api.ViewModels.APGainsViewModel;
+import net.opengress.slimgress.api.ViewModels.CommsViewModel;
+import net.opengress.slimgress.api.ViewModels.DeletedEntityGuidsViewModel;
+import net.opengress.slimgress.api.ViewModels.InventoryViewModel;
+import net.opengress.slimgress.api.ViewModels.LevelUpViewModel;
+import net.opengress.slimgress.api.ViewModels.LocationViewModel;
+import net.opengress.slimgress.api.ViewModels.PlayerDamagesViewModel;
+import net.opengress.slimgress.api.ViewModels.PlayerDataViewModel;
 
 import org.acra.ACRA;
 import org.acra.config.CoreConfigurationBuilder;
@@ -58,6 +59,7 @@ public class SlimgressApplication extends Application {
     private PlayerDataViewModel mPlayerDataViewModel;
     private CommsViewModel mCommsViewModel;
     private LevelUpViewModel mLevelUpViewModel;
+    private ActivityMain mMainActivity;
 
     private final Handler mSepticycleHander = new Handler();
 
@@ -135,7 +137,7 @@ public class SlimgressApplication extends Application {
 
     }
 
-    void postGameScore() {
+    public void postGameScore() {
         long currentTimeMillis = System.currentTimeMillis();
         long unixEpochMillis = 0; // Unix epoch time in milliseconds
         long fiveHoursMillis = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
@@ -160,6 +162,14 @@ public class SlimgressApplication extends Application {
 
     public GameState getGame() {
         return mGame;
+    }
+
+    public void setMainActivity(ActivityMain activity) {
+        mMainActivity = activity;
+    }
+
+    public ActivityMain getMainActivity() {
+        return mMainActivity;
     }
 
     public LocationViewModel getLocationViewModel() {

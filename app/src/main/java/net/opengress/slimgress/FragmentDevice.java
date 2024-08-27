@@ -33,7 +33,8 @@ import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 
-import net.opengress.slimgress.API.Game.GameState;
+import net.opengress.slimgress.activity.ActivityCredits;
+import net.opengress.slimgress.api.Game.GameState;
 
 public class FragmentDevice extends Fragment
 {

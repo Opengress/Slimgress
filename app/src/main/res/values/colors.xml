@@ -20,6 +20,7 @@
         Don't know how correct the level colours are.
         Inlined on https://ingress.fandom.com/wiki/Resonator on 20 July 2024
     -->
+    <!--  See also https://github.com/xosofox/IPAS/blob/master/js/settings.js  -->
     <color name="level_one">#F0FF20</color>
     <color name="level_two">#FFB01C</color>
     <color name="level_three">#FF8733</color>

@@ -22,11 +22,11 @@
 package net.opengress.slimgress;
 
 import static androidx.core.content.ContextCompat.getDrawable;
-import static net.opengress.slimgress.API.Common.Utils.notBouncing;
 import static net.opengress.slimgress.ViewHelpers.getImageForCubeLevel;
 import static net.opengress.slimgress.ViewHelpers.getImageForResoLevel;
 import static net.opengress.slimgress.ViewHelpers.getImageForUltrastrikeLevel;
 import static net.opengress.slimgress.ViewHelpers.getImageForXMPLevel;
+import static net.opengress.slimgress.api.Common.Utils.notBouncing;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -48,20 +48,20 @@ import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 
-import net.opengress.slimgress.API.Common.Location;
-import net.opengress.slimgress.API.Game.GameState;
-import net.opengress.slimgress.API.Game.Inventory;
-import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
-import net.opengress.slimgress.API.Item.ItemBase;
-import net.opengress.slimgress.API.Item.ItemBase.ItemType;
-import net.opengress.slimgress.API.Item.ItemBase.Rarity;
-import net.opengress.slimgress.API.Item.ItemCapsule;
-import net.opengress.slimgress.API.Item.ItemFlipCard;
-import net.opengress.slimgress.API.Item.ItemFlipCard.FlipCardType;
-import net.opengress.slimgress.API.Item.ItemMedia;
-import net.opengress.slimgress.API.Item.ItemMod;
-import net.opengress.slimgress.API.Item.ItemPlayerPowerup;
-import net.opengress.slimgress.API.Item.ItemPortalKey;
+import net.opengress.slimgress.api.Common.Location;
+import net.opengress.slimgress.api.Game.GameState;
+import net.opengress.slimgress.api.Game.Inventory;
+import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
+import net.opengress.slimgress.api.Item.ItemBase;
+import net.opengress.slimgress.api.Item.ItemBase.ItemType;
+import net.opengress.slimgress.api.Item.ItemBase.Rarity;
+import net.opengress.slimgress.api.Item.ItemCapsule;
+import net.opengress.slimgress.api.Item.ItemFlipCard;
+import net.opengress.slimgress.api.Item.ItemFlipCard.FlipCardType;
+import net.opengress.slimgress.api.Item.ItemMedia;
+import net.opengress.slimgress.api.Item.ItemMod;
+import net.opengress.slimgress.api.Item.ItemPlayerPowerup;
+import net.opengress.slimgress.api.Item.ItemPortalKey;
 
 import java.text.Collator;
 import java.util.ArrayList;
@@ -671,14 +671,14 @@ public class FragmentInventory extends Fragment {
 
         String descr = "ADA Refactor";
         if (!adas.isEmpty()) {
-            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, adas, items.get(0).getItemRarity());
+            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(requireContext(), R.drawable.ada), R.drawable.ada, adas, items.get(0).getItemRarity());
             weapon.setFlipCardType(FlipCardType.Ada);
             mGroupWeapons.add(weapon);
         }
 
         descr = "Jarvis Virus";
         if (!jarvises.isEmpty()) {
-            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(requireContext(), R.drawable.no_image), R.drawable.no_image, jarvises, items.get(0).getItemRarity());
+            InventoryListItem weapon = new InventoryListItem(descr, ItemType.FlipCard, getDrawable(requireContext(), R.drawable.jarvis), R.drawable.jarvis, jarvises, items.get(0).getItemRarity());
             weapon.setFlipCardType(FlipCardType.Jarvis);
             mGroupWeapons.add(weapon);
         }

@@ -108,4 +108,10 @@
     <string name="comms_transmit">Transmit</string>
     <string name="xm_value">XM Value:</string>
     <string name="recycle_something">"RECYCLE: "</string>
+    <string name="fire_xmp">FIRE XMP</string>
+    <string name="new_portal">NEW PORTAL</string>
+    <string name="navigate">NAVIGATE</string>
+    <string name="go_to_opr">OPR</string>
+    <string name="fire_button_text">FIRE</string>
+    <string name="done_button_text">DONE</string>
 </resources>

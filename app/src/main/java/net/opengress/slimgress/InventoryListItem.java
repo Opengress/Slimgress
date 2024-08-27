@@ -4,9 +4,9 @@ import android.graphics.drawable.Drawable;
 
 import com.google.common.geometry.S2LatLng;
 
-import net.opengress.slimgress.API.Item.ItemBase.ItemType;
-import net.opengress.slimgress.API.Item.ItemBase.Rarity;
-import net.opengress.slimgress.API.Item.ItemFlipCard.FlipCardType;
+import net.opengress.slimgress.api.Item.ItemBase.ItemType;
+import net.opengress.slimgress.api.Item.ItemBase.Rarity;
+import net.opengress.slimgress.api.Item.ItemFlipCard.FlipCardType;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;

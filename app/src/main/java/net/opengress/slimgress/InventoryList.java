@@ -40,12 +40,13 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
-import net.opengress.slimgress.API.Common.Location;
-import net.opengress.slimgress.API.Game.GameState;
-import net.opengress.slimgress.API.Game.Inventory;
-import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
-import net.opengress.slimgress.API.Item.ItemBase;
-import net.opengress.slimgress.API.Item.ItemPortalKey;
+import net.opengress.slimgress.activity.ActivityInventoryItem;
+import net.opengress.slimgress.api.Common.Location;
+import net.opengress.slimgress.api.Game.GameState;
+import net.opengress.slimgress.api.Game.Inventory;
+import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
+import net.opengress.slimgress.api.Item.ItemBase;
+import net.opengress.slimgress.api.Item.ItemPortalKey;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -217,7 +218,7 @@ public class InventoryList extends BaseExpandableListAdapter {
                         if (reso == null) {
                             continue;
                         }
-                        int resId = resoImageIds[reso.slot - 1];
+                        int resId = resoImageIds[reso.slot];
                         ((ImageView) convertView.findViewById(resId)).setImageResource(getImageForResoLevel(reso.level));
                         int alpha = (int) (((float) reso.energyTotal / reso.getMaxEnergy()) * 255); // Convert percentage to alpha value (0-255)
                         ((ImageView) convertView.findViewById(resId)).setImageAlpha(alpha);

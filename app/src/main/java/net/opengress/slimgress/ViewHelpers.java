@@ -14,8 +14,8 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import net.opengress.slimgress.API.Interface.APGain;
-import net.opengress.slimgress.API.Item.ItemBase;
+import net.opengress.slimgress.api.Interface.APGain;
+import net.opengress.slimgress.api.Item.ItemBase;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -92,6 +92,8 @@ public class ViewHelpers {
         };
     }
 
+    // all these getImageForXYZ things could just go through one method to rule them all
+
     public static int getImageForResoLevel(int level) {
         int drawable = R.drawable.r1;
         switch (level) {
@@ -149,6 +151,26 @@ public class ViewHelpers {
     }
 
     /**
+     * Gets a bearing indicated in degrees from one of the 8 reso slot numbers.
+     *
+     * @param slot The slot number from 0 to 7 inclusive
+     * @return The bearing in degrees
+     */
+    public static int getBearingFromSlot(int slot) {
+        return switch (slot) {
+            case 0 -> 90;
+            case 1 -> 45;
+            case 2 -> 0;
+            case 3 -> 315;
+            case 4 -> 270;
+            case 5 -> 225;
+            case 6 -> 180;
+            case 7 -> 135;
+            default -> throw new IllegalStateException("Unexpected value: " + slot);
+        };
+    }
+
+    /**
      * @noinspection deprecation
      */
     public static int getColorFromResources(Resources r, int id) {
@@ -193,7 +215,7 @@ public class ViewHelpers {
 
     @SuppressLint("DefaultLocale")
     @NonNull
-    static String getPrettyItemName(@NonNull ItemBase item, Resources resources) {
+    public static String getPrettyItemName(@NonNull ItemBase item, Resources resources) {
         String html;
         // rarity will maybe eventually expressed by colour, not text. that's why html
         switch (item.getItemRarity()) {
