@@ -22,8 +22,11 @@
 package net.opengress.slimgress;
 
 import static android.content.Context.SENSOR_SERVICE;
-import static net.opengress.slimgress.API.Item.ItemBase.ItemType.PortalKey;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromAsset;
+import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
+import static net.opengress.slimgress.ViewHelpers.getImageForResoLevel;
+import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.api.Item.ItemBase.ItemType.PortalKey;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -35,6 +38,8 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -47,16 +52,19 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -64,18 +72,22 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import net.opengress.slimgress.API.Common.Team;
-import net.opengress.slimgress.API.Game.GameState;
-import net.opengress.slimgress.API.Game.XMParticle;
-import net.opengress.slimgress.API.GameEntity.GameEntityBase;
-import net.opengress.slimgress.API.GameEntity.GameEntityControlField;
-import net.opengress.slimgress.API.GameEntity.GameEntityLink;
-import net.opengress.slimgress.API.GameEntity.GameEntityPortal;
-import net.opengress.slimgress.API.Item.ItemPortalKey;
-import net.opengress.slimgress.API.Knobs.ScannerKnobs;
-import net.opengress.slimgress.API.Knobs.TeamKnobs;
+import net.opengress.slimgress.activity.ActivityMain;
+import net.opengress.slimgress.activity.ActivityPortal;
+import net.opengress.slimgress.api.Common.Team;
+import net.opengress.slimgress.api.Game.GameState;
+import net.opengress.slimgress.api.Game.XMParticle;
+import net.opengress.slimgress.api.GameEntity.GameEntityBase;
+import net.opengress.slimgress.api.GameEntity.GameEntityControlField;
+import net.opengress.slimgress.api.GameEntity.GameEntityLink;
+import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
+import net.opengress.slimgress.api.Item.ItemPortalKey;
+import net.opengress.slimgress.api.Knobs.ScannerKnobs;
+import net.opengress.slimgress.api.Knobs.TeamKnobs;
+import net.opengress.slimgress.dialog.DialogHackResult;
 
 import org.osmdroid.config.Configuration;
+import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.tileprovider.MapTileProviderBasic;
 import org.osmdroid.tileprovider.tilesource.ITileSource;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
@@ -83,6 +95,7 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.GroundOverlay;
+import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
@@ -91,6 +104,7 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -100,9 +114,11 @@ import java.util.Objects;
 import java.util.Set;
 
 public class ScannerView extends Fragment implements SensorEventListener, LocationListener {
+    // ===========================================================
+    // Hardcore internal stuff
+    // ===========================================================
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
-    private MapView mMap = null;
 
     // ===========================================================
     // Knobs quick reference
@@ -114,8 +130,29 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     private final int mUpdateDistanceM = mScannerKnobs.getUpdateDistanceM();
 
 
+    // ===========================================================
+    // Map basics
+    // ===========================================================
+    final int TOP_LEFT_ANGLE = 315;
+    final int BOTTOM_RIGHT_ANGLE = 135;
+    private MapView mMap = null;
     private final HashMap<String, Bitmap> mIcons = new HashMap<>();
     private final HashMap<String, GroundOverlay> mPortalMarkers = new HashMap<>();
+    /*
+    do it by reso guid:
+    - can receive guid in deletedentitiesguids (when?) and delete it directly
+    - CAN'T delete it with portal deletion (unless we use another data structure)
+    do it by portalguid/slot:
+    - can do it from portal damages
+    - can delete them all when portal is deleted
+    - CAN'T find them by guid (but when do we want to?)
+    if we do it the second way, the server can never delete a reso except when you attack it
+    if we do it the first way, we need to ensure that the reso always gets deleted on upgrade or other-player-attack
+     */
+    // for getting rid of the resonators when we get rid of the portals
+    private final HashMap<String, HashMap<Integer, Pair<GroundOverlay, Polyline>>> mResonatorMarkers = new HashMap<>();
+    // for finding the portal marker when we delete it by Guid
+    private final HashMap<String, Pair<String, Integer>> mResonatorToPortalSlotLookup = new HashMap<>();
     private final HashMap<Long, GroundOverlay> mXMMarkers = new HashMap<>();
     private final HashMap<String, Polyline> mLines = new HashMap<>();
     private final HashMap<String, Polygon> mPolygons = new HashMap<>();
@@ -134,15 +171,16 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     // FIXME this should be used to set "location inaccurate" if updates mysteriously stop
     private Date mLastLocationAcquired = null;
     private GeoPoint mLastLocation = null;
-    private final GroundOverlay mActionRadius = new GroundOverlay();
-    private final GroundOverlay mPlayerCursor = new GroundOverlay();
 
 
     // ===========================================================
     // Other (location)
     // ===========================================================
+    private final GroundOverlay mActionRadius = new GroundOverlay();
+    private final GroundOverlay mPlayerCursor = new GroundOverlay();
     private LocationManager mLocationManager = null;
     private MyLocationNewOverlay mLocationOverlay = null;
+    private AnimatedCircleOverlay mSonarOverlay;
 
     // device sensor manager
     private SensorManager mSensorManager;
@@ -152,6 +190,27 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     private final int MAP_ROTATION_ARBITRARY = 2;
     private final int MAP_ROTATION_FLOATING = 3;
     private int CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
+
+    // ===========================================================
+    // UX/UI Stuff - Events
+    // ===========================================================
+    private boolean isRotating = false;
+    private boolean isDoubleClick = false;
+    MapEventsReceiver mReceive = new MapEventsReceiver() {
+        @Override
+        public boolean singleTapConfirmedHelper(GeoPoint p) {
+            return false;
+        }
+
+        @Override
+        public boolean longPressHelper(GeoPoint p) {
+            if (!isRotating && !isDoubleClick) {
+                ((ActivityMain) requireActivity()).showFireMenu(p);
+                return true;
+            }
+            return false;
+        }
+    };
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -199,7 +258,8 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
              this may or may not be the correct solution,
              as basically it might mean more compositing work. we shall see later, maybe.
          */
-        mPlayerCursor.setPosition(location.destinationPoint(15, 315), location.destinationPoint(15, 135));
+        mPlayerCursor.setPosition(location.destinationPoint(15, TOP_LEFT_ANGLE), location.destinationPoint(15, BOTTOM_RIGHT_ANGLE));
+        mSonarOverlay.updateLocation(location);
         Bitmap cursor = mIcons.get("playercursor");
         Matrix matrix = new Matrix();
         matrix.postRotate(Math.round(bearing));
@@ -227,7 +287,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
     public void onLocationChanged(@NonNull Location location) {
         mCurrentLocation = new GeoPoint(location);
-        var loc = new net.opengress.slimgress.API.Common.Location(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+        var loc = new net.opengress.slimgress.api.Common.Location(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
         mApp.getLocationViewModel().setLocationData(loc);
         mGame.updateLocation(loc);
         mLastLocationAcquired = new Date();
@@ -257,7 +317,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         if (mRotationVectorSensor == null) {
             drawPlayerCursor(currentLocation, bearing);
         }
-        mActionRadius.setPosition(currentLocation.destinationPoint(56.57, 315), currentLocation.destinationPoint(56.57, 135));
+        mActionRadius.setPosition(currentLocation.destinationPoint(56.57, TOP_LEFT_ANGLE), currentLocation.destinationPoint(56.57, BOTTOM_RIGHT_ANGLE));
         mActionRadius.setImage(mIcons.get("actionradius"));
         mMap.getOverlayManager().add(mActionRadius);
 
@@ -293,80 +353,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mRotationVectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR);
 
         mApp.getDeletedEntityGuidsModel().getDeletedEntityGuids().observe(this, this::onReceiveDeletedEntityGuids);
+        mActionRadius.setTransparency(0.5f);
 
         mPortalActivityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK) {
-                        var data = result.getData();
-                        if (mGame.getLocation() != null) {
-                            final Handler uiHandler = new Handler();
-                            uiHandler.post(() -> {
-                                // guard against scanning too fast if request fails
-                                mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
-                                updateWorld(uiHandler);
-                            });
-
-                        }
-
-                        if (data == null) {
-                            return;
-                        }
-
-                        Bundle hackResultBundle = data.getBundleExtra("result");
-                        assert hackResultBundle != null;
-                        @SuppressWarnings("unchecked")
-                        HashMap<String, Integer> items = (HashMap<String, Integer>) hackResultBundle.getSerializable("items");
-                        @SuppressWarnings("unchecked")
-                        HashMap<String, Integer> bonusItems = (HashMap<String, Integer>) hackResultBundle.getSerializable("bonusItems");
-                        String error = hackResultBundle.getString("error");
-
-                        if (error != null) {
-                            int portalLevel = mGame.getCurrentPortal().getPortalLevel();
-                            Team portalTeam = mGame.getCurrentPortal().getPortalTeam();
-                            if (portalTeam.toString().equalsIgnoreCase(mGame.getAgent().getTeam().toString())) {
-                                mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackFriendlyCostByLevel().get(portalLevel));
-                            } else if (portalTeam.toString().equalsIgnoreCase("neutral")) {
-                                mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackNeutralCostByLevel().get(portalLevel));
-                            } else {
-                                mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackEnemyCostByLevel().get(portalLevel));
-                            }
-
-                            var main = ((ActivityMain) getActivity());
-                            if (main != null) {
-                                main.updateAgent();
-                            }
-
-                            DialogHackResult newDialog = new DialogHackResult(getContext());
-//                newDialog.setTitle("");
-                            newDialog.setMessage(error);
-                            newDialog.show();
-                        } else {
-                            if (items != null) {
-                                DialogHackResult newDialog = new DialogHackResult(getContext());
-                                newDialog.setTitle("Acquired items");
-                                newDialog.setItems(items);
-                                newDialog.show();
-
-                                if (bonusItems != null) {
-                                    newDialog.setOnDismissListener(dialog -> {
-                                        DialogHackResult newDialog1 = new DialogHackResult(getContext());
-                                        newDialog1.setTitle("Bonus items");
-                                        newDialog1.setItems(bonusItems);
-                                        newDialog1.show();
-                                    });
-                                }
-
-                            } else if (bonusItems != null) {
-                                DialogHackResult newDialog = new DialogHackResult(getContext());
-                                newDialog.setTitle("Bonus items");
-                                newDialog.setItems(bonusItems);
-                                newDialog.show();
-                            }
-
-                        }
-                    }
-                }
+                this::onPortalActivityResult
         );
     }
 
@@ -387,6 +378,19 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             if (mPortalMarkers.containsKey(guid)) {
                 mMap.getOverlays().remove(mPortalMarkers.get(guid));
                 mPortalMarkers.remove(guid);
+                continue;
+            }
+
+            // for resonators
+            if (mResonatorToPortalSlotLookup.containsKey(guid)) {
+                var portal = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).first;
+                var slot = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).second;
+                var resoParts = Objects.requireNonNull(mResonatorMarkers.get(portal)).get(slot);
+                assert resoParts != null;
+                mMap.getOverlays().remove(resoParts.first);
+                mMap.getOverlays().remove(resoParts.second);
+                mResonatorToPortalSlotLookup.remove(guid);
+                Objects.requireNonNull(mResonatorMarkers.get(portal)).remove(slot);
                 continue;
             }
 
@@ -425,6 +429,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mMap = new MapView(inflater.getContext(), tileProvider) {
             private double mCurrAngle = 0;
             private double mPrevAngle = 0;
+            private long lastClickTime = 0;
+            private float startY = 0;
+            private static final float ZOOM_SENSITIVITY = 0.1f;
 
             @Override
             public boolean onTouchEvent(MotionEvent event) {
@@ -437,19 +444,59 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                     double angrad = Math.atan2(x - xc, yc - y);
 
                     switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN -> mCurrAngle = Math.toDegrees(angrad);
+                        case MotionEvent.ACTION_DOWN -> {
+                            // by definition, not rotating. remember for menu
+                            isRotating = false;
+                            // get ready in case we rotate
+                            mCurrAngle = Math.toDegrees(angrad);
+                            long clickTime = System.currentTimeMillis();
+                            if (clickTime - lastClickTime < 300) { // Double-click detected
+                                isDoubleClick = true;
+                                startY = event.getY();
+                                return true;
+                            } else {
+                                isDoubleClick = false;
+                            }
+                            lastClickTime = clickTime;
+                        }
                         case MotionEvent.ACTION_MOVE -> {
+                            if (isDoubleClick) {
+                                float currentY = event.getY();
+                                // untested jitter filter
+                                if (Math.abs(currentY - startY) >= 0.03) {
+                                    if (currentY > startY) {
+                                        getController().zoomTo(getZoomLevelDouble() - ZOOM_SENSITIVITY);
+                                    } else {
+                                        getController().zoomTo(getZoomLevelDouble() + ZOOM_SENSITIVITY);
+                                    }
+                                }
+                                startY = currentY;
+                                return true;
+                            }
                             CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
                             mPrevAngle = mCurrAngle;
                             mCurrAngle = Math.toDegrees(angrad);
-                            setMapOrientation(getMapOrientation() - (float) (mPrevAngle - mCurrAngle));
-                            return true;
+                            float rotating = (float) (mPrevAngle - mCurrAngle);
+                            setMapOrientation(getMapOrientation() - rotating);
+                            // guard against long-presses for context menu with jitter
+                            if (Math.abs(rotating) >= 0.03 || isRotating) {
+                                isRotating = true;
+                                return true;
+                            }
                         }
-                        case MotionEvent.ACTION_UP -> mPrevAngle = mCurrAngle = 0;
+                        case MotionEvent.ACTION_UP -> {
+                            isRotating = false;
+                            isDoubleClick = false;
+                            mPrevAngle = mCurrAngle = 0;
+                        }
                     }
                 } else {
                     // i assume you're doing a pinch zoom/rotate
                     CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
+//                    if (event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN) {
+//                        // Detect rotation gesture and prevent it
+//                        return true; // Return true to consume the event and prevent rotation
+//                    }
                 }
                 return super.onTouchEvent(event);
             }
@@ -490,6 +537,8 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         //On screen compass
         CompassOverlay mCompassOverlay = getCompassOverlay(context);
         mMap.getOverlays().add(mCompassOverlay);
+        MapEventsOverlay overlayEvents = new MapEventsOverlay(mReceive);
+        mMap.getOverlays().add(overlayEvents);
 
         //scales tiles to the current screen's DPI, helps with readability of labels
         mMap.setTilesScaledToDpi(true);
@@ -503,9 +552,14 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         final double latitude = Double.parseDouble(latitudeString);
         final double longitude = Double.parseDouble(longitudeString);
         mMap.setExpectedCenter(new GeoPoint(latitude, longitude));
-
-//        setHasOptionsMenu(false);
-
+        mSonarOverlay = new AnimatedCircleOverlay(mMap, 500, 60);
+        mSonarOverlay.setColor(0x33FFFF00);
+        mSonarOverlay.setWidth(1);
+        mSonarOverlay.setRunOnce(false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            mSonarOverlay.setBlendMode(BlendMode.DIFFERENCE);
+        }
+        mSonarOverlay.start();
     }
 
     private @NonNull CompassOverlay getCompassOverlay(Context context) {
@@ -671,6 +725,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
     @SuppressLint("DefaultLocale")
     private synchronized void updateWorld(final Handler uiHandler) {
+        mSonarOverlay.trigger();
         displayQuickMessage(getStringSafely(R.string.scanning_local_area));
 
         // handle interface result (on timer thread)
@@ -687,7 +742,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                         portalGUIDs.add(portalGuid);
                     }
                 }
-                mGame.intGetModifiedEntitiesByGuid(portalGUIDs.toArray(new String[0]), new Handler(m -> true));
+                if (!portalGUIDs.isEmpty()) {
+                    mGame.intGetModifiedEntitiesByGuid(portalGUIDs.toArray(new String[0]), new Handler(m -> true));
+                }
                 return true;
             }));
 
@@ -705,33 +762,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 hideQuickMessage();
             }
 
-            // draw xm particles
-            drawXMParticles();
 
-            new Thread(() -> {
-                // draw game entities
-                Map<String, GameEntityBase> entities = mGame.getWorld().getGameEntities();
-                Set<String> keys = entities.keySet();
-                for (String key : keys) {
-                    final GameEntityBase entity = entities.get(key);
+            updateScreen(uiHandler);
 
-                    uiHandler.post(() -> {
-                        assert entity != null;
-                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
-                            drawPortal((GameEntityPortal) entity);
-                        } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
-                            drawLink((GameEntityLink) entity);
-                        } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
-                            drawField((GameEntityControlField) entity);
-                        }
-                    });
-                }
-
-                mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
-                Log.d("ScannerView", "world updated");
-                displayQuickMessage(getStringSafely(R.string.scan_complete));
-                setQuickMessageTimeout();
-            }).start();
+            displayQuickMessage(getStringSafely(R.string.scan_complete));
+            setQuickMessageTimeout();
 
             return true;
         });
@@ -747,6 +782,33 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
         // get objects (on new thread)
         new Thread(() -> mGame.intGetObjectsInCells(mGame.getLocation(), resultHandler)).start();
+    }
+
+    private void updateScreen(Handler uiHandler) {
+        new Thread(() -> {
+            // draw xm particles
+            drawXMParticles();
+
+            // draw game entities
+            Map<String, GameEntityBase> entities = mGame.getWorld().getGameEntities();
+            Set<String> keys = entities.keySet();
+            for (String key : keys) {
+                final GameEntityBase entity = entities.get(key);
+
+                uiHandler.post(() -> {
+                    assert entity != null;
+                    if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
+                        drawPortal((GameEntityPortal) entity);
+                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
+                        drawLink((GameEntityLink) entity);
+                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
+                        drawField((GameEntityControlField) entity);
+                    }
+                });
+            }
+
+            mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
+        }).start();
     }
 
     private void setSlurpableXMParticles() {
@@ -769,7 +831,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
             // FIXME this is honestly the worst imaginable solution, but for now it's what i have...
             assert particle != null;
-            final net.opengress.slimgress.API.Common.Location location = particle.getCellLocation();
+            final net.opengress.slimgress.api.Common.Location location = particle.getCellLocation();
             if (location.getLatLng().distanceToAsDouble(mGame.getLocation().getLatLng()) < mActionRadiusM) {
                 if (oldXM + newXM >= maxXM) {
                     break;
@@ -798,7 +860,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             // only draw if not already in list
             if (!mXMMarkers.containsKey(particle.getCellId())) {
 
-                final net.opengress.slimgress.API.Common.Location location = particle.getCellLocation();
+                final net.opengress.slimgress.api.Common.Location location = particle.getCellLocation();
 
                 Activity activity = getActivity();
                 if (activity == null) {
@@ -814,7 +876,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                     portalIcon = mIcons.get("particle");
 
                     GroundOverlay marker = new GroundOverlay();
-                    marker.setPosition(location.getLatLng().destinationPoint(25, 315), location.getLatLng().destinationPoint(25, 135));
+                    marker.setPosition(location.getLatLng().destinationPoint(25, TOP_LEFT_ANGLE), location.getLatLng().destinationPoint(25, BOTTOM_RIGHT_ANGLE));
                     marker.setImage(portalIcon);
 
                     mMap.getOverlays().add(marker);
@@ -833,7 +895,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 mMap.getOverlays().remove(mPortalMarkers.get(guid));
                 mPortalMarkers.remove(guid);
             }
-            final net.opengress.slimgress.API.Common.Location location = portal.getPortalLocation();
+            final net.opengress.slimgress.api.Common.Location location = portal.getPortalLocation();
 
             Activity activity = getActivity();
             if (activity == null) {
@@ -864,22 +926,83 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                         return false;
                     }
                 };
-                marker.setPosition(location.getLatLng().destinationPoint(20, 315), location.getLatLng().destinationPoint(20, 135));
+                marker.setPosition(location.getLatLng().destinationPoint(20, TOP_LEFT_ANGLE), location.getLatLng().destinationPoint(20, BOTTOM_RIGHT_ANGLE));
                 marker.setImage(portalIcon);
 
                 mMap.getOverlays().add(marker);
                 mPortalMarkers.put(guid, marker);
+
+                for (var reso : portal.getPortalResonators()) {
+                    if (reso != null) {
+                        drawResonatorForPortal(portal, reso);
+                    }
+                }
             });
 
         }
     }
 
+    private void drawResonatorForPortal(GameEntityPortal portal, GameEntityPortal.LinkedResonator reso) {
+        if (portal == null || reso == null) {
+            Log.e("SCANNER", "Invalid input parameters");
+            return;
+        }
+
+        final double LINKED_RESO_SCALE = 1.75;
+
+        // Remove existing marker if present
+        var m = mResonatorMarkers.get(portal.getEntityGuid());
+        if (m != null && m.containsKey(reso.slot)) {
+            mMap.getOverlays().remove(Objects.requireNonNull(m.get(reso.slot)).first);
+            mMap.getOverlays().remove(Objects.requireNonNull(m.get(reso.slot)).second);
+            m.remove(reso.slot);
+            mResonatorToPortalSlotLookup.remove(reso.id);
+        }
+
+        // Update markers map
+        HashMap<Integer, Pair<GroundOverlay, Polyline>> markers;
+        if (mResonatorMarkers.containsKey(portal.getEntityGuid())) {
+            markers = mResonatorMarkers.get(portal.getEntityGuid());
+        } else {
+            markers = new HashMap<>();
+            mResonatorMarkers.put(portal.getEntityGuid(), markers);
+        }
+        assert markers != null;
+
+        // Calculate positions
+        GeoPoint resoPos = reso.getResoCoordinates();
+        GeoPoint topLeft = resoPos.destinationPoint(LINKED_RESO_SCALE, TOP_LEFT_ANGLE);
+        GeoPoint bottomRight = resoPos.destinationPoint(LINKED_RESO_SCALE, BOTTOM_RIGHT_ANGLE);
+
+        // Create actual reso marker
+        GroundOverlay marker = new GroundOverlay();
+        marker.setPosition(topLeft, bottomRight);
+        marker.setImage(BitmapFactory.decodeResource(getResources(), getImageForResoLevel(reso.level)));
+
+        // Connect reso to portal with line
+        Polyline line = new Polyline();
+        line.setPoints(Arrays.asList(portal.getPortalLocation().getLatLng(), resoPos));
+        Paint paint = new Paint();
+        paint.setColor(getColorFromResources(getResources(), getLevelColor(reso.level)));
+        paint.setStrokeWidth(0.25f);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            paint.setBlendMode(BlendMode.SCREEN);
+        }
+        line.getOutlinePaint().set(paint);
+
+        mMap.getOverlays().add(line);
+        mMap.getOverlays().add(marker);
+        markers.put(reso.slot, new Pair<>(marker, line));
+        mResonatorToPortalSlotLookup.put(reso.id, new Pair<>(portal.getEntityGuid(), reso.slot));
+    }
+
+
     private void drawLink(final GameEntityLink link) {
         if (mMap != null) {
             // only update if line has not yet been added
             if (!mLines.containsKey(link.getEntityGuid())) {
-                final net.opengress.slimgress.API.Common.Location origin = link.getLinkOriginLocation();
-                final net.opengress.slimgress.API.Common.Location dest = link.getLinkDestinationLocation();
+                final net.opengress.slimgress.api.Common.Location origin = link.getLinkOriginLocation();
+                final net.opengress.slimgress.api.Common.Location dest = link.getLinkDestinationLocation();
 
                 // TODO: decay link per portal health
                 Activity activity = getActivity();
@@ -911,9 +1034,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         if (mMap != null) {
             // only update if line has not yet been added
             if (!mPolygons.containsKey(field.getEntityGuid())) {
-                final net.opengress.slimgress.API.Common.Location vA = field.getFieldVertexA().getPortalLocation();
-                final net.opengress.slimgress.API.Common.Location vB = field.getFieldVertexB().getPortalLocation();
-                final net.opengress.slimgress.API.Common.Location vC = field.getFieldVertexC().getPortalLocation();
+                final net.opengress.slimgress.api.Common.Location vA = field.getFieldVertexA().getPortalLocation();
+                final net.opengress.slimgress.api.Common.Location vB = field.getFieldVertexB().getPortalLocation();
+                final net.opengress.slimgress.api.Common.Location vC = field.getFieldVertexC().getPortalLocation();
 
                 Activity activity = getActivity();
                 if (activity == null) {
@@ -987,4 +1110,141 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         new Handler(Looper.getMainLooper()).postDelayed(() -> activity.runOnUiThread(() -> activity.findViewById(R.id.quickMessage).setVisibility(View.GONE)), 3000);
     }
 
+    public MapView getMap() {
+        return mMap;
+    }
+
+    public void fireBurster(int radius) {
+        new AnimatedCircleOverlay(mMap, radius, 333).start();
+    }
+
+    private void onPortalActivityResult(ActivityResult result) {
+        if (result.getResultCode() == Activity.RESULT_OK) {
+            var data = result.getData();
+            if (mGame.getLocation() != null) {
+                final Handler uiHandler = new Handler();
+                uiHandler.post(() -> {
+                    // guard against scanning too fast if request fails
+                    mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
+                    updateWorld(uiHandler);
+                });
+
+            }
+
+            if (data == null) {
+                return;
+            }
+
+            Bundle hackResultBundle = data.getBundleExtra("result");
+            assert hackResultBundle != null;
+            @SuppressWarnings("unchecked")
+            HashMap<String, Integer> items = (HashMap<String, Integer>) hackResultBundle.getSerializable("items");
+            @SuppressWarnings("unchecked")
+            HashMap<String, Integer> bonusItems = (HashMap<String, Integer>) hackResultBundle.getSerializable("bonusItems");
+            String error = hackResultBundle.getString("error");
+
+            if (error != null) {
+                int portalLevel = mGame.getCurrentPortal().getPortalLevel();
+                Team portalTeam = mGame.getCurrentPortal().getPortalTeam();
+                if (portalTeam.toString().equalsIgnoreCase(mGame.getAgent().getTeam().toString())) {
+                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackFriendlyCostByLevel().get(portalLevel));
+                } else if (portalTeam.toString().equalsIgnoreCase("neutral")) {
+                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackNeutralCostByLevel().get(portalLevel));
+                } else {
+                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackEnemyCostByLevel().get(portalLevel));
+                }
+
+                var main = ((ActivityMain) getActivity());
+                if (main != null) {
+                    main.updateAgent();
+                }
+
+                DialogHackResult newDialog = new DialogHackResult(getContext());
+//                newDialog.setTitle("");
+                newDialog.setMessage(error);
+                newDialog.show();
+            } else {
+                if (items != null) {
+                    DialogHackResult newDialog = new DialogHackResult(getContext());
+                    newDialog.setTitle("Acquired items");
+                    newDialog.setItems(items);
+                    newDialog.show();
+
+                    if (bonusItems != null) {
+                        newDialog.setOnDismissListener(dialog -> {
+                            DialogHackResult newDialog1 = new DialogHackResult(getContext());
+                            newDialog1.setTitle("Bonus items");
+                            newDialog1.setItems(bonusItems);
+                            newDialog1.show();
+                        });
+                    }
+
+                } else if (bonusItems != null) {
+                    DialogHackResult newDialog = new DialogHackResult(getContext());
+                    newDialog.setTitle("Bonus items");
+                    newDialog.setItems(bonusItems);
+                    newDialog.show();
+                }
+
+            }
+        }
+    }
+
+    @SuppressLint("DefaultLocale")
+    public void displayDamage(int damageAmount, String targetGuid, int targetSlot, boolean criticalHit) {
+        var marker = mPortalMarkers.get(targetGuid);
+        if (marker == null) {
+            return;
+        }
+
+        var actualPortal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(targetGuid);
+        assert actualPortal != null;
+        var actualReso = actualPortal.getPortalResonator(targetSlot);
+        // FIXME reso is deleted from gameWorld before damage is displayed, so we can't display damage
+        if (actualReso != null) {
+            // note that it is allowed to be more than 100%
+            int percentage = (int) ((float) damageAmount / (float) actualReso.getMaxEnergy() * 100);
+
+            var location = actualReso.getResoCoordinates();
+            new TextOverlay(mMap, location, String.format("%d%%", percentage) + (criticalHit ? "!" : ""), 0xCCF8C03E);
+        }
+    }
+
+    @SuppressLint("DefaultLocale")
+    public void displayPlayerDamage(int amount, String attackerGuid) {
+
+        // set up
+        int colour = 0xCCF83030;
+
+        GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(attackerGuid);
+        assert portal != null;
+
+        GeoPoint playerLocation = mGame.getLocation().getLatLng();
+
+        // create the zap line for player damage
+        Polyline line = new Polyline();
+        line.setPoints(Arrays.asList(portal.getPortalLocation().getLatLng(), playerLocation));
+        Paint paint = new Paint();
+        paint.setColor(colour);
+        paint.setStrokeWidth(5f);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            paint.setBlendMode(BlendMode.SCREEN);
+        }
+        line.getOutlinePaint().set(paint);
+
+        mMap.getOverlays().add(line);
+        // let it delete itself
+        new Handler(Looper.getMainLooper()).postDelayed(() -> mMap.getOverlays().remove(line), 2000);
+
+        // now write up the text, but only if the damage was significant
+
+        // max energy or just regular energy?
+        // it is once again allowed to be ore than 100%
+        int percentage = (int) ((float) amount / (float) mGame.getAgent().getEnergyMax() * 100);
+        if (percentage < 1) {
+            return;
+        }
+
+        new TextOverlay(mMap, playerLocation.destinationPoint(10, 0), String.format("%d%%", percentage), colour);
+    }
 }

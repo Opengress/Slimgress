@@ -44,7 +44,7 @@
         <!-- start with splash activity to authenticate and get handshake data -->
         <activity
             android:exported="true"
-            android:name="net.opengress.slimgress.ActivitySplash">
+            android:name="net.opengress.slimgress.activity.ActivitySplash">
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
                 <action android:name="android.intent.action.MAIN" />
@@ -52,35 +52,31 @@
         </activity>
 
         <!-- if necessary continue with authentication -->
-        <activity
-            android:name="net.opengress.slimgress.ActivityAuth" >
+        <activity android:name="net.opengress.slimgress.activity.ActivityAuth">
         </activity>
 
         <!-- start main activity and display map -->
-        <activity
-            android:name="net.opengress.slimgress.ActivityMain" >
+        <activity android:name="net.opengress.slimgress.activity.ActivityMain">
         </activity>
 
         <!-- ops activity with additional information -->
-        <activity android:name="net.opengress.slimgress.ActivityOps">
+        <activity android:name="net.opengress.slimgress.activity.ActivityOps">
         </activity>
 
         <!-- portal view activity with additional information -->
-        <activity android:name="net.opengress.slimgress.ActivityPortal">
+        <activity android:name="net.opengress.slimgress.activity.ActivityPortal">
         </activity>
 
         <!-- resonator deployment activity with additional information -->
-        <activity
-            android:name="net.opengress.slimgress.ActivityDeploy">
+        <activity android:name="net.opengress.slimgress.activity.ActivityDeploy">
         </activity>
 
         <!-- which libraries are used, who created what etc-->
-        <activity
-            android:name="net.opengress.slimgress.ActivityCredits">
+        <activity android:name="net.opengress.slimgress.activity.ActivityCredits">
         </activity>
 
         <!-- viewing an inventory item -->
-        <activity android:name="net.opengress.slimgress.ActivityInventoryItem">
+        <activity android:name="net.opengress.slimgress.activity.ActivityInventoryItem">
         </activity>
     </application>
 

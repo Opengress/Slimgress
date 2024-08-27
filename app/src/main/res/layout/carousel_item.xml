@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.carousel.MaskableFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fire_carousel"
+    android:layout_width="wrap_content"
+    android:layout_height="75dp"
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="4dp"
+    android:foreground="?attr/selectableItemBackground"
+    app:shapeAppearance="?attr/shapeAppearanceCornerExtraLarge">
+
+    <FrameLayout
+        android:layout_width="75dp"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/fire_carousel_image_view"
+            android:layout_width="75dp"
+            android:padding="@dimen/gap_margin"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="end">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|top"
+                android:text="x24"
+                android:padding="4dp"
+                android:id="@+id/fire_carousel_quantity"
+                android:textStyle="bold"
+                android:shadowColor="@android:color/black"
+                android:textSize="20sp"
+                android:shadowDx="5"
+                android:shadowDy="5"
+                android:shadowRadius="5"
+                android:background="@android:color/transparent" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|bottom"
+                android:text="L4"
+                android:padding="4dp"
+                android:id="@+id/fire_carousel_level"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:shadowColor="@android:color/black"
+
+                android:shadowDx="5"
+                android:shadowDy="5"
+                android:shadowRadius="5"
+                android:background="@android:color/transparent" />
+        </LinearLayout>
+    </FrameLayout>
+</com.google.android.material.carousel.MaskableFrameLayout>

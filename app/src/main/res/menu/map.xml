@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_fire_xmp"
+        android:title="@string/fire_xmp" />
+    <item
+        android:id="@+id/action_new_portal"
+        android:title="@string/new_portal" />
+    <item
+        android:id="@+id/action_navigate"
+        android:title="@string/navigate" />
+    <item
+        android:id="@+id/action_opr"
+        android:title="@string/go_to_opr" />
+</menu>
+
