@@ -21,6 +21,7 @@
 
 package net.opengress.slimgress.api.Game;
 
+import static androidx.core.content.ContextCompat.getString;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.ClientMustUpgrade;
 
@@ -32,6 +33,7 @@ import android.util.Log;
 import com.google.common.geometry.S2LatLng;
 import com.google.common.geometry.S2LatLngRect;
 
+import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Common.Team;
@@ -68,8 +70,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class GameState
-{
+public class GameState {
     private final Interface mInterface;
     private Handshake mHandshake;
     private KnobsBundle mKnobs;
@@ -83,8 +84,7 @@ public class GameState
     private GameEntityPortal mPortal;
     private final HashMap<String, String> mAgentNames = new HashMap<>();
 
-    public GameState()
-    {
+    public GameState() {
         mInterface = new Interface();
         mInventory = new Inventory();
         mWorld = new World();
@@ -92,26 +92,22 @@ public class GameState
         mLastSyncTimestamp = "0";
     }
 
-    public void clear()
-    {
+    public void clear() {
         mInventory.clear();
         mWorld.clear();
         mPlexts.clear();
         mLastSyncTimestamp = "0";
     }
 
-    public void updateLocation(Location location)
-    {
+    public void updateLocation(Location location) {
         mLocation = location;
     }
 
-    public final Location getLocation()
-    {
+    public final Location getLocation() {
         return mLocation;
     }
 
-    private synchronized void processGameBasket(GameBasket gameBasket)
-    {
+    private synchronized void processGameBasket(GameBasket gameBasket) {
         SlimgressApplication app = SlimgressApplication.getInstance();
         if (gameBasket == null) {
             Log.w("Game", "game basket is invalid");
@@ -130,7 +126,7 @@ public class GameState
                 // FIXME i ... don't need to add this to player data manually, do i??? yes
                 app.getAPGainsModel().postAPGains(gameBasket.getAPGains());
                 for (var gain : gameBasket.getAPGains()) {
-                    app.getCommsViewModel().addMessage(PlextBase.createByAPGain(gain), "INFO");
+                    app.getAllCommsViewModel().addMessage(PlextBase.createByAPGain(gain));
                     mAgent.addAP(gain.getAmount());
                 }
             }
@@ -138,7 +134,7 @@ public class GameState
                 // FIXME i ... don't need to add this to player data manually, do i??? yes
                 app.getPlayerDamagesModel().postPlayerDamages(gameBasket.getPlayerDamages());
                 for (var dam : gameBasket.getPlayerDamages()) {
-                    app.getCommsViewModel().addMessage(PlextBase.createByPlayerDamage(dam), "INFO");
+                    app.getAllCommsViewModel().addMessage(PlextBase.createByPlayerDamage(dam));
                     app.getMainActivity().damagePlayer(dam.getAmount(), dam.getAttackerGuid());
                     mAgent.subtractEnergy(dam.getAmount());
                 }
@@ -153,24 +149,23 @@ public class GameState
         }
     }
 
-    public synchronized void checkInterface()
-    {
+    public synchronized void checkInterface() {
         // check
-        if (mHandshake == null || !mHandshake.isValid())
+        if (mHandshake == null || !mHandshake.isValid()) {
             throw new RuntimeException("invalid handshake data");
+        }
 
         // get agent
-        if (mAgent == null)
+        if (mAgent == null) {
             mAgent = mHandshake.getAgent();
+        }
     }
 
-    public Interface.AuthSuccess intAuthenticate(String session_name, String session_id)
-    {
+    public Interface.AuthSuccess intAuthenticate(String session_name, String session_id) {
         return mInterface.authenticate(session_name, session_id);
     }
 
-    public synchronized void intHandshake(final Handler handler)
-    {
+    public synchronized void intHandshake(final Handler handler) {
         mInterface.handshake(handshake -> {
             mHandshake = handshake;
             mKnobs = mHandshake.getKnobs();
@@ -183,14 +178,15 @@ public class GameState
 
             if (!handshakeValid) {
                 String errString;
-                if (status == ClientMustUpgrade)
+                if (status == ClientMustUpgrade) {
                     errString = "Client must upgrade";
-                else if (Objects.equals(mHandshake.getServerVersion(), ""))
+                } else if (Objects.equals(mHandshake.getServerVersion(), "")) {
                     errString = "Server returned incorrect handshake response";
-                else if (mHandshake.getAgent() == null)
+                } else if (mHandshake.getAgent() == null) {
                     errString = "Invalid agent data";
-                else
+                } else {
                     errString = "Unknown error";
+                }
 
                 bundle.putString("Error", errString);
             }
@@ -200,8 +196,7 @@ public class GameState
         });
     }
 
-    public void intGetInventory(final Handler handler)
-    {
+    public void intGetInventory(final Handler handler) {
         try {
             checkInterface();
 
@@ -221,8 +216,7 @@ public class GameState
         }
     }
 
-    public void intGetObjectsInCells(final Location location, final Handler handler)
-    {
+    public void intGetObjectsInCells(final Location location, final Handler handler) {
         try {
             checkInterface();
 
@@ -237,8 +231,9 @@ public class GameState
 
             // create dates (timestamps?)
             JSONArray dates = new JSONArray();
-            for (int i = 0; i < cellsAsHex.length(); i++)
+            for (int i = 0; i < cellsAsHex.length(); i++) {
                 dates.put(0);
+            }
 
             // create params
             JSONObject params = new JSONObject();
@@ -257,15 +252,14 @@ public class GameState
         }
     }
 
-    public void intLoadCommunication(final double radiusKM, final boolean factionOnly, final Handler handler)
-    {
+    public synchronized void intLoadCommunication(final double radiusKM, final boolean factionOnly, final Handler handler) {
         try {
             checkInterface();
 
-            final double earthKM = 2 * Math.PI * 6371;	// circumference
+            final double earthKM = 2 * Math.PI * 6371;    // circumference
 
             S2LatLng center = S2LatLng.fromE6(mLocation.getLatitude(), mLocation.getLongitude());
-            S2LatLng size = S2LatLng.fromRadians((Math.PI / earthKM) * radiusKM,  (2 * Math.PI / earthKM) * radiusKM);
+            S2LatLng size = S2LatLng.fromRadians((Math.PI / earthKM) * radiusKM, (2 * Math.PI / earthKM) * radiusKM);
             S2LatLngRect region = S2LatLngRect.fromCenterSize(center, size);
 
             // get cell ids for area
@@ -273,7 +267,9 @@ public class GameState
 
             // create cells
             JSONArray cellsAsHex = new JSONArray();
-            for (String cellId : cellIds) cellsAsHex.put(cellId);
+            for (String cellId : cellIds) {
+                cellsAsHex.put(cellId);
+            }
 
             // create params
             JSONObject params = new JSONObject();
@@ -283,18 +279,26 @@ public class GameState
             params.put("desiredNumItems", 50);
             params.put("factionOnly", factionOnly);
             params.put("ascendingTimestampOrder", false);
+            params.put("categories", factionOnly ? 2 : 1);
 
             mInterface.request(mHandshake, "playerUndecorated/getPaginatedPlexts", mLocation, params, new RequestResult(handler) {
                 @Override
                 public void handleResult(JSONArray result) {
                     try {
+                        // FIXME the way I've done this is absolutely horrifying
+                        mPlexts.clear();
                         // add plexts
                         for (int i = 0; i < result.length(); i++) {
                             PlextBase newPlext = PlextBase.createByJSON(result.getJSONArray(i));
+                            assert newPlext != null;
                             mPlexts.add(newPlext);
                         }
-                    }
-                    catch (JSONException e) {
+                        if (factionOnly) {
+                            SlimgressApplication.getInstance().getFactionCommsViewModel().postMessages(mPlexts);
+                        } else {
+                            SlimgressApplication.getInstance().getAllCommsViewModel().postMessages(mPlexts);
+                        }
+                    } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
@@ -304,8 +308,7 @@ public class GameState
         }
     }
 
-    public void intSendMessage(final String message, final boolean factionOnly, final Handler handler)
-    {
+    public void intSendMessage(final String message, final boolean factionOnly, final Handler handler) {
         try {
             checkInterface();
 
@@ -313,14 +316,31 @@ public class GameState
             params.put("message", message);
             params.put("factionOnly", factionOnly);
 
-            mInterface.request(mHandshake, "player/say", mLocation, params, new RequestResult(handler));
+            mInterface.request(mHandshake, "player/say", mLocation, params, new RequestResult(handler) {
+
+                @Override
+                public void handleError(String error) {
+                    String pretty_error = switch (error) {
+                        case "SERVER_ERROR" ->
+                                getString(SlimgressApplication.getInstance(), R.string.server_error);
+                        case "MESSAGE_REJECTED" -> "You are not allowed to talk!";
+                        case "TOO_LONG" -> // new!
+                                "Message can't be longer than 512 characters.";
+                        default -> {
+                            Log.d("GameState/SendMessage", error);
+                            yield getString(SlimgressApplication.getInstance(), R.string.server_error);
+                        }
+                    };
+                    super.handleError(pretty_error);
+                    super.handleError(error);
+                }
+            });
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    public void intGetGameScore(final Handler handler)
-    {
+    public void intGetGameScore(final Handler handler) {
         checkInterface();
 
         mInterface.request(mHandshake, "playerUndecorated/getGameScore", null, null, new RequestResult(handler) {
@@ -382,8 +402,7 @@ public class GameState
 
     }
 
-    public void intRedeemReward(String passcode, final Handler handler)
-    {
+    public void intRedeemReward(String passcode, final Handler handler) {
         try {
             checkInterface();
 
@@ -417,8 +436,7 @@ public class GameState
         }
     }
 
-    public void intGetNumberOfInvites(final Handler handler)
-    {
+    public void intGetNumberOfInvites(final Handler handler) {
         checkInterface();
 
         mInterface.request(mHandshake, "playerUndecorated/getInviteInfo", null, null, new RequestResult(handler) {
@@ -434,8 +452,7 @@ public class GameState
 
     }
 
-    public void intInviteUser(final String email, final String customMessage, final Handler handler)
-    {
+    public void intInviteUser(final String email, final String customMessage, final Handler handler) {
         try {
             checkInterface();
 
@@ -448,8 +465,7 @@ public class GameState
                 public void handleResult(JSONObject result) {
                     try {
                         getData().putInt("NumInvites", result.getInt("numAvailableInvites"));
-                    }
-                    catch (JSONException e) {
+                    } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
@@ -459,8 +475,7 @@ public class GameState
         }
     }
 
-    public void intValidateNickname(final String nickname, final Handler handler)
-    {
+    public void intValidateNickname(final String nickname, final Handler handler) {
         try {
             checkInterface();
 
@@ -489,8 +504,7 @@ public class GameState
         }
     }
 
-    public void intPersistNickname(final String nickname, final Handler handler)
-    {
+    public void intPersistNickname(final String nickname, final Handler handler) {
         try {
             checkInterface();
 
@@ -505,8 +519,7 @@ public class GameState
         }
     }
 
-    public void intChooseFaction(final Team team, final Handler handler)
-    {
+    public void intChooseFaction(final Team team, final Handler handler) {
         try {
             checkInterface();
 
@@ -521,14 +534,12 @@ public class GameState
         }
     }
 
-    public void intGetNicknameFromUserGUID(String guid, final Handler handler)
-    {
-        String[] guids = { guid };
+    public void intGetNicknameFromUserGUID(String guid, final Handler handler) {
+        String[] guids = {guid};
         intGetNicknamesFromUserGUIDs(guids, handler);
     }
 
-    public void intGetNicknamesFromUserGUIDs(final String[] guids, final Handler handler)
-    {
+    public void intGetNicknamesFromUserGUIDs(final String[] guids, final Handler handler) {
         try {
             checkInterface();
 
@@ -536,8 +547,9 @@ public class GameState
             JSONObject params = new JSONObject();
 
             JSONArray playerGuids = new JSONArray();
-            for (String guid : guids)
+            for (String guid : guids) {
                 playerGuids.put(guid);
+            }
 
             JSONArray playerIds = new JSONArray();
             playerIds.put(playerGuids);
@@ -550,12 +562,12 @@ public class GameState
                         // retrieve nicknames for user ids
                         if (result != null && result.length() > 0) {
                             for (int i = 0; i < result.length(); i++) {
-                                if (!result.isNull(i))
+                                if (!result.isNull(i)) {
                                     getData().putString(guids[i], result.getString(i));
+                                }
                             }
                         }
-                    }
-                    catch (JSONException e) {
+                    } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
@@ -569,8 +581,7 @@ public class GameState
         intFireWeapon(weapon, 0, handler);
     }
 
-    public void intFireWeapon(ItemWeapon weapon, int encodedBoost, final Handler handler)
-    {
+    public void intFireWeapon(ItemWeapon weapon, int encodedBoost, final Handler handler) {
         // FIXME: this is inappropriate because we are not encoding the boost param
         try {
             checkInterface();
@@ -582,8 +593,22 @@ public class GameState
             mInterface.request(mHandshake, "gameplay/fireUntargetedRadialWeaponV2", mLocation, params, new RequestResult(handler) {
                 @Override
                 public void handleError(String error) {
+                    // looks like norman was copying these from ios client - nemesis had way more
                     // PLAYER_DEPLETED, WEAPON_DOES_NOT_EXIST, SPEED_LOCKED
-                    super.handleError(error);
+                    switch (error) {
+                        case "WEAPON_DOES_NOT_EXIST", "WEAPON_DOES_NOT_HAVE_OWNER",
+                             "WRONG_OWNER_FOR_WEAPON" ->
+                                super.handleError(getString(SlimgressApplication.getInstance(), R.string.weapon_does_not_exist));
+                        case "WRONG_WEAPON_TYPE" ->
+                                super.handleError("You can only fire an XMP or UltraStrike!");
+                        case "SPEED_LOCKED" -> // new!
+                                super.handleError(getString(SlimgressApplication.getInstance(), R.string.you_are_moving_too_fast));
+                        case "PLAYER_DEPLETED", "NEED_MORE_ENERGY" ->
+                                super.handleError(getString(SlimgressApplication.getInstance(), R.string.you_don_t_have_enough_xm));
+                        case "SERVER_ERROR" ->
+                                super.handleError(getString(SlimgressApplication.getInstance(), R.string.server_error));
+                        default -> super.handleError("Unknown error: " + error);
+                    }
                 }
 
                 @Override
@@ -622,8 +647,7 @@ public class GameState
         }
     }
 
-    public void intHackPortal(GameEntityPortal portal, final Handler handler)
-    {
+    public void intHackPortal(GameEntityPortal portal, final Handler handler) {
         try {
             checkInterface();
 
@@ -661,9 +685,10 @@ public class GameState
                         }
                         case "OUT_OF_RANGE" -> "Portal is out of range";
                         case "NEED_MORE_ENERGY" -> "You don't have enough XM";
-                        case "SERVER_ERROR" -> "Server error";
+                        case "SERVER_ERROR" ->
+                                getString(SlimgressApplication.getInstance(), R.string.server_error);
                         case "SPEED_LOCKED" -> // new!
-                                "You are moving too fast";
+                                getString(SlimgressApplication.getInstance(), R.string.you_are_moving_too_fast);
                         case "SPEED_LOCKED_" -> {
                             // TODO: maybe format this as "x hours, x minutes, x seconds"
                             String t = error.substring(error.lastIndexOf("_") + 1);
@@ -686,7 +711,7 @@ public class GameState
                     processGameBasket(gameBasket);
                     initBundle();
                     HashMap<String, ItemBase> items = new HashMap<>();
-                    for (ItemBase item: gameBasket.getInventory()) {
+                    for (ItemBase item : gameBasket.getInventory()) {
                         items.put(item.getEntityGuid(), item);
                     }
                     getData().putSerializable("items", items);
@@ -708,7 +733,7 @@ public class GameState
                             }
                             getData().putStringArrayList("bonusGuids", bonusItems);
                         }
-                        for (int x=0; x < guids.length(); x++) {
+                        for (int x = 0; x < guids.length(); x++) {
                             items.add(guids.getString(x));
                         }
                         getData().putStringArrayList("guids", items);
@@ -723,8 +748,7 @@ public class GameState
         }
     }
 
-    public void intDeployResonator(ItemResonator resonator, GameEntityPortal portal, int slot, final Handler handler)
-    {
+    public void intDeployResonator(ItemResonator resonator, GameEntityPortal portal, int slot, final Handler handler) {
         try {
             checkInterface();
 
@@ -778,11 +802,11 @@ public class GameState
                         final GameEntityBase entity = entities.get(key);
                         assert entity != null;
                         if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
-                                if (Objects.equals(entity.getEntityGuid(), portal.getEntityGuid())) {
-                                    setCurrentPortal((GameEntityPortal) entity);
-                                    break;
-                                }
+                            if (Objects.equals(entity.getEntityGuid(), portal.getEntityGuid())) {
+                                setCurrentPortal((GameEntityPortal) entity);
+                                break;
                             }
+                        }
                     }
                     super.finished();
                 }
@@ -792,8 +816,7 @@ public class GameState
         }
     }
 
-    public void intUpgradeResonator(ItemResonator resonator, GameEntityPortal portal, int slot, final Handler handler)
-    {
+    public void intUpgradeResonator(ItemResonator resonator, GameEntityPortal portal, int slot, final Handler handler) {
         try {
             checkInterface();
 
@@ -860,8 +883,7 @@ public class GameState
         }
     }
 
-    public void intAddMod(ItemMod mod, GameEntityPortal portal, int slot, final Handler handler)
-    {
+    public void intAddMod(ItemMod mod, GameEntityPortal portal, int slot, final Handler handler) {
         try {
             checkInterface();
 
@@ -887,8 +909,7 @@ public class GameState
         }
     }
 
-    public void intRemoveMod(GameEntityPortal portal, int slot, final Handler handler)
-    {
+    public void intRemoveMod(GameEntityPortal portal, int slot, final Handler handler) {
         try {
             checkInterface();
 
@@ -913,8 +934,7 @@ public class GameState
         }
     }
 
-    public void intDropItem(ItemBase item, final Handler handler)
-    {
+    public void intDropItem(ItemBase item, final Handler handler) {
         try {
             checkInterface();
 
@@ -951,8 +971,7 @@ public class GameState
         }
     }
 
-    public void intPickupItem(String guid, final Handler handler)
-    {
+    public void intPickupItem(String guid, final Handler handler) {
         try {
             checkInterface();
 
@@ -976,8 +995,7 @@ public class GameState
         }
     }
 
-    public void intRecycleItem(ItemBase item, final Handler handler)
-    {
+    public void intRecycleItem(ItemBase item, final Handler handler) {
         // now unused, but probably still connected in backend
         try {
             checkInterface();
@@ -1070,8 +1088,7 @@ public class GameState
         }
     }
 
-    public void intUsePowerCube(ItemPowerCube powerCube, final Handler handler)
-    {
+    public void intUsePowerCube(ItemPowerCube powerCube, final Handler handler) {
         try {
             checkInterface();
 
@@ -1119,8 +1136,7 @@ public class GameState
         }
     }
 
-    public void intRechargePortal(GameEntityPortal portal, int[] slots, final Handler handler)
-    {
+    public void intRechargePortal(GameEntityPortal portal, int[] slots, final Handler handler) {
         try {
             checkInterface();
 
@@ -1144,8 +1160,7 @@ public class GameState
         }
     }
 
-    public void intRemoteRechargePortal(GameEntityPortal portal, ItemPortalKey key, final Handler handler)
-    {
+    public void intRemoteRechargePortal(GameEntityPortal portal, ItemPortalKey key, final Handler handler) {
         try {
             checkInterface();
 
@@ -1154,8 +1169,9 @@ public class GameState
             params.put("portalKeyGuid", key.getEntityGuid());
 
             JSONArray resonatorSlots = new JSONArray();
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < 8; i++) {
                 resonatorSlots.put(i);
+            }
             params.put("resonatorSlots", resonatorSlots);
 
             mInterface.request(mHandshake, "gameplay/remoteRechargeResonatorsV2", mLocation, params, new RequestResult(handler) {
@@ -1169,8 +1185,7 @@ public class GameState
         }
     }
 
-    public void intQueryLinkablilityForPortal(GameEntityPortal portal, ItemPortalKey key, final Handler handler)
-    {
+    public void intQueryLinkablilityForPortal(GameEntityPortal portal, ItemPortalKey key, final Handler handler) {
         try {
             checkInterface();
 
@@ -1192,8 +1207,7 @@ public class GameState
         }
     }
 
-    public void intLinkPortal(GameEntityPortal portal, ItemPortalKey toKey, final Handler handler)
-    {
+    public void intLinkPortal(GameEntityPortal portal, ItemPortalKey toKey, final Handler handler) {
         try {
             checkInterface();
 
@@ -1213,13 +1227,11 @@ public class GameState
         }
     }
 
-    public void intSetNotificationSettings(final Handler handler)
-    {
+    public void intSetNotificationSettings(final Handler handler) {
         Log.w("Game", "intSetNotificationSettings not yet implemented");
     }
 
-    public void intGetModifiedEntity(String guid, final Handler handler)
-    {
+    public void intGetModifiedEntity(String guid, final Handler handler) {
         String[] guids = {guid};
         intGetModifiedEntitiesByGuid(guids, handler);
     }
@@ -1231,8 +1243,9 @@ public class GameState
             JSONObject params = new JSONObject();
 
             JSONArray entityGuids = new JSONArray();
-            for (String guid : guids)
+            for (String guid : guids) {
                 entityGuids.put(guid);
+            }
             params.put("params", entityGuids);
 
             // request basket
@@ -1247,8 +1260,7 @@ public class GameState
         }
     }
 
-    public void intFlipPortal(GameEntityPortal portal, ItemFlipCard flipCard, final Handler handler)
-    {
+    public void intFlipPortal(GameEntityPortal portal, ItemFlipCard flipCard, final Handler handler) {
         /*
         DOES_NOT_EXIST, OUT_OF_RANGE, WRONG_OWNER_FOR_ITEM, NOT_A_RESOURCE, SERVER_ERROR,
         NEED_MORE_ENERGY, PLAYER_DEPLETED, NO_PLAYER_SPECIFIED, WRONG_LEVEL, PLAYER_DOES_NOT_EXIST,
@@ -1273,13 +1285,11 @@ public class GameState
         }
     }
 
-    public void intSetPortalDetailsForCuration(final Handler handler)
-    {
+    public void intSetPortalDetailsForCuration(final Handler handler) {
         Log.w("Game", "intSetPortalDetailsForCuration not yet implemented");
     }
 
-    public void intGetUploadUrl(final Handler handler)
-    {
+    public void intGetUploadUrl(final Handler handler) {
         checkInterface();
 
         mInterface.request(mHandshake, "playerUndecorated/getUploadUrl", null, null, new RequestResult(handler) {
@@ -1290,18 +1300,15 @@ public class GameState
         });
     }
 
-    public void intUploadPortalPhotoByUrl(String requestId, String imageUrl, final Handler handler)
-    {
+    public void intUploadPortalPhotoByUrl(String requestId, String imageUrl, final Handler handler) {
         Log.w("Game", "intUploadPortalPhotoByUrl not yet implemented");
     }
 
-    public void intUploadPortalImage(final Handler handler)
-    {
+    public void intUploadPortalImage(final Handler handler) {
         Log.w("Game", "intUploadPortalImage not yet implemented");
     }
 
-    public void intFindNearbyPortals(int maxPortals, final Handler handler)
-    {
+    public void intFindNearbyPortals(int maxPortals, final Handler handler) {
         try {
             checkInterface();
 
@@ -1319,39 +1326,32 @@ public class GameState
         }
     }
 
-    public Handshake getHandshake()
-    {
+    public Handshake getHandshake() {
         return mHandshake;
     }
 
-    public void invalidateHandshake()
-    {
+    public void invalidateHandshake() {
         mHandshake = null;
     }
 
-    public KnobsBundle getKnobs()
-    {
+    public KnobsBundle getKnobs() {
         return mKnobs;
     }
 
-    public synchronized World getWorld()
-    {
+    public synchronized World getWorld() {
         return mWorld;
     }
 
-    public synchronized Inventory getInventory()
-    {
+    public synchronized Inventory getInventory() {
         return mInventory;
     }
 
-    public synchronized Agent getAgent()
-    {
+    public synchronized Agent getAgent() {
         checkInterface();
         return mAgent;
     }
 
-    public synchronized List<PlextBase> getPlexts()
-    {
+    public synchronized List<PlextBase> getPlexts() {
         return mPlexts;
     }
 

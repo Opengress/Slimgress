@@ -62,6 +62,19 @@ public class ActivityOps extends AppCompatActivity implements TabLayout.OnTabSel
         mViewPager.setAdapter(mSectionsPagerAdapter);
         // Set up the TabLayout with the ViewPager.
         TabLayout tabLayout = findViewById(R.id.tabs);
+        /*
+        - inventory     ./
+        - store         x
+        - agent         ./ (user)
+        - intel         - (score)
+        - [absent]      - intel/map
+        - missions      - [this would be a bit of a reach because it'd need an editor etc]
+        - training      - [was initially considered out of scope, might be doable]
+        - recruit[0]    - [was initially probably out of scope, could be useful...??]
+        - community     - [probably a good idea... primarily just links anyway...]
+        - passcode      - [will almost certainly do this]
+        - device        ./
+         */
         new TabLayoutMediator(tabLayout, mViewPager,
                 (tab, position) -> {
                     switch (position) {

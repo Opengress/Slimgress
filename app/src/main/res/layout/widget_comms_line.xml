@@ -17,13 +17,14 @@
         android:typeface="monospace"
         android:textSize="12sp"
         android:textColor="#808080"
-        android:gravity="right|center_vertical" />
+        android:gravity="right|top"
+        style="@style/PlextTimeTextView" />
 
     <TextView
         android:id="@+id/plext_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="right"
+        android:layout_gravity="right|top"
         android:layout_marginLeft="@dimen/gap_margin"
         android:layout_weight="1"
         android:textAppearance="@style/TextAppearance.AppCompat.Small" />

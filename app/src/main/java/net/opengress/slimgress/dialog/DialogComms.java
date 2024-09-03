@@ -3,13 +3,18 @@ package net.opengress.slimgress.dialog;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -37,37 +42,45 @@ import java.util.Objects;
 public class DialogComms extends BottomSheetDialogFragment {
 
     private YourAdapter mAdaptor;
-    private CommsViewModel mCommsViewModel;
+    private CommsViewModel mAllCommsViewModel;
+    private CommsViewModel mFactionCommsViewModel;
+    private static boolean mIsInFactionTab = false;
+    private final Handler mTimerHandler = new Handler();
+    private Runnable mTimerRunnable;
+    private boolean mIsTimerRunning = false;
+    private int commsRadiusKM = 50;
+    private BottomSheetDialog mDialog;
+    private final Handler commsRefreshHandler = new Handler(msg -> {
+        if (mIsInFactionTab) {
+            mAdaptor.updateData(mFactionCommsViewModel.getMessages().getValue());
+        } else {
+            mAdaptor.updateData(mAllCommsViewModel.getMessages().getValue());
+        }
+        RecyclerView view = mDialog.findViewById(R.id.recyclerView);
+        assert view != null;
+        view.scrollToPosition(mAdaptor.getItemCount() - 1);
+        return true;
+    });
 
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         setStyle(STYLE_NORMAL, com.google.android.material.R.style.Theme_Material3_Dark_BottomSheetDialog);
-        BottomSheetDialog dialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
-        dialog.setContentView(R.layout.dialog_comms);
-        Objects.requireNonNull(dialog.getWindow()).setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+        mDialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
+        mDialog.setContentView(R.layout.dialog_comms);
+        Objects.requireNonNull(mDialog.getWindow()).setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
-        dialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        mDialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
 
-
-//        View bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
-//        BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
-//
-//        DisplayMetrics displayMetrics = new DisplayMetrics();
-//        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-//        int screenHeight = displayMetrics.heightPixels;
-//
-//        behavior.setPeekHeight(screenHeight / 2);
-//        behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-
-        TabLayout tabLayout = dialog.findViewById(R.id.tabs);
-        RecyclerView view = dialog.findViewById(R.id.recyclerView);
+        TabLayout tabLayout = mDialog.findViewById(R.id.tabs);
+        RecyclerView view = mDialog.findViewById(R.id.recyclerView);
         assert view != null;
         view.setLayoutManager(new LinearLayoutManager(getContext()));
         view.setNestedScrollingEnabled(true);
 
         // Initialize ViewModel
-        mCommsViewModel = SlimgressApplication.getInstance().getCommsViewModel();
+        mAllCommsViewModel = SlimgressApplication.getInstance().getAllCommsViewModel();
+        mFactionCommsViewModel = SlimgressApplication.getInstance().getFactionCommsViewModel();
 
         // Set initial data
         mAdaptor = new YourAdapter(new ArrayList<>());
@@ -76,36 +89,50 @@ public class DialogComms extends BottomSheetDialogFragment {
         assert tabLayout != null;
 
         // Observe the LiveData from ViewModel
-        mCommsViewModel.getAllMessages().observe(this, messages -> {
+        mAllCommsViewModel.getMessages().observe(this, messages -> {
             if (tabLayout.getSelectedTabPosition() == 0) {
                 mAdaptor.updateData(messages);
             }
         });
-        mCommsViewModel.getFactionMessages().observe(this, messages -> {
+        mFactionCommsViewModel.getMessages().observe(this, messages -> {
             if (tabLayout.getSelectedTabPosition() == 1) {
                 mAdaptor.updateData(messages);
             }
         });
-        mCommsViewModel.getAlertMessages().observe(this, messages -> {
-            if (tabLayout.getSelectedTabPosition() == 2) {
-                mAdaptor.updateData(messages);
+
+        mTimerRunnable = new Runnable() {
+            @Override
+            public void run() {
+                new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(commsRadiusKM, mIsInFactionTab, commsRefreshHandler)).start();
+                mTimerHandler.postDelayed(this, 15000);
             }
-        });
-        mCommsViewModel.getInfoMessages().observe(this, messages -> {
-            if (tabLayout.getSelectedTabPosition() == 3) {
-                mAdaptor.updateData(messages);
-            }
-        });
+        };
+
+        Button sendButton = mDialog.findViewById(R.id.button);
+        EditText input = mDialog.findViewById(R.id.input);
+        assert sendButton != null;
+        assert input != null;
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 switch (tab.getPosition()) {
-                    case 0 -> mAdaptor.updateData(mCommsViewModel.getAllMessages().getValue());
-                    case 1 -> mAdaptor.updateData(mCommsViewModel.getFactionMessages().getValue());
-                    case 2 -> mAdaptor.updateData(mCommsViewModel.getAlertMessages().getValue());
-                    case 3 -> mAdaptor.updateData(mCommsViewModel.getInfoMessages().getValue());
+                    case 0 -> {
+                        sendButton.setEnabled(true);
+                        input.setEnabled(true);
+                        mIsInFactionTab = false;
+                        mAdaptor.updateData(mAllCommsViewModel.getMessages().getValue());
+                        view.scrollToPosition(mAdaptor.getItemCount() - 1);
+                    }
+                    case 1 -> {
+                        sendButton.setEnabled(true);
+                        input.setEnabled(true);
+                        mIsInFactionTab = true;
+                        mAdaptor.updateData(mFactionCommsViewModel.getMessages().getValue());
+                        view.scrollToPosition(mAdaptor.getItemCount() - 1);
+                    }
                 }
+                new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(commsRadiusKM, mIsInFactionTab, commsRefreshHandler)).start();
             }
 
             @Override
@@ -117,9 +144,42 @@ public class DialogComms extends BottomSheetDialogFragment {
             }
         });
 
-        Button sendButton = dialog.findViewById(R.id.button);
-        EditText input = dialog.findViewById(R.id.input);
-        assert sendButton != null;
+        input.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Deactivate the button if the text field is empty or contains more than 512 characters
+                sendButton.setEnabled(s.length() > 0 && s.length() <= 512);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        input.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (sendButton.isEnabled()) {
+                    sendButton.performClick();
+                }
+                return true;
+            }
+            return false;
+        });
+
+        input.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                if (sendButton.isEnabled()) {
+                    sendButton.performClick();
+                }
+                return true;
+            }
+            return false;
+        });
+
         sendButton.setOnClickListener(v -> {
             Handler handler = new Handler(msg -> {
                 var data = msg.getData();
@@ -129,23 +189,53 @@ public class DialogComms extends BottomSheetDialogFragment {
                     dialog1.setMessage(error).setDismissDelay(1500).show();
                 } else {
                     // get plexts, probably, and...
-                    assert input != null;
                     input.setText("");
+                    sendButton.setEnabled(true);
+                    new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(commsRadiusKM, mIsInFactionTab, commsRefreshHandler)).start();
                 }
                 return false;
             });
-            assert input != null;
+            sendButton.setEnabled(false);
             SlimgressApplication.getInstance().getGame().intSendMessage(input.getText().toString(), tabLayout.getSelectedTabPosition() == 1, handler);
         });
 
-        return dialog;
+        return mDialog;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Start the timer when the dialog is shown
+        if (!mIsTimerRunning) {
+            startTimer();
+        }
+    }
+
+    @Override
+    public void onDismiss(@NonNull DialogInterface dialog) {
+        stopTimer();
+        super.onDismiss(dialog);
+    }
+
+    private void startTimer() {
+        if (!mIsTimerRunning) {
+            mTimerHandler.post(mTimerRunnable); // Start the timer
+            mIsTimerRunning = true;
+        }
+    }
+
+    private void stopTimer() {
+        if (mIsTimerRunning) {
+            mTimerHandler.removeCallbacks(mTimerRunnable); // Stop the timer
+            mIsTimerRunning = false;
+        }
     }
 
     public static class YourAdapter extends RecyclerView.Adapter<YourAdapter.ViewHolder> {
-        private List<PlextBase> data;
+        private List<PlextBase> mPlexts;
 
-        public YourAdapter(List<PlextBase> data) {
-            this.data = data;
+        public YourAdapter(List<PlextBase> plexts) {
+            mPlexts = plexts;
         }
 
         @NonNull
@@ -157,27 +247,32 @@ public class DialogComms extends BottomSheetDialogFragment {
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            if (data == null) {
+            if (mPlexts == null) {
                 holder.textView.setText(R.string.nothing_to_display);
                 holder.timeView.setText("");
                 return;
             }
-            PlextBase plext = data.get(position);
-            holder.textView.setText(plext.getFormattedText());
+            PlextBase plext = mPlexts.get(position);
+            holder.textView.setText(plext.getFormattedText(mIsInFactionTab));
             holder.textView.setMovementMethod(LinkMovementMethod.getInstance());
 
             SimpleDateFormat sdf = new SimpleDateFormat("h:mm a", Locale.getDefault());
             String formattedTime = sdf.format(new Date(Long.parseLong(plext.getEntityTimestamp())));
             holder.timeView.setText(formattedTime);
+            if (plext.atMentionsPlayer()) {
+                holder.timeView.setTextAppearance(SlimgressApplication.getInstance(), R.style.PlextTimeMentionedTextView);
+            } else {
+                holder.timeView.setTextAppearance(SlimgressApplication.getInstance(), R.style.PlextTimeTextView);
+            }
         }
 
         @Override
         public int getItemCount() {
-            return data == null ? 1 : data.size();
+            return mPlexts == null ? 1 : mPlexts.size();
         }
 
         public void updateData(List<PlextBase> newData) {
-            this.data = newData;
+            this.mPlexts = newData;
             notifyDataSetChanged();
         }
 

@@ -21,6 +21,7 @@
 
 package net.opengress.slimgress.api.Game;
 
+import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.GameEntity.GameEntityBase;
 import net.opengress.slimgress.api.Interface.GameBasket;
 
@@ -68,6 +69,9 @@ public class World {
             }
             mGameEntities.remove(guid);
         }
+
+        // This should probably go to a viewmodel so it can update deploy screen et al
+        SlimgressApplication.getInstance().getMainActivity().refreshDisplay();
     }
 
     public final Map<String, GameEntityBase> getGameEntities() {

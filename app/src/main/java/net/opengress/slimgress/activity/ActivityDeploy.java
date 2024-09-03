@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Objects;
 
 // FIXME user can't deploy on portal if portal belongs to wrong team!
-// maybe resonators should show PORTAL team colour instead of owner team colour
 public class ActivityDeploy extends AppCompatActivity {
 
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
@@ -86,7 +85,6 @@ public class ActivityDeploy extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_deploy);
         setUpView();
-//        mGame.connectSignalLocationUpdated(this::onReceiveLocation);
         mApp.getLocationViewModel().getLocationData().observe(this, this::onReceiveLocation);
 
     }
@@ -95,13 +93,9 @@ public class ActivityDeploy extends AppCompatActivity {
     public void setUpView() {
         GameEntityPortal portal = mGame.getCurrentPortal();
 
-        // hide a reso (don't do this)
-//        findViewById(R.id.deployScreenResonatorNW).setVisibility(View.INVISIBLE);
-        // set text on reso (do do this)
-//        ((TextView)(findViewById(R.id.deployScreenResonatorNE).findViewById(R.id.positionText))).setText("asdasd");
 
-        findViewById(R.id.button9).setVisibility(View.INVISIBLE);
-        findViewById(R.id.button9).setEnabled(false);
+        findViewById(R.id.btnRechargeAll).setVisibility(View.INVISIBLE);
+        findViewById(R.id.btnRechargeAll).setEnabled(false);
 
         // iterate over the resos (maybe unrolled) and set up their info and any relevant callbacks
         for (int id : mResoViewIds) {
@@ -113,20 +107,7 @@ public class ActivityDeploy extends AppCompatActivity {
         }
 
         var resos = portal.getPortalResonators();
-
-        HashMap<Integer, Integer> resoCountForLevel = new HashMap<>();
-        for (int i = 1; i <= 8; i++) {
-            resoCountForLevel.put(i, 0);
-        }
-
-        for (var reso : resos) {
-            if (reso == null) {
-                continue;
-            }
-            if (Objects.equals(reso.ownerGuid, mGame.getAgent().getEntityGuid())) {
-                resoCountForLevel.put(reso.level, resoCountForLevel.get(reso.level) + 1);
-            }
-        }
+        var resoCountForLevel = getResoCountsForLevels(resos);
 
         for (var reso : resos) {
             if (reso == null) {
@@ -140,10 +121,8 @@ public class ActivityDeploy extends AppCompatActivity {
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setText(mGame.getAgentName(reso.ownerGuid));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());
 
-            // TODO don't offer upgrade button if user can't upgrade
-            // maybe put this into the button's tag with setTag?
             List<ItemResonator> resosForUpgrade = new ArrayList<>();
-            if (mGame.getKnobs().getPortalKnobs().getBandForLevel(reso.level + 1).getRemaining() > resoCountForLevel.get(reso.level + 1)) {
+            if (canUpgradeOrDeploy(resoCountForLevel, reso.level)) {
                 resosForUpgrade = inventory.getResosForUpgrade(reso.level);
             }
             if (resosForUpgrade.isEmpty()) {
@@ -169,6 +148,37 @@ public class ActivityDeploy extends AppCompatActivity {
         setButtonsEnabled(dist <= mActionRadiusM);
     }
 
+    private HashMap<Integer, Integer> getResoCountsForLevels(List<GameEntityPortal.LinkedResonator> resos) {
+        HashMap<Integer, Integer> resoCountForLevel = new HashMap<>();
+        for (int i = 1; i <= 8; i++) {
+            resoCountForLevel.put(i, 0);
+        }
+
+        for (var reso : resos) {
+            if (reso == null) {
+                continue;
+            }
+            if (Objects.equals(reso.ownerGuid, mGame.getAgent().getEntityGuid())) {
+                resoCountForLevel.put(reso.level, resoCountForLevel.get(reso.level) + 1);
+            }
+        }
+        return resoCountForLevel;
+    }
+
+    private boolean canUpgradeOrDeploy(HashMap<Integer, Integer> resoCountForLevel, int currentLevel) {
+        while (currentLevel < 8) {
+            if (mGame.getKnobs().getPortalKnobs().getBandForLevel(currentLevel).getRemaining() <= resoCountForLevel.get(currentLevel)) {
+                return true;
+            }
+            ++currentLevel;
+        }
+        return false;
+    }
+
+    private boolean canPutThisResonatorOn(HashMap<Integer, Integer> resoCountForLevel, int level) {
+        return mGame.getKnobs().getPortalKnobs().getBandForLevel(level).getRemaining() > resoCountForLevel.get(level);
+    }
+
     @SuppressLint("DefaultLocale")
     @SuppressWarnings("ConstantConditions")
     private void onUpgradeButtonPressed(View view) {
@@ -176,17 +186,20 @@ public class ActivityDeploy extends AppCompatActivity {
         Log.d("ActivityDeploy", "Pressed UPGRADE button: " + slot);
         var reso = mGame.getCurrentPortal().getPortalResonator(slot);
         var resosForUpgrade = inventory.getResosForUpgrade(reso.level);
+        var resoCountForLevel = getResoCountsForLevels(mGame.getCurrentPortal().getPortalResonators());
         HashMap<Integer, String> levels = new HashMap<>();
         HashMap<Integer, Integer> counts = new HashMap<>();
         for (var r : resosForUpgrade) {
             int level = r.getItemLevel();
-            if (!levels.containsKey(level)) {
-                levels.put(level, String.format("Level %d (x1)", level));
-                counts.put(level, 1);
-            } else {
-                int count = counts.get(level);
-                counts.put(level, count+1);
-                levels.put(level, String.format("Level %d (x%d)", r.getItemLevel(), count+1));
+            if (canPutThisResonatorOn(resoCountForLevel, level)) {
+                if (!levels.containsKey(level)) {
+                    levels.put(level, String.format("Level %d (x1)", level));
+                    counts.put(level, 1);
+                } else {
+                    int count = counts.get(level);
+                    counts.put(level, count + 1);
+                    levels.put(level, String.format("Level %d (x%d)", r.getItemLevel(), count + 1));
+                }
             }
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -215,17 +228,20 @@ public class ActivityDeploy extends AppCompatActivity {
         int slot = layoutIdToResoSlot((Integer) view.getTag());
         Log.d("ActivityDeploy", "Pressed DEPLOY button: " + slot);
         var resosForUpgrade = inventory.getResosForUpgrade(0);
+        var resoCountForLevel = getResoCountsForLevels(mGame.getCurrentPortal().getPortalResonators());
         HashMap<Integer, String> levels = new HashMap<>();
         HashMap<Integer, Integer> counts = new HashMap<>();
         for (var r : resosForUpgrade) {
             int level = r.getItemLevel();
-            if (!levels.containsKey(level)) {
-                levels.put(level, String.format("Level %d (x1)", level));
-                counts.put(level, 1);
-            } else {
-                int count = counts.get(level);
-                counts.put(level, count+1);
-                levels.put(level, String.format("Level %d (x%d)", r.getItemLevel(), count+1));
+            if (canPutThisResonatorOn(resoCountForLevel, level)) {
+                if (!levels.containsKey(level)) {
+                    levels.put(level, String.format("Level %d (x1)", level));
+                    counts.put(level, 1);
+                } else {
+                    int count = counts.get(level);
+                    counts.put(level, count + 1);
+                    levels.put(level, String.format("Level %d (x%d)", r.getItemLevel(), count + 1));
+                }
             }
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -262,7 +278,6 @@ public class ActivityDeploy extends AppCompatActivity {
     }
 
     private void updateInfoText(int dist) {
-        // FIXME make these into separate fields and set colours
         String distanceText = getPrettyDistanceString(dist);
         GameEntityPortal portal = mGame.getCurrentPortal();
         String portalInfoText = "LVL: L" + portal.getPortalLevel() + "\n"
@@ -278,7 +293,7 @@ public class ActivityDeploy extends AppCompatActivity {
     }
 
     private int resoSlotToLayoutId(int slot) {
-        // FIXME not sure if correct - cf intel.js eastAnticlockwiseToNorthClockwise
+        // not sure if correct - cf intel.js eastAnticlockwiseToNorthClockwise
         // also window.OCTANTS = ['E', 'NE', 'N', 'NW', 'W', 'SW', 'S', 'SE'];
         return switch (slot) {
             case 0 -> R.id.deployScreenResonatorE;
@@ -292,7 +307,7 @@ public class ActivityDeploy extends AppCompatActivity {
             default -> {
                 Log.e("ActivityDeploy", "Unknown resonator slot: " + slot);
                 yield -99999;
-                // FIXME: maybe this should be a throw
+                // maybe this should be a throw
             }
         };
     }
@@ -318,7 +333,7 @@ public class ActivityDeploy extends AppCompatActivity {
     }
 
     private String resoSlotToOctantText(int slot) {
-        // FIXME not sure if correct - cf intel.js eastAnticlockwiseToNorthClockwise
+        // not sure if correct - cf intel.js eastAnticlockwiseToNorthClockwise
         // also window.OCTANTS = ['E', 'NE', 'N', 'NW', 'W', 'SW', 'S', 'SE'];
         return switch (slot) {
             case 0 -> "E";

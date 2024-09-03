@@ -7,62 +7,58 @@ import androidx.lifecycle.ViewModel;
 import net.opengress.slimgress.api.Plext.PlextBase;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class CommsViewModel extends ViewModel {
-    private final MutableLiveData<List<PlextBase>> mAllMessages = new MutableLiveData<>();
-    private final MutableLiveData<List<PlextBase>> mFactionMessages = new MutableLiveData<>();
-    private final MutableLiveData<List<PlextBase>> mAlertMessages = new MutableLiveData<>();
-    private final MutableLiveData<List<PlextBase>> mInfoMessages = new MutableLiveData<>();
+    private final MutableLiveData<List<PlextBase>> mPlexts = new MutableLiveData<>();
+    private final Set<String> allGuids = new HashSet<>();
 
-    public LiveData<List<PlextBase>> getAllMessages() {
-        return mAllMessages;
+    public LiveData<List<PlextBase>> getMessages() {
+        return mPlexts;
     }
 
-    public LiveData<List<PlextBase>> getFactionMessages() {
-        return mFactionMessages;
-    }
-
-    public LiveData<List<PlextBase>> getAlertMessages() {
-        return mAlertMessages;
-    }
-
-    public LiveData<List<PlextBase>> getInfoMessages() {
-        return mInfoMessages;
-    }
-
-    public void setMessages(List<PlextBase> newMessages, String category) {
-        switch (category) {
-            case "ALL" -> mAllMessages.setValue(newMessages);
-            case "FACTION" -> mFactionMessages.setValue(newMessages);
-            case "ALERT" -> mAlertMessages.setValue(newMessages);
-            case "INFO" -> mInfoMessages.setValue(newMessages);
+    public void setMessages(List<PlextBase> newMessages) {
+//        sortMessagesByTimestamp(newMessages);
+        allGuids.clear();
+        for (PlextBase message : newMessages) {
+            allGuids.add(message.getEntityGuid());
         }
+        mPlexts.setValue(newMessages);
     }
 
-    public void addMessage(PlextBase message, String category) {
-        // NB updates are posted and may not appear instantly
-        List<PlextBase> currentMessages;
-        switch (category) {
-            case "FACTION" -> {
-                currentMessages = mFactionMessages.getValue() != null ? mFactionMessages.getValue() : new ArrayList<>();
-                currentMessages.add(message);
-                mFactionMessages.postValue(currentMessages);
-            }
-            case "ALERT" -> {
-                currentMessages = mAlertMessages.getValue() != null ? mAlertMessages.getValue() : new ArrayList<>();
-                currentMessages.add(message);
-                mAlertMessages.postValue(currentMessages);
-            }
-            case "INFO" -> {
-                currentMessages = mInfoMessages.getValue() != null ? mInfoMessages.getValue() : new ArrayList<>();
-                currentMessages.add(message);
-                mInfoMessages.postValue(currentMessages);
-            }
+    public void postMessages(List<PlextBase> newMessages) {
+//        sortMessagesByTimestamp(newMessages);
+        allGuids.clear();
+        for (PlextBase message : newMessages) {
+            allGuids.add(message.getEntityGuid());
         }
-        // Update ALL category
-        List<PlextBase> allCurrentMessages = mAllMessages.getValue() != null ? mAllMessages.getValue() : new ArrayList<>();
-        allCurrentMessages.add(message);
-        mAllMessages.postValue(allCurrentMessages);
+        mPlexts.postValue(newMessages);
+    }
+
+    public synchronized void addMessage(PlextBase message) {
+        List<PlextBase> currentMessages = getMessageList();
+        String id = message.getEntityGuid();
+        if (allGuids.contains(id)) {
+            return;
+        }
+        currentMessages.add(message);
+        sortMessagesByTimestamp(currentMessages);
+        mPlexts.postValue(currentMessages);
+        allGuids.add(id);
+    }
+
+    private void sortMessagesByTimestamp(List<PlextBase> messages) {
+        Collections.sort(messages, (o1, o2) -> {
+            long timestamp1 = Long.parseLong(o1.getEntityTimestamp());
+            long timestamp2 = Long.parseLong(o2.getEntityTimestamp());
+            return Long.compare(timestamp1, timestamp2);
+        });
+    }
+
+    private List<PlextBase> getMessageList() {
+        return mPlexts.getValue() != null ? new ArrayList<>(mPlexts.getValue()) : new ArrayList<>();
     }
 }

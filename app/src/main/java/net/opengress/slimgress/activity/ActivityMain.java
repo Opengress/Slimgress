@@ -30,6 +30,7 @@ import static net.opengress.slimgress.ViewHelpers.putItemInMap;
 import static net.opengress.slimgress.ViewHelpers.saveScreenshot;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
+import static net.opengress.slimgress.api.Plext.PlextBase.PlextType.PlayerGenerated;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
@@ -44,12 +45,13 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -142,7 +144,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         final Button buttonComm = findViewById(R.id.buttonComm);
         buttonComm.setOnClickListener(v -> showComms());
 
-        mApp.getCommsViewModel().getAllMessages().observe(this, this::getCommsMessages);
+        mApp.getAllCommsViewModel().getMessages().observe(this, this::getCommsMessages);
         mApp.getLevelUpViewModel().getLevelUpMsgId().observe(this, this::levelUp);
         mApp.setMainActivity(this);
     }
@@ -220,13 +222,25 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     private void getCommsMessages(List<PlextBase> plexts) {
+        if (plexts.isEmpty()) {
+            // can't do anything with this
+            return;
+        }
         PlextBase plext = plexts.get(plexts.size() - 1);
         WidgetCommsLine commsLine = findViewById(R.id.commsOneLiner);
-        ((TextView) commsLine.findViewById(R.id.plext_text)).setText(plext.getFormattedText());
+        ((TextView) commsLine.findViewById(R.id.plext_text)).setText(plext.getFormattedText(false));
+        ((TextView) commsLine.findViewById(R.id.plext_text)).setMaxLines(1);
+        ((TextView) commsLine.findViewById(R.id.plext_text)).setSingleLine(true);
+        ((TextView) commsLine.findViewById(R.id.plext_text)).setEllipsize(TextUtils.TruncateAt.END);
 
         SimpleDateFormat sdf = new SimpleDateFormat("h:mm a", Locale.getDefault());
         String formattedTime = sdf.format(new Date(Long.parseLong(plext.getEntityTimestamp())));
         ((TextView) commsLine.findViewById(R.id.plext_time)).setText(formattedTime);
+        if (plext.atMentionsPlayer()) {
+            ((TextView) commsLine.findViewById(R.id.plext_time)).setTextAppearance(this, R.style.PlextTimeMentionedTextView);
+        } else {
+            ((TextView) commsLine.findViewById(R.id.plext_time)).setTextAppearance(this, R.style.PlextTimeTextView);
+        }
     }
 
     @Override
@@ -422,16 +436,13 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         FireCarouselAdapter adapter = new FireCarouselAdapter(ActivityMain.this, arrayList);
         mRecyclerView.setAdapter(adapter);
 
-        adapter.setOnItemClickListener(new FireCarouselAdapter.OnItemClickListener() {
-            @Override
-            public void onClick(ImageView imageView, InventoryListItem item) {
-                mCurrentFireItem = item;
-                findViewById(R.id.fire_carousel_button_fire).setEnabled(true);
-            }
+        adapter.setOnItemClickListener((imageView, item) -> {
+            // FIXME set this to USE for other types of items
+            mCurrentFireItem = item;
+            findViewById(R.id.fire_carousel_button_fire).setEnabled(true);
         });
 
-        // come back and style this one day
-        // come back and make these work internally one day
+
         var anchor = findViewById(R.id.buttonComm);
         PopupMenu popup = new PopupMenu(ActivityMain.this, anchor);
         popup.getMenuInflater().inflate(R.menu.map, popup.getMenu());
@@ -445,13 +456,14 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                         @Override
                         public void onClick(View v) {
 //                            flashMap();
+                            // FIXME handle the case of cubes/flipcards/whatever
                             fireBurster(mCurrentFireItem.getLevel(), mCurrentFireItem.getType());
 //                            Log.d("MAIN", "Firing "+mCurrentFireItem.getPrettyDescription());
                             mCurrentFireItem.remove(mCurrentFireItem.getFirstID());
                             int index = arrayList.indexOf(mCurrentFireItem);
                             int newIndex = 0;
                             if (mCurrentFireItem.getQuantity() == 0) {
-                                newIndex = mRecyclerView.getChildCount() >= index + 1 ? index : index - 1;
+                                newIndex = (index < 1) ? 0 : index - 1;
 //                                mRecyclerView.scrollToPosition(newIndex);
                                 arrayList.remove(mCurrentFireItem);
                                 adapter.notifyItemRemoved(index);
@@ -472,12 +484,9 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                             }
                         }
                     });
-                    findViewById(R.id.fire_carousel_button_done).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            findViewById(R.id.fire_carousel_layout).setVisibility(View.GONE);
-                            findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
-                        }
+                    findViewById(R.id.fire_carousel_button_done).setOnClickListener(v -> {
+                        findViewById(R.id.fire_carousel_layout).setVisibility(View.GONE);
+                        findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
                     });
                     return true;
                 } else if (itemId == R.id.action_new_portal) {
@@ -524,35 +533,61 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     private void fireBurster(int level, ItemBase.ItemType type) {
+        ItemBase item = Objects.requireNonNull(mGame.getInventory().findItem(mCurrentFireItem.getFirstID()));
+        ItemBase.ItemType itemType = item.getItemType();
         ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
         assert scanner != null;
         // todo: rate limiting etc per knobs
-        mGame.intFireWeapon((ItemWeapon) Objects.requireNonNull(mGame.getInventory().findItem(mCurrentFireItem.getFirstID())), new Handler(msg -> {
-            ArrayList<Damage> damages = msg.getData().getParcelableArrayList("damages");
-            if (damages == null) {
-                // throw?
+
+        if (item.getItemType() == ItemBase.ItemType.WeaponXMP || item.getItemType() == ItemBase.ItemType.WeaponUltraStrike) {
+
+            if (mGame.getKnobs().getXMCostKnobs().getXmpFiringCostByLevel().get(item.getItemLevel() - 1) > mGame.getAgent().getEnergy()) {
+                DialogInfo dialog = new DialogInfo(this);
+                dialog.setMessage(getString(R.string.you_don_t_have_enough_xm)).setDismissDelay(1500).show();
+                return;
+            }
+
+            mGame.intFireWeapon((ItemWeapon) item, new Handler(msg -> {
+                var data = msg.getData();
+                String error = getErrorStringFromAPI(data);
+                if (error != null && !error.isEmpty()) {
+                    DialogInfo dialog = new DialogInfo(this);
+                    dialog.setMessage(error).setDismissDelay(1500).show();
+                }
+                ArrayList<Damage> damages = data.getParcelableArrayList("damages");
+                if (damages == null || damages.isEmpty()) {
+                    mApp.getAllCommsViewModel().addMessage(PlextBase.createByPlainText(PlayerGenerated, getString(R.string.missed_all_resonators)));
+                    return true;
+                }
+                for (var damage : damages) {
+                    scanner.displayDamage(damage.getDamageAmount(), damage.getTargetGuid(), damage.getTargetSlot(), damage.isCriticalHit());
+                }
+
+                // when i put the drawing code (currently below) in here, it doesn't draw.
+
                 return true;
-            }
-            for (var damage : damages) {
-                scanner.displayDamage(damage.getDamageAmount(), damage.getTargetGuid(), damage.getTargetSlot(), damage.isCriticalHit());
+            }));
 
-            }
-
-            return true;
-        }));
-
-        int range = switch (type) {
-            case WeaponXMP -> mGame.getKnobs().getWeaponRangeKnobs().getXmpDamageRange(level);
-            case WeaponUltraStrike ->
-                    mGame.getKnobs().getWeaponRangeKnobs().getUltraStrikeDamageRange(level);
-            default -> 40;
-        };
-        scanner.fireBurster(range);
+            // FIXME this should actually only be displayed if the weapon truly fires??
+            int range = switch (type) {
+                case WeaponXMP -> mGame.getKnobs().getWeaponRangeKnobs().getXmpDamageRange(level);
+                case WeaponUltraStrike ->
+                        mGame.getKnobs().getWeaponRangeKnobs().getUltraStrikeDamageRange(level);
+                default -> 40;
+            };
+            scanner.fireBurster(range);
+        }
     }
 
     public void damagePlayer(int amount, String attackerGuid) {
         ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
         assert scanner != null;
         scanner.displayPlayerDamage(amount, attackerGuid);
+    }
+
+    public void refreshDisplay() {
+        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
+        assert scanner != null;
+        scanner.updateScreen(new Handler(Looper.getMainLooper()));
     }
 }

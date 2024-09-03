@@ -57,7 +57,8 @@ public class SlimgressApplication extends Application {
     private APGainsViewModel mAPGainsViewModel;
     private PlayerDamagesViewModel mPlayerDamagesViewModel;
     private PlayerDataViewModel mPlayerDataViewModel;
-    private CommsViewModel mCommsViewModel;
+    private CommsViewModel mAllCommsViewModel;
+    private CommsViewModel mFactionCommsViewModel;
     private LevelUpViewModel mLevelUpViewModel;
     private ActivityMain mMainActivity;
 
@@ -72,7 +73,8 @@ public class SlimgressApplication extends Application {
         mAPGainsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(APGainsViewModel.class);
         mPlayerDamagesViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDamagesViewModel.class);
         mPlayerDataViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDataViewModel.class);
-        mCommsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(CommsViewModel.class);
+        mAllCommsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(CommsViewModel.class);
+        mFactionCommsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(CommsViewModel.class);
         mLevelUpViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(LevelUpViewModel.class);
 
         mSingleton = this;
@@ -150,7 +152,7 @@ public class SlimgressApplication extends Application {
             mainHandler.post(() -> mGame.intGetGameScore(new Handler(msg -> {
                 var enl = msg.getData().getInt("EnlightenedScore");
                 var res = msg.getData().getInt("ResistanceScore");
-                mCommsViewModel.addMessage(PlextBase.createByScores(enl, res), "INFO");
+                mAllCommsViewModel.addMessage(PlextBase.createByScores(enl, res));
                 return true;
             })));
         }).start();
@@ -196,8 +198,12 @@ public class SlimgressApplication extends Application {
         return mPlayerDataViewModel;
     }
 
-    public CommsViewModel getCommsViewModel() {
-        return mCommsViewModel;
+    public CommsViewModel getAllCommsViewModel() {
+        return mAllCommsViewModel;
+    }
+
+    public CommsViewModel getFactionCommsViewModel() {
+        return mFactionCommsViewModel;
     }
 
     public LevelUpViewModel getLevelUpViewModel() {
