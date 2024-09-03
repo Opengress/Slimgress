@@ -28,9 +28,9 @@ import android.graphics.Color;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
-import android.text.style.URLSpan;
 import android.util.Log;
 
+import net.opengress.slimgress.ClickablePlextItemSpan;
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.Common.EntityBase;
 import net.opengress.slimgress.api.Interface.APGain;
@@ -79,6 +79,10 @@ public class PlextBase extends EntityBase {
         }
 
         return newPlext;
+    }
+
+    public static PlextBase createByPlainText(PlextType type, String message) {
+        return new PlextBase(type, message);
     }
 
     @SuppressLint("DefaultLocale")
@@ -146,7 +150,7 @@ public class PlextBase extends EntityBase {
         return mText;
     }
 
-    public SpannableStringBuilder getFormattedText() {
+    public SpannableStringBuilder getFormattedText(boolean isFactionTab) {
         var teams = SlimgressApplication.getInstance().getGame().getKnobs().getTeamKnobs().getTeams();
         int textColour = 0xFFFFFFFF;
         switch (mPlextType) {
@@ -171,23 +175,38 @@ public class PlextBase extends EntityBase {
             spannable.append(text);
             // TODO check intel map and ios client for ideas about these
             switch (mark.getType()) {
-                case Secure ->
+                case Secure -> {
                     // ios: #F55F55
+                    if (isFactionTab) {
+                        spannable.delete(0, text.length());
+                        end -= text.length();
+                    } else {
                         spannable.setSpan(new ForegroundColorSpan(Color.RED), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    }
+                }
                 // "user generated messages"
                 // omg maybe not sender - "automatically generated messages"
-                case Sender, Player, ATPlayer -> {
+                case Sender -> {
+                    spannable.setSpan(new ClickablePlextItemSpan(((MarkupSender) mark).getGUID(), 0xff000000 + ((MarkupSender) mark).getTeam().getColour(), null), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                case Player -> {
+                    spannable.setSpan(new ClickablePlextItemSpan(((MarkupPlayer) mark).getGUID(), 0xff000000 + ((MarkupPlayer) mark).getTeam().getColour(), null), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                case ATPlayer -> {
                     // ATPlayer might need its own special colour - #FCD452 ?
-                    spannable.setSpan(new ForegroundColorSpan(0xff000000 + ((MarkupSender) mark).getTeam().getColour()), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    spannable.setSpan(new URLSpan("ogagent:" + ((MarkupSender) mark).getGUID()), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE); // maybe not ATPlayer?
+                    int colour = Objects.equals(SlimgressApplication.getInstance().getGame().getAgent().getEntityGuid(), ((MarkupATPlayer) mark).getGUID()) ? 0xFCD452 : ((MarkupATPlayer) mark).getTeam().getColour();
+                    spannable.setSpan(new ClickablePlextItemSpan(((MarkupATPlayer) mark).getGUID(), 0xff000000 + colour, null), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
                 case Portal -> {
                     // maybe don't use team colour? #008780
-                    spannable.setSpan(new ForegroundColorSpan(0xff000000 + ((MarkupPortal) mark).getTeam().getColour()), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    spannable.setSpan(new URLSpan("ogportal:" + ((MarkupPortal) mark).getGUID()), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    spannable.setSpan(new ClickablePlextItemSpan(((MarkupPortal) mark).getGUID(), 0xff000000 + ((MarkupPortal) mark).getTeam().getColour(), null), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                     String text2 = String.format(" (%s)", ((MarkupPortal) mark).getAddress());
+                    int oldEnd = end;
                     end += text2.length();
                     spannable.append(text2);
+                    if (oldEnd - end != 0) {
+                        spannable.setSpan(new ForegroundColorSpan(textColour), oldEnd, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    }
                     // formatting?
                     start += text2.length();
                 }
@@ -216,5 +235,16 @@ public class PlextBase extends EntityBase {
 
     public List<Markup> getMarkups() {
         return mMarkups;
+    }
+
+    public boolean atMentionsPlayer() {
+        for (Markup markup : mMarkups) {
+            if (markup.getType() == Markup.MarkupType.ATPlayer) {
+                if (Objects.equals(((MarkupATPlayer) markup).getGUID(), SlimgressApplication.getInstance().getGame().getAgent().getEntityGuid())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

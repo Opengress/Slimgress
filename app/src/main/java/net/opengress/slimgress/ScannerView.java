@@ -333,7 +333,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 uiHandler.post(() -> {
                     // guard against scanning too fast if request fails
                     mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
-                    updateWorld(uiHandler);
+                    updateWorld();
                 });
 
             }
@@ -386,9 +386,10 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 var portal = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).first;
                 var slot = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).second;
                 var resoParts = Objects.requireNonNull(mResonatorMarkers.get(portal)).get(slot);
-                assert resoParts != null;
-                mMap.getOverlays().remove(resoParts.first);
-                mMap.getOverlays().remove(resoParts.second);
+                if (resoParts != null) {
+                    mMap.getOverlays().remove(resoParts.first);
+                    mMap.getOverlays().remove(resoParts.second);
+                }
                 mResonatorToPortalSlotLookup.remove(guid);
                 Objects.requireNonNull(mResonatorMarkers.get(portal)).remove(slot);
                 continue;
@@ -423,6 +424,10 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         final ITileSource tileSource = new XYTileSource("CartoDB Dark Matter", 3, 18, 256, ".png",
                 new String[]{"https://c.basemaps.cartocdn.com/dark_nolabels/"});
         final MapTileProviderBasic tileProvider = new MapTileProviderBasic(mApp.getApplicationContext(), tileSource);
+        // untested ideas to research issue which causes endless logspam in emulator unpredictably
+        // Configuration.getInstance().setDebugMode(true);
+//        TileWriter tileWriter = new TileWriter();
+//        tileWriter.clear();
 
         // Note! we are programmatically construction the map view
         // be sure to handle application lifecycle correct (see onPause)
@@ -463,7 +468,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                             if (isDoubleClick) {
                                 float currentY = event.getY();
                                 // untested jitter filter
-                                if (Math.abs(currentY - startY) >= 0.03) {
+                                if (Math.abs(currentY - startY) >= 0.06) {
                                     if (currentY > startY) {
                                         getController().zoomTo(getZoomLevelDouble() - ZOOM_SENSITIVITY);
                                     } else {
@@ -479,7 +484,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                             float rotating = (float) (mPrevAngle - mCurrAngle);
                             setMapOrientation(getMapOrientation() - rotating);
                             // guard against long-presses for context menu with jitter
-                            if (Math.abs(rotating) >= 0.03 || isRotating) {
+                            if (Math.abs(rotating) >= 0.06 || isRotating) {
                                 isRotating = true;
                                 return true;
                             }
@@ -724,7 +729,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     }
 
     @SuppressLint("DefaultLocale")
-    private synchronized void updateWorld(final Handler uiHandler) {
+    private synchronized void updateWorld() {
         mSonarOverlay.trigger();
         displayQuickMessage(getStringSafely(R.string.scanning_local_area));
 
@@ -762,8 +767,8 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 hideQuickMessage();
             }
 
-
-            updateScreen(uiHandler);
+// now comes from elsewhere but might end up coming through a viewmodel
+//            updateScreen(uiHandler);
 
             displayQuickMessage(getStringSafely(R.string.scan_complete));
             setQuickMessageTimeout();
@@ -782,9 +787,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
         // get objects (on new thread)
         new Thread(() -> mGame.intGetObjectsInCells(mGame.getLocation(), resultHandler)).start();
+        final Handler commsHandler = new Handler();
+        new Thread(() -> mGame.intLoadCommunication(50, false, commsHandler)).start();
     }
 
-    private void updateScreen(Handler uiHandler) {
+    public void updateScreen(Handler uiHandler) {
         new Thread(() -> {
             // draw xm particles
             drawXMParticles();
@@ -1115,10 +1122,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     }
 
     public void fireBurster(int radius) {
-        new AnimatedCircleOverlay(mMap, radius, 333).start();
+        new AnimatedCircleOverlay(mMap, radius, 100).start();
     }
 
     private void onPortalActivityResult(ActivityResult result) {
+
         if (result.getResultCode() == Activity.RESULT_OK) {
             var data = result.getData();
             if (mGame.getLocation() != null) {
@@ -1126,7 +1134,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 uiHandler.post(() -> {
                     // guard against scanning too fast if request fails
                     mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
-                    updateWorld(uiHandler);
+                    updateWorld();
                 });
 
             }

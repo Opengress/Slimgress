@@ -33,6 +33,9 @@ import java.util.Map;
 
 public class XMCostKnobs extends Knobs
 {
+    // these are annoying: passing in the level you're interested in gives an off-by-one error.
+    // maybe i should fix that in more sophisticated getters.
+
     private final List<Integer> mHeatsinkDeployCostByLevel;
     private final List<Integer> mFlipCardCostByLevel;
     private final List<Integer> mTurretDeployCostByLevel;

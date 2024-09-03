@@ -114,4 +114,9 @@
     <string name="go_to_opr">OPR</string>
     <string name="fire_button_text">FIRE</string>
     <string name="done_button_text">DONE</string>
+    <string name="you_are_moving_too_fast">You are moving too fast</string>
+    <string name="server_error">Server error</string>
+    <string name="you_don_t_have_enough_xm">You don\'t have enough XM!</string>
+    <string name="weapon_does_not_exist">Weapon does not exist</string>
+    <string name="missed_all_resonators">Missed all resonators!</string>
 </resources>

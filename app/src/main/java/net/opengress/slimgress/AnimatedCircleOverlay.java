@@ -5,7 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.os.Build;
-import android.os.Handler;
+import android.view.Choreographer;
 
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
@@ -16,14 +16,15 @@ public class AnimatedCircleOverlay extends Overlay {
     private final float mMaxRadius;
     private final long mVelocity;
     private final long mInterval;
+    private final Point mScreenPoint = new Point();
     private GeoPoint mCenter;
     private float mRadius = 0;
-    private Handler mHandler = new Handler();
-    private MapView mMap;
-    private Runnable mRunnable = createRunnable();
+    private Choreographer mChoreographer;
+    private Choreographer.FrameCallback mFrameCallback;
     private boolean mRunOnce = true;
     private float mStrokeWidth = 10;
     private long mLastTime;
+    private MapView mMap;
 
     public AnimatedCircleOverlay(MapView mapView, float maxRadius, long velocity) {
         this(mapView, maxRadius, velocity, 0);
@@ -38,12 +39,10 @@ public class AnimatedCircleOverlay extends Overlay {
         mPaint.setColor(0xCCCC9900);
         mPaint.setStyle(Paint.Style.STROKE);
         mapView.getOverlays().add(this);
-    }
-
-    private Runnable createRunnable() {
-        return new Runnable() {
+        mChoreographer = Choreographer.getInstance();
+        mFrameCallback = new Choreographer.FrameCallback() {
             @Override
-            public void run() {
+            public void doFrame(long frameTimeNanos) {
                 long currentTime = System.currentTimeMillis();
                 float deltaTime = (currentTime - mLastTime) / 1000f;
                 mLastTime = currentTime;
@@ -52,15 +51,14 @@ public class AnimatedCircleOverlay extends Overlay {
                 if (mRadius >= mMaxRadius) {
                     if (mInterval > 0) {
                         mRadius = 0;
-                        mHandler.postDelayed(this, mInterval);
+                        mChoreographer.postFrameCallbackDelayed(this, mInterval);
                     } else if (mRunOnce) {
                         stop();
                     } else {
                         mRadius = 0;
-                        mHandler.removeCallbacks(mRunnable);
                     }
                 } else {
-                    mHandler.postDelayed(this, 16); // Redraw every 16ms (~60fps)
+                    mChoreographer.postFrameCallback(this);
                 }
                 if (mMap != null) {
                     mMap.invalidate();
@@ -75,11 +73,10 @@ public class AnimatedCircleOverlay extends Overlay {
             return;
         }
 
-        Point screenPoint = new Point();
-        mapView.getProjection().toPixels(mCenter, screenPoint);
+        mapView.getProjection().toPixels(mCenter, mScreenPoint);
         float pixels = mMap.getProjection().metersToPixels(mRadius, mCenter.getLatitude(), mapView.getZoomLevelDouble());
         mPaint.setStrokeWidth(mMap.getProjection().metersToPixels(mStrokeWidth, mCenter.getLatitude(), mapView.getZoomLevelDouble()));
-        canvas.drawCircle(screenPoint.x, screenPoint.y, pixels, mPaint);
+        canvas.drawCircle(mScreenPoint.x, mScreenPoint.y, pixels, mPaint);
     }
 
     public void updateLocation(GeoPoint location) {
@@ -88,15 +85,15 @@ public class AnimatedCircleOverlay extends Overlay {
 
     public void start() {
         mLastTime = System.currentTimeMillis();
-        mHandler.post(mRunnable);
+        mChoreographer.postFrameCallback(mFrameCallback);
     }
 
     public void stop() {
-        mHandler.removeCallbacks(mRunnable);
+        mChoreographer.removeFrameCallback(mFrameCallback);
         mMap.getOverlays().remove(this);
         mMap = null;
-        mHandler = null;
-        mRunnable = null;
+        mChoreographer = null;
+        mFrameCallback = null;
     }
 
     public void setRunOnce(boolean runOnce) {
@@ -104,12 +101,10 @@ public class AnimatedCircleOverlay extends Overlay {
     }
 
     public void setColor(int color) {
-        // color 0x33FFFF00
         mPaint.setColor(color);
     }
 
     public void setWidth(float width) {
-        // width 10
         mStrokeWidth = width;
     }
 
@@ -122,6 +117,4 @@ public class AnimatedCircleOverlay extends Overlay {
     public void trigger() {
         start();
     }
-
-
 }

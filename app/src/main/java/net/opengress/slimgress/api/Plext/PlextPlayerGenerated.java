@@ -39,7 +39,7 @@ public class PlextPlayerGenerated extends PlextBase
 
         JSONObject item = json.getJSONObject(2);
 
-        mLocation = new Location(item.getJSONObject("locationE6"));
+        mLocation = null;//new Location(item.getJSONObject("locationE6"));
 
         JSONObject controllingTeam = item.optJSONObject("controllingTeam");
         if (controllingTeam != null)
