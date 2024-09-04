@@ -21,7 +21,6 @@ public class CommsViewModel extends ViewModel {
     }
 
     public void setMessages(List<PlextBase> newMessages) {
-//        sortMessagesByTimestamp(newMessages);
         allGuids.clear();
         for (PlextBase message : newMessages) {
             allGuids.add(message.getEntityGuid());
@@ -30,7 +29,6 @@ public class CommsViewModel extends ViewModel {
     }
 
     public void postMessages(List<PlextBase> newMessages) {
-//        sortMessagesByTimestamp(newMessages);
         allGuids.clear();
         for (PlextBase message : newMessages) {
             allGuids.add(message.getEntityGuid());
@@ -39,15 +37,33 @@ public class CommsViewModel extends ViewModel {
     }
 
     public synchronized void addMessage(PlextBase message) {
-        List<PlextBase> currentMessages = getMessageList();
-        String id = message.getEntityGuid();
-        if (allGuids.contains(id)) {
+        if (allGuids.contains(message.getEntityGuid())) {
             return;
         }
+
+        List<PlextBase> currentMessages = getMessageList();
         currentMessages.add(message);
+        allGuids.add(message.getEntityGuid());
         sortMessagesByTimestamp(currentMessages);
         mPlexts.postValue(currentMessages);
-        allGuids.add(id);
+    }
+
+    public synchronized void addMessages(List<PlextBase> messages) {
+        List<PlextBase> currentMessages = getMessageList();
+        boolean newMessagesAdded = false;
+
+        for (PlextBase message : messages) {
+            if (!allGuids.contains(message.getEntityGuid())) {
+                currentMessages.add(message);
+                allGuids.add(message.getEntityGuid());
+                newMessagesAdded = true;
+            }
+        }
+
+        if (newMessagesAdded) {
+            sortMessagesByTimestamp(currentMessages);
+            mPlexts.postValue(currentMessages);
+        }
     }
 
     private void sortMessagesByTimestamp(List<PlextBase> messages) {
@@ -62,3 +78,4 @@ public class CommsViewModel extends ViewModel {
         return mPlexts.getValue() != null ? new ArrayList<>(mPlexts.getValue()) : new ArrayList<>();
     }
 }
+
