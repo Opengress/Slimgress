@@ -10,8 +10,8 @@ Only the surface has been scratched, and the problem domain is not yet well unde
 Opengress intends to (initially) implement a client-server network protocol similar to that used
 by the old Nemesis client c2015, along with an example game server, associated website, and game client.
 Emulating (VERY loosely) Google's game means that it will be very easy for third parties to develop
-new clients, now tools, new innovations! Much work had been done to create unofficial clients for
-Google's game. See Slimgress, Ingress-iOS, Influx, and a great many more!
+new clients, new tools, new innovations! Much work had been done to create unofficial clients for
+Google's game. See Slimgress, iOS-Ingress, Influx, and a great many more!
 
 Slimgress fits into this picture as an early Android protocol-development (testing) client.
 As the server and client codebases improve and the problem domain is better understood,
@@ -31,59 +31,59 @@ third-party documentation published online, other third-party client code, scree
 
 # Implemented in client
 - Log in
-- View map with portals (tested), links and fields (not tested)
+- View map with portals and resonators (tested), links and fields (not tested)
 - View BASIC portal details (picture, title, level)
-- Hack portal (incomplete implementation, but it works)
+- Hack portal (no minigame or powerups right now)
 - View inventory (mostly works but needs overhaul)
-- View and slurp energy globs on map (but map needs to update on slurp)
+- View and slurp energy globs on map (seems very buggy)
 - Auto update detection
 - Deploy and upgrade resonators on portals
-- Drop and recycle
+- Drop and recycle including bulk recycle
+- Untargeted radial weapons
+- Mostly sensible main map (actual scanner) rotation/zoom etc. Still has bugs.
 
 # To do soon (almost all of it needing further serverside work)
-- Finish polishing hacking
-- Bulk recycle
 - Update XM and AP in the client (eg on recycling, hacking etc)
-- Fire weapons
+- Flipcards
 - Link portals
 - Log out (Workaround: clear data)
 - Toggle switches for things like loading portal images and maybe even map tiles (save data)
 - Deploy mods to portals
-- Custom CompassOverlay which might draw onto an external widget and not the MapView, and should
-  lock scanner rotation to IRL orientation when clicked
 - View and pick up items from map
-- Send/view comms stuff if/as appropriate
-- Create a variety of game item types
+- Send/view comms stuff if/as appropriate (sending now works)
+- Create a variety of game item types (many types obtainable but some not activatable)
 
 # To do (but it's technical etc)
 
 - Better portal and deploy screens
 - Custom player cursor overlay which sizes like a GroundOverlay but rotates to match orientation
-- Keep scanner's map centred (etc)
 - Full set of log in and account setup stuff (name changes, training, stale cookie...)
 - Invite system support??
 - More types of logins support?
 
 # To do eventually (again, needs serverside stuff)
-- View players'/own stats/profiles
+
+- View players'/own stats/profiles (stats are starting to be recorded now)
 - View scoring information/checkpoints/whatever
-- Catch-up iOS client etc
-- Notifications.... Harder because we are saying NO to fcm/gcm and friends
-- 3D map
+- Catch-up iOS/cross-platform client etc
+- Notifications (not in Telegram).... Harder because we are saying NO to fcm/gcm and friends
+- 3D map (likely maplibre)
 
 # Out of scope
-- A perfect, 1:1 reimplementation of gameplay logic or protocol of other software
+
+- A perfect, 1:1 reimplementation of gameplay logic, UI, UX or protocol of other software
 - Animations or any particularly beautiful art etc
 - Anything illegal
 
 # Goals
 It's hoped that once there's a stable server implementation Slimgress can eventually be retired
-in favour of a V2 client written with something performant and cross-platform. Perhaps Qt.
+in favour of a V2 client written with something performant and cross-platform.
+Perhaps Qt, Godot or libGDX.
 The Slimgress client at this point is imagined as really mostly a client for testing, 
 research and development.
 I'd hope that eventually there will be a client codebase which can be deployed on Android, iOS,
 maybe even Sailfish and future versions of Ubuntu Phone.
-To reach all these platforms, we have to eventually let go of Java (probably).
+To reach all these platforms, we probably have to eventually let go of Java.
 But that's moot right now, when Android development is easy to pick up and has a head start and a
 big audience of possible testers.
 
@@ -96,10 +96,11 @@ But we don't want to reinvent the wheel either,
 so let's try to implement something in the same genre using what we can learn from their example.
 
 Another thing we don't want is to ever make a client which:
-- takes up all the space on your phone
-- eats all your data
-- drains your battery rapidly
-- makes your phone hot enough to fry eggs
+
+- takes up all the space on your phone (if you don't want it to)
+- eats all your data (if you don't want it to)
+- drains your battery rapidly (if you don't want it to)
+- makes your phone hot enough to fry eggs (if you don't want it to)
 - lags between actions/activities/whatever or has long loading screens
 - takes a loooooong time to start/open/resume
 - kills your other applications (memory hog etc)
@@ -109,14 +110,14 @@ Another thing we don't want is to ever make a client which:
 - Complete UI for hacking (done)
 - Auto update detection (done)
 - View and slurp energy globs (done)
-- Drop and recycle items (done, except bulk recycle)
-- Lock map to compass (done for single-finger gestures...)
-- Level up and get a field kit
+- Drop and recycle items (done, protocol might change)
+- Lock map to compass (done except for pinch zoom)
+- Level up and get a field kit (done, protocol might change)
 
 ## v0.3 - by which time players should be able to leave marks on the world and play by game rules
 - Deploy on to portals to power them up (done)
 - Flipcards
-- Weapons (firing of)
+- Weapons (firing of) (done)
 - Data/battery saver toggles
 
 ## v0.4 - by which time it should be possible to have an enemy team or enemy bot
@@ -132,21 +133,31 @@ Another thing we don't want is to ever make a client which:
 ## v0.7 - Quality of life stuff
 - Capsules
 - Passcodes
-- COMMS type information view/receive/send
+- COMMS type information view/receive/send (send works)
 - Portal submission (in game client)
 - Glyph hacking or similar
 
 ## v0.8 - Looking at growth possibilities
 - Invites
 - More types of logins (google/facebook/ldap/microsoft/github/SMS/email/whatever)
+- General parity with iOS-Ingress
 
 ## v0.9 - Things start looking marketable at this moment
 - Nemesis (2013) level of playability on android
 - Regional and global scoring
 - Portal review (in game client)
-- Notification support
+- Notification support (using Telegram for now)
 - Profile pages / badges / whatever
 
 ## v1.0 - A stable client emerges, ready for porting, rewrites, overhauls, new content etc
-- iOS or final client parity
+
+- Equivalent of [REDACTED] parity
 - Gameplay to remind players of 2016, maybe
+
+# Contraversial issue
+
+Platform support: Ideally we go all the way back to API 1.
+We are limited mostly by our dependencies - ACRA needs 26, I think. Material might need 21?
+Probably if we start a V2 client we will try to keep this one running in the basic sense for a while
+at the lowest possible API level, by ripping out ACRA at least.
+A V2 will probably be 26(ish) up.

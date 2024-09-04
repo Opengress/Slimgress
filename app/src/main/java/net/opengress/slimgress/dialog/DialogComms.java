@@ -253,7 +253,7 @@ public class DialogComms extends BottomSheetDialogFragment {
                 return;
             }
             PlextBase plext = mPlexts.get(position);
-            holder.textView.setText(plext.getFormattedText(mIsInFactionTab));
+            holder.textView.setText(plext.getFormattedText(mIsInFactionTab), TextView.BufferType.SPANNABLE);
             holder.textView.setMovementMethod(LinkMovementMethod.getInstance());
 
             SimpleDateFormat sdf = new SimpleDateFormat("h:mm a", Locale.getDefault());
