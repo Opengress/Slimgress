@@ -25,7 +25,7 @@ import static net.opengress.slimgress.ViewHelpers.getAPGainTriggerReason;
 
 import android.annotation.SuppressLint;
 import android.graphics.Color;
-import android.text.SpannableStringBuilder;
+import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
@@ -40,6 +40,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -53,6 +54,23 @@ public class PlextBase extends EntityBase {
         SystemBroadcast,
         SystemNarrowcast
     }
+
+    static class SpanInfo {
+        private final Object what;
+        private final int start;
+        private final int end;
+        private final int flags;
+
+        public SpanInfo(Object what, int start, int end, int flags) {
+            this.what = what;
+            this.start = start;
+            this.end = end;
+            this.flags = flags;
+        }
+    }
+
+
+    private SpannableString mSpannableString;
 
     private final PlextType mPlextType;
     private final String mText;
@@ -150,7 +168,10 @@ public class PlextBase extends EntityBase {
         return mText;
     }
 
-    public SpannableStringBuilder getFormattedText(boolean isFactionTab) {
+    public SpannableString getFormattedText(boolean isFactionTab) {
+        if (mSpannableString != null) {
+            return mSpannableString;
+        }
         var teams = SlimgressApplication.getInstance().getGame().getKnobs().getTeamKnobs().getTeams();
         int textColour = 0xFFFFFFFF;
         switch (mPlextType) {
@@ -159,8 +180,10 @@ public class PlextBase extends EntityBase {
             case SystemNarrowcast -> textColour = 0xFFD5AB4C;
         }
 
-        SpannableStringBuilder spannable = new SpannableStringBuilder();
+
         int start = 0;
+        StringBuilder sb = new StringBuilder();
+        ArrayList<SpanInfo> spans = new ArrayList<>();
         for (var mark : mMarkups) {
             String text;
             if (mark.getType() == Markup.MarkupType.Portal) {
@@ -172,40 +195,39 @@ public class PlextBase extends EntityBase {
                 text = mark.getPlain();
             }
             int end = start + text.length();
-            spannable.append(text);
-            // TODO check intel map and ios client for ideas about these
+            sb.append(text);
             switch (mark.getType()) {
                 case Secure -> {
                     // ios: #F55F55
                     if (isFactionTab) {
-                        spannable.delete(0, text.length());
+                        sb.delete(0, text.length());
                         end -= text.length();
                     } else {
-                        spannable.setSpan(new ForegroundColorSpan(Color.RED), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        spans.add(new SpanInfo(new ForegroundColorSpan(Color.RED), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE));
                     }
                 }
                 // "user generated messages"
                 // omg maybe not sender - "automatically generated messages"
                 case Sender -> {
-                    spannable.setSpan(new ClickablePlextItemSpan(((MarkupSender) mark).getGUID(), 0xff000000 + ((MarkupSender) mark).getTeam().getColour(), null), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    spans.add(new SpanInfo(new ClickablePlextItemSpan(((MarkupSender) mark).getGUID(), 0xff000000 + ((MarkupSender) mark).getTeam().getColour(), null), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE));
                 }
                 case Player -> {
-                    spannable.setSpan(new ClickablePlextItemSpan(((MarkupPlayer) mark).getGUID(), 0xff000000 + ((MarkupPlayer) mark).getTeam().getColour(), null), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    spans.add(new SpanInfo(new ClickablePlextItemSpan(((MarkupPlayer) mark).getGUID(), 0xff000000 + ((MarkupPlayer) mark).getTeam().getColour(), null), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE));
                 }
                 case ATPlayer -> {
                     // ATPlayer might need its own special colour - #FCD452 ?
                     int colour = Objects.equals(SlimgressApplication.getInstance().getGame().getAgent().getEntityGuid(), ((MarkupATPlayer) mark).getGUID()) ? 0xFCD452 : ((MarkupATPlayer) mark).getTeam().getColour();
-                    spannable.setSpan(new ClickablePlextItemSpan(((MarkupATPlayer) mark).getGUID(), 0xff000000 + colour, null), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    spans.add(new SpanInfo(new ClickablePlextItemSpan(((MarkupATPlayer) mark).getGUID(), 0xff000000 + colour, null), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE));
                 }
                 case Portal -> {
                     // maybe don't use team colour? #008780
-                    spannable.setSpan(new ClickablePlextItemSpan(((MarkupPortal) mark).getGUID(), 0xff000000 + ((MarkupPortal) mark).getTeam().getColour(), null), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    spans.add(new SpanInfo(new ClickablePlextItemSpan(((MarkupPortal) mark).getGUID(), 0xff000000 + ((MarkupPortal) mark).getTeam().getColour(), null), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE));
                     String text2 = String.format(" (%s)", ((MarkupPortal) mark).getAddress());
                     int oldEnd = end;
                     end += text2.length();
-                    spannable.append(text2);
+                    sb.append(text2);
                     if (oldEnd - end != 0) {
-                        spannable.setSpan(new ForegroundColorSpan(textColour), oldEnd, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        spans.add(new SpanInfo(new ForegroundColorSpan(textColour), oldEnd, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE));
                     }
                     // formatting?
                     start += text2.length();
@@ -214,23 +236,27 @@ public class PlextBase extends EntityBase {
                     // FIXME team names
                     String texte = String.format(Locale.getDefault(), "Enlightened: %d", ((MarkupScore) mark).getAliensScore());
                     String textr = String.format(Locale.getDefault(), "Resistance: %d", ((MarkupScore) mark).getResistanceScore());
-                    spannable.append(texte);
-                    spannable.append(" - ");
-                    spannable.append(textr);
+                    sb.append(texte);
+                    sb.append(" - ");
+                    sb.append(textr);
                     end -= text.length();
                     end += texte.length();
-                    spannable.setSpan(new ForegroundColorSpan(0xff000000 + Objects.requireNonNull(teams.get("alien")).getColour()), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    spans.add(new SpanInfo(new ForegroundColorSpan(0xff000000 + Objects.requireNonNull(teams.get("alien")).getColour()), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE));
                     start += texte.length() + 3; // +3 because of the joiner
                     end += textr.length() + 3;
-                    spannable.setSpan(new ForegroundColorSpan(0xff000000 + Objects.requireNonNull(teams.get("human")).getColour()), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    spans.add(new SpanInfo(new ForegroundColorSpan(0xff000000 + Objects.requireNonNull(teams.get("human")).getColour()), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE));
                 }
                 default ->
-                        spannable.setSpan(new ForegroundColorSpan(textColour), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        spans.add(new SpanInfo(new ForegroundColorSpan(textColour), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE));
             }
             start = end;
         }
-//        Log.d("PlextBase", spannable.toString());
-        return spannable;
+
+        mSpannableString = new SpannableString(sb);
+        for (var span : spans) {
+            mSpannableString.setSpan(span.what, span.start, span.end, span.flags);
+        }
+        return mSpannableString;
     }
 
     public List<Markup> getMarkups() {
