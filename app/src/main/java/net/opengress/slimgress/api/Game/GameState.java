@@ -64,7 +64,6 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -77,7 +76,6 @@ public class GameState {
     private final Inventory mInventory;
     private final World mWorld;
     private Agent mAgent;
-    private final List<PlextBase> mPlexts;
     // todo: actually use this, and consider whether it needs split for globs/agent/etc
     private String mLastSyncTimestamp;
     private Location mLocation;
@@ -88,14 +86,12 @@ public class GameState {
         mInterface = new Interface();
         mInventory = new Inventory();
         mWorld = new World();
-        mPlexts = new LinkedList<>();
         mLastSyncTimestamp = "0";
     }
 
     public void clear() {
         mInventory.clear();
         mWorld.clear();
-        mPlexts.clear();
         mLastSyncTimestamp = "0";
     }
 
@@ -285,18 +281,16 @@ public class GameState {
                 @Override
                 public void handleResult(JSONArray result) {
                     try {
-                        // FIXME the way I've done this is absolutely horrifying
-                        mPlexts.clear();
-                        // add plexts
+                        ArrayList<PlextBase> plexts = new ArrayList<>();
                         for (int i = 0; i < result.length(); i++) {
                             PlextBase newPlext = PlextBase.createByJSON(result.getJSONArray(i));
                             assert newPlext != null;
-                            mPlexts.add(newPlext);
+                            plexts.add(newPlext);
                         }
                         if (factionOnly) {
-                            SlimgressApplication.getInstance().getFactionCommsViewModel().postMessages(mPlexts);
+                            SlimgressApplication.getInstance().getFactionCommsViewModel().addMessages(plexts);
                         } else {
-                            SlimgressApplication.getInstance().getAllCommsViewModel().postMessages(mPlexts);
+                            SlimgressApplication.getInstance().getAllCommsViewModel().addMessages(plexts);
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -1349,10 +1343,6 @@ public class GameState {
     public synchronized Agent getAgent() {
         checkInterface();
         return mAgent;
-    }
-
-    public synchronized List<PlextBase> getPlexts() {
-        return mPlexts;
     }
 
     public void setCurrentPortal(GameEntityPortal portal) {

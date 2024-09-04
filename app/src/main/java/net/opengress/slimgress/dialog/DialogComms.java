@@ -41,7 +41,8 @@ import java.util.Objects;
 
 public class DialogComms extends BottomSheetDialogFragment {
 
-    private YourAdapter mAdaptor;
+    private CommsViewAdaptor mAllAdaptor;
+    private CommsViewAdaptor mFactionAdaptor;
     private CommsViewModel mAllCommsViewModel;
     private CommsViewModel mFactionCommsViewModel;
     private static boolean mIsInFactionTab = false;
@@ -51,14 +52,14 @@ public class DialogComms extends BottomSheetDialogFragment {
     private int commsRadiusKM = 50;
     private BottomSheetDialog mDialog;
     private final Handler commsRefreshHandler = new Handler(msg -> {
-        if (mIsInFactionTab) {
-            mAdaptor.updateData(mFactionCommsViewModel.getMessages().getValue());
-        } else {
-            mAdaptor.updateData(mAllCommsViewModel.getMessages().getValue());
-        }
-        RecyclerView view = mDialog.findViewById(R.id.recyclerView);
-        assert view != null;
-        view.scrollToPosition(mAdaptor.getItemCount() - 1);
+//        mFactionAdaptor.updateData(mAllCommsViewModel.getMessages().getValue());
+//        RecyclerView factionView = mDialog.findViewById(R.id.recyclerViewFaction);
+//        assert factionView != null;
+//        factionView.scrollToPosition(mFactionAdaptor.getItemCount() - 1);
+//        mAllAdaptor.updateData(mFactionCommsViewModel.getMessages().getValue());
+//        RecyclerView allView = mDialog.findViewById(R.id.recyclerViewAll);
+//        assert allView != null;
+//        allView.scrollToPosition(mAllAdaptor.getItemCount() - 1);
         return true;
     });
 
@@ -73,31 +74,34 @@ public class DialogComms extends BottomSheetDialogFragment {
         mDialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
 
         TabLayout tabLayout = mDialog.findViewById(R.id.tabs);
-        RecyclerView view = mDialog.findViewById(R.id.recyclerView);
-        assert view != null;
-        view.setLayoutManager(new LinearLayoutManager(getContext()));
-        view.setNestedScrollingEnabled(true);
+        RecyclerView allView = mDialog.findViewById(R.id.recyclerViewAll);
+        RecyclerView factionView = mDialog.findViewById(R.id.recyclerViewFaction);
+        assert allView != null;
+        assert factionView != null;
+        allView.setLayoutManager(new LinearLayoutManager(getContext()));
+        factionView.setLayoutManager(new LinearLayoutManager(getContext()));
+        allView.setNestedScrollingEnabled(true);
+        factionView.setNestedScrollingEnabled(true);
 
         // Initialize ViewModel
         mAllCommsViewModel = SlimgressApplication.getInstance().getAllCommsViewModel();
         mFactionCommsViewModel = SlimgressApplication.getInstance().getFactionCommsViewModel();
 
         // Set initial data
-        mAdaptor = new YourAdapter(new ArrayList<>());
-        view.setAdapter(mAdaptor);
-
-        assert tabLayout != null;
+        mAllAdaptor = new CommsViewAdaptor(new ArrayList<>());
+        mFactionAdaptor = new CommsViewAdaptor(new ArrayList<>());
+        allView.setAdapter(mAllAdaptor);
+        factionView.setAdapter(mFactionAdaptor);
 
         // Observe the LiveData from ViewModel
         mAllCommsViewModel.getMessages().observe(this, messages -> {
-            if (tabLayout.getSelectedTabPosition() == 0) {
-                mAdaptor.updateData(messages);
-            }
+            mAllAdaptor.updateData(messages);
+            allView.scrollToPosition(mAllAdaptor.getItemCount() - 1);
         });
+
         mFactionCommsViewModel.getMessages().observe(this, messages -> {
-            if (tabLayout.getSelectedTabPosition() == 1) {
-                mAdaptor.updateData(messages);
-            }
+            mFactionAdaptor.updateData(messages);
+            factionView.scrollToPosition(mFactionAdaptor.getItemCount() - 1);
         });
 
         mTimerRunnable = new Runnable() {
@@ -118,21 +122,20 @@ public class DialogComms extends BottomSheetDialogFragment {
             public void onTabSelected(TabLayout.Tab tab) {
                 switch (tab.getPosition()) {
                     case 0 -> {
-                        sendButton.setEnabled(true);
+                        sendButton.setEnabled(shouldEnableSendButton(input.getText()));
                         input.setEnabled(true);
                         mIsInFactionTab = false;
-                        mAdaptor.updateData(mAllCommsViewModel.getMessages().getValue());
-                        view.scrollToPosition(mAdaptor.getItemCount() - 1);
+                        allView.setVisibility(View.VISIBLE);
+                        factionView.setVisibility(View.GONE);
                     }
                     case 1 -> {
-                        sendButton.setEnabled(true);
+                        sendButton.setEnabled(shouldEnableSendButton(input.getText()));
                         input.setEnabled(true);
                         mIsInFactionTab = true;
-                        mAdaptor.updateData(mFactionCommsViewModel.getMessages().getValue());
-                        view.scrollToPosition(mAdaptor.getItemCount() - 1);
+                        allView.setVisibility(View.GONE);
+                        factionView.setVisibility(View.VISIBLE);
                     }
                 }
-                new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(commsRadiusKM, mIsInFactionTab, commsRefreshHandler)).start();
             }
 
             @Override
@@ -152,7 +155,7 @@ public class DialogComms extends BottomSheetDialogFragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 // Deactivate the button if the text field is empty or contains more than 512 characters
-                sendButton.setEnabled(s.length() > 0 && s.length() <= 512);
+                sendButton.setEnabled(shouldEnableSendButton(s));
             }
 
             @Override
@@ -199,7 +202,15 @@ public class DialogComms extends BottomSheetDialogFragment {
             SlimgressApplication.getInstance().getGame().intSendMessage(input.getText().toString(), tabLayout.getSelectedTabPosition() == 1, handler);
         });
 
+        // GUARANTEE that both tabs are loaded
+        new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(commsRadiusKM, true, commsRefreshHandler)).start();
+        new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(commsRadiusKM, false, commsRefreshHandler)).start();
+
         return mDialog;
+    }
+
+    private static boolean shouldEnableSendButton(CharSequence s) {
+        return s.length() > 0 && s.length() <= 512;
     }
 
     @Override
@@ -231,10 +242,10 @@ public class DialogComms extends BottomSheetDialogFragment {
         }
     }
 
-    public static class YourAdapter extends RecyclerView.Adapter<YourAdapter.ViewHolder> {
+    public static class CommsViewAdaptor extends RecyclerView.Adapter<CommsViewAdaptor.ViewHolder> {
         private List<PlextBase> mPlexts;
 
-        public YourAdapter(List<PlextBase> plexts) {
+        public CommsViewAdaptor(List<PlextBase> plexts) {
             mPlexts = plexts;
         }
 

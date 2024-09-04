@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/GradientTheme"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="@dimen/activity_margin"
-    style="@style/GradientTheme">
+    android:padding="@dimen/activity_margin">
 
     <!--    <RelativeLayout-->
     <!--        android:layout_width="match_parent"-->
@@ -48,38 +48,48 @@
         android:layout_margin="@dimen/activity_margin"
         android:max="100" />
 
-
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+        android:id="@+id/recyclerViewAll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/seekBar"
         android:layout_above="@id/bottomLayout"
-        android:layout_marginTop="@dimen/activity_margin" />
+        android:layout_below="@id/seekBar"
+        android:layout_marginTop="@dimen/activity_margin"
+        android:visibility="visible" />
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewFaction"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/bottomLayout"
+        android:layout_below="@id/seekBar"
+        android:layout_marginTop="@dimen/activity_margin"
+        android:visibility="gone" />
 
     <LinearLayout
         android:id="@+id/bottomLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_alignParentBottom="true">
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal">
 
         <EditText
             android:id="@+id/input"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:hint="@string/start_broadcasting_here"
             android:importantForAutofill="no"
             android:inputType="textShortMessage|textLongMessage"
-            android:maxLines="1"
-            android:hint="@string/start_broadcasting_here" />
+            android:maxLines="1" />
 
         <Button
             android:id="@+id/button"
             style="@style/ShortButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/comms_transmit"
-            android:enabled="false" />
+            android:enabled="false"
+            android:text="@string/comms_transmit" />
     </LinearLayout>
 </RelativeLayout>
