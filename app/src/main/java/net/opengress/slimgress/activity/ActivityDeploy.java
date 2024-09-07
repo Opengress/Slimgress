@@ -25,6 +25,7 @@ import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Game.Inventory;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
+import net.opengress.slimgress.api.GameEntity.GameEntityPortal.LinkedResonator;
 import net.opengress.slimgress.api.Item.ItemResonator;
 import net.opengress.slimgress.dialog.DialogInfo;
 
@@ -106,14 +107,22 @@ public class ActivityDeploy extends AppCompatActivity {
             ((TextView) findViewById(id).findViewById(R.id.resoLevelText)).setText(R.string.l0);
         }
 
-        var resos = portal.getPortalResonators();
-        var resoCountForLevel = getResoCountsForLevels(resos);
+        List<LinkedResonator> resos = portal.getPortalResonators();
+        // iterate to find out if portal is fully deployed
+        int resoCount = 0;
+        for (LinkedResonator reso : resos) {
+            if (reso != null) {
+                resoCount++;
+            }
+        }
+        HashMap<Integer, Integer> resoCountForLevel = getResoCountsForLevels(resos);
 
-        for (var reso : resos) {
+        // iterate again to set up resonator deployment user interface
+        for (LinkedResonator reso : resos) {
             if (reso == null) {
                 continue;
             }
-            var widget = findViewById(resoSlotToLayoutId(reso.slot));
+            View widget = findViewById(resoSlotToLayoutId(reso.slot));
             ((TextView) widget.findViewById(R.id.resoLevelText)).setText(String.format("L%d", reso.level));
             int levelColour = getLevelColor(reso.level);
             ((TextView) widget.findViewById(R.id.resoLevelText)).setTextColor(getColorFromResources(getResources(), levelColour));
@@ -128,11 +137,15 @@ public class ActivityDeploy extends AppCompatActivity {
             if (resosForUpgrade.isEmpty()) {
                 widget.findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
                 widget.findViewById(R.id.widgetActionButton).setEnabled(false);
-            } else {
+            } else if (resoCount == 8) {
                 widget.findViewById(R.id.widgetActionButton).setVisibility(View.VISIBLE);
                 widget.findViewById(R.id.widgetActionButton).setEnabled(true);
                 ((Button) widget.findViewById(R.id.widgetActionButton)).setText(R.string.upgd);
                 widget.findViewById(R.id.widgetActionButton).setOnClickListener(this::onUpgradeButtonPressed);
+            } else {
+                // maybe this should be covered by resosForUpgrade branch
+                widget.findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
+                widget.findViewById(R.id.widgetActionButton).setEnabled(false);
             }
             ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).setMax(reso.getMaxEnergy());
             ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).setProgress(reso.energyTotal);
@@ -167,7 +180,7 @@ public class ActivityDeploy extends AppCompatActivity {
 
     private boolean canUpgradeOrDeploy(HashMap<Integer, Integer> resoCountForLevel, int currentLevel) {
         while (currentLevel < 8) {
-            if (mGame.getKnobs().getPortalKnobs().getBandForLevel(currentLevel).getRemaining() <= resoCountForLevel.get(currentLevel)) {
+            if (canPutThisResonatorOn(resoCountForLevel, currentLevel)) {
                 return true;
             }
             ++currentLevel;

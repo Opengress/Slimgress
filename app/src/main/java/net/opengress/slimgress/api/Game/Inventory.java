@@ -23,6 +23,7 @@ package net.opengress.slimgress.api.Game;
 
 import net.opengress.slimgress.api.Interface.GameBasket;
 import net.opengress.slimgress.api.Item.ItemBase;
+import net.opengress.slimgress.api.Item.ItemFlipCard;
 import net.opengress.slimgress.api.Item.ItemResonator;
 
 import java.util.ArrayList;
@@ -72,6 +73,19 @@ public class Inventory {
         for (Map.Entry<String, ItemBase> item : mItems.entrySet()) {
             if (item.getValue().getItemType() == type) {
                 items.add(item.getValue());
+            }
+        }
+
+        return items;
+    }
+
+    public final List<ItemBase> getFlipCards(ItemFlipCard.FlipCardType type) {
+        List<ItemBase> items = new LinkedList<>();
+        for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
+            ItemBase item = pair.getValue();
+            if (item.getItemType() == ItemBase.ItemType.FlipCard &&
+                    ((ItemFlipCard) item).getFlipCardType() == type) {
+                items.add(item);
             }
         }
 

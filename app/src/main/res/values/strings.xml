@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- general strings -->
     <string name="appname">Slimgress</string>
     <string name="ok">OK</string>
@@ -98,8 +98,8 @@
     <string name="nothing_to_display">Nothing to display…</string>
     <string name="share">Share</string>
     <string name="new_access">NEW ACCESS</string>
-    <string name="hacking_in_progress"><![CDATA[Hacking…
-    ]]></string>
+    <string name="hacking_in_progress"><![CDATA[Hacking
+    Portal…]]></string>
     <string name="comms_tab_all">ALL</string>
     <string name="comms_tab_faction">FACTION</string>
     <string name="comms_tab_alert">ALERT</string>
@@ -119,4 +119,15 @@
     <string name="you_don_t_have_enough_xm">You don\'t have enough XM!</string>
     <string name="weapon_does_not_exist">Weapon does not exist</string>
     <string name="missed_all_resonators">Missed all resonators!</string>
+    <string name="fire_button_text_use">USE</string>
+    <string name="flipcard_confirm_selection">CONFIRM SELECTION</string>
+    <string name="flipcard_select_target">SELECT TARGET</string>
+    <string name="flipcard_confirm">CONFIRM</string>
+    <string name="flipcard_cancel" tools:ignore="ButtonCase">CANCEL</string>
+    <string name="portal">Portal</string>
+    <string name="out_of_range">Target portal is out of range</string>
+    <string name="flipcard_not_applicable_for_resource">Wrong item type: Needs to be a flipcard!</string>
+    <string name="flipcard_invalid_target">Invalid target for that flipcard!</string>
+    <string name="CANNOT_FLIP">Target portal is already aligned!</string>
+    <string name="FLIPCARD_TOO_SOON">Portal can only be flipped once per hour!</string>
 </resources>
