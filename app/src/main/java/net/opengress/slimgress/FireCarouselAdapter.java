@@ -63,7 +63,12 @@ public class FireCarouselAdapter extends RecyclerView.Adapter<FireCarouselAdapte
         }
         holder.imageView.setContentDescription(String.format("L%d %s x%d", item.getLevel(), item.getDescription(), item.getQuantity()));
         holder.textView1.setText(String.format("x%d", item.getQuantity()));
-        holder.textView2.setText(String.format("L%d", item.getLevel()));
+        int level = item.getLevel();
+        if (level > -1) {
+            holder.textView2.setText(String.format("L%d", item.getLevel()));
+        } else {
+            holder.textView2.setText("");
+        }
 
         GradientDrawable drawable = new GradientDrawable();
         drawable.setShape(GradientDrawable.RECTANGLE);

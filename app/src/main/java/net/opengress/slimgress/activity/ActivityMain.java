@@ -62,10 +62,10 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.FragmentActivity;
+import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.carousel.CarouselLayoutManager;
-import com.google.android.material.carousel.CarouselSnapHelper;
 import com.google.android.material.carousel.UncontainedCarouselStrategy;
 
 import net.opengress.slimgress.FireCarouselAdapter;
@@ -77,8 +77,11 @@ import net.opengress.slimgress.WidgetCommsLine;
 import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Game.Inventory;
+import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.Interface.Damage;
 import net.opengress.slimgress.api.Item.ItemBase;
+import net.opengress.slimgress.api.Item.ItemFlipCard;
+import net.opengress.slimgress.api.Item.ItemPowerCube;
 import net.opengress.slimgress.api.Item.ItemWeapon;
 import net.opengress.slimgress.api.Player.Agent;
 import net.opengress.slimgress.api.Plext.PlextBase;
@@ -108,6 +111,11 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     private boolean isLevellingUp = false;
     private RecyclerView mRecyclerView;
     private InventoryListItem mCurrentFireItem;
+    private String mSelectedPortalGuid;
+    private String mSelectedFlipCardGuid;
+    private TextView mSelectTargetText;
+    private Button mConfirmButton;
+    private Button mCancelButton;
 
     @Override
     protected void onDestroy() {
@@ -130,7 +138,10 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         CarouselLayoutManager manager = new CarouselLayoutManager(new UncontainedCarouselStrategy());
         manager.setCarouselAlignment(CarouselLayoutManager.ALIGNMENT_CENTER);
         mRecyclerView.setLayoutManager(manager);
-        new CarouselSnapHelper().attachToRecyclerView(mRecyclerView);
+        new LinearSnapHelper().attachToRecyclerView(mRecyclerView);
+        mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setNestedScrollingEnabled(false);
+
 
         // create ops button callback
         final Button buttonOps = findViewById(R.id.buttonOps);
@@ -147,6 +158,28 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         mApp.getAllCommsViewModel().getMessages().observe(this, this::getCommsMessages);
         mApp.getLevelUpViewModel().getLevelUpMsgId().observe(this, this::levelUp);
         mApp.setMainActivity(this);
+
+
+        mSelectTargetText = findViewById(R.id.select_target_text);
+        mConfirmButton = findViewById(R.id.btn_flipcard_confirm);
+        mCancelButton = findViewById(R.id.btn_flipcard_cancel);
+
+        mConfirmButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSelectedPortalGuid != null && mSelectedFlipCardGuid != null) {
+                    flipPortal(mSelectedPortalGuid, mSelectedFlipCardGuid);
+                }
+                resetSelection();
+            }
+        });
+
+        mCancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resetSelection();
+            }
+        });
     }
 
     private synchronized void levelUp(Integer level) {
@@ -191,6 +224,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     protected void onResume() {
         super.onResume();
         isInForeground = true;
+        Log.d("MAIN", "RESUMING");
     }
 
     @Override
@@ -392,6 +426,22 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
         List<InventoryListItem> weaponList = new LinkedList<>();
 
+        // get xmp power cube items
+        for (int level = 1; level <= 8; level++) {
+            List<ItemBase> items = inv.getItems(ItemBase.ItemType.PowerCube, level);
+
+            String descr = "L" + level + " XMP";
+            if (!items.isEmpty()) {
+                ArrayList<String> weapons = new ArrayList<>();
+                for (ItemBase item : items) {
+                    weapons.add(item.getEntityGuid());
+                }
+                int drawable = getImageForXMPLevel(level);
+                InventoryListItem weapon = new InventoryListItem(descr, ItemBase.ItemType.PowerCube, AppCompatResources.getDrawable(this, drawable), drawable, weapons, items.get(0).getItemRarity(), level);
+                weaponList.add(weapon);
+            }
+        }
+
         // get xmp weapon items
         for (int level = 1; level <= 8; level++) {
             List<ItemBase> items = inv.getItems(ItemBase.ItemType.WeaponXMP, level);
@@ -424,24 +474,37 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             }
         }
 
+        // get flipcard items
+        List<ItemBase> adas = inv.getFlipCards(ItemFlipCard.FlipCardType.Ada);
+        List<ItemBase> jarvises = inv.getFlipCards(ItemFlipCard.FlipCardType.Jarvis);
+
+        String descr = "ADA Refactor";
+        if (!adas.isEmpty()) {
+            ArrayList<String> weapons = new ArrayList<>();
+            for (var item : adas) {
+                weapons.add(item.getEntityGuid());
+            }
+            InventoryListItem weapon = new InventoryListItem(descr, ItemBase.ItemType.FlipCard, AppCompatResources.getDrawable(this, R.drawable.ada), R.drawable.ada, weapons, adas.get(0).getItemRarity());
+            weapon.setFlipCardType(ItemFlipCard.FlipCardType.Ada);
+            weaponList.add(weapon);
+        }
+
+        descr = "Jarvis Virus";
+        if (!jarvises.isEmpty()) {
+            ArrayList<String> weapons = new ArrayList<>();
+            for (var item : jarvises) {
+                weapons.add(item.getEntityGuid());
+            }
+            InventoryListItem weapon = new InventoryListItem(descr, ItemBase.ItemType.FlipCard, AppCompatResources.getDrawable(this, R.drawable.jarvis), R.drawable.jarvis, weapons, jarvises.get(0).getItemRarity());
+            weapon.setFlipCardType(ItemFlipCard.FlipCardType.Jarvis);
+            weaponList.add(weapon);
+        }
+
         return weaponList;
     }
 
     @SuppressLint("RestrictedApi")
     public void showFireMenu(GeoPoint p) {
-
-
-        List<InventoryListItem> arrayList = getWeaponsList();
-
-        FireCarouselAdapter adapter = new FireCarouselAdapter(ActivityMain.this, arrayList);
-        mRecyclerView.setAdapter(adapter);
-
-        adapter.setOnItemClickListener((imageView, item) -> {
-            // FIXME set this to USE for other types of items
-            mCurrentFireItem = item;
-            findViewById(R.id.fire_carousel_button_fire).setEnabled(true);
-        });
-
 
         var anchor = findViewById(R.id.buttonComm);
         PopupMenu popup = new PopupMenu(ActivityMain.this, anchor);
@@ -451,44 +514,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             public boolean onMenuItemClick(MenuItem item) {
                 int itemId = item.getItemId();
                 if (itemId == R.id.action_fire_xmp) {
-                    findViewById(R.id.fire_carousel_layout).setVisibility(View.VISIBLE);
-                    findViewById(R.id.fire_carousel_button_fire).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-//                            flashMap();
-                            // FIXME handle the case of cubes/flipcards/whatever
-                            fireBurster(mCurrentFireItem.getLevel(), mCurrentFireItem.getType());
-//                            Log.d("MAIN", "Firing "+mCurrentFireItem.getPrettyDescription());
-                            mCurrentFireItem.remove(mCurrentFireItem.getFirstID());
-                            int index = arrayList.indexOf(mCurrentFireItem);
-                            int newIndex = 0;
-                            if (mCurrentFireItem.getQuantity() == 0) {
-                                newIndex = (index < 1) ? 0 : index - 1;
-//                                mRecyclerView.scrollToPosition(newIndex);
-                                arrayList.remove(mCurrentFireItem);
-                                adapter.notifyItemRemoved(index);
-                            } else {
-                                adapter.notifyItemChanged(index);
-                            }
-                            if (arrayList.isEmpty()) {
-                                findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
-                                return;
-                            }
-                            if (mCurrentFireItem.getQuantity() == 0) {
-                                mCurrentFireItem = arrayList.get(newIndex);
-                                adapter.setSelectedPosition(newIndex);
-                                mRecyclerView.scrollToPosition(newIndex);
-//                                Objects.requireNonNull(mRecyclerView.findViewHolderForAdapterPosition(newIndex)).itemView.setBackgroundResource(R.drawable.fire_carousel_selected_item_background);
-
-                                adapter.notifyItemChanged(newIndex);
-                            }
-                        }
-                    });
-                    findViewById(R.id.fire_carousel_button_done).setOnClickListener(v -> {
-                        findViewById(R.id.fire_carousel_layout).setVisibility(View.GONE);
-                        findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
-                    });
-                    return true;
+                    return showFireCarousel(null);
                 } else if (itemId == R.id.action_new_portal) {
                     String url = "https://opengress.net/new/?remote";
                     Intent i = new Intent(Intent.ACTION_VIEW);
@@ -513,6 +539,140 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         popup.show();
     }
 
+    boolean showFireCarousel(InventoryListItem selectedItem) {
+        List<InventoryListItem> arrayList = getWeaponsList();
+
+        FireCarouselAdapter adapter = new FireCarouselAdapter(ActivityMain.this, arrayList);
+        mRecyclerView.setAdapter(adapter);
+
+        // Logic to select the relevant item in the carousel
+        int selectedIndex = -1;
+
+        // 0. If we already selected something, grab that
+        if (mCurrentFireItem != null) {
+            for (int i = 0; i < arrayList.size(); i++) {
+                if (Objects.equals(arrayList.get(i).getPrettyDescription(), mCurrentFireItem.getPrettyDescription())) {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // 1. If there's a selectedItem, find it in the list
+        if (mCurrentFireItem == null && selectedItem != null) {
+            for (int i = 0; i < arrayList.size(); i++) {
+                if (Objects.equals(arrayList.get(i).getPrettyDescription(), selectedItem.getPrettyDescription())) {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // 2. If no selectedItem or not found, prioritize finding XMP, then UltraStrike, then PowerCube, or default to first item
+        if (mCurrentFireItem == null && selectedIndex == -1) {
+            // First pass: Look for the highest-level XMP
+            for (int i = 0; i < arrayList.size(); i++) {
+                InventoryListItem item = arrayList.get(i);
+                if (item.getType() == ItemBase.ItemType.WeaponXMP) {
+                    if (selectedIndex == -1 || item.getLevel() > arrayList.get(selectedIndex).getLevel()) {
+                        selectedIndex = i;
+                    }
+                }
+            }
+
+            // Second pass: If no XMP was found, look for the highest-level UltraStrike
+            if (selectedIndex == -1) {
+                for (int i = 0; i < arrayList.size(); i++) {
+                    InventoryListItem item = arrayList.get(i);
+                    if (item.getType() == ItemBase.ItemType.WeaponUltraStrike) {
+                        if (selectedIndex == -1 || item.getLevel() > arrayList.get(selectedIndex).getLevel()) {
+                            selectedIndex = i;
+                        }
+                    }
+                }
+            }
+
+            // Third pass: If no XMP or UltraStrike was found, look for the highest-level PowerCube
+            if (selectedIndex == -1) {
+                for (int i = 0; i < arrayList.size(); i++) {
+                    InventoryListItem item = arrayList.get(i);
+                    if (item.getType() == ItemBase.ItemType.PowerCube) {
+                        if (selectedIndex == -1 || item.getLevel() > arrayList.get(selectedIndex).getLevel()) {
+                            selectedIndex = i;
+                        }
+                    }
+                }
+            }
+
+            // If no special items found, fall back to the first item in the list
+            if (selectedIndex == -1 && !arrayList.isEmpty()) {
+                selectedIndex = 0;
+            }
+        }
+
+        // Set the adapter and scroll to the selected index
+        if (selectedIndex != -1) {
+            mCurrentFireItem = arrayList.get(selectedIndex);
+            adapter.setSelectedPosition(selectedIndex);
+            mRecyclerView.scrollToPosition(selectedIndex);
+            findViewById(R.id.fire_carousel_button_fire).setEnabled(true);
+            if (mCurrentFireItem.getType() == ItemBase.ItemType.WeaponXMP || mCurrentFireItem.getType() == ItemBase.ItemType.WeaponUltraStrike) {
+                ((Button) findViewById(R.id.fire_carousel_button_fire)).setText(R.string.fire_button_text);
+            } else {
+                ((Button) findViewById(R.id.fire_carousel_button_fire)).setText(R.string.fire_button_text_use);
+            }
+        }
+
+        // Adapter item click listener
+        adapter.setOnItemClickListener((imageView, item) -> {
+            mCurrentFireItem = item;
+            findViewById(R.id.fire_carousel_button_fire).setEnabled(true);
+            if (item.getType() == ItemBase.ItemType.WeaponXMP || item.getType() == ItemBase.ItemType.WeaponUltraStrike) {
+                ((Button) findViewById(R.id.fire_carousel_button_fire)).setText(R.string.fire_button_text);
+            } else {
+                ((Button) findViewById(R.id.fire_carousel_button_fire)).setText(R.string.fire_button_text_use);
+            }
+        });
+
+        // Show the carousel layout
+        findViewById(R.id.fire_carousel_layout).setVisibility(View.VISIBLE);
+
+        // Fire button click logic
+        findViewById(R.id.fire_carousel_button_fire).setOnClickListener(v -> {
+            if (fireBurster(mCurrentFireItem.getLevel(), mCurrentFireItem.getType())) {
+                mCurrentFireItem.remove(mCurrentFireItem.getFirstID());
+            }
+            int index = arrayList.indexOf(mCurrentFireItem);
+            int newIndex = 0;
+            if (mCurrentFireItem.getQuantity() == 0) {
+                newIndex = (index < 1) ? 0 : index - 1;
+                arrayList.remove(mCurrentFireItem);
+                adapter.notifyItemRemoved(index);
+            } else {
+                adapter.notifyItemChanged(index);
+            }
+            if (arrayList.isEmpty()) {
+                findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
+                return;
+            }
+            if (mCurrentFireItem.getQuantity() == 0) {
+                mCurrentFireItem = arrayList.get(newIndex);
+                adapter.setSelectedPosition(newIndex);
+                mRecyclerView.scrollToPosition(newIndex);
+                adapter.notifyItemChanged(newIndex);
+            }
+        });
+
+        // Done button logic
+        findViewById(R.id.fire_carousel_button_done).setOnClickListener(v -> {
+            findViewById(R.id.fire_carousel_layout).setVisibility(View.GONE);
+            findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
+        });
+
+        return true;
+    }
+
+
     private void flashMap() {
         ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
         // Invert colors
@@ -529,22 +689,22 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         new Handler().postDelayed(() -> {
             scanner.getMap().getOverlayManager().getTilesOverlay().setColorFilter(null);
             scanner.getMap().invalidate();
-        }, 30);
+        }, 444);
     }
 
-    private void fireBurster(int level, ItemBase.ItemType type) {
+    private boolean fireBurster(int level, ItemBase.ItemType type) {
         ItemBase item = Objects.requireNonNull(mGame.getInventory().findItem(mCurrentFireItem.getFirstID()));
         ItemBase.ItemType itemType = item.getItemType();
         ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
         assert scanner != null;
         // todo: rate limiting etc per knobs
 
-        if (item.getItemType() == ItemBase.ItemType.WeaponXMP || item.getItemType() == ItemBase.ItemType.WeaponUltraStrike) {
+        if (itemType == ItemBase.ItemType.WeaponXMP || itemType == ItemBase.ItemType.WeaponUltraStrike) {
 
             if (mGame.getKnobs().getXMCostKnobs().getXmpFiringCostByLevel().get(item.getItemLevel() - 1) > mGame.getAgent().getEnergy()) {
                 DialogInfo dialog = new DialogInfo(this);
                 dialog.setMessage(getString(R.string.you_don_t_have_enough_xm)).setDismissDelay(1500).show();
-                return;
+                return false;
             }
 
             mGame.intFireWeapon((ItemWeapon) item, new Handler(msg -> {
@@ -576,7 +736,38 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 default -> 40;
             };
             scanner.fireBurster(range);
+        } else if (itemType == ItemBase.ItemType.PowerCube) {
+            mGame.intUsePowerCube((ItemPowerCube) item, new Handler(msg -> {
+                var data = msg.getData();
+                String error = getErrorStringFromAPI(data);
+                if (error != null && !error.isEmpty()) {
+                    DialogInfo dialog = new DialogInfo(this);
+                    dialog.setMessage(error).setDismissDelay(1500).show();
+                } else {
+                    var res = data.getString("result");
+                    DialogInfo dialog = new DialogInfo(this);
+                    String message = "Gained %s XM from using a powercube";
+                    dialog.setMessage(String.format(message, res)).setDismissDelay(1500).show();
+
+
+                    for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
+                        mGame.getInventory().removeItem(id);
+                    }
+                }
+                return false;
+            }));
+        } else if (itemType == ItemBase.ItemType.FlipCard) {
+            mSelectedFlipCardGuid = item.getEntityGuid();
+            mSelectTargetText.setVisibility(View.VISIBLE);
+            mConfirmButton.setVisibility(View.VISIBLE);
+            mCancelButton.setVisibility(View.VISIBLE);
+            findViewById(R.id.fire_carousel_layout).setVisibility(View.GONE);
+            findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
+            return false;
+        } else {
+            throw new RuntimeException("Unhandled weapon type fired from carousel");
         }
+        return true;
     }
 
     public void damagePlayer(int amount, String attackerGuid) {
@@ -590,4 +781,61 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         assert scanner != null;
         scanner.updateScreen(new Handler(Looper.getMainLooper()));
     }
+
+    private void resetSelection() {
+        mSelectTargetText.setVisibility(View.GONE);
+        mSelectTargetText.setText(R.string.flipcard_select_target);
+        mConfirmButton.setVisibility(View.GONE);
+        mConfirmButton.setEnabled(false);
+        mCancelButton.setVisibility(View.GONE);
+        mSelectedPortalGuid = null;
+        mSelectedFlipCardGuid = null;
+        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
+        assert scanner != null;
+        scanner.removeInfoCard();
+    }
+
+    private void flipPortal(String portalGuid, String mSelectedFlipCardGuid) {
+        GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(portalGuid);
+        ItemFlipCard flipCard = (ItemFlipCard) mGame.getInventory().getItems().get(mSelectedFlipCardGuid);
+        assert portal != null;
+        assert flipCard != null;
+        mGame.intFlipPortal(portal, flipCard, new Handler(msg -> {
+            var data = msg.getData();
+            String error = getErrorStringFromAPI(data);
+            if (error != null && !error.isEmpty()) {
+                DialogInfo dialog = new DialogInfo(this);
+                dialog.setMessage(error).setDismissDelay(1500).show();
+            } else {
+                flashMap();
+            }
+            return false;
+        }));
+    }
+
+    public boolean isSelectingTargetPortal() {
+        return mSelectTargetText.getVisibility() == View.VISIBLE;
+    }
+
+    public void setTargetPortal(String entityGuid) {
+        GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(entityGuid);
+        assert portal != null;
+        int dist = (int) mGame.getLocation().getLatLng().distanceToAsDouble(portal.getPortalLocation().getLatLng());
+        mSelectTargetText.setText(dist < 41 ? R.string.flipcard_confirm_selection : R.string.flipcard_select_target);
+        mSelectedPortalGuid = entityGuid;
+        mConfirmButton.setEnabled(dist < 41);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        Log.d("MAIN", "GETTING ACTIVITY RESULT");
+
+        if (resultCode == RESULT_OK && data.hasExtra("selected_weapon")) {
+            InventoryListItem selectedItem = (InventoryListItem) data.getSerializableExtra("selected_weapon");
+            showFireCarousel(selectedItem);
+        }
+    }
+
 }

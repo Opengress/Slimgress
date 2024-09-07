@@ -21,7 +21,7 @@
 
 package net.opengress.slimgress.api.Game;
 
-import static androidx.core.content.ContextCompat.getString;
+import static net.opengress.slimgress.ViewHelpers.getString;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.ClientMustUpgrade;
 
@@ -176,6 +176,8 @@ public class GameState {
                 String errString;
                 if (status == ClientMustUpgrade) {
                     errString = "Client must upgrade";
+                } else if (Objects.equals(mHandshake.getErrorFromServer(), "NOT_LOGGED_IN")) {
+                    errString = "Expired user session";
                 } else if (Objects.equals(mHandshake.getServerVersion(), "")) {
                     errString = "Server returned incorrect handshake response";
                 } else if (mHandshake.getAgent() == null) {
@@ -315,14 +317,13 @@ public class GameState {
                 @Override
                 public void handleError(String error) {
                     String pretty_error = switch (error) {
-                        case "SERVER_ERROR" ->
-                                getString(SlimgressApplication.getInstance(), R.string.server_error);
+                        case "SERVER_ERROR" -> getString(R.string.server_error);
                         case "MESSAGE_REJECTED" -> "You are not allowed to talk!";
                         case "TOO_LONG" -> // new!
                                 "Message can't be longer than 512 characters.";
                         default -> {
                             Log.d("GameState/SendMessage", error);
-                            yield getString(SlimgressApplication.getInstance(), R.string.server_error);
+                            yield getString(R.string.server_error);
                         }
                     };
                     super.handleError(pretty_error);
@@ -592,15 +593,14 @@ public class GameState {
                     switch (error) {
                         case "WEAPON_DOES_NOT_EXIST", "WEAPON_DOES_NOT_HAVE_OWNER",
                              "WRONG_OWNER_FOR_WEAPON" ->
-                                super.handleError(getString(SlimgressApplication.getInstance(), R.string.weapon_does_not_exist));
+                                super.handleError(getString(R.string.weapon_does_not_exist));
                         case "WRONG_WEAPON_TYPE" ->
                                 super.handleError("You can only fire an XMP or UltraStrike!");
                         case "SPEED_LOCKED" -> // new!
-                                super.handleError(getString(SlimgressApplication.getInstance(), R.string.you_are_moving_too_fast));
+                                super.handleError(getString(R.string.you_are_moving_too_fast));
                         case "PLAYER_DEPLETED", "NEED_MORE_ENERGY" ->
-                                super.handleError(getString(SlimgressApplication.getInstance(), R.string.you_don_t_have_enough_xm));
-                        case "SERVER_ERROR" ->
-                                super.handleError(getString(SlimgressApplication.getInstance(), R.string.server_error));
+                                super.handleError(getString(R.string.you_don_t_have_enough_xm));
+                        case "SERVER_ERROR" -> super.handleError(getString(R.string.server_error));
                         default -> super.handleError("Unknown error: " + error);
                     }
                 }
@@ -679,10 +679,9 @@ public class GameState {
                         }
                         case "OUT_OF_RANGE" -> "Portal is out of range";
                         case "NEED_MORE_ENERGY" -> "You don't have enough XM";
-                        case "SERVER_ERROR" ->
-                                getString(SlimgressApplication.getInstance(), R.string.server_error);
+                        case "SERVER_ERROR" -> getString(R.string.server_error);
                         case "SPEED_LOCKED" -> // new!
-                                getString(SlimgressApplication.getInstance(), R.string.you_are_moving_too_fast);
+                                getString(R.string.you_are_moving_too_fast);
                         case "SPEED_LOCKED_" -> {
                             // TODO: maybe format this as "x hours, x minutes, x seconds"
                             String t = error.substring(error.lastIndexOf("_") + 1);
@@ -1269,6 +1268,27 @@ public class GameState {
             params.put("resourceGuid", flipCard.getEntityGuid());
 
             mInterface.request(mHandshake, "gameplay/flipPortal", mLocation, params, new RequestResult(handler) {
+                @Override
+                public void handleError(String error) {
+                    switch (error) {
+                        case "DOES_NOT_EXIST" ->
+                                super.handleError(getString(R.string.weapon_does_not_exist));
+                        case "NOT_APPLICABLE_FOR_RESOURCE" ->
+                                super.handleError(getString(R.string.flipcard_not_applicable_for_resource));
+                        case "INVALID_TARGET" ->
+                                super.handleError(getString(R.string.flipcard_invalid_target));
+                        case "CANNOT_FLIP" -> super.handleError(getString(R.string.CANNOT_FLIP));
+                        case "TOO_SOON" -> super.handleError(getString(R.string.FLIPCARD_TOO_SOON));
+                        case "OUT_OF_RANGE" -> super.handleError(getString(R.string.out_of_range));
+                        case "SPEED_LOCKED" -> // new!
+                                super.handleError(getString(R.string.you_are_moving_too_fast));
+                        case "PLAYER_DEPLETED", "NEED_MORE_ENERGY" ->
+                                super.handleError(getString(R.string.you_don_t_have_enough_xm));
+                        case "SERVER_ERROR" -> super.handleError(getString(R.string.server_error));
+                        default -> super.handleError("Unknown error: " + error);
+                    }
+                }
+                
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);

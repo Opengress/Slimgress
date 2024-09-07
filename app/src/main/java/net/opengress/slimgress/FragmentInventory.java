@@ -107,8 +107,8 @@ public class FragmentInventory extends Fragment {
         }
         mInventoryCount = inventoryCount;
 
-        final ExpandableListView list = getView().findViewById(R.id.listView);
-        final ProgressBar progress = getView().findViewById(R.id.progressBar1);
+        final ExpandableListView list = requireView().findViewById(R.id.listView);
+        final ProgressBar progress = requireView().findViewById(R.id.progressBar1);
 
         final Runnable runnable = getRunnable(getLayoutInflater(), list, progress);
 
@@ -119,8 +119,8 @@ public class FragmentInventory extends Fragment {
             // FIXME monkeypatch
             int c = mApp.getGame().getInventory().getItems().size();
             if (c != mInventoryCount || mInventoryCount == 0) {
-                    FragmentInventory.this.fillInventory(runnable);
-                }
+                FragmentInventory.this.fillInventory(runnable);
+            }
             mInventoryCount = c;
         };
 

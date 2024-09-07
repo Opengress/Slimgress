@@ -2,6 +2,7 @@ package net.opengress.slimgress.activity;
 
 import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getMainActivity;
 import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
 import static net.opengress.slimgress.ViewHelpers.getRarityColor;
 import static net.opengress.slimgress.ViewHelpers.getRarityText;
@@ -9,6 +10,7 @@ import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -123,14 +125,16 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 itemDescription.setText("Exotic Matter Pulse weapons which can destroy enemy resonators and Mods and neutralize enemy portals");
                 inflateResource(mItem, actual);
                 findViewById(R.id.activity_inventory_item_fire).setVisibility(View.VISIBLE);
-                findViewById(R.id.activity_inventory_item_fire).setEnabled(false);
+                findViewById(R.id.activity_inventory_item_fire).setEnabled(true);
+                findViewById(R.id.activity_inventory_item_fire).setOnClickListener(this::onFireClicked);
             }
             case WeaponUltraStrike -> {
                 itemTitle.setText("Ultra Strike");
                 itemDescription.setText("A variation of the Exotic Matter Pulse weapon with a more powerful blast that occurs within a smaller radius");
                 inflateResource(mItem, actual);
                 findViewById(R.id.activity_inventory_item_fire).setVisibility(View.VISIBLE);
-                findViewById(R.id.activity_inventory_item_fire).setEnabled(false);
+                findViewById(R.id.activity_inventory_item_fire).setEnabled(true);
+                findViewById(R.id.activity_inventory_item_fire).setOnClickListener(this::onFireClicked);
             }
             case ModShield -> {
                 itemTitle.setText(actual.getDisplayName());
@@ -168,18 +172,17 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 inflateResource(mItem, actual);
             }
             case FlipCard -> {
+                itemTitle.setText(actual.getDisplayName());
                 switch (((ItemFlipCard) actual).getFlipCardType()) {
-                    case Jarvis -> {
-                        itemTitle.setText(actual.getDisplayName());
-                        itemDescription.setText("The JARVIS virus can be used to reverse the alignment of a Resistance Portal.");
-                        inflateResource(mItem, actual);
-                    }
-                    case Ada -> {
-                        itemTitle.setText(actual.getDisplayName());
-                        itemDescription.setText("The ADA Refactor can be used to reverse the alignment of an Enlightened Portal.");
-                        inflateResource(mItem, actual);
-                    }
+                    case Jarvis ->
+                            itemDescription.setText("The JARVIS virus can be used to reverse the alignment of a Resistance Portal.");
+                    case Ada ->
+                            itemDescription.setText("The ADA Refactor can be used to reverse the alignment of an Enlightened Portal.");
                 }
+                inflateResource(mItem, actual);
+                findViewById(R.id.activity_inventory_item_use).setVisibility(View.VISIBLE);
+                findViewById(R.id.activity_inventory_item_use).setEnabled(true);
+                findViewById(R.id.activity_inventory_item_use).setOnClickListener(this::onFireClicked);
             }
             case PlayerPowerup -> {
                 // FIXME different types of playerpowerups
@@ -281,6 +284,15 @@ public class ActivityInventoryItem extends AppCompatActivity {
 
         AlertDialog d = builder.create();
         d.show();
+    }
+
+    private void onFireClicked(View view) {
+        getMainActivity().showFireCarousel(mItem);
+        Intent intent = new Intent(ActivityInventoryItem.this, ActivityMain.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        setResult(RESULT_OK, intent);
+        startActivity(intent);
+        finish();
     }
 
     private void onUseItemClicked(View ignoredV) {

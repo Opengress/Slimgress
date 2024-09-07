@@ -45,6 +45,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -56,12 +57,14 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResult;
@@ -96,6 +99,7 @@ import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.GroundOverlay;
 import org.osmdroid.views.overlay.MapEventsOverlay;
+import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polygon;
 import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
@@ -109,6 +113,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -194,6 +199,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     // ===========================================================
     // UX/UI Stuff - Events
     // ===========================================================
+    private Marker mMarkerInfoCard;
     private boolean isRotating = false;
     private boolean isDoubleClick = false;
     MapEventsReceiver mReceive = new MapEventsReceiver() {
@@ -359,6 +365,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 new ActivityResultContracts.StartActivityForResult(),
                 this::onPortalActivityResult
         );
+
     }
 
     public void onReceiveDeletedEntityGuids(List<String> deletedEntityGuids) {
@@ -904,7 +911,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             }
             final net.opengress.slimgress.api.Common.Location location = portal.getPortalLocation();
 
-            Activity activity = getActivity();
+            ActivityMain activity = (ActivityMain) getActivity();
             if (activity == null) {
                 return;
             }
@@ -924,6 +931,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
                     @Override
                     public boolean onSingleTapConfirmed(final MotionEvent e, final MapView mapView) {
+                        if (activity.isSelectingTargetPortal() && touchedBy(e)) {
+                            activity.setTargetPortal(portal.getEntityGuid());
+                            showInfoCard(portal);
+                            return true;
+                        }
                         if (touchedBy(e)) {
                             Intent myIntent = new Intent(getContext(), ActivityPortal.class);
                             mGame.setCurrentPortal(portal);
@@ -947,6 +959,39 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             });
 
         }
+    }
+
+    public void removeInfoCard() {
+        if (mMarkerInfoCard != null) {
+            mMap.getOverlays().remove(mMarkerInfoCard);
+            mMarkerInfoCard = null;
+        }
+    }
+
+
+    private void showInfoCard(GameEntityPortal portal) {
+        removeInfoCard();
+        View markerView = LayoutInflater.from(getContext()).inflate(R.layout.marker_info_card, null);
+        TextView textView1 = markerView.findViewById(R.id.marker_info_card_portal_level);
+        TextView textView2 = markerView.findViewById(R.id.marker_info_card_portal_team);
+        TextView textView3 = markerView.findViewById(R.id.marker_info_card_portal_title);
+        TextView textview4 = markerView.findViewById(R.id.marker_info_card_portal_distance);
+
+        textView1.setText(String.format(Locale.getDefault(), "L%d ", portal.getPortalLevel()));
+        textView1.setTextColor(0xFF000000 + getColorFromResources(getResources(), getLevelColor(portal.getPortalLevel())));
+        textView2.setText(R.string.portal);
+        textView2.setTextColor(0xFF000000 + Objects.requireNonNull(mGame.getKnobs().getTeamKnobs().getTeams().get(portal.getPortalTeam().toString())).getColour());
+        textView3.setText(portal.getPortalTitle());
+        int dist = (int) mGame.getLocation().getLatLng().distanceToAsDouble(portal.getPortalLocation().getLatLng());
+        textview4.setText(String.format(Locale.getDefault(), "Distance: %dm", dist));
+
+
+        Marker marker = new Marker(mMap);
+        marker.setPosition(portal.getPortalLocation().getLatLng());
+        marker.setIcon(new BitmapDrawable(getResources(), createDrawableFromView(requireContext(), markerView)));
+        mMarkerInfoCard = marker;
+        mMap.getOverlays().add(marker);
+        mMap.invalidate();
     }
 
     private void drawResonatorForPortal(GameEntityPortal portal, GameEntityPortal.LinkedResonator reso) {
@@ -1254,5 +1299,20 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         }
 
         new TextOverlay(mMap, playerLocation.destinationPoint(10, 0), String.format("%d%%", percentage), colour);
+    }
+
+    private Bitmap createDrawableFromView(Context context, View view) {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getMetrics(displayMetrics);
+        view.setLayoutParams(new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT));
+        view.measure(displayMetrics.widthPixels, displayMetrics.heightPixels);
+        view.layout(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
+        view.buildDrawingCache();
+        Bitmap bitmap = Bitmap.createBitmap(view.getMeasuredWidth(), view.getMeasuredHeight() + 30, Bitmap.Config.ARGB_8888);
+
+        Canvas canvas = new Canvas(bitmap);
+        view.draw(canvas);
+
+        return bitmap;
     }
 }

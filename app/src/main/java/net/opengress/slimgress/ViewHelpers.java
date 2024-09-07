@@ -13,7 +13,9 @@ import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 
+import net.opengress.slimgress.activity.ActivityMain;
 import net.opengress.slimgress.api.Interface.APGain;
 import net.opengress.slimgress.api.Item.ItemBase;
 
@@ -208,9 +210,13 @@ public class ViewHelpers {
             case RedeemedAP -> what = "redeeming a passcode";
             case RemoteRechargeResonator -> what = "recharging a remote resonator";
             case UpgradeResonator -> what = "upgrading someone else's resonator";
-            default -> what = "doing something";
+            default -> what = "doing something cool";
         }
         return what;
+    }
+
+    public static String getString(int resId) {
+        return ContextCompat.getString(SlimgressApplication.getInstance(), resId);
     }
 
     @SuppressLint("DefaultLocale")
@@ -256,5 +262,9 @@ public class ViewHelpers {
             }
         });
         return screenshotFile;
+    }
+
+    public static ActivityMain getMainActivity() {
+        return SlimgressApplication.getInstance().getMainActivity();
     }
 }
