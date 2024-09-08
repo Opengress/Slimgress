@@ -217,4 +217,8 @@ public class SlimgressApplication extends Application {
     public void setLoggedIn(boolean loggedIn) {
         mLoggedIn = loggedIn;
     }
+
+    public static void postPlainCommsMessage(String msg) {
+        getInstance().getAllCommsViewModel().addMessage(PlextBase.createByPlainText(PlextBase.PlextType.PlayerGenerated, msg));
+    }
 }

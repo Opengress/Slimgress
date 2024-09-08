@@ -970,6 +970,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
 
     private void showInfoCard(GameEntityPortal portal) {
+        // TODO theoretically I can update this as the user moves, but for now I do not.
         removeInfoCard();
         View markerView = LayoutInflater.from(getContext()).inflate(R.layout.marker_info_card, null);
         TextView textView1 = markerView.findViewById(R.id.marker_info_card_portal_level);
@@ -987,6 +988,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
 
         Marker marker = new Marker(mMap);
+        marker.setOnMarkerClickListener((marker1, mapView) -> false);
         marker.setPosition(portal.getPortalLocation().getLatLng());
         marker.setIcon(new BitmapDrawable(getResources(), createDrawableFromView(requireContext(), markerView)));
         mMarkerInfoCard = marker;
