@@ -30,7 +30,6 @@ import static net.opengress.slimgress.ViewHelpers.putItemInMap;
 import static net.opengress.slimgress.ViewHelpers.saveScreenshot;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
-import static net.opengress.slimgress.api.Plext.PlextBase.PlextType.PlayerGenerated;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
@@ -210,6 +209,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                     dialog.setMessage(error).setDismissDelay(1500).show();
                     isLevellingUp = false;
                 } else {
+                    SlimgressApplication.postPlainCommsMessage("Level up! You are now level " + level);
                     showLevelUpDialog(generateFieldKitMap(data));
                 }
                 return false;
@@ -224,7 +224,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     protected void onResume() {
         super.onResume();
         isInForeground = true;
-        Log.d("MAIN", "RESUMING");
     }
 
     @Override
@@ -713,14 +712,28 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 if (error != null && !error.isEmpty()) {
                     DialogInfo dialog = new DialogInfo(this);
                     dialog.setMessage(error).setDismissDelay(1500).show();
-                }
-                ArrayList<Damage> damages = data.getParcelableArrayList("damages");
-                if (damages == null || damages.isEmpty()) {
-                    mApp.getAllCommsViewModel().addMessage(PlextBase.createByPlainText(PlayerGenerated, getString(R.string.missed_all_resonators)));
+                    SlimgressApplication.postPlainCommsMessage("XMP failed: " + error);
                     return true;
                 }
+
+                ArrayList<Damage> damages = data.getParcelableArrayList("damages");
+                if (damages == null || damages.isEmpty()) {
+                    SlimgressApplication.postPlainCommsMessage(getString(R.string.missed_all_resonators));
+                    return true;
+                }
+
+                int destroyedResos = 0;
                 for (var damage : damages) {
                     scanner.displayDamage(damage.getDamageAmount(), damage.getTargetGuid(), damage.getTargetSlot(), damage.isCriticalHit());
+                    if (damage.isTargetDestroyed()) {
+                        ++destroyedResos;
+                    }
+                }
+
+                if (destroyedResos == 1) {
+                    SlimgressApplication.postPlainCommsMessage("Destroyed 1 resonator");
+                } else if (destroyedResos > 1) {
+                    SlimgressApplication.postPlainCommsMessage(String.format(Locale.getDefault(), "Destroyed %d resonators", destroyedResos));
                 }
 
                 // when i put the drawing code (currently below) in here, it doesn't draw.

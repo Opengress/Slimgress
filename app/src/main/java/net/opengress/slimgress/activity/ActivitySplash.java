@@ -75,6 +75,7 @@ public class ActivitySplash extends Activity {
             startActivityForResult(myIntent, 0);
         } else {
             // start main activity
+            SlimgressApplication.postPlainCommsMessage("Agent ID Confirmed. Welcome " + mGame.getAgent().getNickname());
             finish();
             startActivity(new Intent(getApplicationContext(), ActivityMain.class));
         }

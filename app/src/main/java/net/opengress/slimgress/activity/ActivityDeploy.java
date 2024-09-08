@@ -93,6 +93,7 @@ public class ActivityDeploy extends AppCompatActivity {
     @SuppressLint({"DefaultLocale", "ObsoleteSdkInt"})
     public void setUpView() {
         GameEntityPortal portal = mGame.getCurrentPortal();
+        boolean teamOK = portal.getPortalTeam().toString().equalsIgnoreCase("neutral") || portal.getPortalTeam().toString().equals(mGame.getAgent().getTeam().toString());
 
 
         findViewById(R.id.btnRechargeAll).setVisibility(View.INVISIBLE);
@@ -101,10 +102,15 @@ public class ActivityDeploy extends AppCompatActivity {
         // iterate over the resos (maybe unrolled) and set up their info and any relevant callbacks
         for (int id : mResoViewIds) {
             ((Button) findViewById(id).findViewById(R.id.widgetActionButton)).setText(R.string.dply);
-            findViewById(id).findViewById(R.id.widgetActionButton).setOnClickListener(this::onDeployButtonPressed);
+            if (teamOK) {
+                findViewById(id).findViewById(R.id.widgetActionButton).setOnClickListener(this::onDeployButtonPressed);
+            } else {
+                findViewById(id).findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
+                findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(false);
+            }
             findViewById(id).findViewById(R.id.widgetActionButton).setTag(id);
             // we don't do this in the reso widget because it's also used for recharging
-            ((TextView) findViewById(id).findViewById(R.id.resoLevelText)).setText(R.string.l0);
+//            ((TextView) findViewById(id).findViewById(R.id.resoLevelText)).setText(R.string.l0);
         }
 
         List<LinkedResonator> resos = portal.getPortalResonators();
@@ -131,7 +137,7 @@ public class ActivityDeploy extends AppCompatActivity {
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());
 
             List<ItemResonator> resosForUpgrade = new ArrayList<>();
-            if (canUpgradeOrDeploy(resoCountForLevel, reso.level)) {
+            if (teamOK && canUpgradeOrDeploy(resoCountForLevel, reso.level)) {
                 resosForUpgrade = inventory.getResosForUpgrade(reso.level);
             }
             if (resosForUpgrade.isEmpty()) {
@@ -180,7 +186,7 @@ public class ActivityDeploy extends AppCompatActivity {
 
     private boolean canUpgradeOrDeploy(HashMap<Integer, Integer> resoCountForLevel, int currentLevel) {
         while (currentLevel < 8) {
-            if (canPutThisResonatorOn(resoCountForLevel, currentLevel)) {
+            if (canPutThisResonatorOn(resoCountForLevel, currentLevel + 1)) {
                 return true;
             }
             ++currentLevel;

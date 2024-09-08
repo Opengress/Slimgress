@@ -266,7 +266,9 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 if (error != null && !error.isEmpty()) {
                     DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
                     dialog.setMessage(error).setDismissDelay(1500).show();
+                    SlimgressApplication.postPlainCommsMessage("Drop failed: " + error);
                 } else {
+                    SlimgressApplication.postPlainCommsMessage("Drop successful");
                     for (var id : Objects.requireNonNull(data.getStringArray("dropped"))) {
                         mItem.remove(id);
                         mInventory.removeItem(id);
@@ -303,12 +305,13 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 if (error != null && !error.isEmpty()) {
                     DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
                     dialog.setMessage(error).setDismissDelay(1500).show();
+                    SlimgressApplication.postPlainCommsMessage("Unable top use power cube: " + error);
                 } else {
                     var res = data.getString("result");
                     DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
                     String message = "Gained %s XM from using a powercube";
                     dialog.setMessage(String.format(message, res, mItem.getDescription())).setDismissDelay(1500).show();
-
+//                    SlimgressApplication.postPlainCommsMessage("Should this say something?");
 
                     for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
                         mItem.remove(id);
@@ -475,7 +478,9 @@ public class ActivityInventoryItem extends AppCompatActivity {
             if (error != null && !error.isEmpty()) {
                 DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
                 dialog.setMessage(error).setDismissDelay(1500).show();
+                SlimgressApplication.postPlainCommsMessage("Recycle failed: " + error);
             } else {
+                SlimgressApplication.postPlainCommsMessage("Recycle successful");
                 var res = data.getString("result");
                 DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
                 String message;

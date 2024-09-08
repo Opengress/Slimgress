@@ -756,18 +756,22 @@ public class GameState {
             mInterface.request(mHandshake, "gameplay/deployResonatorV2", mLocation, params, new RequestResult(handler) {
                 @Override
                 public void handleError(String error) {
-                    // PORTAL_OUT_OF_RANGE, TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER, PORTAL_AT_MAX_RESONATORS, ITEM_DOES_NOT_EXIST, SERVER_ERROR
+                    // PORTAL_OUT_OF_RANGE, TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER,
+                    // PORTAL_AT_MAX_RESONATORS, ITEM_DOES_NOT_EXIST, SERVER_ERROR
                     String pretty_error = switch (error.replaceAll("\\d", "")) {
                         case "PORTAL_OUT_OF_RANGE" -> "Portal is out of range";
                         case "PLAYER_LIMIT_REACHED", "TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER" ->
-                            // You already have the maximum number of resonators of that level on the portal
+                            // You already deployed the maximum number of resonators of that level
                                 "Too many resonators with same level by you";
                         case "PORTAL_AT_MAX_RESONATORS" ->
                             // Portal is already fully deployed
                                 "Portal already has all resonators";
-                        case "ITEM_DOES_NOT_EXIST" ->
+                        case "ITEM_DOES_NOT_EXIST", "RESONATOR_DOES_NOT_EXIST" ->
                                 "The resonator you tried to deploy is not in your inventory";
                         case "SERVER_ERROR" -> "Server error";
+                        case "PLAYER_DEPLETED", "NEED_MORE_ENERGY" ->
+                                getString(R.string.you_don_t_have_enough_xm);
+                        case "PORTAL_BELONGS_TO_ENEMY" -> "That portal belongs to the wrong team!";
                         case "SPEED_LOCKED" -> // new!
                                 "You are moving too fast";
                         case "SPEED_LOCKED_" -> {
@@ -825,7 +829,7 @@ public class GameState {
                     String pretty_error = switch (error.replaceAll("\\d", "")) {
                         case "OUT_OF_RANGE", "PORTAL_OUT_OF_RANGE" -> "Portal is out of range";
                         case "PLAYER_LIMIT_REACHED", "TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER" ->
-                            // You already have the maximum number of resonators of that level on the portal
+                            // You already deployed the maximum number of resonators of that level
                                 "Too many resonators with same level by you";
                         case "CAN_ONLY_UPGRADE_TO_HIGHER_LEVEL" ->
                             // Resonator is already upgraded
@@ -834,6 +838,9 @@ public class GameState {
                                 "The resonator you tried to deploy is not in your inventory";
                         case "SERVER_ERROR" -> // new!
                                 "Server error";
+                        case "PLAYER_DEPLETED", "NEED_MORE_ENERGY" ->
+                                getString(R.string.you_don_t_have_enough_xm);
+                        case "PORTAL_BELONGS_TO_ENEMY" -> "That portal belongs to the wrong team!";
                         case "SPEED_LOCKED" -> // new!
                                 "You are moving too fast";
                         case "SPEED_LOCKED_" -> {
