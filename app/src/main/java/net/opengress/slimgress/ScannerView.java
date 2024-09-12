@@ -503,7 +503,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                         case MotionEvent.ACTION_MOVE -> {
                             if (isDoubleClick) {
                                 float currentY = event.getY();
-                                // untested jitter filter
+                                // jitter filter
                                 if (Math.abs(currentY - startY) >= 0.06) {
                                     if (currentY > startY) {
                                         getController().zoomTo(getZoomLevelDouble() - ZOOM_SENSITIVITY);
@@ -520,7 +520,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                             float rotating = (float) (mPrevAngle - mCurrAngle);
                             setMapOrientation(getMapOrientation() - rotating);
                             // guard against long-presses for context menu with jitter
-                            if (Math.abs(rotating) >= 0.06 || isRotating) {
+                            if (Math.abs(rotating) >= 0.09 || isRotating) {
                                 isRotating = true;
                                 return true;
                             }
@@ -612,7 +612,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 Point reuse = new Point();
                 mapView.getProjection().rotateAndScalePoint((int) e.getX(), (int) e.getY(), reuse);
                 if (reuse.x < mCompassFrameBitmap.getWidth() && reuse.y < mCompassFrameCenterY + mCompassFrameBitmap.getHeight()) {
-                    Log.d("Scanner", "Got tap!");
                     if (CURRENT_MAP_ORIENTATION_SCHEME == MAP_ROTATION_FLOATING) {
                         CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
                         mapView.setMapOrientation(0);
@@ -679,7 +678,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
         if (mRotationVectorSensor != null) {
             mSensorManager.registerListener(this, mRotationVectorSensor,
-                    SensorManager.SENSOR_DELAY_GAME);
+                    SensorManager.SENSOR_DELAY_NORMAL);
         }
 
 

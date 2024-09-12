@@ -77,7 +77,6 @@
     <string name="fragment_device_show_inventory_sort">Show inventory key sort</string>
     <string name="fragment_device_show_inventory_level_filter">Show inventory item level filter</string>
     <string name="fragment_device_show_inventory_rarity_filter">Show inventory rarity filter</string>
-    <string name="these_features_may_require_a_restart">These features MAY require a restart</string>
     <string name="fragment_inventory_hint_search">Search</string>
     <string name="select_image_size">Image size</string>
     <string name="select_map_tiles">Map tiles</string>

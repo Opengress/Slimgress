@@ -96,13 +96,6 @@
 
                 </LinearLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/gap_margin"
-                    android:text="@string/these_features_may_require_a_restart"
-                    android:textIsSelectable="false" />
-
             </LinearLayout>
 
 
