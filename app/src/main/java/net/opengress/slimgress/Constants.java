@@ -15,6 +15,7 @@ public final class Constants {
     public static final String PREFS_DEVICE_TILE_SOURCE_DEFAULT = "CartoDB Dark Matter (no labels)";
     public static final String UNTRANSLATABLE_IMAGE_RESOLUTION_NONE = "None";
     public static final String UNTRANSLATABLE_IMAGE_RESOLUTION_ORIGINAL = "Original";
+    public static final String UNTRANSLATABLE_MAP_TILE_SOURCE_BLANK = "BLANK";
     public static final String BULK_STORAGE_DEVICE_IMAGE_RESOLUTION = "imageResolution";
-    public static final String BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT = UNTRANSLATABLE_IMAGE_RESOLUTION_ORIGINAL;
+    public static final String BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT = "640x480";
 }

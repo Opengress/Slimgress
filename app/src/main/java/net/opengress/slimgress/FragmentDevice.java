@@ -29,6 +29,7 @@ import static net.opengress.slimgress.Constants.PREFS_INVENTORY_KEY_SORT_VISIBLE
 import static net.opengress.slimgress.Constants.PREFS_INVENTORY_LEVEL_FILTER_VISIBLE;
 import static net.opengress.slimgress.Constants.PREFS_INVENTORY_RARITY_FILTER_VISIBLE;
 import static net.opengress.slimgress.Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE;
+import static net.opengress.slimgress.Constants.UNTRANSLATABLE_MAP_TILE_SOURCE_BLANK;
 import static net.opengress.slimgress.ViewHelpers.setUpSpinner;
 
 import android.content.Context;
@@ -112,7 +113,7 @@ public class FragmentDevice extends Fragment
             }
         });
         List<String> mapSources = new ArrayList<>(mGame.getKnobs().getMapCompositionRootKnobs().getMapProviders().keySet());
-        mapSources.add(0, "BLANK");
+        mapSources.add(0, UNTRANSLATABLE_MAP_TILE_SOURCE_BLANK);
         Spinner mapSourceSpinner = setUpSpinner(mapSources.toArray(new String[0]), mRootView, R.id.device_spinner_performance_tile_source);
         String previouslySelectedSource = mPrefs.getString(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT);
         int selectedIndex = mapSources.indexOf(previouslySelectedSource);
