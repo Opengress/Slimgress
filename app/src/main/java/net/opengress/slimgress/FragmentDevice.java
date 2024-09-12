@@ -21,6 +21,16 @@
 
 package net.opengress.slimgress;
 
+import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION;
+import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
+import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE;
+import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE_DEFAULT;
+import static net.opengress.slimgress.Constants.PREFS_INVENTORY_KEY_SORT_VISIBLE;
+import static net.opengress.slimgress.Constants.PREFS_INVENTORY_LEVEL_FILTER_VISIBLE;
+import static net.opengress.slimgress.Constants.PREFS_INVENTORY_RARITY_FILTER_VISIBLE;
+import static net.opengress.slimgress.Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE;
+import static net.opengress.slimgress.ViewHelpers.setUpSpinner;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -28,13 +38,20 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.CheckBox;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 
 import net.opengress.slimgress.activity.ActivityCredits;
+import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Game.GameState;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class FragmentDevice extends Fragment
 {
@@ -49,7 +66,7 @@ public class FragmentDevice extends Fragment
         mRootView = inflater.inflate(R.layout.fragment_device,
                 container, false);
 
-        mPrefs = requireActivity().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE);
+        mPrefs = SlimgressApplication.getInstance().getApplicationContext().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE);
 
         mRootView.findViewById(R.id.device_button_credits).setEnabled(true);
         mRootView.findViewById(R.id.device_button_credits).setOnClickListener(v -> {
@@ -60,17 +77,71 @@ public class FragmentDevice extends Fragment
         mRootView.findViewById(R.id.device_button_profile_link).setEnabled(false);
 
         // features
-        setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_search, Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE, false);
-        setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_key_sort, Constants.PREFS_INVENTORY_KEY_SORT_VISIBLE, true);
-        setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_level_filter, Constants.PREFS_INVENTORY_LEVEL_FILTER_VISIBLE, false);
-        setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_rarity_filter, Constants.PREFS_INVENTORY_RARITY_FILTER_VISIBLE, false);
+        setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_search, PREFS_INVENTORY_SEARCH_BOX_VISIBLE, false);
+        setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_key_sort, PREFS_INVENTORY_KEY_SORT_VISIBLE, true);
+        setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_level_filter, PREFS_INVENTORY_LEVEL_FILTER_VISIBLE, false);
+        setUpPrefsCheckBox(R.id.device_checkbox_features_inventory_rarity_filter, PREFS_INVENTORY_RARITY_FILTER_VISIBLE, false);
 
         // performance
-        mRootView.findViewById(R.id.device_checkbox_performance_load_images_network).setEnabled(false);
-        mRootView.findViewById(R.id.device_checkbox_performance_load_map_tiles_network).setEnabled(false);
+        BulkPlayerStorage storage = mGame.getBulkPlayerStorage();
+        // FIXME hardcoded
+        String[] imageResolutions = {"Original", "None", "640x480", "1366x768", "1920x1080"};
+        Spinner imageResolutionSpinner = setUpSpinner(imageResolutions, mRootView, R.id.device_spinner_performance_image_size);
+        String previouslySelectedResolution = storage.getString(BULK_STORAGE_DEVICE_IMAGE_RESOLUTION, BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT);
+        int selectedResolution = Arrays.asList(imageResolutions).indexOf(previouslySelectedResolution);
+        // Default to 0 if no previous selection - NB sane default in prefs.getString
+        imageResolutionSpinner.setSelection(Math.max(selectedResolution, 0));
+        imageResolutionSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            boolean isFirstSelection = true;
+
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (isFirstSelection) {
+                    isFirstSelection = false;
+                    return;
+                }
+                String selectedResolution = imageResolutions[i];
+
+                // this one is actually saved on the server! A first for Opengress!
+                storage.putString(BULK_STORAGE_DEVICE_IMAGE_RESOLUTION, selectedResolution);
+                storage.apply();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        List<String> mapSources = new ArrayList<>(mGame.getKnobs().getMapCompositionRootKnobs().getMapProviders().keySet());
+        mapSources.add(0, "BLANK");
+        Spinner mapSourceSpinner = setUpSpinner(mapSources.toArray(new String[0]), mRootView, R.id.device_spinner_performance_tile_source);
+        String previouslySelectedSource = mPrefs.getString(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT);
+        int selectedIndex = mapSources.indexOf(previouslySelectedSource);
+        // Default to 0 if no previous selection - NB sane default in prefs.getString
+        mapSourceSpinner.setSelection(Math.max(selectedIndex, 0));
+
+        mapSourceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            boolean isFirstSelection = true;
+
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (isFirstSelection) {
+                    isFirstSelection = false;
+                    return;
+                }
+                String selectedSource = mapSources.get(i);
+
+                // Save the selected source to SharedPreferences
+                SharedPreferences.Editor editor = mPrefs.edit();
+                editor.putString(PREFS_DEVICE_TILE_SOURCE, selectedSource);
+                editor.apply();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
         mRootView.findViewById(R.id.device_checkbox_performance_high_precision_compass).setEnabled(false);
-        ((CheckBox) mRootView.findViewById(R.id.device_checkbox_performance_load_images_network)).setChecked(true);
-        ((CheckBox) mRootView.findViewById(R.id.device_checkbox_performance_load_map_tiles_network)).setChecked(true);
         // Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR or Sensor.TYPE_ROTATION_VECTOR
         ((CheckBox) mRootView.findViewById(R.id.device_checkbox_performance_high_precision_compass)).setChecked(true);
 

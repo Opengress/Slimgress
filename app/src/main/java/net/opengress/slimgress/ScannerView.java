@@ -22,11 +22,17 @@
 package net.opengress.slimgress;
 
 import static android.content.Context.SENSOR_SERVICE;
+import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE;
+import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE_DEFAULT;
+import static net.opengress.slimgress.Constants.PREFS_OSM_LATITUDE_STRING;
+import static net.opengress.slimgress.Constants.PREFS_OSM_LONGITUDE_STRING;
+import static net.opengress.slimgress.Constants.PREFS_OSM_ZOOM_LEVEL_DOUBLE;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromAsset;
 import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
 import static net.opengress.slimgress.ViewHelpers.getImageForResoLevel;
 import static net.opengress.slimgress.ViewHelpers.getLevelColor;
 import static net.opengress.slimgress.api.Item.ItemBase.ItemType.PortalKey;
+import static net.opengress.slimgress.api.Knobs.MapCompositionRootKnobs.MapProvider.CoordinateSystem.XYZ;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -85,6 +91,7 @@ import net.opengress.slimgress.api.GameEntity.GameEntityControlField;
 import net.opengress.slimgress.api.GameEntity.GameEntityLink;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.Item.ItemPortalKey;
+import net.opengress.slimgress.api.Knobs.MapCompositionRootKnobs.MapProvider;
 import net.opengress.slimgress.api.Knobs.ScannerKnobs;
 import net.opengress.slimgress.api.Knobs.TeamKnobs;
 import net.opengress.slimgress.dialog.DialogHackResult;
@@ -280,7 +287,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
      * onSensorChanged(), this is only called when this accuracy value changes.
      *
      * <p>See the SENSOR_STATUS_* constants in
-     * {@link android.hardware.SensorManager SensorManager} for details.
+     * {@link SensorManager SensorManager} for details.
      *
      * @param accuracy The new accuracy of this sensor, one of
      *                 {@code SensorManager.SENSOR_STATUS_*}
@@ -420,24 +427,46 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         }
     }
 
+    private MapTileProviderBasic createTileProvider(MapProvider provider) {
+        ITileSource tileSource;
+        if (provider == null) {
+            tileSource = new BlankTileSource();
+        } else if (provider.getCoordinateSystem() == XYZ) {
+            tileSource = new XYTileSource(provider.getName(), provider.getMinZoom(), provider.getMaxZoom(), provider.getTileSize(), provider.getFilenameEnding(),
+                    provider.getBaseUrls());
+        } else {
+            throw new RuntimeException("Unknown slippy map coordinate system!");
+        }
+        var tileProvider = new MapTileProviderBasic(mApp.getApplicationContext(), tileSource);
+        if (provider == null) {
+            tileProvider.detach();
+        }
+        return tileProvider;
+    }
+
+    private MapTileProviderBasic getMapTileProvider(String name, String def) {
+        MapProvider mapProvider = mGame.getKnobs().getMapCompositionRootKnobs().fromString(mPrefs.getString(name, def));
+        return createTileProvider(mapProvider);
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        // allows map tiles to be cached in SQLite so map draws properly
-        Configuration.getInstance().load(requireContext(), requireContext().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE));
+        mPrefs = mApp.getApplicationContext().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE);
+        // allows map tiles to be cached so map draws properly
+        Configuration.getInstance().load(requireContext(), mPrefs);
+
+        mPrefs.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
+            Log.d("Scanner", String.format("PREFERENCE CHANGE IN ANOTHER THING: %s", key));
+            switch (Objects.requireNonNull(key)) {
+                case PREFS_DEVICE_TILE_SOURCE ->
+                        mMap.setTileProvider(getMapTileProvider(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT));
+            }
+        });
 
         // set up map tile source before creating map, so we don't download wrong tiles wastefully
-        final ITileSource tileSource = new XYTileSource("CartoDB Dark Matter", 3, 18, 256, ".png",
-                new String[]{"https://c.basemaps.cartocdn.com/dark_nolabels/"});
-        final MapTileProviderBasic tileProvider = new MapTileProviderBasic(mApp.getApplicationContext(), tileSource);
-        // untested ideas to research issue which causes endless logspam in emulator unpredictably
-        // Configuration.getInstance().setDebugMode(true);
-//        TileWriter tileWriter = new TileWriter();
-//        tileWriter.clear();
-
-        // Note! we are programmatically construction the map view
-        // be sure to handle application lifecycle correct (see onPause)
+        final MapTileProviderBasic tileProvider = getMapTileProvider(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT);
         mMap = new MapView(inflater.getContext(), tileProvider) {
             private double mCurrAngle = 0;
             private double mPrevAngle = 0;
@@ -539,7 +568,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
         final Context context = this.requireActivity();
 
-        mPrefs = context.getSharedPreferences(Constants.PREFS_OSM_NAME, Context.MODE_PRIVATE);
 
 
         Configuration.getInstance().setUserAgentValue("Slimgress/Openflux (OSMDroid)");
@@ -556,11 +584,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mMap.setTilesScaledToDpi(true);
 
         //the rest of this is restoring the last map location the user looked at
-        final float zoomLevel = mPrefs.getFloat(Constants.PREFS_OSM_ZOOM_LEVEL_DOUBLE, 18);
+        final float zoomLevel = mPrefs.getFloat(PREFS_OSM_ZOOM_LEVEL_DOUBLE, 18);
         mMap.getController().setZoom(zoomLevel);
         mMap.setMapOrientation(0, false);
-        final String latitudeString = mPrefs.getString(Constants.PREFS_OSM_LATITUDE_STRING, "1.0");
-        final String longitudeString = mPrefs.getString(Constants.PREFS_OSM_LONGITUDE_STRING, "1.0");
+        final String latitudeString = mPrefs.getString(PREFS_OSM_LATITUDE_STRING, "1.0");
+        final String longitudeString = mPrefs.getString(PREFS_OSM_LONGITUDE_STRING, "1.0");
         final double latitude = Double.parseDouble(latitudeString);
         final double longitude = Double.parseDouble(longitudeString);
         mMap.setExpectedCenter(new GeoPoint(latitude, longitude));
@@ -612,9 +640,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     public void onPause() {
         //save the current location
         final SharedPreferences.Editor edit = mPrefs.edit();
-        edit.putString(Constants.PREFS_OSM_LATITUDE_STRING, String.valueOf(mMap.getMapCenter().getLatitude()));
-        edit.putString(Constants.PREFS_OSM_LONGITUDE_STRING, String.valueOf(mMap.getMapCenter().getLongitude()));
-        edit.putFloat(Constants.PREFS_OSM_ZOOM_LEVEL_DOUBLE, (float) mMap.getZoomLevelDouble());
+        edit.putString(PREFS_OSM_LATITUDE_STRING, String.valueOf(mMap.getMapCenter().getLatitude()));
+        edit.putString(PREFS_OSM_LONGITUDE_STRING, String.valueOf(mMap.getMapCenter().getLongitude()));
+        edit.putFloat(PREFS_OSM_ZOOM_LEVEL_DOUBLE, (float) mMap.getZoomLevelDouble());
         edit.apply();
 
         mMap.onPause();
@@ -637,6 +665,10 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     public void onResume() {
         super.onResume();
         mMap.onResume();
+
+        // technically this probably means we're setting this up twice.
+        // probably mostly harmless, but maybe try to fix later.
+        mMap.setTileProvider(getMapTileProvider(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT));
 
         if (mLastLocationAcquired == null || mLastLocationAcquired.before(new Date(System.currentTimeMillis() - mUpdateIntervalMS))) {
             setLocationInaccurate(true);
@@ -881,17 +913,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                     return;
                 }
                 activity.runOnUiThread(() -> {
-                    Bitmap portalIcon;
-                    // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
-                    // i would also like to draw the resonators around it, but i'm not sure that that would be practical with osmdroid
-                    // ... maybe i can at least write the portal level on the portal, like in iitc
-                    // it's quite possible that resonators can live in a separate Hash of markers,
-                    //   as long as the guids are stored with the portal info
-                    portalIcon = mIcons.get("particle");
+                    Bitmap particleIcon = mIcons.get("particle");
 
                     GroundOverlay marker = new GroundOverlay();
-                    marker.setPosition(location.getLatLng().destinationPoint(25, TOP_LEFT_ANGLE), location.getLatLng().destinationPoint(25, BOTTOM_RIGHT_ANGLE));
-                    marker.setImage(portalIcon);
+                    marker.setPosition(location.getLatLng().destinationPoint(10, TOP_LEFT_ANGLE), location.getLatLng().destinationPoint(10, BOTTOM_RIGHT_ANGLE));
+                    marker.setImage(particleIcon);
 
                     mMap.getOverlays().add(marker);
                     mXMMarkers.put(particle.getCellId(), marker);
@@ -1038,9 +1064,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         line.setPoints(Arrays.asList(portal.getPortalLocation().getLatLng(), resoPos));
         Paint paint = new Paint();
         paint.setColor(getColorFromResources(getResources(), getLevelColor(reso.level)));
-        paint.setStrokeWidth(0.25f);
+        paint.setStrokeWidth(0.33f);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            paint.setBlendMode(BlendMode.SCREEN);
+            paint.setBlendMode(BlendMode.HARD_LIGHT);
         }
         line.getOutlinePaint().set(paint);
 

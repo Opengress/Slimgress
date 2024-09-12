@@ -21,6 +21,9 @@
 
 package net.opengress.slimgress;
 
+import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION;
+import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
+import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_NONE;
 import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
 import static net.opengress.slimgress.ViewHelpers.getImageForResoLevel;
 import static net.opengress.slimgress.ViewHelpers.getLevelColor;
@@ -41,6 +44,7 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 
 import net.opengress.slimgress.activity.ActivityInventoryItem;
+import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Game.Inventory;
@@ -166,11 +170,19 @@ public class InventoryList extends BaseExpandableListAdapter {
             text.setText(item.getPrettyDescription());
             image = convertView.findViewById(R.id.inventory_childRow_portalKey_ChildImage);
 
-            Glide.with(mContext)
-                    .load(item.getImage())
-                    .placeholder(R.drawable.no_image)
-                    .error(item.getIcon())
-                    .into(image);
+            BulkPlayerStorage storage = mGame.getBulkPlayerStorage();
+            String desiredResolution = storage.getString(BULK_STORAGE_DEVICE_IMAGE_RESOLUTION, BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT);
+            if (Objects.equals(desiredResolution, UNTRANSLATABLE_IMAGE_RESOLUTION_NONE)) {
+                Glide.with(mContext)
+                        .load(item.getIcon())
+                        .into(image);
+            } else {
+                Glide.with(mContext)
+                        .load(item.getImage())
+                        .placeholder(R.drawable.no_image)
+                        .error(item.getIcon())
+                        .into(image);
+            }
             ItemPortalKey key = (ItemPortalKey) mInventory.getItems().get(item.getFirstID());
             if (key != null) {
                 GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key.getPortalGuid());

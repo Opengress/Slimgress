@@ -1,5 +1,8 @@
 package net.opengress.slimgress.activity;
 
+import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION;
+import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
+import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_NONE;
 import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColor;
 import static net.opengress.slimgress.ViewHelpers.getMainActivity;
@@ -28,6 +31,7 @@ import com.bumptech.glide.Glide;
 import net.opengress.slimgress.InventoryListItem;
 import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
+import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Game.Inventory;
@@ -208,11 +212,19 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 ((ImageView) findViewById(R.id.activity_inventory_item_image)).setImageDrawable(mItem.getIcon());
             }
         } else {
-            Glide.with(this)
-                    .load(url)
-                    .placeholder(R.drawable.no_image)
-                    .error(R.drawable.no_image)
-                    .into((ImageView) findViewById(R.id.activity_inventory_item_image));
+            BulkPlayerStorage storage = mGame.getBulkPlayerStorage();
+            String desiredResolution = storage.getString(BULK_STORAGE_DEVICE_IMAGE_RESOLUTION, BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT);
+            if (Objects.equals(desiredResolution, UNTRANSLATABLE_IMAGE_RESOLUTION_NONE)) {
+                Glide.with(this)
+                        .load(R.drawable.no_image)
+                        .into((ImageView) findViewById(R.id.activity_inventory_item_image));
+            } else {
+                Glide.with(this)
+                        .load(url)
+                        .placeholder(R.drawable.no_image)
+                        .error(R.drawable.no_image)
+                        .into((ImageView) findViewById(R.id.activity_inventory_item_image));
+            }
         }
 
         boolean isRecyclable = mGame.getKnobs().getRecycleKnobs().getRecycleValues(mInventory.getItems(mItem.getType()).get(0).getName()) != null;
