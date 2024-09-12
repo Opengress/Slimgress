@@ -38,6 +38,7 @@ public class KnobsBundle
     private final NearbyPortalKnobs mNearbyPortalKnobs;
     private final PlayerLevelKnobs mPlayerLevelKnobs;
     private final TeamKnobs mTeamKnobs;
+    private final MapCompositionRootKnobs mMapCompositionRootKnobs;
 
     public KnobsBundle(JSONObject json) throws JSONException
     {
@@ -58,6 +59,7 @@ public class KnobsBundle
         mNearbyPortalKnobs = new NearbyPortalKnobs(bundleMap.getJSONObject("NearbyPortalKnobs"));
         mPlayerLevelKnobs = new PlayerLevelKnobs(bundleMap.getJSONObject("PlayerLevelKnobs"));
         mTeamKnobs = new TeamKnobs(bundleMap.getJSONObject("TeamKnobs"));
+        mMapCompositionRootKnobs = new MapCompositionRootKnobs(bundleMap.getJSONObject("MapCompositionRootKnobs"));
 
     }
 
@@ -114,6 +116,10 @@ public class KnobsBundle
     public PlayerLevelKnobs getPlayerLevelKnobs()
     {
         return mPlayerLevelKnobs;
+    }
+
+    public MapCompositionRootKnobs getMapCompositionRootKnobs() {
+        return mMapCompositionRootKnobs;
     }
 
     public TeamKnobs getTeamKnobs()

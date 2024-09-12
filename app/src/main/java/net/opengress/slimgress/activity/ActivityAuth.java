@@ -23,6 +23,7 @@ package net.opengress.slimgress.activity;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -92,7 +93,7 @@ public class ActivityAuth extends Activity {
 
         if (isLoggedIn()) {
             // user is already logged in, get login data
-            SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, 0);
+            SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, Context.MODE_PRIVATE);
             final String sessionName = prefs.getString(Constants.PREFS_SERVER_SESSION_NAME, null);
             final String sessionId = prefs.getString(Constants.PREFS_SERVER_SESSION_ID, null);
 
@@ -114,7 +115,7 @@ public class ActivityAuth extends Activity {
         String accountName;
         String accountToken;
         // check if login data exists
-        SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, 0);
+        SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, Context.MODE_PRIVATE);
         accountName = prefs.getString(Constants.PREFS_SERVER_SESSION_NAME, null);
         accountToken = prefs.getString(Constants.PREFS_SERVER_SESSION_ID, null);
 
@@ -278,7 +279,7 @@ public class ActivityAuth extends Activity {
             if (success == Interface.AuthSuccess.Successful) {
 
                 // save login data
-                SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, 0);
+                SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, Context.MODE_PRIVATE);
                 Editor editor = prefs.edit();
                 editor.putString(Constants.PREFS_SERVER_SESSION_NAME, session_name);
                 editor.putString(Constants.PREFS_SERVER_SESSION_ID, session_id);
@@ -305,7 +306,7 @@ public class ActivityAuth extends Activity {
 
     public void authFailed() {
         // clear login data
-        SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, 0);
+        SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, Context.MODE_PRIVATE);
         String sessionName = prefs.getString(Constants.PREFS_SERVER_SESSION_NAME, null);
         String sessionId = prefs.getString(Constants.PREFS_SERVER_SESSION_ID, null);
 

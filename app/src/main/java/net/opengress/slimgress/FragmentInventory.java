@@ -22,10 +22,16 @@
 package net.opengress.slimgress;
 
 import static androidx.core.content.ContextCompat.getDrawable;
+import static net.opengress.slimgress.Constants.PREFS_INVENTORY_KEY_SORT;
+import static net.opengress.slimgress.Constants.PREFS_INVENTORY_KEY_SORT_VISIBLE;
+import static net.opengress.slimgress.Constants.PREFS_INVENTORY_LEVEL_FILTER_VISIBLE;
+import static net.opengress.slimgress.Constants.PREFS_INVENTORY_RARITY_FILTER_VISIBLE;
+import static net.opengress.slimgress.Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE;
 import static net.opengress.slimgress.ViewHelpers.getImageForCubeLevel;
 import static net.opengress.slimgress.ViewHelpers.getImageForResoLevel;
 import static net.opengress.slimgress.ViewHelpers.getImageForUltrastrikeLevel;
 import static net.opengress.slimgress.ViewHelpers.getImageForXMPLevel;
+import static net.opengress.slimgress.ViewHelpers.setUpSpinner;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
 
 import android.content.Context;
@@ -33,12 +39,10 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
@@ -69,7 +73,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 public class FragmentInventory extends Fragment {
@@ -92,7 +95,14 @@ public class FragmentInventory extends Fragment {
     private InventoryList mInventoryList;
     private Observer<Inventory> mObserver;
 
-    final String[] mSorts = new String[]{"Deployment", "Distance", "Level", "Name", "Team"};
+    private Spinner mRaritySpinner;
+    private Spinner mSortSpinner;
+    private SearchView mSearchBox;
+    private Spinner mLevelSpinner;
+
+    final String[] mSorts = {"Deployment", "Distance", "Level", "Name", "Team"};
+    final String[] mRarityNames = {"ALL", "Very Common", "Common", "Less Common", "Rare", "Very Rare", "Extra Rare"};
+    final String[] mLevelNames = {"ALL", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5", "Level 6", "Level 7", "Level 8"};
     int mInventoryKeySort;
     int mInventoryCount = 0;
     boolean mFirstRun = true;
@@ -126,6 +136,16 @@ public class FragmentInventory extends Fragment {
 
         mApp.getInventoryViewModel().getInventory().observe(getViewLifecycleOwner(), mObserver);
 
+
+        // one day i'd like to centralise all this. same defaults repeated on device screen.
+        updateItemVisibilityForPreference(mSearchBox, PREFS_INVENTORY_SEARCH_BOX_VISIBLE, false);
+        updateItemVisibilityForPreference(mSortSpinner, PREFS_INVENTORY_KEY_SORT_VISIBLE, true);
+        updateItemVisibilityForPreference(mLevelSpinner, PREFS_INVENTORY_LEVEL_FILTER_VISIBLE, false);
+        updateItemVisibilityForPreference(mRaritySpinner, PREFS_INVENTORY_RARITY_FILTER_VISIBLE, false);
+        if (!mPrefs.getBoolean(PREFS_INVENTORY_SEARCH_BOX_VISIBLE, true)) {
+            mSearchBox.setQuery(null, false);
+        }
+
         mFirstRun = false;
         super.onResume();
     }
@@ -137,20 +157,19 @@ public class FragmentInventory extends Fragment {
 
         final ExpandableListView list = mRootView.findViewById(R.id.listView);
         final ProgressBar progress = mRootView.findViewById(R.id.progressBar1);
-        mPrefs = requireActivity().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE);
-        mInventoryKeySort = mPrefs.getInt(Constants.PREFS_INVENTORY_KEY_SORT, 3);
+        mPrefs = mApp.getApplicationContext().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE);
+        mInventoryKeySort = mPrefs.getInt(PREFS_INVENTORY_KEY_SORT, 3);
 
         list.setVisibility(View.INVISIBLE);
         progress.setVisibility(View.VISIBLE);
 
-        String[] rarityNames = {"ALL", "Very Common", "Common", "Less Common", "Rare", "Very Rare", "Extra Rare"};
-        Spinner raritySpinner = setUpSpinner(rarityNames, mRootView, R.id.spinnerRarity);
-        raritySpinner.setSelection(0);
-        raritySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        mRaritySpinner = setUpSpinner(mRarityNames, mRootView, R.id.spinnerRarity);
+        mRaritySpinner.setSelection(0);
+        mRaritySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 if (mInventoryList != null) {
-                    mInventoryList.limitRarities(rarityNames[i]);
+                    mInventoryList.limitRarities(mRarityNames[i]);
                 }
             }
 
@@ -159,14 +178,13 @@ public class FragmentInventory extends Fragment {
             }
         });
 
-        String[] levels = {"ALL", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5", "Level 6", "Level 7", "Level 8"};
-        Spinner levelSpinner = setUpSpinner(levels, mRootView, R.id.spinnerLevel);
-        levelSpinner.setSelection(0);
-        levelSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        mLevelSpinner = setUpSpinner(mLevelNames, mRootView, R.id.spinnerLevel);
+        mLevelSpinner.setSelection(0);
+        mLevelSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 if (mInventoryList != null) {
-                    mInventoryList.limitLevels(levels[i]);
+                    mInventoryList.limitLevels(mLevelNames[i]);
                 }
             }
 
@@ -175,15 +193,15 @@ public class FragmentInventory extends Fragment {
             }
         });
 
-        Spinner sortSpinner = setUpSpinner(mSorts, mRootView, R.id.spinnerSort);
-        sortSpinner.setSelection(mInventoryKeySort);
-        sortSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        mSortSpinner = setUpSpinner(mSorts, mRootView, R.id.spinnerSort);
+        mSortSpinner.setSelection(mInventoryKeySort);
+        mSortSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 final SharedPreferences.Editor edit = mPrefs.edit();
                 // updating mInventoryKeySort is a purely defensive move since we currently don't use it again after this
                 mInventoryKeySort = i;
-                edit.putInt(Constants.PREFS_INVENTORY_KEY_SORT, i);
+                edit.putInt(PREFS_INVENTORY_KEY_SORT, i);
                 edit.apply();
                 sortKeys(mSorts[i]);
             }
@@ -193,8 +211,8 @@ public class FragmentInventory extends Fragment {
             }
         });
 
-        SearchView searchBox = mRootView.findViewById(R.id.editTextSearch);
-        searchBox.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+        mSearchBox = mRootView.findViewById(R.id.editTextSearch);
+        mSearchBox.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 return false;
@@ -209,26 +227,6 @@ public class FragmentInventory extends Fragment {
                 mInventoryList.setSearchText(newText);
                 notifyDatasetChanged();
                 return false;
-            }
-        });
-
-        // one day i'd like to centralise all this. same defaults repeated on device screen.
-        updateItemVisibilityForPreference(searchBox, Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE, false);
-        updateItemVisibilityForPreference(sortSpinner, Constants.PREFS_INVENTORY_KEY_SORT_VISIBLE, true);
-        updateItemVisibilityForPreference(levelSpinner, Constants.PREFS_INVENTORY_LEVEL_FILTER_VISIBLE, false);
-        updateItemVisibilityForPreference(raritySpinner, Constants.PREFS_INVENTORY_RARITY_FILTER_VISIBLE, false);
-
-        mPrefs.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
-            Log.d("FragmentInventory", String.format("PREFENCE CHANGE IN ANOTHER THING: %s", key));
-            switch (Objects.requireNonNull(key)) {
-                case Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE ->
-                        updateItemVisibilityForPreference(searchBox, Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE, false);
-                case Constants.PREFS_INVENTORY_KEY_SORT_VISIBLE ->
-                        updateItemVisibilityForPreference(sortSpinner, Constants.PREFS_INVENTORY_KEY_SORT_VISIBLE, true);
-                case Constants.PREFS_INVENTORY_LEVEL_FILTER_VISIBLE ->
-                        updateItemVisibilityForPreference(levelSpinner, Constants.PREFS_INVENTORY_LEVEL_FILTER_VISIBLE, false);
-                case Constants.PREFS_INVENTORY_RARITY_FILTER_VISIBLE ->
-                        updateItemVisibilityForPreference(raritySpinner, Constants.PREFS_INVENTORY_RARITY_FILTER_VISIBLE, false);
             }
         });
 
@@ -389,15 +387,6 @@ public class FragmentInventory extends Fragment {
                 }
             }
         }
-    }
-
-    private Spinner setUpSpinner(String[] what, View where, int resource) {
-        Spinner sp = where.findViewById(resource);
-        ArrayAdapter<String> levelAdapter = new ArrayAdapter<>(where.getContext(),
-                android.R.layout.simple_spinner_item, what);
-        levelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        sp.setAdapter(levelAdapter);
-        return sp;
     }
 
     private @NonNull Runnable getRunnable(LayoutInflater inflater, ExpandableListView list, ProgressBar progress) {

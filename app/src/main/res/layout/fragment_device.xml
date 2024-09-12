@@ -173,17 +173,48 @@
                     style="@style/SectionBodyDominatingStyle"
                     android:orientation="vertical">
 
-                    <CheckBox
-                        android:id="@+id/device_checkbox_performance_load_images_network"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/load_images_from_network" />
+                        android:orientation="vertical"
+                        android:padding="8dp"
+                        android:layout_margin="8dp"
+                        android:background="@drawable/rectangle_border_half_white">
 
-                    <CheckBox
-                        android:id="@+id/device_checkbox_performance_load_map_tiles_network"
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/select_image_size" />
+
+                        <Spinner
+                            android:id="@+id/device_spinner_performance_image_size"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/load_map_tiles_from_network" />
+                        android:orientation="vertical"
+                        android:padding="8dp"
+                        android:layout_margin="8dp"
+                        android:background="@drawable/rectangle_border_half_white">
+
+                        <!-- Label TextView -->
+                        <TextView
+                            android:id="@+id/tile_source_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/select_map_tiles" />
+
+                        <!-- Spinner -->
+                        <Spinner
+                            android:id="@+id/device_spinner_performance_tile_source"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+
 
                     <CheckBox
                         android:id="@+id/device_checkbox_performance_high_precision_compass"

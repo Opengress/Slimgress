@@ -35,6 +35,7 @@ import com.google.common.geometry.S2LatLngRect;
 
 import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
+import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Common.Utils;
@@ -73,6 +74,7 @@ public class GameState {
     private final Interface mInterface;
     private Handshake mHandshake;
     private KnobsBundle mKnobs;
+    private BulkPlayerStorage mStorage;
     private final Inventory mInventory;
     private final World mWorld;
     private Agent mAgent;
@@ -165,6 +167,7 @@ public class GameState {
         mInterface.handshake(handshake -> {
             mHandshake = handshake;
             mKnobs = mHandshake.getKnobs();
+            mStorage = mHandshake.getBulkPlayerStorage();
             boolean handshakeValid = mHandshake.isValid();
             PregameStatus status = mHandshake.getPregameStatus();
 
@@ -283,7 +286,7 @@ public class GameState {
                 @Override
                 public void handleResult(JSONArray result) {
                     try {
-                        ArrayList<PlextBase> plexts = new ArrayList<>();
+                        ArrayList<PlextBase> plexts = new ArrayList<>(result.length());
                         for (int i = 0; i < result.length(); i++) {
                             PlextBase newPlext = PlextBase.createByJSON(result.getJSONArray(i));
                             assert newPlext != null;
@@ -1347,12 +1350,36 @@ public class GameState {
         }
     }
 
+    public void intPutBulkPlayerStorage(final Handler handler) {
+        try {
+            checkInterface();
+
+            JSONObject params = new JSONObject();
+            JSONArray actualParams = new JSONArray();
+            actualParams.put(getBulkPlayerStorage().toJSONObject());
+            params.put("params", actualParams);
+
+            mInterface.request(mHandshake, "playerUndecorated/putBulkPlayerStorage", mLocation, params, new RequestResult(handler) {
+                @Override
+                public void handleResult(JSONArray result) {
+                    // TODO: UNDONE
+                }
+            });
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     public Handshake getHandshake() {
         return mHandshake;
     }
 
     public void invalidateHandshake() {
         mHandshake = null;
+    }
+
+    public BulkPlayerStorage getBulkPlayerStorage() {
+        return mStorage;
     }
 
     public KnobsBundle getKnobs() {

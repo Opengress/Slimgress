@@ -79,8 +79,8 @@
     <string name="fragment_device_show_inventory_rarity_filter">Show inventory rarity filter</string>
     <string name="these_features_may_require_a_restart">These features MAY require a restart</string>
     <string name="fragment_inventory_hint_search">Search</string>
-    <string name="load_images_from_network">Load images from network</string>
-    <string name="load_map_tiles_from_network">Load map tiles from network</string>
+    <string name="select_image_size">Image size</string>
+    <string name="select_map_tiles">Map tiles</string>
     <string name="fragment_device_android_notifications">Android Notifications</string>
     <string name="device_notification_you_are_mentioned_in_comm">You are mentioned in COMM</string>
     <string name="device_notification_portal_under_attack">Portal under attack</string>

@@ -10,6 +10,9 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Build;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -266,5 +269,14 @@ public class ViewHelpers {
 
     public static ActivityMain getMainActivity() {
         return SlimgressApplication.getInstance().getMainActivity();
+    }
+
+    public static Spinner setUpSpinner(String[] what, View where, int resource) {
+        Spinner sp = where.findViewById(resource);
+        ArrayAdapter<String> levelAdapter = new ArrayAdapter<>(where.getContext(),
+                android.R.layout.simple_spinner_item, what);
+        levelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sp.setAdapter(levelAdapter);
+        return sp;
     }
 }

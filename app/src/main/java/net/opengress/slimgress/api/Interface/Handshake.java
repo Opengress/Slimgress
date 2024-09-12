@@ -21,6 +21,7 @@
 
 package net.opengress.slimgress.api.Interface;
 
+import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Knobs.KnobsBundle;
 import net.opengress.slimgress.api.Player.Agent;
 
@@ -49,6 +50,7 @@ public class Handshake
     private final String mNickname;
     private Agent mAgent = null;
     private KnobsBundle mKnobs = null;
+    private BulkPlayerStorage mStorage = null;
     private final String mErrorFromServer;
 
     public Handshake(JSONObject json) throws JSONException
@@ -58,6 +60,13 @@ public class Handshake
         if (result != null) {
 
             mErrorFromServer = null;
+
+            // get BulkPlayerStorage
+            JSONObject storage = result.optJSONObject("storage");
+            if (storage != null) {
+                mStorage = new BulkPlayerStorage(storage);
+            }
+
 
             JSONObject pregameStatus = result.optJSONObject("pregameStatus");
             if (pregameStatus != null) {
@@ -130,5 +139,9 @@ public class Handshake
     public KnobsBundle getKnobs()
     {
         return mKnobs;
+    }
+
+    public BulkPlayerStorage getBulkPlayerStorage() {
+        return mStorage;
     }
 }

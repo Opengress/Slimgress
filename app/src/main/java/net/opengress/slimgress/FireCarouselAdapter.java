@@ -44,7 +44,7 @@ public class FireCarouselAdapter extends RecyclerView.Adapter<FireCarouselAdapte
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         var item = mArrayList.get(position);
-//        Glide.with(mContext).load(item).into(holder.imageView);
+//        Glide .with(mContext).load(item).into(holder.imageView);
         switch (item.getType()) {
             case WeaponXMP ->
                     holder.imageView.setImageResource(getImageForXMPLevel(item.getLevel()));
