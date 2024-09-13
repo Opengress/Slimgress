@@ -27,7 +27,9 @@ import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.Clie
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -41,6 +43,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
 import net.opengress.slimgress.BuildConfig;
+import net.opengress.slimgress.Constants;
 import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.Game.GameState;
@@ -149,6 +152,18 @@ public class ActivitySplash extends Activity {
                     Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://opengress.net/downloads/"));
                     startActivity(browserIntent);
                     finish();
+                });
+            } else if (Objects.equals(loginBundle.getString("Error"), "Expired user session")) {
+                builder.setMessage(R.string.session_expired_log_in_again);
+                builder.setNegativeButton("OK", (dialog, which) -> {
+                    mApp.setLoggedIn(false);
+                    SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.remove(Constants.PREFS_SERVER_SESSION_NAME);
+                    editor.remove(Constants.PREFS_SERVER_SESSION_ID);
+                    editor.apply();
+                    Intent myIntent = new Intent(getApplicationContext(), ActivityAuth.class);
+                    startActivityForResult(myIntent, 0);
                 });
             } else {
                 builder.setMessage(loginBundle.getString("Error"));

@@ -129,4 +129,5 @@
     <string name="flipcard_invalid_target">Invalid target for that flipcard!</string>
     <string name="CANNOT_FLIP">Target portal is already aligned!</string>
     <string name="FLIPCARD_TOO_SOON">Portal can only be flipped once per hour!</string>
+    <string name="session_expired_log_in_again">Your user session has expired. You will have to log in again.</string>
 </resources>
