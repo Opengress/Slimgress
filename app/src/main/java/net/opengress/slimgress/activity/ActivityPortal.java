@@ -104,7 +104,7 @@ public class ActivityPortal extends AppCompatActivity {
                 for (var guid : guids) {
                     names.put(guid, msg.getData().getString(guid));
                 }
-                mGame.setAgentNames(names);
+                mGame.putAgentNames(names);
                 return false;
             });
             new Thread(() -> mGame.intGetNicknamesFromUserGUIDs(guids.toArray(new String[0]), ownerResultHandler)).start();
