@@ -130,4 +130,7 @@
     <string name="CANNOT_FLIP">Target portal is already aligned!</string>
     <string name="FLIPCARD_TOO_SOON">Portal can only be flipped once per hour!</string>
     <string name="session_expired_log_in_again">Your user session has expired. You will have to log in again.</string>
+    <string name="send_me_updates">Send me Opengress related news, offers, promotions and updates</string>
+    <string name="read_the_full_tos">Read the full Terms of Service before accepting these terms and conditions.</string>
+    <string name="rules_short_version">By clicking agree, you agree to play by the rules, use the service as intended and to treat others with diginity and respect.\n\nOpengress is a location based game.\n\nYour location is collected by this application and may be visible to other users when you take certain actions in the game.</string>
 </resources>

@@ -23,6 +23,7 @@ package net.opengress.slimgress.activity;
 
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.ClientMustUpgrade;
+import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.UserMustAcceptTOS;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -34,8 +35,12 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.Html;
 import android.text.InputFilter;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.view.View;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -54,6 +59,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Objects;
 
 import okhttp3.OkHttpClient;
@@ -87,6 +93,32 @@ public class ActivitySplash extends Activity {
         }
     }
 
+    protected void performHandshake() {
+        performHandshake(false, false);
+    }
+
+    void performHandshake(boolean tosAccepted, boolean wantsPromos) {
+        HashMap<String, String> params = new HashMap<>();
+        if (tosAccepted) {
+            params.put("tosAccepted", "1");
+            params.put("wantsPromos", wantsPromos ? "true" : "false");
+        }
+        Handler handler = new Handler(msg -> {
+            loginBundle = msg.getData();
+
+            // this will need further updates, like when user needs to select a faction
+            if (mGame.getHandshake().isValid() && mGame.getAgent().isAllowedNicknameEdit()) {
+                showValidateUsernameDialog(null);
+                return false;
+            } else {
+                procedWithLogin();
+            }
+
+            return true;
+        });
+        mGame.intHandshake(handler, params);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
@@ -95,19 +127,7 @@ public class ActivitySplash extends Activity {
                 mApp.setLoggedIn(true);
 
                 // perform handshake
-                mGame.intHandshake(new Handler(msg -> {
-                    loginBundle = msg.getData();
-
-                    // this will need further updates, like when user needs to select a faction
-                    if (mGame.getHandshake().isValid() && mGame.getAgent().isAllowNicknameEdit()) {
-                        showValidateUsernameDialog(null);
-                        return false;
-                    } else {
-                        procedWithLogin();
-                    }
-
-                    return true;
-                }));
+                performHandshake();
             } else if (resultCode == RESULT_FIRST_USER) {
                 // user cancelled authentication
                 finish();
@@ -156,6 +176,20 @@ public class ActivitySplash extends Activity {
                     startActivity(browserIntent);
                     finish();
                 });
+            } else if (status == UserMustAcceptTOS) {
+                View dialogView = getLayoutInflater().inflate(R.layout.dialog_terms, null);
+                builder.setView(dialogView);
+
+                CheckBox emailOptIn = dialogView.findViewById(R.id.emailOptIn);
+                emailOptIn.setChecked(loginBundle.getBoolean("MaySendPromoEmail"));
+                builder.setMessage(Html.fromHtml("Please review and accept our updated <a href='https://opengress.net/terms-of-service'>Terms of Service</a> to continue."));
+                builder.setPositiveButton("Accept", (dialog, which) -> {
+                    // around we go!
+                    performHandshake(true, emailOptIn.isChecked());
+                });
+                builder.setNegativeButton("Decline", (dialog, which) -> {
+                    finish();
+                });
             } else if (Objects.equals(loginBundle.getString("Error"), "Expired user session")) {
                 builder.setMessage(R.string.session_expired_log_in_again);
                 builder.setNegativeButton("OK", (dialog, which) -> {
@@ -174,6 +208,10 @@ public class ActivitySplash extends Activity {
             }
             Dialog dialog = builder.create();
             dialog.show();
+            TextView messageView = dialog.findViewById(android.R.id.message);
+            if (messageView != null) {
+                messageView.setMovementMethod(LinkMovementMethod.getInstance());
+            }
         }
     }
 

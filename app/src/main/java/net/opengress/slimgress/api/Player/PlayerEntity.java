@@ -41,14 +41,105 @@ public class PlayerEntity extends EntityBase
         Undefined
     }
 
+    public class NotificationSettings {
+        private boolean mShouldSendEmail = true;
+        private boolean mMaySendPromoEmail = true;
+        private boolean mShouldPushNotifyForAtPlayer = true;
+        private boolean mShouldPushNotifyForPortalAttacks = true;
+        private boolean mShouldPushNotifyForInvitesAndFactionInfo = true;
+        private boolean mShouldPushNotifyForNewsOfTheDay = true;
+        private boolean mShouldPushNotifyForEventsAndOpportunities = true;
+        private String mLocale;
+
+        public NotificationSettings(JSONObject json) {
+            try {
+                mShouldSendEmail = json.getBoolean("shouldSendEmail");
+                mMaySendPromoEmail = json.getBoolean("maySendPromoEmail");
+                mShouldPushNotifyForAtPlayer = json.getBoolean("shouldPushNotifyForAtPlayer");
+                mShouldPushNotifyForPortalAttacks = json.getBoolean("shouldPushNotifyForPortalAttacks");
+                mShouldPushNotifyForInvitesAndFactionInfo = json.getBoolean("shouldPushNotifyForInvitesAndFactionInfo");
+                mShouldPushNotifyForNewsOfTheDay = json.getBoolean("shouldPushNotifyForNewsOfTheDay");
+                mShouldPushNotifyForEventsAndOpportunities = json.getBoolean("shouldPushNotifyForEventsAndOpportunities");
+                mLocale = json.getString("locale");
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public String getLocale() {
+            return mLocale;
+        }
+
+        public void setLocale(String mLocale) {
+            this.mLocale = mLocale;
+        }
+
+        public boolean maySendPromoEmail() {
+            return mMaySendPromoEmail;
+        }
+
+        public void setMaySendPromoEmail(boolean mMaySendPromoEmail) {
+            this.mMaySendPromoEmail = mMaySendPromoEmail;
+        }
+
+        public boolean shouldPushNotifyForAtPlayer() {
+            return mShouldPushNotifyForAtPlayer;
+        }
+
+        public void setShouldPushNotifyForAtPlayer(boolean mShouldPushNotifyForAtPlayer) {
+            this.mShouldPushNotifyForAtPlayer = mShouldPushNotifyForAtPlayer;
+        }
+
+        public boolean shouldPushNotifyForEventsAndOpportunities() {
+            return mShouldPushNotifyForEventsAndOpportunities;
+        }
+
+        public void setShouldPushNotifyForEventsAndOpportunities(boolean mShouldPushNotifyForEventsAndOpportunities) {
+            this.mShouldPushNotifyForEventsAndOpportunities = mShouldPushNotifyForEventsAndOpportunities;
+        }
+
+        public boolean shouldPushNotifyForInvitesAndFactionInfo() {
+            return mShouldPushNotifyForInvitesAndFactionInfo;
+        }
+
+        public void setShouldPushNotifyForInvitesAndFactionInfo(boolean mShouldPushNotifyForInvitesAndFactionInfo) {
+            this.mShouldPushNotifyForInvitesAndFactionInfo = mShouldPushNotifyForInvitesAndFactionInfo;
+        }
+
+        public boolean shouldPushNotifyForNewsOfTheDay() {
+            return mShouldPushNotifyForNewsOfTheDay;
+        }
+
+        public void setShouldPushNotifyForNewsOfTheDay(boolean mShouldPushNotifyForNewsOfTheDay) {
+            this.mShouldPushNotifyForNewsOfTheDay = mShouldPushNotifyForNewsOfTheDay;
+        }
+
+        public boolean shouldPushNotifyForPortalAttacks() {
+            return mShouldPushNotifyForPortalAttacks;
+        }
+
+        public void setShouldPushNotifyForPortalAttacks(boolean mShouldPushNotifyForPortalAttacks) {
+            this.mShouldPushNotifyForPortalAttacks = mShouldPushNotifyForPortalAttacks;
+        }
+
+        public boolean shouldSendEmail() {
+            return mShouldSendEmail;
+        }
+
+        public void setShouldSendEmail(boolean mShouldSendEmail) {
+            this.mShouldSendEmail = mShouldSendEmail;
+        }
+    }
+
     private Team mTeam;
     private int mAP;
     private int mEnergy;
     private EnergyState mEnergyState;
-    // maybe called clientLevel in some versions. what does it do?
+    // maybe called clientLevel in some versions?
     private int mVerifiedLevel;
     private boolean mAllowNicknameEdit;
     private boolean mAllowFactionChoice;
+    private NotificationSettings mNotificationSettings;
 
     public PlayerEntity(JSONArray json) throws JSONException
     {
@@ -75,6 +166,7 @@ public class PlayerEntity extends EntityBase
             mVerifiedLevel = playerPersonal.getInt("verifiedLevel");
             mAllowNicknameEdit = playerPersonal.getBoolean("allowNicknameEdit");
             mAllowFactionChoice = playerPersonal.getBoolean("allowFactionChoice");
+            mNotificationSettings = new NotificationSettings(playerPersonal.getJSONObject("notificationSettings"));
         }
     }
 
@@ -103,6 +195,7 @@ public class PlayerEntity extends EntityBase
             mVerifiedLevel = playerPersonal.getInt("verifiedLevel");
             mAllowNicknameEdit = playerPersonal.getBoolean("allowNicknameEdit");
             mAllowFactionChoice = playerPersonal.getBoolean("allowFactionChoice");
+            mNotificationSettings = new NotificationSettings(playerPersonal.getJSONObject("notificationSettings"));
         }
     }
 
@@ -115,6 +208,7 @@ public class PlayerEntity extends EntityBase
         mVerifiedLevel = entity.mVerifiedLevel;
         mAllowNicknameEdit = entity.mAllowNicknameEdit;
         mAllowFactionChoice = entity.mAllowFactionChoice;
+        mNotificationSettings = entity.mNotificationSettings;
     }
 
     public Team getTeam()
@@ -150,13 +244,17 @@ public class PlayerEntity extends EntityBase
         return mVerifiedLevel;
     }
 
-    public boolean isAllowNicknameEdit()
+    public boolean isAllowedNicknameEdit()
     {
         return mAllowNicknameEdit;
     }
 
-    public boolean isAllowFactionChoice()
+    public boolean isAllowedFactionChoice()
     {
         return mAllowFactionChoice;
+    }
+
+    public NotificationSettings getNotificationSettings() {
+        return mNotificationSettings;
     }
 }
