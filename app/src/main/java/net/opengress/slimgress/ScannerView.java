@@ -459,9 +459,8 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
         mPrefs.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
             Log.d("Scanner", String.format("PREFERENCE CHANGE IN ANOTHER THING: %s", key));
-            switch (Objects.requireNonNull(key)) {
-                case PREFS_DEVICE_TILE_SOURCE ->
-                        mMap.setTileProvider(getMapTileProvider(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT));
+            if (Objects.requireNonNull(key).equals(PREFS_DEVICE_TILE_SOURCE)) {
+                mMap.setTileProvider(getMapTileProvider(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT));
             }
         });
 

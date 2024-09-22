@@ -48,6 +48,7 @@ import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Interface.Interface;
+import net.opengress.slimgress.api.Player.Agent;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -78,7 +79,9 @@ public class ActivitySplash extends Activity {
             startActivityForResult(myIntent, 0);
         } else {
             // start main activity
-            SlimgressApplication.postPlainCommsMessage("Agent ID Confirmed. Welcome " + mGame.getAgent().getNickname());
+            Agent agent = mGame.getAgent();
+            SlimgressApplication.postPlainCommsMessage("Agent ID Confirmed. Welcome " + agent.getNickname());
+            mGame.putAgentName(agent.getEntityGuid(), agent.getNickname());
             finish();
             startActivity(new Intent(getApplicationContext(), ActivityMain.class));
         }

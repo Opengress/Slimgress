@@ -1414,7 +1414,11 @@ public class GameState {
         }
     }
 
-    public void setAgentNames(HashMap<String, String> agentNames) {
+    public void putAgentName(String guid, String name) {
+        mAgentNames.put(guid, name);
+    }
+
+    public void putAgentNames(HashMap<String, String> agentNames) {
         mAgentNames.putAll(agentNames);
     }
 

@@ -46,6 +46,7 @@ import android.widget.AdapterView;
 import android.widget.ExpandableListView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
@@ -68,6 +69,7 @@ import net.opengress.slimgress.api.Item.ItemPlayerPowerup;
 import net.opengress.slimgress.api.Item.ItemPortalKey;
 
 import java.text.Collator;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -99,6 +101,7 @@ public class FragmentInventory extends Fragment {
     private Spinner mSortSpinner;
     private SearchView mSearchBox;
     private Spinner mLevelSpinner;
+    private TextView mTotal;
 
     final String[] mSorts = {"Deployment", "Distance", "Level", "Name", "Team"};
     final String[] mRarityNames = {"ALL", "Very Common", "Common", "Less Common", "Rare", "Very Rare", "Extra Rare"};
@@ -152,18 +155,19 @@ public class FragmentInventory extends Fragment {
 
     @Override
     public View onCreateView(final LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
-        View mRootView = inflater.inflate(R.layout.fragment_inventory,
+        View rootView = inflater.inflate(R.layout.fragment_inventory,
                 container, false);
 
-        final ExpandableListView list = mRootView.findViewById(R.id.listView);
-        final ProgressBar progress = mRootView.findViewById(R.id.progressBar1);
+        final ExpandableListView list = rootView.findViewById(R.id.listView);
+        final ProgressBar progress = rootView.findViewById(R.id.progressBar1);
         mPrefs = mApp.getApplicationContext().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE);
         mInventoryKeySort = mPrefs.getInt(PREFS_INVENTORY_KEY_SORT, 3);
 
         list.setVisibility(View.INVISIBLE);
         progress.setVisibility(View.VISIBLE);
 
-        mRaritySpinner = setUpSpinner(mRarityNames, mRootView, R.id.spinnerRarity);
+        mTotal = rootView.findViewById(R.id.textFragmentInventoryTotal);
+        mRaritySpinner = setUpSpinner(mRarityNames, rootView, R.id.spinnerRarity);
         mRaritySpinner.setSelection(0);
         mRaritySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -178,7 +182,7 @@ public class FragmentInventory extends Fragment {
             }
         });
 
-        mLevelSpinner = setUpSpinner(mLevelNames, mRootView, R.id.spinnerLevel);
+        mLevelSpinner = setUpSpinner(mLevelNames, rootView, R.id.spinnerLevel);
         mLevelSpinner.setSelection(0);
         mLevelSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -193,7 +197,7 @@ public class FragmentInventory extends Fragment {
             }
         });
 
-        mSortSpinner = setUpSpinner(mSorts, mRootView, R.id.spinnerSort);
+        mSortSpinner = setUpSpinner(mSorts, rootView, R.id.spinnerSort);
         mSortSpinner.setSelection(mInventoryKeySort);
         mSortSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -211,7 +215,7 @@ public class FragmentInventory extends Fragment {
             }
         });
 
-        mSearchBox = mRootView.findViewById(R.id.editTextSearch);
+        mSearchBox = rootView.findViewById(R.id.editTextSearch);
         mSearchBox.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -230,7 +234,7 @@ public class FragmentInventory extends Fragment {
             }
         });
 
-        return mRootView;
+        return rootView;
     }
 
     private void updateItemVisibilityForPreference(View item, String preference, boolean defaultValue) {
@@ -433,6 +437,8 @@ public class FragmentInventory extends Fragment {
             fillWeapons();
             fillPowerCubes();
             fillOther();
+
+            mTotal.setText(MessageFormat.format("{0}", mGame.getInventory().getItems().size()));
 
             callback.run();
         });
