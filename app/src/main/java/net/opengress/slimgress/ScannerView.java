@@ -824,7 +824,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
         // get objects (on new thread)
         new Thread(() -> mGame.intGetObjectsInCells(mGame.getLocation(), resultHandler)).start();
-        final Handler commsHandler = new Handler();
+        final Handler commsHandler = new Handler(Looper.getMainLooper());
         new Thread(() -> mGame.intLoadCommunication(50, false, commsHandler)).start();
     }
 

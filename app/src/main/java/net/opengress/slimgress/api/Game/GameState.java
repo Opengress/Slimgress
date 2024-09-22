@@ -24,6 +24,7 @@ package net.opengress.slimgress.api.Game;
 import static net.opengress.slimgress.ViewHelpers.getString;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.ClientMustUpgrade;
+import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.UserMustAcceptTOS;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -163,7 +164,7 @@ public class GameState {
         return mInterface.authenticate(session_name, session_id);
     }
 
-    public synchronized void intHandshake(final Handler handler) {
+    public synchronized void intHandshake(final Handler handler, Map<String, String> params) {
         mInterface.handshake(handshake -> {
             mHandshake = handshake;
             mKnobs = mHandshake.getKnobs();
@@ -179,6 +180,9 @@ public class GameState {
                 String errString;
                 if (status == ClientMustUpgrade) {
                     errString = "Client must upgrade";
+                } else if (status == UserMustAcceptTOS) {
+                    errString = "User must accept Terms of Service";
+                    bundle.putBoolean("MaySendPromoEmail", mHandshake.getAgent().getNotificationSettings().maySendPromoEmail());
                 } else if (Objects.equals(mHandshake.getErrorFromServer(), "NOT_LOGGED_IN")) {
                     errString = "Expired user session";
                 } else if (Objects.equals(mHandshake.getServerVersion(), "")) {
@@ -194,7 +198,7 @@ public class GameState {
 
             msg.setData(bundle);
             handler.sendMessage(msg);
-        });
+        }, params);
     }
 
     public void intGetInventory(final Handler handler) {
@@ -1298,7 +1302,7 @@ public class GameState {
                         default -> super.handleError("Unknown error: " + error);
                     }
                 }
-                
+
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);

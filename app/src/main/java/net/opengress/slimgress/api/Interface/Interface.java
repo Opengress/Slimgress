@@ -35,6 +35,7 @@ import org.json.JSONObject;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Map;
 import java.util.Objects;
 
 import okhttp3.MediaType;
@@ -90,7 +91,7 @@ public class Interface
         return AuthSuccess.Successful;
     }
 
-    public void handshake(final Handshake.Callback callback)
+    public void handshake(final Handshake.Callback callback, Map<String, String> inParams)
     {
         new Thread(() -> {
             JSONObject params = new JSONObject();
@@ -101,6 +102,11 @@ public class Interface
                 params.put("deviceHardwareVersion", Build.MODEL);
                 params.put("deviceOperatingSystem", "Android");
 
+                if (params != null) {
+                    for (Map.Entry<String, String> param : inParams.entrySet()) {
+                        params.put(param.getKey(), param.getValue());
+                    }
+                }
                 // TODO:
                 /*params.put("activationCode", "");
                 params.put("tosAccepted", "1");
