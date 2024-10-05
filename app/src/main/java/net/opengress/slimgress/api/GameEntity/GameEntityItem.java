@@ -21,14 +21,22 @@
 
 package net.opengress.slimgress.api.GameEntity;
 
+import net.opengress.slimgress.api.Item.ItemBase;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 
 public class GameEntityItem extends GameEntityBase
 {
+    private final ItemBase mItem;
+
     GameEntityItem(JSONArray json) throws JSONException {
         super(GameEntityType.Item, json);
 
-        // UNDONE
+        mItem = ItemBase.createByJSON(json);
+    }
+
+    public ItemBase getItem() {
+        return mItem;
     }
 }

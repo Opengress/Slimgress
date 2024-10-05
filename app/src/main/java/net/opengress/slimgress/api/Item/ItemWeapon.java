@@ -24,7 +24,7 @@ package net.opengress.slimgress.api.Item;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-public class ItemWeapon extends ItemBase
+public abstract class ItemWeapon extends ItemBase
 {
 
     protected int mLevel = 1;
@@ -50,5 +50,10 @@ public class ItemWeapon extends ItemBase
     }
 
     public int getAmmo() { return mAmmo; }
+
+    @Override
+    public String getUsefulName() {
+        return "Level " + getItemLevel() + " " + getDisplayName();
+    }
 
 }

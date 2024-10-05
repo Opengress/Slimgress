@@ -20,8 +20,8 @@ android {
 //        1112223333
         versionCode 30002
         versionName "0.3.2"
+        resourceConfigurations += ['en']
 
-        resConfigs "en"
         buildConfigField "String", "BUILD_TIME", "\"${buildTime()}\""
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

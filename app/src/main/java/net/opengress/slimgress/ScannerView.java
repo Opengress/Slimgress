@@ -28,9 +28,13 @@ import static net.opengress.slimgress.Constants.PREFS_OSM_LATITUDE_STRING;
 import static net.opengress.slimgress.Constants.PREFS_OSM_LONGITUDE_STRING;
 import static net.opengress.slimgress.Constants.PREFS_OSM_ZOOM_LEVEL_DOUBLE;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromAsset;
+import static net.opengress.slimgress.ViewHelpers.getBitmapFromDrawable;
 import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
 import static net.opengress.slimgress.ViewHelpers.getImageForResoLevel;
 import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getTintedImage;
+import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
+import static net.opengress.slimgress.api.Common.Utils.notBouncing;
 import static net.opengress.slimgress.api.Item.ItemBase.ItemType.PortalKey;
 import static net.opengress.slimgress.api.Knobs.MapCompositionRootKnobs.MapProvider.CoordinateSystem.XYZ;
 
@@ -83,13 +87,16 @@ import androidx.fragment.app.Fragment;
 
 import net.opengress.slimgress.activity.ActivityMain;
 import net.opengress.slimgress.activity.ActivityPortal;
+import net.opengress.slimgress.activity.ActivitySplash;
 import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Game.XMParticle;
 import net.opengress.slimgress.api.GameEntity.GameEntityBase;
 import net.opengress.slimgress.api.GameEntity.GameEntityControlField;
+import net.opengress.slimgress.api.GameEntity.GameEntityItem;
 import net.opengress.slimgress.api.GameEntity.GameEntityLink;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
+import net.opengress.slimgress.api.Item.ItemFlipCard;
 import net.opengress.slimgress.api.Item.ItemPortalKey;
 import net.opengress.slimgress.api.Knobs.MapCompositionRootKnobs.MapProvider;
 import net.opengress.slimgress.api.Knobs.ScannerKnobs;
@@ -135,16 +142,16 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     // ===========================================================
     // Knobs quick reference
     // ===========================================================
-    final ScannerKnobs mScannerKnobs = mGame.getKnobs().getScannerKnobs();
-    private final int mActionRadiusM = mScannerKnobs.getActionRadiusM();
-    private final int mUpdateIntervalMS = mScannerKnobs.getUpdateIntervalMS();
-    private final int mMinUpdateIntervalMS = mScannerKnobs.getMinUpdateIntervalMS();
-    private final int mUpdateDistanceM = mScannerKnobs.getUpdateDistanceM();
+    ScannerKnobs mScannerKnobs = mGame.getKnobs().getScannerKnobs();
+    private int mActionRadiusM = mScannerKnobs.getActionRadiusM();
+    private int mUpdateIntervalMS = mScannerKnobs.getUpdateIntervalMS();
+    private int mMinUpdateIntervalMS = mScannerKnobs.getMinUpdateIntervalMS();
+    private int mUpdateDistanceM = mScannerKnobs.getUpdateDistanceM();
 
 
     // ===========================================================
     // Map basics
-    // ===========================================================
+    // ========================================bing===================
     final int TOP_LEFT_ANGLE = 315;
     final int BOTTOM_RIGHT_ANGLE = 135;
     private MapView mMap = null;
@@ -168,6 +175,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     private final HashMap<Long, GroundOverlay> mXMMarkers = new HashMap<>();
     private final HashMap<String, Polyline> mLines = new HashMap<>();
     private final HashMap<String, Polygon> mPolygons = new HashMap<>();
+    private final HashMap<String, GroundOverlay> mItemMarkers = new HashMap<>();
 
     private ActivityResultLauncher<Intent> mPortalActivityResultLauncher;
 
@@ -362,6 +370,12 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (mGame.getKnobs() == null) {
+            Intent intent = new Intent(getActivity(), ActivitySplash.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+        }
+
         mSensorManager = (SensorManager) requireActivity().getSystemService(SENSOR_SERVICE);
         mRotationVectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR);
 
@@ -372,6 +386,12 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 new ActivityResultContracts.StartActivityForResult(),
                 this::onPortalActivityResult
         );
+
+        mScannerKnobs = mGame.getKnobs().getScannerKnobs();
+        mActionRadiusM = mScannerKnobs.getActionRadiusM();
+        mUpdateIntervalMS = mScannerKnobs.getUpdateIntervalMS();
+        mMinUpdateIntervalMS = mScannerKnobs.getMinUpdateIntervalMS();
+        mUpdateDistanceM = mScannerKnobs.getUpdateDistanceM();
 
     }
 
@@ -422,7 +442,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 mPolygons.remove(guid);
             }
 
-            // for dropped items .... not done yet...
+            // for dropped items
+            if (mItemMarkers.containsKey(guid)) {
+                mMap.getOverlays().remove(mItemMarkers.get(guid));
+                mItemMarkers.remove(guid);
+            }
 
         }
     }
@@ -676,8 +700,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         }
 
         if (mRotationVectorSensor != null) {
+            // FIXME put this in a pref
             mSensorManager.registerListener(this, mRotationVectorSensor,
-                    SensorManager.SENSOR_DELAY_NORMAL);
+                    SensorManager.SENSOR_DELAY_FASTEST);
         }
 
 
@@ -757,16 +782,69 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         AssetManager assetManager = requireActivity().getAssets();
         Map<String, TeamKnobs.TeamType> teams = mGame.getKnobs().getTeamKnobs().getTeams();
         for (String team : teams.keySet()) {
-            mIcons.put(team, ViewHelpers.getTintedImage("portalTexture_NEUTRAL.png", 0xff000000 + Objects.requireNonNull(teams.get(team)).getColour(), assetManager));
+            mIcons.put(team, getTintedImage("portalTexture_NEUTRAL.png", 0xff000000 + Objects.requireNonNull(teams.get(team)).getColour(), assetManager));
         }
 
         mIcons.put("particle", getBitmapFromAsset("particle.png", assetManager));
         mIcons.put("actionradius", getBitmapFromAsset("actionradius.png", assetManager));
-        mIcons.put("playercursor", ViewHelpers.getTintedImage("playercursor.png", 0xff000000 + Objects.requireNonNull(mGame.getAgent().getTeam()).getColour(), assetManager));
+        mIcons.put("playercursor", getTintedImage("playercursor.png", 0xff000000 + Objects.requireNonNull(mGame.getAgent().getTeam()).getColour(), assetManager));
+        mIcons.put("ada", getBitmapFromDrawable(getContext(), R.drawable.ada));
+        mIcons.put("c1", getBitmapFromDrawable(getContext(), R.drawable.c1));
+        mIcons.put("c2", getBitmapFromDrawable(getContext(), R.drawable.c2));
+        mIcons.put("c3", getBitmapFromDrawable(getContext(), R.drawable.c3));
+        mIcons.put("c4", getBitmapFromDrawable(getContext(), R.drawable.c4));
+        mIcons.put("c5", getBitmapFromDrawable(getContext(), R.drawable.c5));
+        mIcons.put("c6", getBitmapFromDrawable(getContext(), R.drawable.c6));
+        mIcons.put("c7", getBitmapFromDrawable(getContext(), R.drawable.c7));
+        mIcons.put("c8", getBitmapFromDrawable(getContext(), R.drawable.c8));
+        mIcons.put("capsule", getBitmapFromDrawable(getContext(), R.drawable.capsule));
+        mIcons.put("dap", getBitmapFromDrawable(getContext(), R.drawable.dap));
+        mIcons.put("force_amp", getBitmapFromDrawable(getContext(), R.drawable.force_amp));
+        mIcons.put("heatsink_common", getBitmapFromDrawable(getContext(), R.drawable.heatsink_common));
+        mIcons.put("heatsink_rare", getBitmapFromDrawable(getContext(), R.drawable.heatsink_rare));
+        mIcons.put("heatsink_very_rare", getBitmapFromDrawable(getContext(), R.drawable.heatsink_very_rare));
+        mIcons.put("jarvis", getBitmapFromDrawable(getContext(), R.drawable.jarvis));
+        mIcons.put("linkamp_rare", getBitmapFromDrawable(getContext(), R.drawable.linkamp_rare));
+        mIcons.put("linkamp_very_rare", getBitmapFromDrawable(getContext(), R.drawable.linkamp_very_rare));
+        mIcons.put("multihack_common", getBitmapFromDrawable(getContext(), R.drawable.multihack_common));
+        mIcons.put("multihack_rare", getBitmapFromDrawable(getContext(), R.drawable.multihack_rare));
+        mIcons.put("multihack_very_rare", getBitmapFromDrawable(getContext(), R.drawable.multihack_very_rare));
+        mIcons.put("portalkey", getBitmapFromDrawable(getContext(), R.drawable.portalkey));
+        mIcons.put("r1", getBitmapFromDrawable(getContext(), R.drawable.r1));
+        mIcons.put("r2", getBitmapFromDrawable(getContext(), R.drawable.r2));
+        mIcons.put("r3", getBitmapFromDrawable(getContext(), R.drawable.r3));
+        mIcons.put("r4", getBitmapFromDrawable(getContext(), R.drawable.r4));
+        mIcons.put("r5", getBitmapFromDrawable(getContext(), R.drawable.r5));
+        mIcons.put("r6", getBitmapFromDrawable(getContext(), R.drawable.r6));
+        mIcons.put("r7", getBitmapFromDrawable(getContext(), R.drawable.r7));
+        mIcons.put("r8", getBitmapFromDrawable(getContext(), R.drawable.r8));
+        mIcons.put("shield_common", getBitmapFromDrawable(getContext(), R.drawable.shield_common));
+        mIcons.put("shield_rare", getBitmapFromDrawable(getContext(), R.drawable.shield_rare));
+        mIcons.put("shield_very_rare", getBitmapFromDrawable(getContext(), R.drawable.shield_very_rare));
+        mIcons.put("turret", getBitmapFromDrawable(getContext(), R.drawable.turret));
+        mIcons.put("u1", getBitmapFromDrawable(getContext(), R.drawable.u1));
+        mIcons.put("u2", getBitmapFromDrawable(getContext(), R.drawable.u2));
+        mIcons.put("u3", getBitmapFromDrawable(getContext(), R.drawable.u3));
+        mIcons.put("u4", getBitmapFromDrawable(getContext(), R.drawable.u4));
+        mIcons.put("u5", getBitmapFromDrawable(getContext(), R.drawable.u5));
+        mIcons.put("u6", getBitmapFromDrawable(getContext(), R.drawable.u6));
+        mIcons.put("u7", getBitmapFromDrawable(getContext(), R.drawable.u7));
+        mIcons.put("u8", getBitmapFromDrawable(getContext(), R.drawable.u8));
+        mIcons.put("x1", getBitmapFromDrawable(getContext(), R.drawable.x1));
+        mIcons.put("x2", getBitmapFromDrawable(getContext(), R.drawable.x2));
+        mIcons.put("x3", getBitmapFromDrawable(getContext(), R.drawable.x3));
+        mIcons.put("x4", getBitmapFromDrawable(getContext(), R.drawable.x4));
+        mIcons.put("x5", getBitmapFromDrawable(getContext(), R.drawable.x5));
+        mIcons.put("x6", getBitmapFromDrawable(getContext(), R.drawable.x6));
+        mIcons.put("x7", getBitmapFromDrawable(getContext(), R.drawable.x7));
+        mIcons.put("x8", getBitmapFromDrawable(getContext(), R.drawable.x8));
     }
 
     @SuppressLint("DefaultLocale")
-    private synchronized void updateWorld() {
+    public synchronized void updateWorld() {
+        if (!notBouncing("updateWorld", mMinUpdateIntervalMS)) {
+            return;
+        }
         mSonarOverlay.trigger();
         displayQuickMessage(getStringSafely(R.string.scanning_local_area));
 
@@ -838,15 +916,17 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             Set<String> keys = entities.keySet();
             for (String key : keys) {
                 final GameEntityBase entity = entities.get(key);
+                assert entity != null;
 
                 uiHandler.post(() -> {
-                    assert entity != null;
                     if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
                         drawPortal((GameEntityPortal) entity);
                     } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
                         drawLink((GameEntityLink) entity);
                     } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
                         drawField((GameEntityControlField) entity);
+                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {
+                        drawItem((GameEntityItem) entity);
                     }
                 });
             }
@@ -1141,6 +1221,105 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                     mPolygons.put(field.getEntityGuid(), polygon);
                 });
             }
+        }
+    }
+
+    private void drawItem(GameEntityItem entity) {
+        if (mMap != null) {
+            // if marker already exists, remove it so it can be updated
+            String guid = entity.getEntityGuid();
+            if (mItemMarkers.containsKey(guid)) {
+                mMap.getOverlays().remove(mItemMarkers.get(guid));
+                mItemMarkers.remove(guid);
+            }
+            final net.opengress.slimgress.api.Common.Location location = entity.getItem().getItemLocation();
+
+            ActivityMain activity = (ActivityMain) getActivity();
+            if (activity == null) {
+                return;
+            }
+            activity.runOnUiThread(() -> {
+                Bitmap portalIcon = mIcons.get("actionradius");
+                switch (entity.getItem().getItemType()) {
+                    case ModForceAmp -> portalIcon = mIcons.get("force_amp");
+                    case ModHeatsink -> {
+                        switch (entity.getItem().getItemRarity()) {
+                            case Common -> portalIcon = mIcons.get("heatsink_common");
+                            case Rare -> portalIcon = mIcons.get("heatsink_rare");
+                            case VeryRare -> portalIcon = mIcons.get("heatsink_very_rare");
+                        }
+                    }
+                    case ModLinkAmp -> {
+                        switch (entity.getItem().getItemRarity()) {
+                            case Rare -> portalIcon = mIcons.get("linkamp_rare");
+                            case VeryRare -> portalIcon = mIcons.get("linkamp_very_rare");
+                        }
+                    }
+                    case ModMultihack -> {
+                        switch (entity.getItem().getItemRarity()) {
+                            case Common -> portalIcon = mIcons.get("multihack_common");
+                            case Rare -> portalIcon = mIcons.get("multihack_rare");
+                            case VeryRare -> portalIcon = mIcons.get("multihack_very_rare");
+                        }
+                    }
+                    case ModShield -> {
+                        switch (entity.getItem().getItemRarity()) {
+                            case Common -> portalIcon = mIcons.get("shield_common");
+                            case Rare -> portalIcon = mIcons.get("shield_rare");
+                            case VeryRare -> portalIcon = mIcons.get("shield_very_rare");
+                        }
+                    }
+                    case ModTurret -> portalIcon = mIcons.get("turret");
+                    case PortalKey -> portalIcon = mIcons.get("portalkey");
+                    case PowerCube ->
+                            portalIcon = mIcons.get("c" + entity.getItem().getItemLevel());
+                    case Resonator ->
+                            portalIcon = mIcons.get("r" + entity.getItem().getItemLevel());
+                    case FlipCard -> {
+                        switch (((ItemFlipCard) entity.getItem()).getFlipCardType()) {
+                            case Jarvis -> portalIcon = mIcons.get("jarvis");
+                            case Ada -> portalIcon = mIcons.get("ada");
+                        }
+                    }
+                    case WeaponXMP ->
+                            portalIcon = mIcons.get("x" + entity.getItem().getItemLevel());
+                    case WeaponUltraStrike ->
+                            portalIcon = mIcons.get("u" + entity.getItem().getItemLevel());
+                    case Capsule -> portalIcon = mIcons.get("capsule");
+                    case PlayerPowerup -> portalIcon = mIcons.get("dap");
+                }
+
+                GroundOverlay marker = new GroundOverlay() {
+                    public boolean touchedBy(@NonNull final MotionEvent event) {
+                        GeoPoint tappedGeoPoint = (GeoPoint) mMap.getProjection().fromPixels((int) event.getX(), (int) event.getY());
+                        return getBounds().contains(tappedGeoPoint);
+                    }
+
+                    @Override
+                    public boolean onSingleTapConfirmed(final MotionEvent e, final MapView mapView) {
+                        if (touchedBy(e)) {
+                            mGame.intPickupItem(entity.getEntityGuid(), new Handler(msg -> {
+                                var data = msg.getData();
+                                String error = getErrorStringFromAPI(data);
+                                if (error != null && !error.isEmpty()) {
+                                    SlimgressApplication.postPlainCommsMessage(error);
+                                } else {
+                                    SlimgressApplication.postPlainCommsMessage("Picked up a " + msg.getData().getString("description"));
+                                }
+                                return false;
+                            }));
+                            return true;
+                        }
+                        return false;
+                    }
+                };
+                marker.setPosition(location.getLatLng().destinationPoint(5, TOP_LEFT_ANGLE), location.getLatLng().destinationPoint(5, BOTTOM_RIGHT_ANGLE));
+                marker.setImage(portalIcon);
+
+                mMap.getOverlays().add(marker);
+                mItemMarkers.put(guid, marker);
+            });
+
         }
     }
 

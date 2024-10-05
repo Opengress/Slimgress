@@ -21,8 +21,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:orientation="vertical"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -105,54 +105,55 @@
 
                 <Button
                     android:id="@+id/activity_inventory_item_recharge"
+                    style="@style/ButtonStyleYellow"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/inventory_button_recharge"
-                    style="@style/ButtonStyleYellow"
                     android:layout_gravity="center_vertical|left"
+                    android:text="@string/inventory_button_recharge"
                     android:visibility="gone" />
 
                 <Button
                     android:id="@+id/activity_inventory_item_use"
+                    style="@style/ButtonStyleYellow"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/inventory_button_use"
-                    style="@style/ButtonStyleYellow"
                     android:layout_gravity="center_vertical|left"
+                    android:text="@string/inventory_button_use"
                     android:visibility="gone" />
 
                 <Button
                     android:id="@+id/activity_inventory_item_fire"
+                    style="@style/ButtonStyleYellow"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/inventory_button_fire"
-                    style="@style/ButtonStyleYellow"
                     android:layout_gravity="center_vertical|left"
+                    android:text="@string/inventory_button_fire"
                     android:visibility="gone" />
 
-                <!-- problem if we want to go earlier than kitkat -->
-                <Space
+                <TextView
+                    android:id="@+id/activity_inventory_item_qty"
                     android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1" />
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right" />
 
                 <Button
                     android:id="@+id/activity_inventory_item_drop"
+                    style="@style/ButtonStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/inventory_button_drop"
-                    style="@style/ButtonStyle"
                     android:layout_gravity="center_vertical|right"
-                    android:enabled="false" />
+                    android:enabled="false"
+                    android:text="@string/inventory_button_drop" />
 
                 <Button
                     android:id="@+id/activity_inventory_item_recycle"
+                    style="@style/ButtonStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/inventory_button_recycle"
-                    style="@style/ButtonStyle"
                     android:layout_gravity="center_vertical|right"
-                    android:enabled="false" />
+                    android:enabled="false"
+                    android:text="@string/inventory_button_recycle" />
 
             </LinearLayout>
         </LinearLayout>

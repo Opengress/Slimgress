@@ -40,4 +40,9 @@ public class ItemResonator extends ItemBase
     {
         return getNameStatic();
     }
+
+    @Override
+    public String getUsefulName() {
+        return "Level " + getItemLevel() + " " + getDisplayName();
+    }
 }

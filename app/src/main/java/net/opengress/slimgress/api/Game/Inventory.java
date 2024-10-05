@@ -45,18 +45,19 @@ public class Inventory {
     }
 
     public void processGameBasket(GameBasket basket) {
+
+        // remove deleted entities
+        List<String> deletedEntityGuids = basket.getDeletedEntityGuids();
+        for (String guid : deletedEntityGuids) {
+            mItems.remove(guid);
+        }
+
         // add new inventory items
         List<ItemBase> entities = basket.getInventory();
         for (ItemBase entity : entities) {
             if (!mItems.containsKey(entity.getEntityGuid())) {
                 mItems.put(entity.getEntityGuid(), entity);
             }
-        }
-
-        // remove deleted entities
-        List<String> deletedEntityGuids = basket.getDeletedEntityGuids();
-        for (String guid : deletedEntityGuids) {
-            mItems.remove(guid);
         }
     }
 

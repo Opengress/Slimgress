@@ -56,6 +56,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.app.ActivityCompat;
@@ -115,6 +118,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     private TextView mSelectTargetText;
     private Button mConfirmButton;
     private Button mCancelButton;
+    private ActivityResultLauncher<Intent> mOpsActivityResultLauncher;
 
     @Override
     protected void onDestroy() {
@@ -143,11 +147,15 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
 
         // create ops button callback
+        mOpsActivityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                this::onOpsResult
+        );
         final Button buttonOps = findViewById(R.id.buttonOps);
         buttonOps.setOnClickListener(v -> {
             // Perform action on click
             Intent myIntent = new Intent(getApplicationContext(), ActivityOps.class);
-            startActivity(myIntent);
+            mOpsActivityResultLauncher.launch(myIntent);
         });
 
         // create comm button callback
@@ -179,6 +187,12 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 resetSelection();
             }
         });
+    }
+
+    private void onOpsResult(ActivityResult activityResult) {
+        // this is nice to have, but probably unneeded so i could turn it off to speed the game up
+        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
+        Objects.requireNonNull(scanner).updateWorld();
     }
 
     private synchronized void levelUp(Integer level) {

@@ -988,14 +988,31 @@ public class GameState {
             mInterface.request(mHandshake, "gameplay/pickUp", mLocation, params, new RequestResult(handler) {
                 @Override
                 public void handleError(String error) {
-                    // RESOURCE_NOT_AVAILABLE
-                    super.handleError(error);
+                    // RESOURCE_NOT_AVAILABLE, OUT_OF_RANGE, INVENTORY_FULL
+                    switch (error) {
+                        case "RESOURCE_NOT_AVAILABLE" ->
+                                super.handleError("Pickup failed: Item not available to pick up");
+                        case "OUT_OF_RANGE" -> super.handleError("Pickup failed: Out of range");
+                        case "INVENTORY_FULL" ->
+                                super.handleError("Too many items in Inventory. Your Inventory can have no more than 2000 items");
+                        case "SPEED_LOCKED" -> // new!
+                                super.handleError("You are moving too fast");
+                        case "SPEED_LOCKED_" -> {
+                            // TODO: maybe format this as "x hours, x minutes, x seconds"
+                            String t = error.substring(error.lastIndexOf("_") + 1);
+                            super.handleError("You are moving too fast! You will be ready to play in " + t + "seconds"); // new!
+                        }
+                        default -> super.handleError("Unknown error: " + error);
+                    }
                 }
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
+                    ItemBase item = gameBasket.getInventory().get(0);
+                    getData().putString("description", item.getUsefulName());
                 }
+
             });
         } catch (JSONException e) {
             e.printStackTrace();

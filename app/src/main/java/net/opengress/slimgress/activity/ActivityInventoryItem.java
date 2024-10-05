@@ -74,8 +74,10 @@ public class ActivityInventoryItem extends AppCompatActivity {
         // Set the item details
         assert mItem != null;
         ItemBase.ItemType type = mItem.getType();
-        var actual = mInventory.getItems().get(mItem.getFirstID());
+        ItemBase actual = mInventory.getItems().get(mItem.getFirstID());
         assert actual != null;
+
+        ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
 
         // handle items with levels etc differently? need to check old stuff...
         switch (type) {
@@ -266,38 +268,27 @@ public class ActivityInventoryItem extends AppCompatActivity {
 
     private void onDropItemClicked(View ignoredV) {
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(ActivityInventoryItem.this);
-        builder.setTitle("DROP: " + mItem.getDescription());
-        builder.setMessage(String.format("This %s will be removed from your inventory and you will not be able to see it for a VERY LONG TIME!", mItem.getDescription()));
-
-        builder.setPositiveButton(R.string.ok, (d, which) -> {
-            mGame.intDropItem(Objects.requireNonNull(mInventory.getItems().get(mItem.getFirstID())), new Handler(msg -> {
-                var data = msg.getData();
-                String error = getErrorStringFromAPI(data);
-                // FIXME why is my error text funny?
-                if (error != null && !error.isEmpty()) {
-                    DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
-                    dialog.setMessage(error).setDismissDelay(1500).show();
-                    SlimgressApplication.postPlainCommsMessage("Drop failed: " + error);
-                } else {
-                    SlimgressApplication.postPlainCommsMessage("Drop successful");
-                    for (var id : Objects.requireNonNull(data.getStringArray("dropped"))) {
-                        mItem.remove(id);
-                        mInventory.removeItem(id);
-                    }
-                    if (mItem.getQuantity() == 0) {
-                        new Handler(Looper.getMainLooper()).postDelayed(this::finish, 1500);
-                    }
+        mGame.intDropItem(Objects.requireNonNull(mInventory.getItems().get(mItem.getFirstID())), new Handler(msg -> {
+            var data = msg.getData();
+            String error = getErrorStringFromAPI(data);
+            // FIXME why is my error text funny?
+            if (error != null && !error.isEmpty()) {
+                DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
+                dialog.setMessage(error).setDismissDelay(1500).show();
+                SlimgressApplication.postPlainCommsMessage("Drop failed: " + error);
+            } else {
+                SlimgressApplication.postPlainCommsMessage("Drop successful");
+                for (var id : Objects.requireNonNull(data.getStringArray("dropped"))) {
+                    mItem.remove(id);
+                    mInventory.removeItem(id);
+                    ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                 }
-                return false;
-            }));
-            d.dismiss();
-        });
-
-        builder.setNegativeButton(R.string.cancel, (d, which) -> d.dismiss());
-
-        AlertDialog d = builder.create();
-        d.show();
+                if (mItem.getQuantity() == 0) {
+                    new Handler(Looper.getMainLooper()).postDelayed(this::finish, 100);
+                }
+            }
+            return false;
+        }));
     }
 
     private void onFireClicked(View view) {
@@ -328,6 +319,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
                         mItem.remove(id);
                         mInventory.removeItem(id);
+                        ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                     }
                     if (mItem.getQuantity() == 0) {
                         new Handler(Looper.getMainLooper()).postDelayed(this::finish, 1500);
@@ -438,7 +430,9 @@ public class ActivityInventoryItem extends AppCompatActivity {
         }).start();
     }
 
-    /** @noinspection BusyWait*/
+    /**
+     * @noinspection BusyWait
+     */
     @SuppressLint("DefaultLocale")
     private void decrementQuantity(Button buttonDecrement, TextView quantityDisplay, TextView recoveryInfo) {
         new Thread(() -> {
@@ -507,6 +501,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 for (var id : Objects.requireNonNull(data.getStringArray("recycled"))) {
                     mItem.remove(id);
                     mInventory.removeItem(id);
+                    ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                 }
                 if (mItem.getQuantity() == 0) {
                     new Handler(Looper.getMainLooper()).postDelayed(this::finish, 1500);
