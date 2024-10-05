@@ -29,29 +29,25 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public abstract class GameEntityBase extends EntityBase
-{
-    public enum GameEntityType
-    {
+public abstract class GameEntityBase extends EntityBase {
+    public enum GameEntityType {
         ControlField,
         Link,
         Portal,
         Item
     }
 
-    private enum OwnerType
-    {
+    private enum OwnerType {
         Creator,
         Conqueror
     }
 
     GameEntityType mGameEntityType;
-    OwnerType mOwnerType;	// created or captured
+    OwnerType mOwnerType;    // created or captured
     String mOwnerGuid;
     String mOwnerTimestamp;
 
-    public static GameEntityBase createByJSON(JSONArray json) throws JSONException
-    {
+    public static GameEntityBase createByJSON(JSONArray json) throws JSONException {
         if (json.length() != 3) {
             Log.e("GameEntityBase", "invalid array size");
             return null;
@@ -61,15 +57,15 @@ public abstract class GameEntityBase extends EntityBase
 
         // create entity
         GameEntityBase newEntity = null;
-        if (item.has("edge"))
+        if (item.has("edge")) {
             newEntity = new GameEntityLink(json);
-        else if (item.has("capturedRegion"))
+        } else if (item.has("capturedRegion")) {
             newEntity = new GameEntityControlField(json);
-        else if (item.has("portalV2"))
+        } else if (item.has("portalV2")) {
             newEntity = new GameEntityPortal(json);
-        else if (item.has("resource") || item.has("resourceWithLevels") || item.has("modResource"))
+        } else if (item.has("resource") || item.has("resourceWithLevels") || item.has("modResource")) {
             newEntity = new GameEntityItem(json);
-        else {
+        } else {
             // unknown game entity
             Log.w("GameEntityBase", "unknown game entity");
         }
@@ -77,8 +73,7 @@ public abstract class GameEntityBase extends EntityBase
         return newEntity;
     }
 
-    GameEntityBase(GameEntityType type, JSONArray json) throws JSONException
-    {
+    GameEntityBase(GameEntityType type, JSONArray json) throws JSONException {
         super(json);
         mGameEntityType = type;
 
@@ -89,36 +84,30 @@ public abstract class GameEntityBase extends EntityBase
             mOwnerGuid = creator.getString("creatorGuid");
             mOwnerTimestamp = creator.getString("creationTime");
             mOwnerType = OwnerType.Creator;
-        }
-        else if (item.has("captured")) {
+        } else if (item.has("captured")) {
             JSONObject creator = item.getJSONObject("captured");
             mOwnerGuid = creator.getString("capturingPlayerId");
 //            mOwnerTimestamp = creator.getString("capturedTime");
             mOwnerType = OwnerType.Conqueror;
-        }
-        else {
+        } else {
             // UNDONE: GameEntityItem does not have owner information
-            //throw new RuntimeException("no owner information available");
+//            throw new RuntimeException("no owner information available");
         }
     }
 
-    public GameEntityType getGameEntityType()
-    {
+    public GameEntityType getGameEntityType() {
         return mGameEntityType;
     }
 
-    public OwnerType getOwnerType()
-    {
+    public OwnerType getOwnerType() {
         return mOwnerType;
     }
 
-    public String getOwnerGuid()
-    {
+    public String getOwnerGuid() {
         return mOwnerGuid;
     }
 
-    public String getOwnerTimestamp()
-    {
+    public String getOwnerTimestamp() {
         return mOwnerTimestamp;
     }
 }

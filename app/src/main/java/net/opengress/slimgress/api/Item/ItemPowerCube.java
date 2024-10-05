@@ -53,4 +53,9 @@ public class ItemPowerCube extends ItemBase
     {
         return mEnergy;
     }
+
+    @Override
+    public String getUsefulName() {
+        return "Level " + getItemLevel() + " " + getDisplayName();
+    }
 }

@@ -51,6 +51,11 @@ public class ItemCapsule extends ItemBase {
         return getNameStatic();
     }
 
+    @Override
+    public String getUsefulName() {
+        return getDisplayName() + " " + mDifferentiator;
+    }
+
     public String getDifferentiator() {
         return mDifferentiator;
     }

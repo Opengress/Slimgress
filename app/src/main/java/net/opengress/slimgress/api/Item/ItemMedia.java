@@ -82,4 +82,9 @@ public class ItemMedia extends ItemBase
     {
         return mMediaReleaseDate;
     }
+
+    @Override
+    public String getUsefulName() {
+        return getDisplayName() + ": " + getMediaDescription();
+    }
 }

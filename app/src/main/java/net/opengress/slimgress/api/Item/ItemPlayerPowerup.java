@@ -55,4 +55,9 @@ public class ItemPlayerPowerup extends ItemBase {
     public PlayerPowerupType getPlayerPowerupType() {
         return mPlayerPowerupType;
     }
+
+    @Override
+    public String getUsefulName() {
+        return getDisplayName();
+    }
 }

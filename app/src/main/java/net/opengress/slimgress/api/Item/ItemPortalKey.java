@@ -81,4 +81,9 @@ public class ItemPortalKey extends ItemBase
     {
         return mPortalAddress;
     }
+
+    @Override
+    public String getUsefulName() {
+        return getDisplayName() + ": " + getPortalTitle();
+    }
 }

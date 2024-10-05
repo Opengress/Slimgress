@@ -64,4 +64,9 @@ public class ItemFlipCard extends ItemBase
     {
         return mVirusType;
     }
+
+    @Override
+    public String getUsefulName() {
+        return getDisplayName();
+    }
 }

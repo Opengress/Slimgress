@@ -50,4 +50,9 @@ public abstract class ItemMod extends ItemBase
     {
         return mRemovalStickiness;
     }
+
+    @Override
+    public String getUsefulName() {
+        return getItemRarity() + " " + getDisplayName();
+    }
 }

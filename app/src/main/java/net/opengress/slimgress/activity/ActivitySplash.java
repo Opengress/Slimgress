@@ -86,7 +86,6 @@ public class ActivitySplash extends Activity {
         } else {
             // start main activity
             Agent agent = mGame.getAgent();
-            SlimgressApplication.postPlainCommsMessage("Agent ID Confirmed. Welcome " + agent.getNickname());
             mGame.putAgentName(agent.getEntityGuid(), agent.getNickname());
             finish();
             startActivity(new Intent(getApplicationContext(), ActivityMain.class));
@@ -154,6 +153,7 @@ public class ActivitySplash extends Activity {
     // might change this to be recursive
     private void procedWithLogin() {
         if (loginBundle.getBoolean("Successful")) {
+            SlimgressApplication.postPlainCommsMessage("Agent ID Confirmed. Welcome " + mGame.getAgent().getNickname());
             // start main activity
             ActivitySplash.this.finish();
             ActivitySplash.this.startActivity(new Intent(ActivitySplash.this, ActivityMain.class));
