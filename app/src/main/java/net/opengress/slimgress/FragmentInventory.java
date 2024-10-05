@@ -722,6 +722,7 @@ public class FragmentInventory extends Fragment {
             }
 
             String descr = theItem1.getPortalTitle();
+//            String descr = theItem1.getUsefulName();
             keys.add(item1.getEntityGuid());
 
             // check for multiple portal keys with the same portal guid
