@@ -22,6 +22,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
@@ -43,6 +44,8 @@ import net.opengress.slimgress.api.Item.ItemPowerCube;
 import net.opengress.slimgress.dialog.DialogInfo;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class ActivityInventoryItem extends AppCompatActivity {
@@ -95,7 +98,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
 
 
                 // bonanza at south beach
-                itemName.setText(mItem.getPrettyDescription());
+                itemName.setText(mItem.getDescription());
                 itemName.setTextColor(0xFF000000 + portal.getPortalTeam().getColour());
                 itemName.setVisibility(View.VISIBLE);
 
@@ -277,6 +280,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 dialog.setMessage(error).setDismissDelay(1500).show();
                 SlimgressApplication.postPlainCommsMessage("Drop failed: " + error);
             } else {
+                // could say what we dropped
                 SlimgressApplication.postPlainCommsMessage("Drop successful");
                 for (var id : Objects.requireNonNull(data.getStringArray("dropped"))) {
                     mItem.remove(id);
@@ -302,18 +306,21 @@ public class ActivityInventoryItem extends AppCompatActivity {
 
     private void onUseItemClicked(View ignoredV) {
         if (mItem.getType() == ItemBase.ItemType.PowerCube) {
-            mGame.intUsePowerCube((ItemPowerCube) Objects.requireNonNull(mInventory.getItems().get(mItem.getFirstID())), new Handler(msg -> {
+            ItemPowerCube cube = (ItemPowerCube) Objects.requireNonNull(mInventory.getItems().get(mItem.getFirstID()));
+            String name = cube.getUsefulName();
+            mGame.intUsePowerCube(cube, new Handler(msg -> {
                 var data = msg.getData();
                 String error = getErrorStringFromAPI(data);
                 if (error != null && !error.isEmpty()) {
                     DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
                     dialog.setMessage(error).setDismissDelay(1500).show();
-                    SlimgressApplication.postPlainCommsMessage("Unable top use power cube: " + error);
+                    SlimgressApplication.postPlainCommsMessage("Unable to use power cube: " + error);
                 } else {
                     var res = data.getString("result");
-                    DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
-                    String message = "Gained %s XM from using a powercube";
-                    dialog.setMessage(String.format(message, res, mItem.getDescription())).setDismissDelay(1500).show();
+                    String message = "Gained %s XM from using a %s";
+                    message = String.format(message, res, name);
+                    SlimgressApplication.postPlainCommsMessage(message);
+                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
 //                    SlimgressApplication.postPlainCommsMessage("Should this say something?");
 
                     for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
@@ -322,7 +329,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                         ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                     }
                     if (mItem.getQuantity() == 0) {
-                        new Handler(Looper.getMainLooper()).postDelayed(this::finish, 1500);
+                        new Handler(Looper.getMainLooper()).postDelayed(this::finish, 100);
                     }
                 }
                 return false;
@@ -477,7 +484,29 @@ public class ActivityInventoryItem extends AppCompatActivity {
 
 
     private void recycleItems(int quantity) {
-        mGame.intRecycleItems(Objects.requireNonNull(mInventory.getItems(mItem.getType(), mItem.getRarity(), mItem.getLevel()).subList(0, quantity)), new Handler(msg -> {
+
+        // Get all the IDs for the items of this type
+        ArrayList<String> itemIDs = mItem.getAllIDs();
+
+        // Ensure the requested quantity doesn't exceed available items
+        if (itemIDs.size() < quantity) {
+            quantity = itemIDs.size();
+        }
+
+        // Create a list of ItemBase from the item IDs
+        List<ItemBase> itemsToRecycle = new ArrayList<>();
+        for (int i = 0; i < quantity; i++) {
+            String id = itemIDs.get(i);
+            ItemBase item = mInventory.getItems().get(id);
+            if (item != null) {
+                itemsToRecycle.add(item);
+            }
+        }
+
+        String name = itemsToRecycle.get(0).getUsefulName();
+
+        int finalQuantity = quantity;
+        mGame.intRecycleItems(itemsToRecycle, new Handler(msg -> {
             var data = msg.getData();
             String error = getErrorStringFromAPI(data);
             // FIXME why is my error text funny?
@@ -490,13 +519,15 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 var res = data.getString("result");
                 DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
                 String message;
-                if (quantity > 1) {
+                if (finalQuantity > 1) {
                     message = "Gained %s XM from recycling %d %ss";
-                    dialog.setMessage(String.format(message, res, quantity, mItem.getDescription())).setDismissDelay(1500).show();
+                    message = String.format(message, res, finalQuantity, name);
                 } else {
                     message = "Gained %s XM from recycling a %s";
-                    dialog.setMessage(String.format(message, res, mItem.getDescription())).setDismissDelay(1500).show();
+                    message = String.format(message, res, name);
                 }
+                SlimgressApplication.postPlainCommsMessage(message);
+                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
 
                 for (var id : Objects.requireNonNull(data.getStringArray("recycled"))) {
                     mItem.remove(id);
@@ -504,7 +535,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                 }
                 if (mItem.getQuantity() == 0) {
-                    new Handler(Looper.getMainLooper()).postDelayed(this::finish, 1500);
+                    new Handler(Looper.getMainLooper()).postDelayed(this::finish, 100);
                 }
             }
             return false;
