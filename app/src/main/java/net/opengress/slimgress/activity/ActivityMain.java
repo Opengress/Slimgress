@@ -563,58 +563,52 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
         // 0. If we already selected something, grab that
         if (mCurrentFireItem != null) {
-            for (int i = 0; i < arrayList.size(); i++) {
-                if (Objects.equals(arrayList.get(i).getPrettyDescription(), mCurrentFireItem.getPrettyDescription())) {
-                    selectedIndex = i;
-                    break;
-                }
-            }
+            selectedIndex = findItemByDescription(arrayList, mCurrentFireItem.getPrettyDescription());
         }
 
         // 1. If there's a selectedItem, find it in the list
         if (mCurrentFireItem == null && selectedItem != null) {
-            for (int i = 0; i < arrayList.size(); i++) {
-                if (Objects.equals(arrayList.get(i).getPrettyDescription(), selectedItem.getPrettyDescription())) {
-                    selectedIndex = i;
-                    break;
-                }
-            }
+            selectedIndex = findItemByDescription(arrayList, selectedItem.getPrettyDescription());
         }
 
         // 2. If no selectedItem or not found, prioritize finding XMP, then UltraStrike, then PowerCube, or default to first item
         if (mCurrentFireItem == null && selectedIndex == -1) {
-            // First pass: Look for the highest-level XMP
+            int selectedXMPIndex = -1;
+            int selectedUltraStrikeIndex = -1;
+            int selectedPowerCubeIndex = -1;
+
             for (int i = 0; i < arrayList.size(); i++) {
                 InventoryListItem item = arrayList.get(i);
+
+                // Track highest level XMP
                 if (item.getType() == ItemBase.ItemType.WeaponXMP) {
-                    if (selectedIndex == -1 || item.getLevel() > arrayList.get(selectedIndex).getLevel()) {
-                        selectedIndex = i;
+                    if (selectedXMPIndex == -1 || item.getLevel() > arrayList.get(selectedXMPIndex).getLevel()) {
+                        selectedXMPIndex = i;
+                    }
+                }
+
+                // Track highest level UltraStrike
+                else if (item.getType() == ItemBase.ItemType.WeaponUltraStrike) {
+                    if (selectedUltraStrikeIndex == -1 || item.getLevel() > arrayList.get(selectedUltraStrikeIndex).getLevel()) {
+                        selectedUltraStrikeIndex = i;
+                    }
+                }
+
+                // Track highest level PowerCube
+                else if (item.getType() == ItemBase.ItemType.PowerCube) {
+                    if (selectedPowerCubeIndex == -1 || item.getLevel() > arrayList.get(selectedPowerCubeIndex).getLevel()) {
+                        selectedPowerCubeIndex = i;
                     }
                 }
             }
 
-            // Second pass: If no XMP was found, look for the highest-level UltraStrike
-            if (selectedIndex == -1) {
-                for (int i = 0; i < arrayList.size(); i++) {
-                    InventoryListItem item = arrayList.get(i);
-                    if (item.getType() == ItemBase.ItemType.WeaponUltraStrike) {
-                        if (selectedIndex == -1 || item.getLevel() > arrayList.get(selectedIndex).getLevel()) {
-                            selectedIndex = i;
-                        }
-                    }
-                }
-            }
-
-            // Third pass: If no XMP or UltraStrike was found, look for the highest-level PowerCube
-            if (selectedIndex == -1) {
-                for (int i = 0; i < arrayList.size(); i++) {
-                    InventoryListItem item = arrayList.get(i);
-                    if (item.getType() == ItemBase.ItemType.PowerCube) {
-                        if (selectedIndex == -1 || item.getLevel() > arrayList.get(selectedIndex).getLevel()) {
-                            selectedIndex = i;
-                        }
-                    }
-                }
+            // Set the selected index based on priority: XMP > UltraStrike > PowerCube
+            if (selectedXMPIndex != -1) {
+                selectedIndex = selectedXMPIndex;
+            } else if (selectedUltraStrikeIndex != -1) {
+                selectedIndex = selectedUltraStrikeIndex;
+            } else if (selectedPowerCubeIndex != -1) {
+                selectedIndex = selectedPowerCubeIndex;
             }
 
             // If no special items found, fall back to the first item in the list
@@ -691,6 +685,15 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         });
 
         return true;
+    }
+
+    private int findItemByDescription(List<InventoryListItem> arrayList, String description) {
+        for (int i = 0; i < arrayList.size(); i++) {
+            if (Objects.equals(arrayList.get(i).getPrettyDescription(), description)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private int findNextHigherLevelItem(List<InventoryListItem> arrayList, InventoryListItem currentItem) {
