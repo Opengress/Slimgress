@@ -657,22 +657,30 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             }
             int index = arrayList.indexOf(mCurrentFireItem);
             int newIndex = 0;
+
+            // if current stack is depleted
             if (mCurrentFireItem.getQuantity() == 0) {
-                newIndex = (index < 1) ? 0 : index - 1;
                 arrayList.remove(mCurrentFireItem);
                 adapter.notifyItemRemoved(index);
+
+                // Check for a higher level stack of the same type
+                newIndex = findNextHigherLevelItem(arrayList, mCurrentFireItem);
+
+                // If no higher level stack of the same type, fallback to the previous behavior
+                if (newIndex == -1) {
+                    newIndex = (index < 1) ? 0 : index - 1;
+                }
+
+                if (!arrayList.isEmpty()) {
+                    mCurrentFireItem = arrayList.get(newIndex);
+                    adapter.setSelectedPosition(newIndex);
+                    mRecyclerView.scrollToPosition(newIndex);
+                    adapter.notifyItemChanged(newIndex);
+                } else {
+                    findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
+                }
             } else {
                 adapter.notifyItemChanged(index);
-            }
-            if (arrayList.isEmpty()) {
-                findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
-                return;
-            }
-            if (mCurrentFireItem.getQuantity() == 0) {
-                mCurrentFireItem = arrayList.get(newIndex);
-                adapter.setSelectedPosition(newIndex);
-                mRecyclerView.scrollToPosition(newIndex);
-                adapter.notifyItemChanged(newIndex);
             }
         });
 
@@ -685,6 +693,15 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         return true;
     }
 
+    private int findNextHigherLevelItem(List<InventoryListItem> arrayList, InventoryListItem currentItem) {
+        for (int i = 0; i < arrayList.size(); i++) {
+            InventoryListItem item = arrayList.get(i);
+            if (item.getType() == currentItem.getType() && item.getLevel() > currentItem.getLevel()) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     private void flashMap() {
         ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
