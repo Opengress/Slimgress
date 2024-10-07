@@ -81,6 +81,7 @@ public class GameState {
     private Agent mAgent;
     // todo: actually use this, and consider whether it needs split for globs/agent/etc
     private String mLastSyncTimestamp;
+    private String mInventoryTimeStamp;
     private Location mLocation;
     private GameEntityPortal mPortal;
     private final HashMap<String, String> mAgentNames = new HashMap<>();
@@ -90,12 +91,14 @@ public class GameState {
         mInventory = new Inventory();
         mWorld = new World();
         mLastSyncTimestamp = "0";
+        mInventoryTimeStamp = "0";
     }
 
     public void clear() {
         mInventory.clear();
         mWorld.clear();
         mLastSyncTimestamp = "0";
+        mInventoryTimeStamp = "0";
     }
 
     public void updateLocation(Location location) {
@@ -207,13 +210,19 @@ public class GameState {
 
             // create params
             JSONObject params = new JSONObject();
-            params.put("lastQueryTimestamp", mLastSyncTimestamp);
+            params.put("lastQueryTimestamp", mInventoryTimeStamp);
 
             // request basket
             mInterface.request(mHandshake, "playerUndecorated/getInventory", mLocation, params, new RequestResult(handler) {
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
+                }
+
+                @Override
+                public void handleResult(String result) {
+                    mInventoryTimeStamp = result;
+                    super.handleResult(result);
                 }
             });
         } catch (JSONException e) {
