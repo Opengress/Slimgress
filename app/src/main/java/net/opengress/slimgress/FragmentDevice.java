@@ -75,6 +75,12 @@ public class FragmentDevice extends Fragment
             startActivity(myIntent);
         });
 
+        mRootView.findViewById(R.id.device_button_force_sync).setEnabled(true);
+        mRootView.findViewById(R.id.device_button_force_sync).setOnClickListener(v -> {
+            mGame.clear();
+            requireActivity().finish();
+        });
+
         mRootView.findViewById(R.id.device_button_profile_link).setEnabled(false);
 
         // features
