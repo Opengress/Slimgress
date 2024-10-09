@@ -398,7 +398,11 @@ public class FragmentInventory extends Fragment {
 
         final Handler handler = new Handler();
         return () -> handler.post(() -> {
-            mInventoryList = new InventoryList(thisObject.requireContext(), mGroupNames, mGroups);
+            Context context = thisObject.getContext();
+            if (context == null) {
+                return;
+            }
+            mInventoryList = new InventoryList(context, mGroupNames, mGroups);
             mInventoryList.setInflater(inflater, thisObject.getActivity());
             list.setAdapter(mInventoryList);
             list.setVisibility(View.VISIBLE);

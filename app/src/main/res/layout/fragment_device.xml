@@ -339,6 +339,49 @@
 
         </LinearLayout>
 
+        <!-- DATA -->
+        <LinearLayout style="@style/SectionStyle">
+
+            <LinearLayout style="@style/SectionHeaderStyle">
+
+                <LinearLayout style="@style/SectionTitleStyle">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/data" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/gap_margin"
+                    android:text="@string/force_clear_data_and_resync"
+                    android:textIsSelectable="false" />
+
+            </LinearLayout>
+
+            <LinearLayout style="@style/SectionBodyStyle">
+
+                <LinearLayout style="@style/SectionBodySplitStyle">
+
+
+                </LinearLayout>
+
+                <LinearLayout style="@style/SectionBodySplitStyle">
+
+                    <Button
+                        android:id="@+id/device_button_force_sync"
+                        style="@style/ButtonStyle"
+                        android:text="@string/force_sync" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
         <!-- CREDITS -->
         <LinearLayout style="@style/SectionStyle">
 

@@ -1142,7 +1142,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         }
     }
 
-
+    @SuppressLint("InflateParams")
     private void showInfoCard(GameEntityPortal portal) {
         // TODO theoretically I can update this as the user moves, but for now I do not.
         removeInfoCard();
