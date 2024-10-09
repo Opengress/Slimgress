@@ -238,6 +238,14 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     protected void onResume() {
         super.onResume();
         isInForeground = true;
+        if (mGame.getKnobs() == null) {
+            Intent intent = new Intent(this, ActivitySplash.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+            startActivity(intent);
+            finish();
+            return;
+        }
     }
 
     @Override
