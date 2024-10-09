@@ -107,7 +107,7 @@ public class DialogComms extends BottomSheetDialogFragment {
         mTimerRunnable = new Runnable() {
             @Override
             public void run() {
-                new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(commsRadiusKM, mIsInFactionTab, commsRefreshHandler)).start();
+                new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(false, commsRadiusKM, mIsInFactionTab, commsRefreshHandler)).start();
                 mTimerHandler.postDelayed(this, 15000);
             }
         };
@@ -194,7 +194,7 @@ public class DialogComms extends BottomSheetDialogFragment {
                     // get plexts, probably, and...
                     input.setText("");
                     sendButton.setEnabled(true);
-                    new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(commsRadiusKM, mIsInFactionTab, commsRefreshHandler)).start();
+                    new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(false, commsRadiusKM, mIsInFactionTab, commsRefreshHandler)).start();
                 }
                 return false;
             });
@@ -203,8 +203,8 @@ public class DialogComms extends BottomSheetDialogFragment {
         });
 
         // GUARANTEE that both tabs are loaded
-        new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(commsRadiusKM, true, commsRefreshHandler)).start();
-        new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(commsRadiusKM, false, commsRefreshHandler)).start();
+        new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(false, commsRadiusKM, true, commsRefreshHandler)).start();
+        new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(false, commsRadiusKM, false, commsRefreshHandler)).start();
 
         return mDialog;
     }

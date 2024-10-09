@@ -67,7 +67,7 @@ public class Interface
     public static final String mUserAgent = "Opengress/Slimgress (API dev)";
 
     // kludge: interface can say the right things about collecting globs without asking GameState
-    private ArrayList<String> mSlurpableXMParticles;
+    private final ArrayList<String> mSlurpableXMParticles = new ArrayList<>();
 
     public Interface()
     {
@@ -246,6 +246,7 @@ public class Interface
 //                    Log.d("Interface.request", content);
                     JSONObject json = new JSONObject(content);
                     RequestResult.handleRequest(json, result);
+                    mSlurpableXMParticles.clear();
                 }
             }
             catch (Exception e) {
@@ -257,8 +258,8 @@ public class Interface
     }
 
 
-    public void setSlurpableParticles(ArrayList<String> slurpableParticles) {
-        mSlurpableXMParticles = slurpableParticles;
+    public void addSlurpableParticles(ArrayList<String> slurpableParticles) {
+        mSlurpableXMParticles.addAll(slurpableParticles);
     }
 
     private long getCurrentTimestamp()

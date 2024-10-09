@@ -60,8 +60,8 @@ public class GameBasket
         processAPGains(json.optJSONArray("apGains"));
         processLevelUp(json.optJSONObject("levelUp"));
         processInventory(json.getJSONArray("inventory"));
-        processDeletedEntityGuids(json.getJSONArray("deletedEntityGuids"));
         processEnergyGlobGuids(json.optJSONArray("energyGlobGuids"), json.optString("energyGlobTimestamp"));
+        processDeletedEntityGuids(json.getJSONArray("deletedEntityGuids"));
     }
 
     private void processPlayerDamages(JSONArray playerDamages) throws JSONException

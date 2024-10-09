@@ -126,10 +126,12 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
 
 public class ScannerView extends Fragment implements SensorEventListener, LocationListener {
@@ -176,6 +178,8 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     private final HashMap<String, Polyline> mLines = new HashMap<>();
     private final HashMap<String, Polygon> mPolygons = new HashMap<>();
     private final HashMap<String, GroundOverlay> mItemMarkers = new HashMap<>();
+    private final Queue<GroundOverlay> mOverlayPool = new LinkedList<>();
+    private final Queue<Polyline> mPolylinePool = new LinkedList<>();
 
     private ActivityResultLauncher<Intent> mPortalActivityResultLauncher;
 
@@ -187,7 +191,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
     private GeoPoint mCurrentLocation = null;
     private static final int RECORD_REQUEST_CODE = 101;
-    private Date mLastScan = null;
+    private long mLastScan = 0;
     // FIXME this should be used to set "location inaccurate" if updates mysteriously stop
     private Date mLastLocationAcquired = null;
     private GeoPoint mLastLocation = null;
@@ -201,6 +205,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     private LocationManager mLocationManager = null;
     private MyLocationNewOverlay mLocationOverlay = null;
     private AnimatedCircleOverlay mSonarOverlay;
+    private Map<Integer, Bitmap> mCachedPlayerCursorRotations = new HashMap<>();
 
     // device sensor manager
     private SensorManager mSensorManager;
@@ -266,9 +271,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mMap.getOverlayManager().remove(mPlayerCursor);
 
         /*
-         because we retain the original image size, the rotated image gets scaled.
-         this means that rotating the cursor changes its size.
-         we need to do a couple of things when we fix this:
+         we need to do a couple of things:
          1) find a better way to draw the cursor.
              i think you can paste the image on to a rotated canvas.
              that's probably the correct approach.
@@ -281,11 +284,13 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
          */
         mPlayerCursor.setPosition(location.destinationPoint(15, TOP_LEFT_ANGLE), location.destinationPoint(15, BOTTOM_RIGHT_ANGLE));
         mSonarOverlay.updateLocation(location);
-        Bitmap cursor = mIcons.get("playercursor");
-        Matrix matrix = new Matrix();
-        matrix.postRotate(Math.round(bearing));
-        assert cursor != null;
-        mPlayerCursor.setImage(Bitmap.createBitmap(cursor, 0, 0, cursor.getWidth(), cursor.getHeight(), matrix, true));
+
+        // Normalize the bearing to the closest 3-degree step
+        int normalizedBearing = (int) (Math.round(bearing / 3.0) * 3.0) % 360;
+        Bitmap rotatedCursor = getRotatedBitmap(mIcons.get("playercursor"), normalizedBearing);
+        if (rotatedCursor != null) {
+            mPlayerCursor.setImage(rotatedCursor);
+        }
 
         mMap.getOverlayManager().add(mPlayerCursor);
     }
@@ -307,6 +312,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
 
     public void onLocationChanged(@NonNull Location location) {
+        slurp();
         mCurrentLocation = new GeoPoint(location);
         var loc = new net.opengress.slimgress.api.Common.Location(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
         mApp.getLocationViewModel().setLocationData(loc);
@@ -335,25 +341,23 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     private void displayMyCurrentLocationOverlay(GeoPoint currentLocation, float bearing) {
 
         mMap.getOverlayManager().remove(mActionRadius);
-        if (mRotationVectorSensor == null) {
-            drawPlayerCursor(currentLocation, bearing);
-        }
+        drawPlayerCursor(currentLocation, bearing);
         mActionRadius.setPosition(currentLocation.destinationPoint(56.57, TOP_LEFT_ANGLE), currentLocation.destinationPoint(56.57, BOTTOM_RIGHT_ANGLE));
         mActionRadius.setImage(mIcons.get("actionradius"));
         mMap.getOverlayManager().add(mActionRadius);
 
-        long now = new Date().getTime();
+        long now = System.currentTimeMillis();
 
-        if (mLastScan == null ||
+        if (mLastScan == 0 ||
                 mLastLocation == null ||
-                (now - mLastScan.getTime() >= mUpdateIntervalMS) ||
-                (now - mLastScan.getTime() >= mMinUpdateIntervalMS && mLastLocation.distanceToAsDouble(currentLocation) >= mUpdateDistanceM)
+                (now - mLastScan >= mUpdateIntervalMS) ||
+                (now - mLastScan >= mMinUpdateIntervalMS && mLastLocation.distanceToAsDouble(currentLocation) >= mUpdateDistanceM)
         ) {
             if (mGame.getLocation() != null) {
                 final Handler uiHandler = new Handler();
                 uiHandler.post(() -> {
                     // guard against scanning too fast if request fails
-                    mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
+                    mLastScan = now + mMinUpdateIntervalMS;
                     updateWorld();
                 });
 
@@ -364,6 +368,40 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
         setLocationInaccurate(false);
 
+    }
+
+    private Bitmap getRotatedBitmap(Bitmap originalCursor, int angle) {
+        // Check if the bitmap is already cached for this angle
+        if (mCachedPlayerCursorRotations.containsKey(angle)) {
+            return mCachedPlayerCursorRotations.get(angle);
+        }
+
+        int width = originalCursor.getWidth();
+        int height = originalCursor.getHeight();
+
+        // Calculate the new bounding box size to avoid stretching
+        int newSize = (int) (Math.sqrt(2) * Math.max(width, height));
+
+        // Create a new bitmap with the larger size to fit the rotation
+        Bitmap newBitmap = Bitmap.createBitmap(newSize, newSize, originalCursor.getConfig());
+
+        // Create a canvas to draw the rotated image
+        Canvas canvas = new Canvas(newBitmap);
+
+        // Compute the matrix to rotate around the center of the new bitmap
+        Matrix matrix = new Matrix();
+        int centerX = (newSize - width) / 2;
+        int centerY = (newSize - height) / 2;
+        matrix.postTranslate(centerX, centerY);  // Center the original image in the new bitmap
+        matrix.postRotate(angle, newSize / 2f, newSize / 2f);  // Rotate around the center of the bitmap
+
+        // Draw the original bitmap onto the new bitmap using the rotation matrix
+        canvas.drawBitmap(originalCursor, matrix, null);
+
+        // Cache the rotated bitmap
+        mCachedPlayerCursorRotations.put(angle, newBitmap);
+
+        return newBitmap;  // Return the newly created rotated bitmap
     }
 
     @Override
@@ -403,6 +441,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 long particle = Long.parseLong(guid.substring(0, 16), 16);
                 if (mXMMarkers.containsKey(particle)) {
                     mMap.getOverlays().remove(mXMMarkers.get(particle));
+                    recycleOverlay(mXMMarkers.get(particle));
                     mXMMarkers.remove(particle);
                 }
                 continue;
@@ -423,6 +462,8 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 if (resoParts != null) {
                     mMap.getOverlays().remove(resoParts.first);
                     mMap.getOverlays().remove(resoParts.second);
+                    recycleOverlay(Objects.requireNonNull(resoParts.first));
+                    recyclePolyline(Objects.requireNonNull(resoParts.second));
                 }
                 mResonatorToPortalSlotLookup.remove(guid);
                 Objects.requireNonNull(mResonatorMarkers.get(portal)).remove(slot);
@@ -432,6 +473,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             // for links
             if (mLines.containsKey(guid)) {
                 mMap.getOverlays().remove(mLines.get(guid));
+                recyclePolyline(mLines.get(guid));
                 mLines.remove(guid);
                 continue;
             }
@@ -445,6 +487,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             // for dropped items
             if (mItemMarkers.containsKey(guid)) {
                 mMap.getOverlays().remove(mItemMarkers.get(guid));
+                recycleOverlay(mItemMarkers.get(guid));
                 mItemMarkers.remove(guid);
             }
 
@@ -592,7 +635,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         final Context context = this.requireActivity();
 
 
-
         Configuration.getInstance().setUserAgentValue("Slimgress/Openflux (OSMDroid)");
 
         mMap.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
@@ -702,7 +744,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         if (mRotationVectorSensor != null) {
             // FIXME put this in a pref
             mSensorManager.registerListener(this, mRotationVectorSensor,
-                    SensorManager.SENSOR_DELAY_FASTEST);
+                    SensorManager.SENSOR_DELAY_NORMAL);
         }
 
 
@@ -891,51 +933,20 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             return true;
         });
 
-        // FIXME: they're probably being drawn and slurped at the same time,
-        //  in which case user will see ghost XM particles they've just slurped
-        //  ... also, can we get particles that we passed over between scans? probably not.
-        //  maybe with slurp?
-        setSlurpableXMParticles();
-        if (getActivity() != null) {
-            ((ActivityMain) getActivity()).updateAgent();
-        }
+        slurp();
 
         // get objects (on new thread)
         new Thread(() -> mGame.intGetObjectsInCells(mGame.getLocation(), resultHandler)).start();
         final Handler commsHandler = new Handler(Looper.getMainLooper());
-        new Thread(() -> mGame.intLoadCommunication(50, false, commsHandler)).start();
+        new Thread(() -> mGame.intLoadCommunication(false, 50, false, commsHandler)).start();
     }
 
-    public void updateScreen(Handler uiHandler) {
-        new Thread(() -> {
-            // draw xm particles
-            drawXMParticles();
+    private void slurp() {
+        // FIXME: they're probably being drawn and slurped at the same time,
+        //  in which case user will see ghost XM particles they've just slurped
+        //  ... also, can we get particles that we passed over between scans? probably not.
+        //  maybe with slurp?
 
-            // draw game entities
-            Map<String, GameEntityBase> entities = mGame.getWorld().getGameEntities();
-            Set<String> keys = entities.keySet();
-            for (String key : keys) {
-                final GameEntityBase entity = entities.get(key);
-                assert entity != null;
-
-                uiHandler.post(() -> {
-                    if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
-                        drawPortal((GameEntityPortal) entity);
-                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
-                        drawLink((GameEntityLink) entity);
-                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
-                        drawField((GameEntityControlField) entity);
-                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {
-                        drawItem((GameEntityItem) entity);
-                    }
-                });
-            }
-
-            mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
-        }).start();
-    }
-
-    private void setSlurpableXMParticles() {
         if (mGame.getAgent() == null) {
             return;
         }
@@ -967,9 +978,41 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             }
         }
 
-        mGame.setSlurpableXMParticles(slurpableParticles);
+        mGame.addSlurpableXMParticles(slurpableParticles);
         mGame.getAgent().addEnergy(newXM);
 
+        if (getActivity() != null && newXM > 0) {
+            ((ActivityMain) getActivity()).updateAgent();
+        }
+    }
+
+    public void updateScreen(Handler uiHandler) {
+        new Thread(() -> {
+            // draw xm particles
+            drawXMParticles();
+
+            // draw game entities
+            Map<String, GameEntityBase> entities = mGame.getWorld().getGameEntities();
+            Set<String> keys = entities.keySet();
+            for (String key : keys) {
+                final GameEntityBase entity = entities.get(key);
+                assert entity != null;
+
+                uiHandler.post(() -> {
+                    if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
+                        drawPortal((GameEntityPortal) entity);
+                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
+                        drawLink((GameEntityLink) entity);
+                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
+                        drawField((GameEntityControlField) entity);
+                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {
+                        drawItem((GameEntityItem) entity);
+                    }
+                });
+            }
+
+            mLastScan = System.currentTimeMillis() + mMinUpdateIntervalMS;
+        }).start();
     }
 
     private void drawXMParticles() {
@@ -993,8 +1036,8 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 activity.runOnUiThread(() -> {
                     Bitmap particleIcon = mIcons.get("particle");
 
-                    GroundOverlay marker = new GroundOverlay();
-                    marker.setPosition(location.getLatLng().destinationPoint(10, TOP_LEFT_ANGLE), location.getLatLng().destinationPoint(10, BOTTOM_RIGHT_ANGLE));
+                    GroundOverlay marker = getOverlay();
+                    marker.setPosition(location.getLatLng().destinationPoint(5, TOP_LEFT_ANGLE), location.getLatLng().destinationPoint(5, BOTTOM_RIGHT_ANGLE));
                     marker.setImage(particleIcon);
 
                     mMap.getOverlays().add(marker);
@@ -1004,14 +1047,41 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         }
     }
 
+    private GroundOverlay getOverlay() {
+        GroundOverlay overlay = mOverlayPool.poll();
+        if (overlay == null) {
+            overlay = new GroundOverlay();
+        }
+        return overlay;
+    }
+
+    private void recycleOverlay(GroundOverlay overlay) {
+        mOverlayPool.add(overlay);
+    }
+
+    private Polyline getPolyline(MapView map) {
+        Polyline overlay = mPolylinePool.poll();
+        if (overlay == null) {
+            overlay = new Polyline(map);
+        }
+        return overlay;
+    }
+
+    private void recyclePolyline(Polyline overlay) {
+        mPolylinePool.add(overlay);
+    }
+
     private void drawPortal(@NonNull final GameEntityPortal portal) {
         final Team team = portal.getPortalTeam();
         if (mMap != null) {
             // if marker already exists, remove it so it can be updated
             String guid = portal.getEntityGuid();
             if (mPortalMarkers.containsKey(guid)) {
-                mMap.getOverlays().remove(mPortalMarkers.get(guid));
+                GroundOverlay o = mPortalMarkers.get(guid);
+                mMap.getOverlays().remove(o);
                 mPortalMarkers.remove(guid);
+                assert o != null;
+                recycleOverlay(o);
             }
             final net.opengress.slimgress.api.Common.Location location = portal.getPortalLocation();
 
@@ -1112,7 +1182,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         var m = mResonatorMarkers.get(portal.getEntityGuid());
         if (m != null && m.containsKey(reso.slot)) {
             mMap.getOverlays().remove(Objects.requireNonNull(m.get(reso.slot)).first);
+            recycleOverlay(Objects.requireNonNull(m.get(reso.slot)).first);
             mMap.getOverlays().remove(Objects.requireNonNull(m.get(reso.slot)).second);
+            recyclePolyline(Objects.requireNonNull(m.get(reso.slot)).second);
             m.remove(reso.slot);
             mResonatorToPortalSlotLookup.remove(reso.id);
         }
@@ -1133,12 +1205,12 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         GeoPoint bottomRight = resoPos.destinationPoint(LINKED_RESO_SCALE, BOTTOM_RIGHT_ANGLE);
 
         // Create actual reso marker
-        GroundOverlay marker = new GroundOverlay();
+        GroundOverlay marker = getOverlay();
         marker.setPosition(topLeft, bottomRight);
         marker.setImage(BitmapFactory.decodeResource(getResources(), getImageForResoLevel(reso.level)));
 
         // Connect reso to portal with line
-        Polyline line = new Polyline();
+        Polyline line = getPolyline(mMap);
         line.setPoints(Arrays.asList(portal.getPortalLocation().getLatLng(), resoPos));
         Paint paint = new Paint();
         paint.setColor(getColorFromResources(getResources(), getLevelColor(reso.level)));
@@ -1383,7 +1455,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
                 final Handler uiHandler = new Handler();
                 uiHandler.post(() -> {
                     // guard against scanning too fast if request fails
-                    mLastScan = new Date(System.currentTimeMillis() + mMinUpdateIntervalMS);
+                    mLastScan = System.currentTimeMillis() + mMinUpdateIntervalMS;
                     updateWorld();
                 });
 

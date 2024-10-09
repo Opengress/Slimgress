@@ -46,16 +46,6 @@ public class World {
 
     public void processGameBasket(GameBasket basket) {
 
-        // remove deleted entities
-        List<String> deletedEntityGuids = basket.getDeletedEntityGuids();
-        for (String guid : deletedEntityGuids) {
-            if (guid.contains(".")) {
-                mXMParticles.remove(Long.parseLong(guid.substring(0, 16), 16));
-                continue;
-            }
-            mGameEntities.remove(guid);
-        }
-
         // only add non-existing game entities ... should this be a map?
         List<GameEntityBase> entities = basket.getGameEntities();
         for (GameEntityBase entity : entities) {
@@ -69,6 +59,16 @@ public class World {
             if (!mXMParticles.containsKey(particle.getCellId())) {
                 mXMParticles.put(particle.getCellId(), particle);
             }
+        }
+
+        // remove deleted entities
+        List<String> deletedEntityGuids = basket.getDeletedEntityGuids();
+        for (String guid : deletedEntityGuids) {
+            if (guid.contains(".")) {
+                mXMParticles.remove(Long.parseLong(guid.substring(0, 16), 16));
+                continue;
+            }
+            mGameEntities.remove(guid);
         }
 
         // This should probably go to a viewmodel so it can update deploy screen et al

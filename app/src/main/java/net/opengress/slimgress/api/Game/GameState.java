@@ -80,8 +80,11 @@ public class GameState {
     private final World mWorld;
     private Agent mAgent;
     // todo: actually use this, and consider whether it needs split for globs/agent/etc
-    private String mLastSyncTimestamp;
-    private String mInventoryTimeStamp;
+    private String mLastSyncTimestamp = "0";
+    private String mInventoryTimestamp = "0";
+    private final Map<String, String> mCellUpdateTimeStamps = new HashMap<>();
+    private final Map<String, Long> mMinCommTimestamps = new HashMap<>();
+    private final Map<String, Long> mMaxCommTimestamps = new HashMap<>();
     private Location mLocation;
     private GameEntityPortal mPortal;
     private final HashMap<String, String> mAgentNames = new HashMap<>();
@@ -91,14 +94,22 @@ public class GameState {
         mInventory = new Inventory();
         mWorld = new World();
         mLastSyncTimestamp = "0";
-        mInventoryTimeStamp = "0";
+        mInventoryTimestamp = "0";
     }
 
     public void clear() {
         mInventory.clear();
         mWorld.clear();
         mLastSyncTimestamp = "0";
-        mInventoryTimeStamp = "0";
+        mInventoryTimestamp = "0";
+        mCellUpdateTimeStamps.clear();
+        mAgentNames.clear();
+        mMinCommTimestamps.clear();
+        mMaxCommTimestamps.clear();
+        SlimgressApplication app = SlimgressApplication.getInstance();
+        app.getInventoryViewModel().postInventory(mInventory);
+        app.getAllCommsViewModel().clearMessages();
+        app.getFactionCommsViewModel().clearMessages();
     }
 
     public void updateLocation(Location location) {
@@ -210,7 +221,7 @@ public class GameState {
 
             // create params
             JSONObject params = new JSONObject();
-            params.put("lastQueryTimestamp", mInventoryTimeStamp);
+            params.put("lastQueryTimestamp", mInventoryTimestamp);
 
             // request basket
             mInterface.request(mHandshake, "playerUndecorated/getInventory", mLocation, params, new RequestResult(handler) {
@@ -221,7 +232,7 @@ public class GameState {
 
                 @Override
                 public void handleResult(String result) {
-                    mInventoryTimeStamp = result;
+                    mInventoryTimestamp = result;
                     super.handleResult(result);
                 }
             });
@@ -245,8 +256,12 @@ public class GameState {
 
             // create dates (timestamps?)
             JSONArray dates = new JSONArray();
-            for (int i = 0; i < cellsAsHex.length(); i++) {
-                dates.put(0);
+            for (String cellId : cellIds) {
+                String lastQueried = "0";
+                if (mCellUpdateTimeStamps.containsKey(cellId)) {
+                    lastQueried = mCellUpdateTimeStamps.get(cellId);
+                }
+                dates.put(Long.parseLong(lastQueried));
             }
 
             // create params
@@ -260,13 +275,23 @@ public class GameState {
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
                 }
+
+                @Override
+                public void handleResult(String result) {
+                    for (String cellId : cellIds) {
+                        mCellUpdateTimeStamps.put(cellId, result);
+                    }
+                    // not ready for this yet
+//                    mInventoryTimeStamp = result;
+                    super.handleResult(result);
+                }
             });
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    public synchronized void intLoadCommunication(final double radiusKM, final boolean factionOnly, final Handler handler) {
+    public synchronized void intLoadCommunication(boolean getOlderMessages, final double radiusKM, final boolean factionOnly, final Handler handler) {
         try {
             checkInterface();
 
@@ -285,30 +310,53 @@ public class GameState {
                 cellsAsHex.put(cellId);
             }
 
+            String categoryName = factionOnly ? "faction" : "all";
+            long minTimeStampMs = -1;
+            long maxTimeStampMs = -1;
+            if (!getOlderMessages && mMinCommTimestamps.containsKey(categoryName)) {
+                minTimeStampMs = mMinCommTimestamps.get(categoryName);
+            }
+            // probably harmless to always send this regardless
+            if (mMaxCommTimestamps.containsKey(categoryName)) {
+                maxTimeStampMs = mMaxCommTimestamps.get(categoryName);
+            }
+
             // create params
             JSONObject params = new JSONObject();
             params.put("cellsAsHex", cellsAsHex);
-            params.put("minTimestampMs", -1);
-            params.put("maxTimestampMs", -1);
+            params.put("minTimestampMs", minTimeStampMs);
+            params.put("maxTimestampMs", maxTimeStampMs);
             params.put("desiredNumItems", 50);
             params.put("factionOnly", factionOnly);
             params.put("ascendingTimestampOrder", false);
             params.put("categories", factionOnly ? 2 : 1);
 
+            long finalMinTimeStampMs = minTimeStampMs;
+            long finalMaxTimeStampMs = maxTimeStampMs;
             mInterface.request(mHandshake, "playerUndecorated/getPaginatedPlexts", mLocation, params, new RequestResult(handler) {
                 @Override
                 public void handleResult(JSONArray result) {
                     try {
-                        ArrayList<PlextBase> plexts = new ArrayList<>(result.length());
-                        for (int i = 0; i < result.length(); i++) {
-                            PlextBase newPlext = PlextBase.createByJSON(result.getJSONArray(i));
-                            assert newPlext != null;
-                            plexts.add(newPlext);
-                        }
-                        if (factionOnly) {
-                            SlimgressApplication.getInstance().getFactionCommsViewModel().addMessages(plexts);
-                        } else {
-                            SlimgressApplication.getInstance().getAllCommsViewModel().addMessages(plexts);
+                        if (result.length() > 0) {
+                            ArrayList<PlextBase> plexts = new ArrayList<>(result.length());
+                            for (int i = 0; i < result.length(); i++) {
+                                PlextBase newPlext = PlextBase.createByJSON(result.getJSONArray(i));
+                                assert newPlext != null;
+                                plexts.add(newPlext);
+                                long time = Long.parseLong(newPlext.getEntityTimestamp());
+                                if (finalMinTimeStampMs == -1 || finalMinTimeStampMs > time) {
+                                    mMaxCommTimestamps.put(categoryName, time);
+                                }
+                                if (finalMaxTimeStampMs == -1 || finalMaxTimeStampMs < time) {
+                                    mMinCommTimestamps.put(categoryName, time);
+                                }
+                            }
+
+                            if (factionOnly) {
+                                SlimgressApplication.getInstance().getFactionCommsViewModel().addMessages(plexts);
+                            } else {
+                                SlimgressApplication.getInstance().getAllCommsViewModel().addMessages(plexts);
+                            }
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -1437,8 +1485,8 @@ public class GameState {
         return mPortal;
     }
 
-    public void setSlurpableXMParticles(ArrayList<String> slurpableParticles) {
-        mInterface.setSlurpableParticles(slurpableParticles);
+    public void addSlurpableXMParticles(ArrayList<String> slurpableParticles) {
+        mInterface.addSlurpableParticles(slurpableParticles);
         for (var particle : slurpableParticles) {
             mWorld.getXMParticles().remove(Long.parseLong(particle.substring(0, 16), 16));
         }
