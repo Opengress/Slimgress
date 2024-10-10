@@ -211,6 +211,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     private SensorManager mSensorManager;
     private float mBearing = 0;
     private Sensor mRotationVectorSensor;
+    private boolean mHaveRotationSensor = false;
 
     private final int MAP_ROTATION_ARBITRARY = 2;
     private final int MAP_ROTATION_FLOATING = 3;
@@ -260,6 +261,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             float azimuth = (float) Math.toDegrees(orientation[0]);
             mBearing = (azimuth + 360) % 360;
 
+            mHaveRotationSensor = true;
         }
         if (CURRENT_MAP_ORIENTATION_SCHEME == MAP_ROTATION_FLOATING) {
             mMap.setMapOrientation(-mBearing);
@@ -269,6 +271,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
     public void drawPlayerCursor(GeoPoint location, float bearing) {
         mMap.getOverlayManager().remove(mPlayerCursor);
+        mMap.getOverlayManager().remove(mActionRadius);
 
         /*
          we need to do a couple of things:
@@ -291,6 +294,10 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         if (rotatedCursor != null) {
             mPlayerCursor.setImage(rotatedCursor);
         }
+
+        mActionRadius.setPosition(location.destinationPoint(56.57, TOP_LEFT_ANGLE), location.destinationPoint(56.57, BOTTOM_RIGHT_ANGLE));
+        mActionRadius.setImage(mIcons.get("actionradius"));
+        mMap.getOverlayManager().add(mActionRadius);
 
         mMap.getOverlayManager().add(mPlayerCursor);
     }
@@ -339,12 +346,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
 
     private void displayMyCurrentLocationOverlay(GeoPoint currentLocation, float bearing) {
-
-        mMap.getOverlayManager().remove(mActionRadius);
-        drawPlayerCursor(currentLocation, bearing);
-        mActionRadius.setPosition(currentLocation.destinationPoint(56.57, TOP_LEFT_ANGLE), currentLocation.destinationPoint(56.57, BOTTOM_RIGHT_ANGLE));
-        mActionRadius.setImage(mIcons.get("actionradius"));
-        mMap.getOverlayManager().add(mActionRadius);
+        drawPlayerCursor(currentLocation, mHaveRotationSensor ? mBearing : bearing);
 
         long now = System.currentTimeMillis();
 
