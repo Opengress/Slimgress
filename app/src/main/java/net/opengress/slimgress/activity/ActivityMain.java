@@ -372,6 +372,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     public void updateAgent() {
+        // i REALLY want this to be connected to a viewmodel or something
         // get agent data
         Agent agent = mGame.getAgent();
 
