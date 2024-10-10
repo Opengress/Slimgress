@@ -768,6 +768,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             requestLocationUpdates();
         }
 
+        if (getActivity() != null) {
+            ((ActivityMain) getActivity()).updateAgent();
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -931,6 +934,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
             displayQuickMessage(getStringSafely(R.string.scan_complete));
             setQuickMessageTimeout();
+            if (getActivity() != null) {
+                ((ActivityMain) getActivity()).updateAgent();
+            }
 
             return true;
         });
@@ -1447,6 +1453,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
     public void fireBurster(int radius) {
         new AnimatedCircleOverlay(mMap, radius, 100).start();
+        if (getActivity() != null) {
+            ((ActivityMain) getActivity()).updateAgent();
+        }
     }
 
     private void onPortalActivityResult(ActivityResult result) {
@@ -1520,6 +1529,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
 
             }
         }
+        if (getActivity() != null) {
+            ((ActivityMain) getActivity()).updateAgent();
+        }
     }
 
     @SuppressLint("DefaultLocale")
@@ -1578,6 +1590,9 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         }
 
         new TextOverlay(mMap, playerLocation.destinationPoint(10, 0), String.format("%d%%", percentage), colour);
+        if (getActivity() != null) {
+            ((ActivityMain) getActivity()).updateAgent();
+        }
     }
 
     private Bitmap createDrawableFromView(Context context, View view) {
