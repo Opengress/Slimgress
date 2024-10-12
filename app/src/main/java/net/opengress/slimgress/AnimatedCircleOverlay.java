@@ -61,7 +61,7 @@ public class AnimatedCircleOverlay extends Overlay {
                     mChoreographer.postFrameCallback(this);
                 }
                 if (mMap != null) {
-                    mMap.invalidate();
+//                    mMap.invalidate();
                 }
             }
         };

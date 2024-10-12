@@ -121,6 +121,7 @@ import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -205,7 +206,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     private LocationManager mLocationManager = null;
     private MyLocationNewOverlay mLocationOverlay = null;
     private AnimatedCircleOverlay mSonarOverlay;
-    private Map<Integer, Bitmap> mCachedPlayerCursorRotations = new HashMap<>();
+    private final Map<Integer, Bitmap> mCachedPlayerCursorRotations = new HashMap<>();
 
     // device sensor manager
     private SensorManager mSensorManager;
@@ -216,6 +217,10 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     private final int MAP_ROTATION_ARBITRARY = 2;
     private final int MAP_ROTATION_FLOATING = 3;
     private int CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
+
+    private GeoPoint mLastCursorLocation = null;
+    private float mLastCursorBearing = -1;
+    private static final double CURSOR_JITTER_THRESHOLD = 0.05;
 
     // ===========================================================
     // UX/UI Stuff - Events
@@ -269,7 +274,22 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         drawPlayerCursor(location, mBearing);
     }
 
+    private boolean isSignificantChange(GeoPoint newLocation, GeoPoint oldLocation) {
+        return newLocation.distanceToAsDouble(oldLocation) > CURSOR_JITTER_THRESHOLD;
+    }
+
+    private boolean isSignificantChange(float newBearing, float oldBearing) {
+        return Math.abs(newBearing - oldBearing) >= 2.5;
+    }
+
     public void drawPlayerCursor(GeoPoint location, float bearing) {
+        if (mLastCursorLocation != null && !isSignificantChange(location, mLastCursorLocation) && !isSignificantChange(bearing, mLastCursorBearing)) {
+            return; // Skip jittery updates
+        }
+
+        mLastCursorLocation = location;
+        mLastCursorBearing = bearing;
+
         mMap.getOverlayManager().remove(mPlayerCursor);
         mMap.getOverlayManager().remove(mActionRadius);
 
@@ -525,6 +545,16 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mPrefs = mApp.getApplicationContext().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE);
         // allows map tiles to be cached so map draws properly
         Configuration.getInstance().load(requireContext(), mPrefs);
+        Configuration.getInstance().setOsmdroidTileCache(new File(requireActivity().getCacheDir(), "osmdroid")); // Set the cache directory
+
+        // suggestion... didn't do anything i liked
+//        Configuration.getInstance().setCacheMapTileCount((short) 27);
+//        Configuration.getInstance().setCacheMapTileOvershoot((short) 27);
+//        Configuration.getInstance().setExpirationExtendedDuration(Long.MAX_VALUE);
+//        Configuration.getInstance().setTileFileSystemCacheMaxBytes(50L * 1024L * 1024L);
+//        Configuration.getInstance().setExpirationExtendedDuration(60L * 60L * 24L * 7L * 1000L);
+
+
 
         mPrefs.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
             Log.d("Scanner", String.format("PREFERENCE CHANGE IN ANOTHER THING: %s", key));
@@ -950,35 +980,40 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     }
 
     private void slurp() {
-        // FIXME: they're probably being drawn and slurped at the same time,
-        //  in which case user will see ghost XM particles they've just slurped
-        //  ... also, can we get particles that we passed over between scans? probably not.
-        //  maybe with slurp?
 
-        if (mGame.getAgent() == null) {
+        final net.opengress.slimgress.api.Common.Location playerLoc = mGame.getLocation();
+        if (mGame.getAgent() == null || playerLoc == null) {
             return;
         }
-        // FIXME maybe don't try to slurp particles that aren't needed to fill the tank
-        //  -- note that we may need to sort the particles and pick out the optimal configuration
-        //  -- also note that if we're really cheeky we may want/be able to do that serverside
-        Map<Long, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
-        Set<Long> keys = xmParticles.keySet();
-        ArrayList<String> slurpableParticles = new ArrayList<>();
 
         int oldXM = mGame.getAgent().getEnergy();
         int maxXM = mGame.getAgent().getEnergyMax();
         int newXM = 0;
 
-        for (Long key : keys) {
-            XMParticle particle = xmParticles.get(key);
+        if (oldXM >= maxXM) {
+            return;
+        }
+
+        // FIXME maybe don't try to slurp particles that aren't needed to fill the tank
+        //  -- note that we may need to sort the particles and pick out the optimal configuration
+        //  -- also note that if we're really cheeky we may want/be able to do that serverside
+        Map<Long, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
+        ArrayList<String> slurpableParticles = new ArrayList<>();
+
+        final GeoPoint playerLatLng = playerLoc.getLatLng();
+
+        for (Map.Entry<Long, XMParticle> entry : xmParticles.entrySet()) {
+            if (oldXM + newXM >= maxXM) {
+                continue;
+            }
+            Long key = entry.getKey();
+            XMParticle particle = entry.getValue();
 
             // FIXME this is honestly the worst imaginable solution, but for now it's what i have...
             assert particle != null;
             final net.opengress.slimgress.api.Common.Location location = particle.getCellLocation();
-            if (location.getLatLng().distanceToAsDouble(mGame.getLocation().getLatLng()) < mActionRadiusM) {
-                if (oldXM + newXM >= maxXM) {
-                    break;
-                }
+            if (location.getLatLng().distanceToAsDouble(playerLatLng) < mActionRadiusM) {
+
                 slurpableParticles.add(particle.getGuid());
                 newXM += particle.getAmount();
                 var marker = mXMMarkers.remove(key);
@@ -1175,7 +1210,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         marker.setIcon(new BitmapDrawable(getResources(), createDrawableFromView(requireContext(), markerView)));
         mMarkerInfoCard = marker;
         mMap.getOverlays().add(marker);
-        mMap.invalidate();
+//        mMap.invalidate();
     }
 
     private void drawResonatorForPortal(GameEntityPortal portal, GameEntityPortal.LinkedResonator reso) {

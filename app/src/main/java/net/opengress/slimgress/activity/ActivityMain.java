@@ -244,7 +244,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
             startActivity(intent);
             finish();
-            return;
         }
     }
 
@@ -725,12 +724,12 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 0, 0, -1, 0, 255,
                 0, 0, 0, 1, 0
         })));
-        scanner.getMap().invalidate();
+//        scanner.getMap().invalidate();
 
         // Revert colors after a short delay
         new Handler().postDelayed(() -> {
             scanner.getMap().getOverlayManager().getTilesOverlay().setColorFilter(null);
-            scanner.getMap().invalidate();
+//            scanner.getMap().invalidate();
         }, 444);
     }
 
