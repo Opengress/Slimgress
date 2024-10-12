@@ -27,14 +27,14 @@ public class TextOverlay extends Overlay {
         paint.setTextSize(30);
         paint.setAntiAlias(true);
         map.getOverlays().add(this);
-        map.invalidate();
+//        map.invalidate();
         Looper looper = Looper.myLooper();
         if (looper == null) {
             looper = Looper.getMainLooper();
         }
         new Handler(looper).postDelayed(() -> {
             map.getOverlays().remove(this);
-            map.invalidate();
+//            map.invalidate();
             map = null;
         }, 2000); // 2 seconds
     }
