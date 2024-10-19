@@ -36,8 +36,6 @@ import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.PorterDuff;
 import android.net.Uri;
@@ -92,7 +90,7 @@ import net.opengress.slimgress.dialog.DialogHackResult;
 import net.opengress.slimgress.dialog.DialogInfo;
 import net.opengress.slimgress.dialog.DialogLevelUp;
 
-import org.osmdroid.util.GeoPoint;
+import org.maplibre.android.geometry.LatLng;
 
 import java.io.File;
 import java.io.Serializable;
@@ -301,8 +299,8 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
-        Objects.requireNonNull(scanner).requestLocationUpdates();
+//        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
+//        Objects.requireNonNull(scanner).requestLocationUpdates();
     }
 
     private void showComms() {
@@ -525,7 +523,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     @SuppressLint("RestrictedApi")
-    public void showFireMenu(GeoPoint p) {
+    public void showFireMenu(LatLng p) {
 
         var anchor = findViewById(R.id.buttonComm);
         PopupMenu popup = new PopupMenu(ActivityMain.this, anchor);
@@ -715,22 +713,22 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     private void flashMap() {
-        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
-        // Invert colors
-        assert scanner != null;
-        scanner.getMap().getOverlayManager().getTilesOverlay().setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(new float[]{
-                -1, 0, 0, 0, 255,
-                0, -1, 0, 0, 255,
-                0, 0, -1, 0, 255,
-                0, 0, 0, 1, 0
-        })));
-//        scanner.getMap().invalidate();
-
-        // Revert colors after a short delay
-        new Handler().postDelayed(() -> {
-            scanner.getMap().getOverlayManager().getTilesOverlay().setColorFilter(null);
-//            scanner.getMap().invalidate();
-        }, 444);
+//        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
+//        // Invert colors
+//        assert scanner != null;
+//        scanner.getMap().getOverlayManager().getTilesOverlay().setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(new float[]{
+//                -1, 0, 0, 0, 255,
+//                0, -1, 0, 0, 255,
+//                0, 0, -1, 0, 255,
+//                0, 0, 0, 1, 0
+//        })));
+////        scanner.getMap().invalidate();
+//
+//        // Revert colors after a short delay
+//        new Handler().postDelayed(() -> {
+//            scanner.getMap().getOverlayManager().getTilesOverlay().setColorFilter(null);
+////            scanner.getMap().invalidate();
+//        }, 444);
     }
 
     private boolean fireBurster(int level, ItemBase.ItemType type) {
@@ -873,12 +871,12 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     public void setTargetPortal(String entityGuid) {
-        GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(entityGuid);
-        assert portal != null;
-        int dist = (int) mGame.getLocation().getLatLng().distanceToAsDouble(portal.getPortalLocation().getLatLng());
-        mSelectTargetText.setText(dist < 41 ? R.string.flipcard_confirm_selection : R.string.flipcard_select_target);
-        mSelectedPortalGuid = entityGuid;
-        mConfirmButton.setEnabled(dist < 41);
+//        GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(entityGuid);
+//        assert portal != null;
+//        int dist = (int) mGame.getLocation().getLatLng().distanceToAsDouble(portal.getPortalLocation().getLatLng());
+//        mSelectTargetText.setText(dist < 41 ? R.string.flipcard_confirm_selection : R.string.flipcard_select_target);
+//        mSelectedPortalGuid = entityGuid;
+//        mConfirmButton.setEnabled(dist < 41);
     }
 
     @Override
