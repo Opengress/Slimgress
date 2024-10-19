@@ -21,12 +21,15 @@
 
 package net.opengress.slimgress.api.Common;
 
+import androidx.annotation.NonNull;
+
+import com.google.common.geometry.S1Angle;
 import com.google.common.geometry.S2CellId;
 import com.google.common.geometry.S2LatLng;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osmdroid.util.GeoPoint;
+import org.maplibre.android.geometry.LatLng;
 
 import java.math.BigInteger;
 
@@ -61,10 +64,8 @@ public class Location
 
     public Location(double latDeg, double lngDeg)
     {
-        S2LatLng pos = S2LatLng.fromDegrees(latDeg, lngDeg);
-
-        latitude = pos.lat().e6();
-        longitude = pos.lng().e6();
+        latitude = Math.round(latDeg * 1e6);
+        longitude = Math.round(lngDeg * 1e6);
     }
 
     public Location(long latE6, long lngE6)
@@ -90,13 +91,39 @@ public class Location
         return longitude;
     }
 
+    public double getLatitudeDegrees() {
+        return S1Angle.e6(latitude).degrees();
+    }
+
+    public double getLongitudeDegrees() {
+        return S1Angle.e6(longitude).degrees();
+    }
+
     public S2LatLng getS2LatLng() {
         return S2LatLng.fromE6(latitude, longitude);
     }
 
-    public GeoPoint getLatLng()
+    public LatLng getLatLng()
     {
-        S2LatLng pos = S2LatLng.fromE6(latitude, longitude);
-        return new GeoPoint(pos.latDegrees(), pos.lngDegrees());
+        return new LatLng(getLatitudeDegrees(), getLongitudeDegrees());
+    }
+
+    @NonNull
+    public String toString() {
+        return getLatitudeDegrees() + "," + getLongitudeDegrees();
+    }
+
+    public Location destinationPoint(int distMetres, int bearingDegrees) {
+        double lat1 = Math.toRadians(getLatitudeDegrees());
+        double lon1 = Math.toRadians(getLongitudeDegrees());
+        double angularDistance = distMetres / S2LatLng.EARTH_RADIUS_METERS;
+        double bearingRad = Math.toRadians(bearingDegrees);
+
+        double lat2 = Math.asin(Math.sin(lat1) * Math.cos(angularDistance) +
+                Math.cos(lat1) * Math.sin(angularDistance) * Math.cos(bearingRad));
+        double lon2 = lon1 + Math.atan2(Math.sin(bearingRad) * Math.sin(angularDistance) * Math.cos(lat1),
+                Math.cos(angularDistance) - Math.sin(lat1) * Math.sin(lat2));
+
+        return new Location(Math.toDegrees(lat2), Math.toDegrees(lon2));
     }
 }

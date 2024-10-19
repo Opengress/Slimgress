@@ -183,7 +183,7 @@ public class Interface
 
                         // add persistent request parameters
                         if (playerLocation != null) {
-                            String loc = playerLocation.getLatLng().toDoubleString();
+                            String loc = playerLocation.toString();
                             params.getJSONObject("params").put("playerLocation", loc);
                             params.getJSONObject("params").put("location", loc);
                         }
