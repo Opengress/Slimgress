@@ -21,7 +21,6 @@
 
 package net.opengress.slimgress;
 
-import static android.content.Context.SENSOR_SERVICE;
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromAsset;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromDrawable;
@@ -45,10 +44,6 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -93,6 +88,7 @@ import net.opengress.slimgress.api.Item.ItemPortalKey;
 import net.opengress.slimgress.api.Knobs.ScannerKnobs;
 import net.opengress.slimgress.api.Knobs.TeamKnobs;
 import net.opengress.slimgress.dialog.DialogHackResult;
+import net.opengress.slimgress.positioning.AndroidBearingProvider;
 
 import org.maplibre.android.MapLibre;
 import org.maplibre.android.WellKnownTileServer;
@@ -132,7 +128,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class ScannerView extends Fragment implements SensorEventListener, LocationListener {
+public class ScannerView extends Fragment implements LocationListener {
     // ===========================================================
     // Hardcore internal stuff
     // ===========================================================
@@ -207,9 +203,8 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     private AnimatedCircleOverlay mSonarOverlay;
 
     // device sensor manager
-    private SensorManager mSensorManager;
     private int mBearing = 0;
-    private Sensor mRotationVectorSensor;
+    private AndroidBearingProvider mBearingProvider;
     private boolean mHaveRotationSensor = false;
 
     private final int MAP_ROTATION_ARBITRARY = 2;
@@ -219,9 +214,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     private LatLng mLastCursorLocation = null;
     private float mLastCursorBearing = -1;
     private final double CURSOR_JITTER_THRESHOLD = 0.05;
-    private final float LOW_PASS_FILTER_ALPHA = 0.25f;
-    private final float ROTATION_THRESHOLD = 1F;
-    private float[] mSmoothedSensorReadings = null;
 
     // ===========================================================
     // UX/UI Stuff - Events
@@ -235,51 +227,13 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
     private static final float ZOOM_SENSITIVITY = 0.1f;
 
 
-    /**
-     * Called when an event comes in from a hardware sensor.
-     * Probably a geomagnetic rotation sensor.
-     * We use this sensor information to update the bearing indicator on the screen, if possible.
-     *
-     * @param event the {@link android.hardware.SensorEvent SensorEvent}.
-     */
-    @Override
-    public void onSensorChanged(SensorEvent event) {
+    private void updateBearing(int bearing) {
         if (mMapLibreMap == null) {
             return;
         }
-
-        if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR || event.sensor.getType() == Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR) {
-            if (mSmoothedSensorReadings == null) {
-                mSmoothedSensorReadings = new float[event.values.length];
-                System.arraycopy(event.values, 0, mSmoothedSensorReadings, 0, event.values.length);
-                return;
-            }
-
-//            float[] filteredValues = lowPassFilter(event.values, mSmoothedSensorReadings);
-
-//            updateBearing(filteredValues);
-//            mSmoothedSensorReadings = filteredValues;
-
-            updateBearing(event.values);
-            mSmoothedSensorReadings = event.values;
-        }
-    }
-
-
-    private void updateBearing(float[] filteredValues) {
-
         mHaveRotationSensor = true;
-        float[] rotationMatrix = new float[9];
-        SensorManager.getRotationMatrixFromVector(rotationMatrix, filteredValues);
-
-        float[] orientation = new float[3];
-        SensorManager.getOrientation(rotationMatrix, orientation);
-
-        double azimuth = Math.toDegrees(orientation[0]);
-        int oldBearing = mBearing;
-        mBearing = (int) ((360 - azimuth + 360) % 360);
-
-        if (oldBearing != mBearing) {
+        if (bearing != mBearing) {
+            mBearing = bearing;
 //            updateBearingInData(mBearing);
             drawPlayerCursor();
         }
@@ -291,43 +245,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         }
         LatLngQuad newImagePosition = getRotatedLatLngQuad(mCurrentLocation, 15, 15, mBearing);
         mPlayerCursorImageSource.setCoordinates(newImagePosition);
-    }
-
-
-//    private void updateBearingInData(float bearing) {
-//        if (mPlayerCursorSource == null) {
-//            return;
-//        }
-//        Feature bearingFeature = Feature.fromGeometry(Point.fromLngLat(mCurrentLocation.getLongitude(), mCurrentLocation.getLatitude()));
-//        bearingFeature.addNumberProperty("bearing", bearing);
-//        mPlayerCursorSource.setGeoJson(bearingFeature);
-//    }
-
-    // Low-pass filter function to smooth the sensor data
-    private float[] lowPassFilter(float[] input, float[] output) {
-        if (output == null) {
-            return input.clone();
-        }
-
-        float[] result = new float[input.length];
-        for (int i = 0; i < input.length; i++) {
-            result[i] = output[i] + LOW_PASS_FILTER_ALPHA * (input[i] - output[i]);
-        }
-        return result;
-    }
-
-    // Function to check if there's a significant change between two arrays
-    private boolean hasSignificantChange(float[] currentValues, float[] lastValues, float threshold) {
-        if (lastValues == null) {
-            return true;
-        }
-
-        for (int i = 0; i < currentValues.length; i++) {
-            if (Math.abs(currentValues[i] - lastValues[i]) > threshold) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public void setupPlayerCursor(LatLng initialLocation, int bearing) {
@@ -407,21 +324,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         return (float) (meters / mMapLibreMap.getProjection().getMetersPerPixelAtLatitude(location.getLatitude()));
     }
 
-    /**
-     * Called when the accuracy of the registered sensor has changed.  Unlike
-     * onSensorChanged(), this is only called when this accuracy value changes.
-     *
-     * <p>See the SENSOR_STATUS_* constants in
-     * {@link SensorManager SensorManager} for details.
-     *
-     * @param accuracy The new accuracy of this sensor, one of
-     *                 {@code SensorManager.SENSOR_STATUS_*}
-     */
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        // unimplemented, don't care
-    }
-
 
     public void onLocationChanged(@NonNull Location location) {
 
@@ -477,11 +379,11 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             startActivity(intent);
         }
 
-        mSensorManager = (SensorManager) requireActivity().getSystemService(SENSOR_SERVICE);
-        mRotationVectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR);
+        mBearingProvider = new AndroidBearingProvider(requireContext());
+        mBearingProvider.startBearingUpdates();
+        mBearingProvider.setBearingCallback(bearing -> updateBearing((int) bearing));
 
         mApp.getDeletedEntityGuidsModel().getDeletedEntityGuids().observe(this, this::onReceiveDeletedEntityGuids);
-//        mActionRadius.setTransparency(0.5f);
 
         mPortalActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::onPortalActivityResult);
 
@@ -856,8 +758,7 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         mMapView.onPause();
         super.onPause();
 
-        // to stop the listener and save battery
-        mSensorManager.unregisterListener(this);
+        mBearingProvider.stopBearingUpdates();
     }
 
     @Override
@@ -882,11 +783,6 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
             displayMyCurrentLocationOverlay(mCurrentLocation);
         }
 
-        if (mRotationVectorSensor != null) {
-            // FIXME put this in a pref
-            mSensorManager.registerListener(this, mRotationVectorSensor, SensorManager.SENSOR_DELAY_FASTEST);
-        }
-
 
         // ===========================================================
         // Other (location)
@@ -903,6 +799,8 @@ public class ScannerView extends Fragment implements SensorEventListener, Locati
         } else {
             requestLocationUpdates();
         }
+
+        mBearingProvider.startBearingUpdates();
 
         if (getActivity() != null) {
             ((ActivityMain) getActivity()).updateAgent();
