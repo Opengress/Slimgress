@@ -61,7 +61,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
@@ -89,21 +88,17 @@ import net.opengress.slimgress.api.Knobs.ScannerKnobs;
 import net.opengress.slimgress.api.Knobs.TeamKnobs;
 import net.opengress.slimgress.dialog.DialogHackResult;
 import net.opengress.slimgress.positioning.AndroidBearingProvider;
+import net.opengress.slimgress.positioning.AndroidLocationProvider;
+import net.opengress.slimgress.positioning.LocationCallback;
 
 import org.maplibre.android.MapLibre;
 import org.maplibre.android.WellKnownTileServer;
+import org.maplibre.android.camera.CameraPosition;
 import org.maplibre.android.camera.CameraUpdateFactory;
 import org.maplibre.android.geometry.LatLng;
 import org.maplibre.android.geometry.LatLngQuad;
-import org.maplibre.android.location.LocationComponent;
-import org.maplibre.android.location.LocationComponentActivationOptions;
-import org.maplibre.android.location.LocationComponentOptions;
-import org.maplibre.android.location.engine.LocationEngine;
 import org.maplibre.android.location.engine.LocationEngineCallback;
-import org.maplibre.android.location.engine.LocationEngineRequest;
 import org.maplibre.android.location.engine.LocationEngineResult;
-import org.maplibre.android.location.modes.CameraMode;
-import org.maplibre.android.location.modes.RenderMode;
 import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapView;
 import org.maplibre.android.maps.Style;
@@ -205,10 +200,12 @@ public class ScannerView extends Fragment implements LocationListener {
     // device sensor manager
     private int mBearing = 0;
     private AndroidBearingProvider mBearingProvider;
+    private AndroidLocationProvider mLocationProvider;
     private boolean mHaveRotationSensor = false;
 
-    private final int MAP_ROTATION_ARBITRARY = 2;
-    private final int MAP_ROTATION_FLOATING = 3;
+
+    private final int MAP_ROTATION_ARBITRARY = 1;
+    private final int MAP_ROTATION_FLOATING = 2;
     private int CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
 
     private LatLng mLastCursorLocation = null;
@@ -221,10 +218,11 @@ public class ScannerView extends Fragment implements LocationListener {
 //    private Marker mMarkerInfoCard;
     private boolean mIsRotating = false;
     private boolean mIsZooming = false;
-    private GestureDetector gestureDetector;
+    private GestureDetector mGestureDetector;
     private double mPrevAngle = 0;
     private float mStartY = 0;
-    private static final float ZOOM_SENSITIVITY = 0.1f;
+    private final float ZOOM_SENSITIVITY = 0.1f;
+    private boolean mIsClickingCompass = false;
 
 
     private void updateBearing(int bearing) {
@@ -240,11 +238,24 @@ public class ScannerView extends Fragment implements LocationListener {
     }
 
     private void drawPlayerCursor() {
-        if (mMapLibreMap == null || mPlayerCursorImageSource == null) {
+        // hardcoded and possibly incorrect, also not enough teams
+        // int bearingDrawable = mGame.getAgent().getTeam().toString().equals("alien") ? R.drawable.player_cursor_green : R.drawable.player_cursor_blue;
+
+        if (mMapLibreMap == null || mPlayerCursorImageSource == null || mCurrentLocation == null) {
             return;
         }
         LatLngQuad newImagePosition = getRotatedLatLngQuad(mCurrentLocation, 15, 15, mBearing);
         mPlayerCursorImageSource.setCoordinates(newImagePosition);
+
+        if (CURRENT_MAP_ORIENTATION_SCHEME == MAP_ROTATION_ARBITRARY) {
+            mMapLibreMap.easeCamera(CameraUpdateFactory.newLatLngZoom(mCurrentLocation, mMapLibreMap.getCameraPosition().zoom));
+        } else {
+            mMapLibreMap.easeCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
+                    .target(mCurrentLocation)
+                    .zoom(mMapLibreMap.getCameraPosition().zoom)
+                    .bearing((360 - mBearing + 360) % 360)
+                    .build()));
+        }
     }
 
     public void setupPlayerCursor(LatLng initialLocation, int bearing) {
@@ -380,8 +391,36 @@ public class ScannerView extends Fragment implements LocationListener {
         }
 
         mBearingProvider = new AndroidBearingProvider(requireContext());
-        mBearingProvider.startBearingUpdates();
+        mLocationProvider = new AndroidLocationProvider(requireContext());
         mBearingProvider.setBearingCallback(bearing -> updateBearing((int) bearing));
+        mLocationProvider.setLocationCallback(new LocationCallback() {
+            @Override
+            public void onLocationUpdated(Location location) {
+                slurp();
+                mCurrentLocation = new LatLng(location);
+                var loc = new net.opengress.slimgress.api.Common.Location(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+                mApp.getLocationViewModel().setLocationData(loc);
+                mGame.updateLocation(loc);
+                mLastLocationAcquired = new Date();
+                displayMyCurrentLocationOverlay(mCurrentLocation);
+
+                if (!mHaveRotationSensor && location.hasBearing()) {
+                    mBearing = (int) location.getBearing();
+                }
+                drawPlayerCursor();
+            }
+
+            @Override
+            public void onUpdatesStarted() {
+                // FIXME this or OnLocationUpdated should setLocationInaccurate(false) by hitting displayMyLocation
+            }
+
+            @Override
+            public void onUpdatesStopped() {
+                setLocationInaccurate(true);
+            }
+        });
+//        requestLocationUpdates();
 
         mApp.getDeletedEntityGuidsModel().getDeletedEntityGuids().observe(this, this::onReceiveDeletedEntityGuids);
 
@@ -512,6 +551,7 @@ public class ScannerView extends Fragment implements LocationListener {
             mMapLibreMap.setMaxZoomPreference(22);
             mMapLibreMap.setStyle(new Style.Builder().fromUri("https://demotiles.maplibre.org/style.json").withSource(new RasterSource("carto-basemap", new TileSet("tileset", "https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png"))).withLayer(new RasterLayer("carto-basemap-layer", "carto-basemap")), style -> {
 
+                // FIXME zoom, bearing and latlng should be in prefs
                 LatLng initialLocation = new LatLng(-42.673314, 171.025762);
                 setupPlayerCursor(initialLocation, 0);
                 mMapLibreMap.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLocation, 18));
@@ -535,7 +575,7 @@ public class ScannerView extends Fragment implements LocationListener {
                 mSymbolManager.setIconAllowOverlap(true);
 
                 mMapLibreMap.addOnMapLongClickListener(point -> {
-                    if (mIsRotating || mIsZooming) {
+                    if (mIsRotating || mIsZooming || mIsClickingCompass) {
                         return false;
                     }
                     ((ActivityMain) requireActivity()).showFireMenu(point);
@@ -546,12 +586,12 @@ public class ScannerView extends Fragment implements LocationListener {
 
 //                addMarker(mSymbolManager, new LatLng(-42.673314, 171.025762));
 
-                enableLocationComponent(style);
+//                enableLocationComponent(style);
 
             });
         });
 
-        gestureDetector = new GestureDetector(requireContext(), new GestureDetector.SimpleOnGestureListener() {
+        mGestureDetector = new GestureDetector(requireContext(), new GestureDetector.SimpleOnGestureListener() {
 
             @Override
             public boolean onScroll(MotionEvent e1, @NonNull MotionEvent e2, float distanceX, float distanceY) {
@@ -585,8 +625,7 @@ public class ScannerView extends Fragment implements LocationListener {
                         // Update the previous angle for the next scroll event
                         mPrevAngle = currentAngleDeg;
 
-
-                        mMapLibreMap.getLocationComponent().setCameraMode(CameraMode.TRACKING);
+                        CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
 
                         return true;
                     }
@@ -599,17 +638,12 @@ public class ScannerView extends Fragment implements LocationListener {
                 mIsZooming = true;
                 return true;
             }
-
-//            @Override
-//            public boolean onSingleTapUp(@NonNull MotionEvent e) {
-//                return checkAndProcessCompassClick(e);
-//            }
         });
 
 // Set a touch listener on the overlay to intercept gestures
         rootView.findViewById(R.id.gestureOverlay).setOnTouchListener((v, event) -> {
             // need to capture mouse up and mouse down here to check that we can start rotation
-            boolean isGestureHandled = event.getPointerCount() == 1 && gestureDetector.onTouchEvent(event);
+            boolean isGestureHandled = event.getPointerCount() == 1 && mGestureDetector.onTouchEvent(event);
 
             if (event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL) {
                 mPrevAngle = 0;
@@ -651,21 +685,25 @@ public class ScannerView extends Fragment implements LocationListener {
         compassMargins[2] = uiSettings.getCompassMarginRight();
         compassMargins[3] = uiSettings.getCompassMarginBottom();
 
-        int compassSize = Objects.requireNonNull(uiSettings.getCompassImage()).getIntrinsicWidth(); // Adjust size if needed, based on your compass icon size
+        int compassSize = Objects.requireNonNull(uiSettings.getCompassImage()).getIntrinsicWidth();
 
-        // Check if the tap occurred within the compass area (adjust margins based on gravity)
+        // Check if the tap occurred within the compass area
         if (e.getX() > compassMargins[0] && e.getX() < compassMargins[0] + compassSize && e.getY() > compassMargins[1] && e.getY() < compassMargins[1] + compassSize) {
 
-            // Perform your action when the compass is clicked
-            Toast.makeText(requireContext(), "Compass clicked!", Toast.LENGTH_SHORT).show();
-            // cycle through modes, maybe with toast or smart logic idk
-            mMapLibreMap.resetNorth();
-//            mMapLibreMap.getLocationComponent().setCameraMode(CameraMode.TRACKING_COMPASS);
+            mIsClickingCompass = true;
 
-            return true; // Indicates the compass was clicked and handled
+            // could put an icon over the compass to indicate the mode
+            if (CURRENT_MAP_ORIENTATION_SCHEME == MAP_ROTATION_FLOATING) {
+                CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
+                mMapLibreMap.resetNorth();
+            } else {
+                CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_FLOATING;
+            }
+
+            return true;
         }
 
-        return false; // Not a compass click
+        return false;
     }
 
     private void addMarker(SymbolManager symbolManager, LatLng position) {
@@ -688,12 +726,6 @@ public class ScannerView extends Fragment implements LocationListener {
 
 //        Configuration.getInstance().setUserAgentValue("Slimgress/Openflux (OSMDroid)");
 
-//        //On screen compass
-//        CompassOverlay mCompassOverlay = getCompassOverlay(context);
-//        mMapView.getOverlays().add(mCompassOverlay);
-//        MapEventsOverlay overlayEvents = new MapEventsOverlay(mReceive);
-//        mMapView.getOverlays().add(overlayEvents);
-
 //        //the rest of this is restoring the last map location the user looked at
 //        final float zoomLevel = mPrefs.getFloat(PREFS_OSM_ZOOM_LEVEL_DOUBLE, 18);
 //        mMapView.getController().setZoom(zoomLevel);
@@ -713,39 +745,6 @@ public class ScannerView extends Fragment implements LocationListener {
 //        mSonarOverlay.start();
     }
 
-//    private @NonNull CompassOverlay getCompassOverlay(Context context) {
-//
-//        CompassOverlay mCompassOverlay = new CompassOverlay(context, new InternalCompassOrientationProvider(context),
-//                mMapView) {
-//            @Override
-//            public boolean onSingleTapConfirmed(final MotionEvent e, final MapView mapView) {
-//                // FIXME set auto/manual rotation (may need to reset to north)
-//                Point reuse = new Point();
-//                mapView.getProjection().rotateAndScalePoint((int) e.getX(), (int) e.getY(), reuse);
-//                if (reuse.x < mCompassFrameBitmap.getWidth() && reuse.y < mCompassFrameCenterY + mCompassFrameBitmap.getHeight()) {
-//                    if (CURRENT_MAP_ORIENTATION_SCHEME == MAP_ROTATION_FLOATING) {
-//                        CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
-//                        mapView.setMapOrientation(0);
-//                    } else {
-//                        CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_FLOATING;
-//                    }
-//                    return true;
-//                }
-//
-//                return super.onSingleTapConfirmed(e, mapView);
-//            }
-//
-//            @Override
-//            public void draw(Canvas canvas, MapView mapView, boolean shadow) {
-//                // Adjust the compass orientation to always point north
-//                drawCompass(canvas, -mapView.getMapOrientation(), mapView.getProjection().getScreenRect());
-//            }
-//        };
-//        mCompassOverlay.enableCompass();
-//        mCompassOverlay.setCompassCenter(30, 60);
-//        return mCompassOverlay;
-//    }
-
     @Override
     public void onPause() {
         //save the current location
@@ -759,6 +758,7 @@ public class ScannerView extends Fragment implements LocationListener {
         super.onPause();
 
         mBearingProvider.stopBearingUpdates();
+        mLocationProvider.stopLocationUpdates();
     }
 
     @Override
@@ -800,112 +800,15 @@ public class ScannerView extends Fragment implements LocationListener {
             requestLocationUpdates();
         }
 
-        mBearingProvider.startBearingUpdates();
 
         if (getActivity() != null) {
             ((ActivityMain) getActivity()).updateAgent();
         }
     }
 
-    @SuppressLint("MissingPermission")
     public void requestLocationUpdates() {
-        if (mLocationManager == null) {
-            mLocationManager = (LocationManager) mApp.getSystemService(Context.LOCATION_SERVICE);
-            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-            Location location = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if (location != null) {
-                mCurrentLocation = new LatLng(location);
-            }
-        }
-    }
-
-    private boolean isSignificantChange(LatLng newLocation, LatLng oldLocation) {
-        return newLocation.distanceTo(oldLocation) > CURSOR_JITTER_THRESHOLD;
-    }
-
-    private void enableLocationComponent(Style style) {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-
-            // hardcoded and possibly incorrect, also not enough teams
-            int bearingDrawable = mGame.getAgent().getTeam().toString().equals("alien") ? R.drawable.player_cursor_green : R.drawable.player_cursor_blue;
-
-            LocationComponentOptions locationComponentOptions = LocationComponentOptions.builder(requireContext()).foregroundDrawable(R.drawable.invisible).backgroundDrawable(R.drawable.invisible).bearingDrawable(R.drawable.invisible).accuracyColor(0).accuracyAlpha(0.0f).trackingAnimationDurationMultiplier(0).compassAnimationEnabled(false).trackingInitialMoveThreshold(999999999).build();
-
-            // Initialise the LocationComponent
-            LocationComponent locationComponent = mMapLibreMap.getLocationComponent();
-
-            // Activate the LocationComponent with the style
-            LocationComponentActivationOptions locationComponentActivationOptions = LocationComponentActivationOptions.builder(requireContext(), style).locationComponentOptions(locationComponentOptions).useDefaultLocationEngine(true)  // Use the default location engine to receive location updates
-                    .useSpecializedLocationLayer(true).build();
-
-            locationComponent.activateLocationComponent(locationComponentActivationOptions);
-            locationComponent.setLocationComponentEnabled(true);
-            locationComponent.setCameraMode(CameraMode.TRACKING);
-            locationComponent.setRenderMode(RenderMode.COMPASS);
-
-            setupLocationUpdates(locationComponent);
-            mMapLibreMap.addOnCameraIdleListener(() -> {
-                Location currentLocation = locationComponent.getLastKnownLocation();
-                if (currentLocation != null) {
-//                    updateActionRadiusLocation(new LatLng(currentLocation));
-                    if (notBouncing("lockCamera", 250)) {
-
-                        // Only move the camera if it's significantly off from the current location
-                        LatLng currentCameraTarget = mMapLibreMap.getCameraPosition().target;
-
-                        if (currentCameraTarget != null && isSignificantChange(currentCameraTarget, new LatLng(currentLocation))) {
-//                            mMapLibreMap.moveCamera(CameraUpdateFactory.newLatLngZoom(loc, currentCameraPosition.zoom));
-                            locationComponent.setCameraMode(CameraMode.TRACKING);
-                        }
-                    }
-                }
-            });
-        } else {
-            int LOCATION_PERMISSION_REQUEST_CODE = 65534;
-            // Request location permissions if not granted
-            ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
-        }
-    }
-
-    private void setupLocationUpdates(LocationComponent locationComponent) {
-        mLocationEngineCallback = new LocationEngineCallback<>() {
-            @Override
-            public void onSuccess(LocationEngineResult result) {
-                Location location = result.getLastLocation();
-                if (location != null) {
-                    slurp();
-                    mCurrentLocation = new LatLng(location);
-                    var loc = new net.opengress.slimgress.api.Common.Location(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
-                    mApp.getLocationViewModel().setLocationData(loc);
-                    mGame.updateLocation(loc);
-                    mLastLocationAcquired = new Date();
-                    displayMyCurrentLocationOverlay(mCurrentLocation);
-
-                    mBearing = mHaveRotationSensor ? mBearing : (int) location.getBearing();
-                    drawPlayerCursor();
-
-
-//                    mMapLibreMap.moveCamera(CameraUpdateFactory.newLatLng(mCurrentLocation));
-
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Exception exception) {
-                Log.e("LocationUpdate", "Failed to get location", exception);
-                setLocationInaccurate(true);
-            }
-        };
-
-        LocationEngine locationEngine = locationComponent.getLocationEngine();
-        LocationEngineRequest locationEngineRequest = new LocationEngineRequest.Builder(1L).setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY).setMaxWaitTime(5000L).build();
-
-        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            assert locationEngine != null;
-            locationEngine.requestLocationUpdates(locationEngineRequest, mLocationEngineCallback, requireActivity().getMainLooper());
-            locationEngine.getLastLocation(mLocationEngineCallback);
-        }
-
+        setLocationInaccurate(!mLocationProvider.startLocationUpdates());
+        mBearingProvider.startBearingUpdates();
     }
 
     @SuppressLint("ClickableViewAccessibility")
