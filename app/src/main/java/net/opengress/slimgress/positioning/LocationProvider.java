@@ -1,7 +1,7 @@
 package net.opengress.slimgress.positioning;
 
 public interface LocationProvider {
-    void startLocationUpdates();
+    boolean startLocationUpdates();
 
     void stopLocationUpdates();
 
