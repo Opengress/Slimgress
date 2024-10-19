@@ -45,7 +45,6 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -123,7 +122,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class ScannerView extends Fragment implements LocationListener {
+public class ScannerView extends Fragment {
     // ===========================================================
     // Hardcore internal stuff
     // ===========================================================
@@ -239,7 +238,6 @@ public class ScannerView extends Fragment implements LocationListener {
 
     private void drawPlayerCursor() {
         // hardcoded and possibly incorrect, also not enough teams
-        // int bearingDrawable = mGame.getAgent().getTeam().toString().equals("alien") ? R.drawable.player_cursor_green : R.drawable.player_cursor_blue;
 
         if (mMapLibreMap == null || mPlayerCursorImageSource == null || mCurrentLocation == null) {
             return;
@@ -256,6 +254,8 @@ public class ScannerView extends Fragment implements LocationListener {
                     .bearing((360 - mBearing + 360) % 360)
                     .build()));
         }
+
+        updateActionRadiusLocation(mCurrentLocation);
     }
 
     public void setupPlayerCursor(LatLng initialLocation, int bearing) {
@@ -265,9 +265,8 @@ public class ScannerView extends Fragment implements LocationListener {
 
         mPlayerCursorSource = new GeoJsonSource("player-cursor-source", Feature.fromGeometry(Point.fromLngLat(initialLocation.getLongitude(), initialLocation.getLatitude())));
 
-
         LatLngQuad rotatedQuad = getRotatedLatLngQuad(initialLocation, 15, 15, bearing);
-        mPlayerCursorImageSource = new ImageSource("bearing-image-source", rotatedQuad, getBitmapFromDrawable(requireContext(), R.drawable.player_cursor_blue));
+        mPlayerCursorImageSource = new ImageSource("bearing-image-source", rotatedQuad, Objects.requireNonNull(mIcons.get("playercursor")));
 
         mMapLibreMap.getStyle(style -> {
             style.addSource(mPlayerCursorSource);
@@ -336,29 +335,7 @@ public class ScannerView extends Fragment implements LocationListener {
     }
 
 
-    public void onLocationChanged(@NonNull Location location) {
-
-    }
-
-    public void onProviderDisabled(@NonNull String provider) {
-        if (!Objects.equals(provider, "gps")) {
-            return;
-        }
-        setLocationInaccurate(true);
-    }
-
-    public void onProviderEnabled(@NonNull String provider) {
-        // don't register location as no longer inaccurate until new location info arrives
-    }
-
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-        // probably useless, might not be called above android Q
-        // could be interesting for checking that gps fix comes from satellites
-    }
-
-
     private void displayMyCurrentLocationOverlay(LatLng currentLocation) {
-        updateActionRadiusLocation(currentLocation);
 
         long now = System.currentTimeMillis();
 
@@ -377,6 +354,8 @@ public class ScannerView extends Fragment implements LocationListener {
         mLastLocation = currentLocation;
 
         setLocationInaccurate(false);
+
+        drawPlayerCursor();
 
     }
 
@@ -402,12 +381,12 @@ public class ScannerView extends Fragment implements LocationListener {
                 mApp.getLocationViewModel().setLocationData(loc);
                 mGame.updateLocation(loc);
                 mLastLocationAcquired = new Date();
-                displayMyCurrentLocationOverlay(mCurrentLocation);
 
                 if (!mHaveRotationSensor && location.hasBearing()) {
                     mBearing = (int) location.getBearing();
                 }
-                drawPlayerCursor();
+
+                displayMyCurrentLocationOverlay(mCurrentLocation);
             }
 
             @Override
@@ -421,6 +400,7 @@ public class ScannerView extends Fragment implements LocationListener {
             }
         });
 //        requestLocationUpdates();
+        setLocationInaccurate(true);
 
         mApp.getDeletedEntityGuidsModel().getDeletedEntityGuids().observe(this, this::onReceiveDeletedEntityGuids);
 
@@ -576,6 +556,7 @@ public class ScannerView extends Fragment implements LocationListener {
 
                 mMapLibreMap.addOnMapLongClickListener(point -> {
                     if (mIsRotating || mIsZooming || mIsClickingCompass) {
+                        mIsClickingCompass = false;
                         return false;
                     }
                     ((ActivityMain) requireActivity()).showFireMenu(point);
@@ -807,7 +788,9 @@ public class ScannerView extends Fragment implements LocationListener {
     }
 
     public void requestLocationUpdates() {
-        setLocationInaccurate(!mLocationProvider.startLocationUpdates());
+        if (!mLocationProvider.startLocationUpdates()) {
+            setLocationInaccurate(true);
+        }
         mBearingProvider.startBearingUpdates();
     }
 
@@ -826,6 +809,7 @@ public class ScannerView extends Fragment implements LocationListener {
         if (getActivity() == null || getActivity().findViewById(R.id.quickMessage) == null) {
             return;
         }
+
         // FIXME this is fine, but really the game state needs to know about it.
         //  for example, if i'm about to hack a portal and i switch my GPS off, that shouldn't work!
 
