@@ -24,6 +24,8 @@ package net.opengress.slimgress;
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromAsset;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromDrawable;
+import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
+import static net.opengress.slimgress.ViewHelpers.getLevelColor;
 import static net.opengress.slimgress.ViewHelpers.getTintedImage;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
 import static net.opengress.slimgress.api.Item.ItemBase.ItemType.PortalKey;
@@ -44,8 +46,8 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.PointF;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -60,6 +62,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
@@ -72,6 +75,7 @@ import androidx.fragment.app.Fragment;
 import com.google.common.geometry.S2LatLng;
 
 import net.opengress.slimgress.activity.ActivityMain;
+import net.opengress.slimgress.activity.ActivityPortal;
 import net.opengress.slimgress.activity.ActivitySplash;
 import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Game.GameState;
@@ -102,6 +106,7 @@ import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapView;
 import org.maplibre.android.maps.Style;
 import org.maplibre.android.maps.UiSettings;
+import org.maplibre.android.plugins.annotation.Symbol;
 import org.maplibre.android.plugins.annotation.SymbolManager;
 import org.maplibre.android.plugins.annotation.SymbolOptions;
 import org.maplibre.android.style.layers.CircleLayer;
@@ -111,6 +116,7 @@ import org.maplibre.android.style.sources.ImageSource;
 import org.maplibre.android.style.sources.RasterSource;
 import org.maplibre.android.style.sources.TileSet;
 import org.maplibre.geojson.Feature;
+import org.maplibre.geojson.FeatureCollection;
 import org.maplibre.geojson.Point;
 
 import java.util.ArrayList;
@@ -118,6 +124,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -144,6 +151,7 @@ public class ScannerView extends Fragment {
     // ===========================================================
     final int TOP_LEFT_ANGLE = 315;
     final int BOTTOM_RIGHT_ANGLE = 135;
+    final int PORTAL_RADIUS_METRES = 20;
     private MapView mMapView = null;
     private MapLibreMap mMapLibreMap;
     private SymbolManager mSymbolManager;
@@ -193,7 +201,6 @@ public class ScannerView extends Fragment {
     private GeoJsonSource mPlayerCursorSource;
     private CircleLayer mActionRadius;
     private ImageSource mPlayerCursorImageSource;
-    private LocationManager mLocationManager = null;
     private AnimatedCircleOverlay mSonarOverlay;
 
     // device sensor manager
@@ -207,14 +214,10 @@ public class ScannerView extends Fragment {
     private final int MAP_ROTATION_FLOATING = 2;
     private int CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
 
-    private LatLng mLastCursorLocation = null;
-    private float mLastCursorBearing = -1;
-    private final double CURSOR_JITTER_THRESHOLD = 0.05;
-
     // ===========================================================
     // UX/UI Stuff - Events
     // ===========================================================
-//    private Marker mMarkerInfoCard;
+    private Symbol mMarkerInfoCard;
     private boolean mIsRotating = false;
     private boolean mIsZooming = false;
     private GestureDetector mGestureDetector;
@@ -222,6 +225,7 @@ public class ScannerView extends Fragment {
     private float mStartY = 0;
     private final float ZOOM_SENSITIVITY = 0.1f;
     private boolean mIsClickingCompass = false;
+    GeoJsonSource mPortalGeoJsonSource;
 
 
     private void updateBearing(int bearing) {
@@ -242,7 +246,7 @@ public class ScannerView extends Fragment {
         if (mMapLibreMap == null || mPlayerCursorImageSource == null || mCurrentLocation == null) {
             return;
         }
-        LatLngQuad newImagePosition = getRotatedLatLngQuad(mCurrentLocation, 15, 15, mBearing);
+        LatLngQuad newImagePosition = getRotatedLatLngQuad(mCurrentLocation, 25, 25, mBearing);
         mPlayerCursorImageSource.setCoordinates(newImagePosition);
 
         if (CURRENT_MAP_ORIENTATION_SCHEME == MAP_ROTATION_ARBITRARY) {
@@ -265,7 +269,7 @@ public class ScannerView extends Fragment {
 
         mPlayerCursorSource = new GeoJsonSource("player-cursor-source", Feature.fromGeometry(Point.fromLngLat(initialLocation.getLongitude(), initialLocation.getLatitude())));
 
-        LatLngQuad rotatedQuad = getRotatedLatLngQuad(initialLocation, 15, 15, bearing);
+        LatLngQuad rotatedQuad = getRotatedLatLngQuad(initialLocation, 25, 25, bearing);
         mPlayerCursorImageSource = new ImageSource("bearing-image-source", rotatedQuad, Objects.requireNonNull(mIcons.get("playercursor")));
 
         mMapLibreMap.getStyle(style -> {
@@ -529,6 +533,7 @@ public class ScannerView extends Fragment {
             mMapLibreMap = mapLibreMap;
             mMapLibreMap.setMinZoomPreference(16);
             mMapLibreMap.setMaxZoomPreference(22);
+            // FIXME wrong layer name or layer needs to be dynamic
             mMapLibreMap.setStyle(new Style.Builder().fromUri("https://demotiles.maplibre.org/style.json").withSource(new RasterSource("carto-basemap", new TileSet("tileset", "https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png"))).withLayer(new RasterLayer("carto-basemap-layer", "carto-basemap")), style -> {
 
                 // FIXME zoom, bearing and latlng should be in prefs
@@ -550,10 +555,6 @@ public class ScannerView extends Fragment {
                 mMapLibreMap.getUiSettings().setScaleVelocityAnimationEnabled(false);
                 mMapLibreMap.getUiSettings().setFlingVelocityAnimationEnabled(false);
 
-                mSymbolManager = new SymbolManager(mMapView, mMapLibreMap, style);
-
-                mSymbolManager.setIconAllowOverlap(true);
-
                 mMapLibreMap.addOnMapLongClickListener(point -> {
                     if (mIsRotating || mIsZooming || mIsClickingCompass) {
                         mIsClickingCompass = false;
@@ -563,12 +564,33 @@ public class ScannerView extends Fragment {
                     return true;
                 });
 
+                mMapLibreMap.addOnMapClickListener(this::onMapClick);
+
+
+                mPortalGeoJsonSource = new GeoJsonSource("portal-data-layer");
+                style.addSource(mPortalGeoJsonSource);
+
+                CircleLayer circleLayer = new CircleLayer("portal-hit-layer", "portal-data-layer");
+                circleLayer.setProperties(
+                        circleRadius(30f),
+                        circleColor("rgba(255, 0, 0, 0)")
+                );
+                style.addLayer(circleLayer);
+
 //                style.addImage("my-marker-image", BitmapFactory.decodeResource(getResources(), R.drawable.c2));
 
 //                addMarker(mSymbolManager, new LatLng(-42.673314, 171.025762));
 
 //                enableLocationComponent(style);
 
+
+                mSymbolManager = new SymbolManager(mMapView, mMapLibreMap, style);
+                mSymbolManager.setIconAllowOverlap(true);
+
+                mMapLibreMap.addOnCameraMoveListener(() -> {
+                    float radiusInPixels = metresToPixels(PORTAL_RADIUS_METRES / 1.5, Objects.requireNonNull(mMapLibreMap.getCameraPosition().target));
+                    circleLayer.setProperties(circleRadius(radiusInPixels));
+                });
             });
         });
 
@@ -655,6 +677,10 @@ public class ScannerView extends Fragment {
         });
 
         return rootView;
+    }
+
+    private void addDummyFeatures(List<Feature> features) {
+        mPortalGeoJsonSource.setGeoJson(FeatureCollection.fromFeatures(features));
     }
 
     private boolean checkAndProcessCompassClick(@NonNull MotionEvent e) {
@@ -1004,6 +1030,12 @@ public class ScannerView extends Fragment {
     }
 
     public void updateScreen(Handler uiHandler) {
+        if (mMapLibreMap == null || mMapLibreMap.getStyle() == null) {
+            return;
+        }
+
+        List<Feature> features = new ArrayList<>();
+
         new Thread(() -> {
             // draw xm particles
             drawXMParticles();
@@ -1017,7 +1049,11 @@ public class ScannerView extends Fragment {
 
                 uiHandler.post(() -> {
                     if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
-                        drawPortal((GameEntityPortal) entity);
+                        GameEntityPortal portal = (GameEntityPortal) entity;
+                        drawPortal(portal);
+                        Feature feature = Feature.fromGeometry(Point.fromLngLat(portal.getPortalLocation().getLongitudeDegrees(), portal.getPortalLocation().getLatitudeDegrees()));
+                        feature.addStringProperty("guid", portal.getEntityGuid());
+                        features.add(feature);
                     } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
                         drawLink((GameEntityLink) entity);
                     } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
@@ -1026,10 +1062,15 @@ public class ScannerView extends Fragment {
                         drawItem((GameEntityItem) entity);
                     }
                 });
+
             }
+
+            uiHandler.post(() ->
+                    addDummyFeatures(features));
 
             mLastScan = System.currentTimeMillis() + mMinUpdateIntervalMS;
         }).start();
+
     }
 
     private void drawXMParticles() {
@@ -1112,8 +1153,8 @@ public class ScannerView extends Fragment {
                 // it's quite possible that resonators can live in a separate Hash of markers,
                 //   as long as the guids are stored with the portal info
                 Bitmap portalIcon = mIcons.get(team.toString());
-                net.opengress.slimgress.api.Common.Location topLeft = location.destinationPoint(20, TOP_LEFT_ANGLE);
-                net.opengress.slimgress.api.Common.Location bottomRight = location.destinationPoint(20, BOTTOM_RIGHT_ANGLE);
+                net.opengress.slimgress.api.Common.Location topLeft = location.destinationPoint(PORTAL_RADIUS_METRES, TOP_LEFT_ANGLE);
+                net.opengress.slimgress.api.Common.Location bottomRight = location.destinationPoint(PORTAL_RADIUS_METRES, BOTTOM_RIGHT_ANGLE);
 
                 assert portalIcon != null;
                 ImageSource imageSource = new ImageSource(sourceName, new LatLngQuad(topLeft.getLatLng(), new LatLng(topLeft.getLatitudeDegrees(), bottomRight.getLongitudeDegrees()), bottomRight.getLatLng(), new LatLng(bottomRight.getLatitudeDegrees(), topLeft.getLongitudeDegrees())), portalIcon // this could be a drawable id
@@ -1123,29 +1164,6 @@ public class ScannerView extends Fragment {
                     style.addSource(imageSource);
                     style.addLayer(new RasterLayer(layerName, sourceName));
                 });
-
-//                GroundOverlay marker = new GroundOverlay() {
-//                    public boolean touchedBy(@NonNull final MotionEvent event) {
-//                        GeoPoint tappedGeoPoint = (GeoPoint) mMapView.getProjection().fromPixels((int) event.getX(), (int) event.getY());
-//                        return getBounds().contains(tappedGeoPoint);
-//                    }
-//
-//                    @Override
-//                    public boolean onSingleTapConfirmed(final MotionEvent e, final MapView mapView) {
-//                        if (activity.isSelectingTargetPortal() && touchedBy(e)) {
-//                            activity.setTargetPortal(portal.getEntityGuid());
-//                            showInfoCard(portal);
-//                            return true;
-//                        }
-//                        if (touchedBy(e)) {
-//                            Intent myIntent = new Intent(getContext(), ActivityPortal.class);
-//                            mGame.setCurrentPortal(portal);
-//                            mPortalActivityResultLauncher.launch(myIntent);
-//                            return true;
-//                        }
-//                        return false;
-//                    }
-//                };
 
                 for (var reso : portal.getPortalResonators()) {
                     if (reso != null) {
@@ -1158,38 +1176,41 @@ public class ScannerView extends Fragment {
     }
 
     public void removeInfoCard() {
-//        if (mMarkerInfoCard != null) {
-//            mMapView.getOverlays().remove(mMarkerInfoCard);
-//            mMarkerInfoCard = null;
-//        }
+        // Remove the info card symbol if it exists
+        if (mMarkerInfoCard != null) {
+            mSymbolManager.delete(mMarkerInfoCard);
+            mMarkerInfoCard = null;
+        }
+
+        // Remove the image from the map style
+        Objects.requireNonNull(mMapLibreMap.getStyle()).removeImage("info_card");
     }
 
     @SuppressLint("InflateParams")
     private void showInfoCard(GameEntityPortal portal) {
-//        // TODO theoretically I can update this as the user moves, but for now I do not.
-//        removeInfoCard();
-//        View markerView = LayoutInflater.from(getContext()).inflate(R.layout.marker_info_card, null);
-//        TextView textView1 = markerView.findViewById(R.id.marker_info_card_portal_level);
-//        TextView textView2 = markerView.findViewById(R.id.marker_info_card_portal_team);
-//        TextView textView3 = markerView.findViewById(R.id.marker_info_card_portal_title);
-//        TextView textview4 = markerView.findViewById(R.id.marker_info_card_portal_distance);
-//
-//        textView1.setText(String.format(Locale.getDefault(), "L%d ", portal.getPortalLevel()));
-//        textView1.setTextColor(0xFF000000 + getColorFromResources(getResources(), getLevelColor(portal.getPortalLevel())));
-//        textView2.setText(R.string.portal);
-//        textView2.setTextColor(0xFF000000 + Objects.requireNonNull(mGame.getKnobs().getTeamKnobs().getTeams().get(portal.getPortalTeam().toString())).getColour());
-//        textView3.setText(portal.getPortalTitle());
-//        int dist = (int) mGame.getLocation().getLatLng().distanceToAsDouble(portal.getPortalLocation().getLatLng());
-//        textview4.setText(String.format(Locale.getDefault(), "Distance: %dm", dist));
-//
-//
-//        Marker marker = new Marker(mMapView);
-//        marker.setOnMarkerClickListener((marker1, mapView) -> false);
-//        marker.setPosition(portal.getPortalLocation().getLatLng());
-//        marker.setIcon(new BitmapDrawable(getResources(), createDrawableFromView(requireContext(), markerView)));
-//        mMarkerInfoCard = marker;
-//        mMapView.getOverlays().add(marker);
-////        mMap.invalidate();
+        // TODO theoretically I can update this as the user moves, but for now I do not.
+        removeInfoCard();
+        View markerView = LayoutInflater.from(getContext()).inflate(R.layout.marker_info_card, null);
+        TextView textView1 = markerView.findViewById(R.id.marker_info_card_portal_level);
+        TextView textView2 = markerView.findViewById(R.id.marker_info_card_portal_team);
+        TextView textView3 = markerView.findViewById(R.id.marker_info_card_portal_title);
+        TextView textview4 = markerView.findViewById(R.id.marker_info_card_portal_distance);
+
+        textView1.setText(String.format(Locale.getDefault(), "L%d ", portal.getPortalLevel()));
+        textView1.setTextColor(0xFF000000 + getColorFromResources(getResources(), getLevelColor(portal.getPortalLevel())));
+        textView2.setText(R.string.portal);
+        textView2.setTextColor(0xFF000000 + Objects.requireNonNull(mGame.getKnobs().getTeamKnobs().getTeams().get(portal.getPortalTeam().toString())).getColour());
+        textView3.setText(portal.getPortalTitle());
+        int dist = (int) mCurrentLocation.distanceTo(portal.getPortalLocation().getLatLng());
+        textview4.setText(String.format(Locale.getDefault(), "Distance: %dm", dist));
+
+
+        Bitmap bitmap = createDrawableFromView(requireContext(), markerView);
+        Objects.requireNonNull(mMapLibreMap.getStyle()).addImage("info_card", bitmap);
+        mMarkerInfoCard = mSymbolManager.create(new SymbolOptions()
+                .withLatLng(new LatLng(portal.getPortalLocation().getLatitudeDegrees(), portal.getPortalLocation().getLongitudeDegrees()))
+                .withIconImage("info_card")
+                .withIconSize(1.0f));
     }
 
     private void drawResonatorForPortal(GameEntityPortal portal, GameEntityPortal.LinkedResonator reso) {
@@ -1632,4 +1653,80 @@ public class ScannerView extends Fragment {
 
         return bitmap;
     }
+
+    private boolean onMapClick(LatLng point) {
+        if (mIsZooming) {
+            return false;
+        }
+        PointF screenPoint = mMapLibreMap.getProjection().toScreenLocation(point);
+        List<Feature> things = mMapLibreMap.queryRenderedFeatures(screenPoint);
+        List<GameEntityBase> hitList = new ArrayList<>();
+        for (Feature thing : things) {
+            if (thing.hasProperty("guid")) {
+                String guid = thing.getStringProperty("guid");
+                GameEntityBase item = mGame.getWorld().getGameEntities().get(guid);
+                if (item != null) {
+                    hitList.add(item);
+                }
+            }
+        }
+        switch (hitList.size()) {
+            case 0:
+                break;
+            case 1:
+                interactWithEntity(hitList.get(0));
+                break;
+            default:
+                showGameEntityDialog(hitList);
+        }
+
+        return true;
+    }
+
+    private String getEntityDescription(GameEntityBase entity) {
+        String desc;
+        switch (entity.getGameEntityType()) {
+            case Portal -> desc = "Portal: " + ((GameEntityPortal) entity).getPortalTitle();
+            case Item -> desc = ((GameEntityItem) entity).getItem().getUsefulName();
+            default -> desc = "Mysterious Object";
+        }
+        return desc;
+    }
+
+    private void showGameEntityDialog(List<GameEntityBase> gameEntities) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Select an Item");
+
+        // Create a list of names to display in the dialog
+        String[] entityNames = new String[gameEntities.size()];
+        for (int i = 0; i < gameEntities.size(); i++) {
+            entityNames[i] = getEntityDescription(gameEntities.get(i));
+        }
+
+        builder.setItems(entityNames, (dialog, which) -> {
+            // Handle item selection
+            GameEntityBase selectedEntity = gameEntities.get(which);
+            interactWithEntity(selectedEntity);
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void interactWithEntity(GameEntityBase entity) {
+        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
+            ActivityMain activity = (ActivityMain) requireActivity();
+            if (activity.isSelectingTargetPortal()) {
+                activity.setTargetPortal(entity.getEntityGuid());
+                showInfoCard((GameEntityPortal) entity);
+                return;
+            }
+            Intent myIntent = new Intent(getContext(), ActivityPortal.class);
+            mGame.setCurrentPortal((GameEntityPortal) entity);
+            mPortalActivityResultLauncher.launch(myIntent);
+            return;
+        }
+        Toast.makeText(requireContext(), "Interacting with: " + getEntityDescription(entity), Toast.LENGTH_SHORT).show();
+    }
+
 }
