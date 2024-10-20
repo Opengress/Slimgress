@@ -260,6 +260,10 @@ public class GameState {
                 String lastQueried = "0";
                 if (mCellUpdateTimeStamps.containsKey(cellId)) {
                     lastQueried = mCellUpdateTimeStamps.get(cellId);
+                    mCellUpdateTimeStamps.get(cellId);
+                    if (lastQueried == null || lastQueried.isEmpty()) {
+                        lastQueried = "0";
+                    }
                 }
                 dates.put(Long.parseLong(lastQueried));
             }

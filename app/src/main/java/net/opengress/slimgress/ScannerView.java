@@ -106,10 +106,13 @@ import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapView;
 import org.maplibre.android.maps.Style;
 import org.maplibre.android.maps.UiSettings;
+import org.maplibre.android.plugins.annotation.Line;
+import org.maplibre.android.plugins.annotation.LineManager;
 import org.maplibre.android.plugins.annotation.Symbol;
 import org.maplibre.android.plugins.annotation.SymbolManager;
 import org.maplibre.android.plugins.annotation.SymbolOptions;
 import org.maplibre.android.style.layers.CircleLayer;
+import org.maplibre.android.style.layers.PropertyFactory;
 import org.maplibre.android.style.layers.RasterLayer;
 import org.maplibre.android.style.sources.GeoJsonSource;
 import org.maplibre.android.style.sources.ImageSource;
@@ -155,6 +158,7 @@ public class ScannerView extends Fragment {
     private MapView mMapView = null;
     private MapLibreMap mMapLibreMap;
     private SymbolManager mSymbolManager;
+    private LineManager mLineManager;
     private final HashMap<String, Bitmap> mIcons = new HashMap<>();
     //    private final HashMap<String, GroundOverlay> mPortalMarkers = new HashMap<>();
     /*
@@ -169,7 +173,7 @@ public class ScannerView extends Fragment {
     if we do it the first way, we need to ensure that the reso always gets deleted on upgrade or other-player-attack
      */
     // for getting rid of the resonators when we get rid of the portals
-//    private final HashMap<String, HashMap<Integer, Pair<MarkerOptions, Line>>> mResonatorMarkers = new HashMap<>();
+    private final HashMap<String, HashMap<Integer, Pair<Symbol, Line>>> mResonatorMarkers = new HashMap<>();
     // for finding the portal marker when we delete it by Guid
     private final HashMap<String, Pair<String, Integer>> mResonatorToPortalSlotLookup = new HashMap<>();
 //    private final HashMap<Long, GroundOverlay> mXMMarkers = new HashMap<>();
@@ -763,15 +767,14 @@ public class ScannerView extends Fragment {
 
         mMapView.onPause();
         super.onPause();
-
-        mBearingProvider.stopBearingUpdates();
-        mLocationProvider.stopLocationUpdates();
     }
 
     @Override
     public void onDestroyView() {
         mMapView.onDestroy();
         super.onDestroyView();
+        mBearingProvider.stopBearingUpdates();
+        mLocationProvider.stopLocationUpdates();
     }
 
     @Override
@@ -1214,56 +1217,74 @@ public class ScannerView extends Fragment {
     }
 
     private void drawResonatorForPortal(GameEntityPortal portal, GameEntityPortal.LinkedResonator reso) {
-//        if (portal == null || reso == null) {
-//            Log.e("SCANNER", "Invalid input parameters");
-//            return;
-//        }
-//
-//        final double LINKED_RESO_SCALE = 1.75;
-//
-//        // Remove existing marker if present
-//        var m = mResonatorMarkers.get(portal.getEntityGuid());
-//        if (m != null && m.containsKey(reso.slot)) {
-//            Symbol resoSymbol = Objects.requireNonNull(m.get(reso.slot)).first;
-//            Line resoLine = Objects.requireNonNull(m.get(reso.slot)).second;
-//            if (resoSymbol != null) symbolManager.delete(resoSymbol);
-//            if (resoLine != null) lineManager.delete(resoLine);
-//            m.remove(reso.slot);
+        if (portal == null || reso == null) {
+            Log.e("SCANNER", "Invalid input parameters");
+            return;
+        }
+
+
+        final double LINKED_RESO_SCALE = 1.75;
+        Style style = mMapLibreMap.getStyle();
+        assert style != null;
+        assert mIcons != null;
+
+        float saturation = (float) reso.energyTotal / (float) reso.getMaxEnergy();
+        saturation = -1 * (1 - saturation);
+
+        if (mResonatorToPortalSlotLookup.containsKey(reso.id)) {
+            Objects.requireNonNull(style.getLayer("reso-layer-" + reso.id)).setProperties(PropertyFactory.rasterContrast(saturation));
+            return;
+        }
+
+
+        // Remove existing marker if present
+        var m = mResonatorMarkers.get(portal.getEntityGuid());
+        if (m != null && m.containsKey(reso.slot)) {
+            Symbol resoSymbol = Objects.requireNonNull(m.get(reso.slot)).first;
+            Line resoLine = Objects.requireNonNull(m.get(reso.slot)).second;
+            if (resoSymbol != null) {
+                mSymbolManager.delete(resoSymbol);
+            }
+            if (resoLine != null) {
+                mLineManager.delete(resoLine);
+            }
+            m.remove(reso.slot);
+        }
+//        if (mResonatorToPortalSlotLookup.containsKey(reso.id)) {
 //            mResonatorToPortalSlotLookup.remove(reso.id);
+//            style.removeLayer("reso-layer-" + reso.id);
+//            style.removeSource("reso-source-" + reso.id);
 //        }
-//
-//        // Update markers map
-//        HashMap<Integer, Pair<GroundOverlay, Polyline>> markers;
-//        if (mResonatorMarkers.containsKey(portal.getEntityGuid())) {
-//            markers = mResonatorMarkers.get(portal.getEntityGuid());
-//        } else {
-//            markers = new HashMap<>();
-//            mResonatorMarkers.put(portal.getEntityGuid(), markers);
-//        }
-//        assert markers != null;
-//
-//        // Calculate positions
-//        S2LatLng resoPos = reso.getResoCoordinates();
-//
-//        Objects.requireNonNull(mMapLibreMap.getStyle()).addImage("reso-icon-" + reso.id, BitmapFactory.decodeResource(getResources(), getImageForResoLevel(reso.level)));
-//
-//        // Create the ImageLayer
-//        RasterLayer portalImageLayer = new RasterLayer("reso-layer-" + reso.id, "reso-icon-" + reso.id)
-//                .withProperties(
-//                        PropertyFactory.rasterOpacity(1.0f)  // Set opacity
-//                );
-//
-//        // Position the image using its coordinates (longitude, latitude)
-//        LatLngBounds bounds = new LatLngBounds.Builder()
-//                .include(new LatLng(resoPos.latDegrees() - LINKED_RESO_SCALE, resoPos.lngDegrees() - LINKED_RESO_SCALE))
-//                .include(new LatLng(resoPos.latDegrees() + LINKED_RESO_SCALE, resoPos.lngDegrees() + LINKED_RESO_SCALE))
-//                .build();
-//
-//        RasterSource rasterSource = new RasterSource("reso-source-" + reso.id, bounds, 256);
-//        mMapLibreMap.getStyle().addSource(rasterSource);
-//        mMapLibreMap.getStyle().addLayer(portalImageLayer);
-//
-//        // Connect reso to portal with line
+
+        // Update markers map
+        HashMap<Integer, Pair<Symbol, Line>> markers;
+        if (mResonatorMarkers.containsKey(portal.getEntityGuid())) {
+            markers = mResonatorMarkers.get(portal.getEntityGuid());
+        } else {
+            markers = new HashMap<>();
+            mResonatorMarkers.put(portal.getEntityGuid(), markers);
+        }
+        assert markers != null;
+
+        // Calculate positions
+        S2LatLng resoPos = reso.getResoCoordinates();
+
+        style.addImage("reso-icon-" + reso.level, mIcons.get("r" + reso.level));
+
+        // Create the ImageLayer
+        RasterLayer portalImageLayer = new RasterLayer("reso-layer-" + reso.id, "reso-source-" + reso.id)
+                .withProperties(
+                        PropertyFactory.rasterContrast(saturation)
+                );
+
+        // Position the image using its coordinates (longitude, latitude)
+        LatLngQuad quad = getRotatedLatLngQuad(new LatLng(resoPos.latDegrees(), resoPos.lngDegrees()), LINKED_RESO_SCALE, LINKED_RESO_SCALE, 0);
+
+        ImageSource rasterSource = new ImageSource("reso-source-" + reso.id, quad, mIcons.get("r" + reso.level));
+        style.addSource(rasterSource);
+        style.addLayer(portalImageLayer);
+
+        // Connect reso to portal with line
 //        Polyline line = getPolyline(mMapView);
 //        line.setPoints(Arrays.asList(portal.getPortalLocation().getLatLng(), resoPos));
 //        Paint paint = new Paint();
@@ -1273,11 +1294,11 @@ public class ScannerView extends Fragment {
 //            paint.setBlendMode(BlendMode.HARD_LIGHT);
 //        }
 //        line.getOutlinePaint().set(paint);
-//
+
 //        mMapView.getOverlays().add(line);
 //        mMapView.getOverlays().add(marker);
 //        markers.put(reso.slot, new Pair<>(marker, line));
-//        mResonatorToPortalSlotLookup.put(reso.id, new Pair<>(portal.getEntityGuid(), reso.slot));
+        mResonatorToPortalSlotLookup.put(reso.id, new Pair<>(portal.getEntityGuid(), reso.slot));
     }
 
 
