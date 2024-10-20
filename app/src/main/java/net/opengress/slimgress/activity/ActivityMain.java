@@ -30,6 +30,7 @@ import static net.opengress.slimgress.ViewHelpers.putItemInMap;
 import static net.opengress.slimgress.ViewHelpers.saveScreenshot;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
+import static org.maplibre.android.style.layers.PropertyFactory.visibility;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
@@ -91,6 +92,10 @@ import net.opengress.slimgress.dialog.DialogInfo;
 import net.opengress.slimgress.dialog.DialogLevelUp;
 
 import org.maplibre.android.geometry.LatLng;
+import org.maplibre.android.maps.MapView;
+import org.maplibre.android.maps.Style;
+import org.maplibre.android.style.layers.Property;
+import org.maplibre.android.style.layers.RasterLayer;
 
 import java.io.File;
 import java.io.Serializable;
@@ -713,22 +718,26 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     private void flashMap() {
-//        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
-//        // Invert colors
-//        assert scanner != null;
-//        scanner.getMap().getOverlayManager().getTilesOverlay().setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(new float[]{
-//                -1, 0, 0, 0, 255,
-//                0, -1, 0, 0, 255,
-//                0, 0, -1, 0, 255,
-//                0, 0, 0, 1, 0
-//        })));
-////        scanner.getMap().invalidate();
-//
-//        // Revert colors after a short delay
-//        new Handler().postDelayed(() -> {
-//            scanner.getMap().getOverlayManager().getTilesOverlay().setColorFilter(null);
-////            scanner.getMap().invalidate();
-//        }, 444);
+        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
+        assert scanner != null;
+        MapView mapView = scanner.getMap();
+        mapView.getMapAsync(maplibreMap -> {
+            Style style = maplibreMap.getStyle();
+            if (style != null) {
+                // FIXME wrong layer name or it might be dynamic
+                RasterLayer rasterLayer = style.getLayerAs("carto-basemap-layer");
+                if (rasterLayer != null) {
+                    rasterLayer.setProperties(visibility(Property.NONE));
+                    mapView.invalidate();
+
+                    // Revert the color change after a short delay
+                    new Handler().postDelayed(() -> {
+                        rasterLayer.setProperties(visibility(Property.VISIBLE));
+                        mapView.invalidate();
+                    }, 444);
+                }
+            }
+        });
     }
 
     private boolean fireBurster(int level, ItemBase.ItemType type) {
@@ -861,6 +870,9 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 dialog.setMessage(error).setDismissDelay(1500).show();
             } else {
                 flashMap();
+                ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
+                assert scanner != null;
+                scanner.removeInfoCard();
             }
             return false;
         }));
@@ -871,12 +883,12 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     public void setTargetPortal(String entityGuid) {
-//        GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(entityGuid);
-//        assert portal != null;
-//        int dist = (int) mGame.getLocation().getLatLng().distanceToAsDouble(portal.getPortalLocation().getLatLng());
-//        mSelectTargetText.setText(dist < 41 ? R.string.flipcard_confirm_selection : R.string.flipcard_select_target);
-//        mSelectedPortalGuid = entityGuid;
-//        mConfirmButton.setEnabled(dist < 41);
+        GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(entityGuid);
+        assert portal != null;
+        int dist = (int) mGame.getLocation().getLatLng().distanceTo(portal.getPortalLocation().getLatLng());
+        mSelectTargetText.setText(dist < 41 ? R.string.flipcard_confirm_selection : R.string.flipcard_select_target);
+        mSelectedPortalGuid = entityGuid;
+        mConfirmButton.setEnabled(dist < 41);
     }
 
     @Override
