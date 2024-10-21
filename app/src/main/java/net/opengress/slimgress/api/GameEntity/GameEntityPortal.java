@@ -21,6 +21,7 @@
 
 package net.opengress.slimgress.api.GameEntity;
 
+import static com.google.common.geometry.S2LatLng.EARTH_RADIUS_METERS;
 import static net.opengress.slimgress.ViewHelpers.getBearingFromSlot;
 
 import com.google.common.geometry.S2LatLng;
@@ -33,6 +34,7 @@ import net.opengress.slimgress.api.Knobs.PortalKnobs;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.maplibre.android.geometry.LatLng;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -66,7 +68,14 @@ public class GameEntityPortal extends GameEntityBase
             return mPortalKnobs.getResonatorEnergyForLevel(level);
         }
 
-        public S2LatLng getResoCoordinates() {
+        public LatLng getResoLatLng() {
+            int angle = getBearingFromSlot(slot);
+            net.opengress.slimgress.api.Common.Location location = getPortalLocation();
+            LatLng portalLatLng = location.getLatLng();
+            return destinationPoint(portalLatLng, distanceToPortal, angle);
+        }
+
+        public S2LatLng getResoS2LatLng() {
             int angle = getBearingFromSlot(slot);
             net.opengress.slimgress.api.Common.Location location = getPortalLocation();
             S2LatLng portalS2LatLng = location.getS2LatLng();
@@ -74,10 +83,29 @@ public class GameEntityPortal extends GameEntityBase
         }
 
         // Helper method to calculate the destination point using S2LatLng directly
-        public S2LatLng destinationPointS2(S2LatLng start, double distance, double bearing) {
-            double radiusEarthMeters = 6371009;  // Earth's radius in meters
+        public LatLng destinationPoint(LatLng start, double distance, double bearing) {
+            double distanceRadians = distance / EARTH_RADIUS_METERS;  // Convert distance from meters to radians
+            double bearingRadians = Math.toRadians(bearing);  // Convert bearing to radians
 
-            double distanceRadians = distance / radiusEarthMeters;  // Convert distance from meters to radians
+            // Spherical trigonometry to calculate the new point
+            double lat1 = Math.toRadians(start.getLatitude());
+            double lon1 = Math.toRadians(start.getLongitude());
+
+            // Calculate new latitude
+            double newLat = Math.asin(Math.sin(lat1) * Math.cos(distanceRadians) +
+                    Math.cos(lat1) * Math.sin(distanceRadians) * Math.cos(bearingRadians));
+
+            // Calculate new longitude
+            double newLon = lon1 + Math.atan2(Math.sin(bearingRadians) * Math.sin(distanceRadians) * Math.cos(lat1),
+                    Math.cos(distanceRadians) - Math.sin(lat1) * Math.sin(newLat));
+
+            // Return the result as an S2LatLng
+            return new LatLng(Math.toDegrees(newLat), Math.toDegrees(newLon));
+        }
+
+        // Helper method to calculate the destination point using S2LatLng directly
+        public S2LatLng destinationPointS2(S2LatLng start, double distance, double bearing) {
+            double distanceRadians = distance / EARTH_RADIUS_METERS;  // Convert distance from meters to radians
             double bearingRadians = Math.toRadians(bearing);  // Convert bearing to radians
 
             // Spherical trigonometry to calculate the new point

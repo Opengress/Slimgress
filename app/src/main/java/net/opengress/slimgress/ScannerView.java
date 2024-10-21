@@ -34,6 +34,7 @@ import static org.maplibre.android.style.layers.PropertyFactory.circleColor;
 import static org.maplibre.android.style.layers.PropertyFactory.circleRadius;
 import static org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor;
 import static org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth;
+import static org.maplibre.android.utils.ColorUtils.colorToRgbaString;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -108,6 +109,7 @@ import org.maplibre.android.maps.Style;
 import org.maplibre.android.maps.UiSettings;
 import org.maplibre.android.plugins.annotation.Line;
 import org.maplibre.android.plugins.annotation.LineManager;
+import org.maplibre.android.plugins.annotation.LineOptions;
 import org.maplibre.android.plugins.annotation.Symbol;
 import org.maplibre.android.plugins.annotation.SymbolManager;
 import org.maplibre.android.plugins.annotation.SymbolOptions;
@@ -123,6 +125,7 @@ import org.maplibre.geojson.FeatureCollection;
 import org.maplibre.geojson.Point;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -590,6 +593,7 @@ public class ScannerView extends Fragment {
 
                 mSymbolManager = new SymbolManager(mMapView, mMapLibreMap, style);
                 mSymbolManager.setIconAllowOverlap(true);
+                mLineManager = new LineManager(mMapView, mapLibreMap, style);
 
                 mMapLibreMap.addOnCameraMoveListener(() -> {
                     float radiusInPixels = metresToPixels(PORTAL_RADIUS_METRES / 1.5, Objects.requireNonNull(mMapLibreMap.getCameraPosition().target));
@@ -1229,7 +1233,7 @@ public class ScannerView extends Fragment {
         assert mIcons != null;
 
         float saturation = (float) reso.energyTotal / (float) reso.getMaxEnergy();
-        saturation = -1 * (1 - saturation);
+        saturation = -0.85f * (0.95f - saturation);
 
         if (mResonatorToPortalSlotLookup.containsKey(reso.id)) {
             Objects.requireNonNull(style.getLayer("reso-layer-" + reso.id)).setProperties(PropertyFactory.rasterContrast(saturation));
@@ -1267,7 +1271,7 @@ public class ScannerView extends Fragment {
         assert markers != null;
 
         // Calculate positions
-        S2LatLng resoPos = reso.getResoCoordinates();
+        LatLng resoPos = reso.getResoLatLng();
 
         style.addImage("reso-icon-" + reso.level, mIcons.get("r" + reso.level));
 
@@ -1278,26 +1282,25 @@ public class ScannerView extends Fragment {
                 );
 
         // Position the image using its coordinates (longitude, latitude)
-        LatLngQuad quad = getRotatedLatLngQuad(new LatLng(resoPos.latDegrees(), resoPos.lngDegrees()), LINKED_RESO_SCALE, LINKED_RESO_SCALE, 0);
+        LatLngQuad quad = getRotatedLatLngQuad(new LatLng(resoPos.getLatitude(), resoPos.getLongitude()), LINKED_RESO_SCALE, LINKED_RESO_SCALE, 0);
 
         ImageSource rasterSource = new ImageSource("reso-source-" + reso.id, quad, mIcons.get("r" + reso.level));
         style.addSource(rasterSource);
         style.addLayer(portalImageLayer);
 
-        // Connect reso to portal with line
-//        Polyline line = getPolyline(mMapView);
-//        line.setPoints(Arrays.asList(portal.getPortalLocation().getLatLng(), resoPos));
-//        Paint paint = new Paint();
-//        paint.setColor(getColorFromResources(getResources(), getLevelColor(reso.level)));
-//        paint.setStrokeWidth(0.33f);
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-//            paint.setBlendMode(BlendMode.HARD_LIGHT);
-//        }
-//        line.getOutlinePaint().set(paint);
 
-//        mMapView.getOverlays().add(line);
-//        mMapView.getOverlays().add(marker);
-//        markers.put(reso.slot, new Pair<>(marker, line));
+        int rgb = getColorFromResources(getResources(), getLevelColor(reso.level));
+        // set opacity to half
+        rgb = (rgb & 0x00FFFFFF) | (128 << 24);
+
+        LineOptions lineOptions = new LineOptions()
+                .withLatLngs(Arrays.asList(portal.getPortalLocation().getLatLng(), resoPos))
+                .withLineColor(colorToRgbaString(rgb))
+                .withLineWidth(0.1f);
+
+        Line line = mLineManager.create(lineOptions);
+
+        markers.put(reso.slot, new Pair<>(null, line));
         mResonatorToPortalSlotLookup.put(reso.id, new Pair<>(portal.getEntityGuid(), reso.slot));
     }
 
