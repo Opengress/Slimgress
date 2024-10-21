@@ -27,13 +27,11 @@ import static net.opengress.slimgress.ViewHelpers.getBitmapFromDrawable;
 import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColor;
 import static net.opengress.slimgress.ViewHelpers.getTintedImage;
+import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
 import static net.opengress.slimgress.api.Item.ItemBase.ItemType.PortalKey;
-import static org.maplibre.android.style.layers.PropertyFactory.circleBlur;
 import static org.maplibre.android.style.layers.PropertyFactory.circleColor;
 import static org.maplibre.android.style.layers.PropertyFactory.circleRadius;
-import static org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor;
-import static org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth;
 import static org.maplibre.android.utils.ColorUtils.colorToRgbaString;
 
 import android.Manifest;
@@ -101,8 +99,6 @@ import org.maplibre.android.camera.CameraPosition;
 import org.maplibre.android.camera.CameraUpdateFactory;
 import org.maplibre.android.geometry.LatLng;
 import org.maplibre.android.geometry.LatLngQuad;
-import org.maplibre.android.location.engine.LocationEngineCallback;
-import org.maplibre.android.location.engine.LocationEngineResult;
 import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapView;
 import org.maplibre.android.maps.Style;
@@ -146,7 +142,7 @@ public class ScannerView extends Fragment {
     // Knobs quick reference
     // ===========================================================
     ScannerKnobs mScannerKnobs;
-    private int mActionRadiusM;
+    private int mActionRadiusM = 40;
     private int mUpdateIntervalMS;
     private int mMinUpdateIntervalMS;
     private int mUpdateDistanceM;
@@ -187,7 +183,6 @@ public class ScannerView extends Fragment {
 //    private final Queue<Polyline> mPolylinePool = new LinkedList<>();
 
     private ActivityResultLauncher<Intent> mPortalActivityResultLauncher;
-    private LocationEngineCallback<LocationEngineResult> mLocationEngineCallback;
 
     // ===========================================================
     // Fields and permissions
@@ -206,7 +201,6 @@ public class ScannerView extends Fragment {
     // Other (location)
     // ===========================================================
     private GeoJsonSource mPlayerCursorSource;
-    private CircleLayer mActionRadius;
     private ImageSource mPlayerCursorImageSource;
     private AnimatedCircleOverlay mSonarOverlay;
 
@@ -289,6 +283,24 @@ public class ScannerView extends Fragment {
 
     }
 
+    // Function to calculate LatLngQuad for the given radius in meters
+    private LatLngQuad getRadialLatLngQuad(LatLng center, double radiusMeters) {
+        LatLng topLeft = calculateOffset(center, -radiusMeters, radiusMeters);
+        LatLng topRight = calculateOffset(center, radiusMeters, radiusMeters);
+        LatLng bottomRight = calculateOffset(center, radiusMeters, -radiusMeters);
+        LatLng bottomLeft = calculateOffset(center, -radiusMeters, -radiusMeters);
+
+        return new LatLngQuad(topLeft, topRight, bottomRight, bottomLeft);
+    }
+
+    // Helper function to calculate the offset LatLng
+    private LatLng calculateOffset(LatLng center, double offsetX, double offsetY) {
+        double latOffset = offsetY / S2LatLng.EARTH_RADIUS_METERS * (180 / Math.PI);
+        double lngOffset = offsetX / (S2LatLng.EARTH_RADIUS_METERS * Math.cos(Math.toRadians(center.getLatitude()))) * (180 / Math.PI);
+
+        return new LatLng(center.getLatitude() + latOffset, center.getLongitude() + lngOffset);
+    }
+
     // Function to calculate a rotated LatLngQuad based on bearing
     private LatLngQuad getRotatedLatLngQuad(LatLng center, double width, double height, double bearing) {
         // Convert bearing from degrees to radians
@@ -314,11 +326,7 @@ public class ScannerView extends Fragment {
         double rotatedX = offsetX * Math.cos(bearingRad) - offsetY * Math.sin(bearingRad);
         double rotatedY = offsetX * Math.sin(bearingRad) + offsetY * Math.cos(bearingRad);
 
-        // Add the rotated offsets to the center location to get the new corner
-        double newLat = center.getLatitude() + (rotatedY / S2LatLng.EARTH_RADIUS_METERS) * (180 / Math.PI);
-        double newLng = center.getLongitude() + (rotatedX / (S2LatLng.EARTH_RADIUS_METERS * Math.cos(Math.toRadians(center.getLatitude())))) * (180 / Math.PI);
-
-        return new LatLng(newLat, newLng);
+        return calculateOffset(center, rotatedX, rotatedY);
     }
 
 
@@ -326,19 +334,23 @@ public class ScannerView extends Fragment {
         if (mMapLibreMap.getStyle() == null) {
             return;
         }
-
-        mActionRadius = new CircleLayer("action-radius-layer", "player-cursor-source");
-        mActionRadius.setProperties(circleRadius(metresToPixels(mActionRadiusM, initialLocation)), circleColor("rgba(0, 0, 0, 0)"), circleStrokeColor("rgba(175, 141, 51, 1.0)"), circleBlur(0.05F), circleStrokeWidth(metresToPixels(0.05, initialLocation)));
-
-        mMapLibreMap.getStyle().addLayer(mActionRadius);
+        LatLngQuad actionRadiusQuad = getRadialLatLngQuad(initialLocation, mActionRadiusM);
+        ImageSource actionRadiusSource = new ImageSource("action-radius-source", actionRadiusQuad, mIcons.get("actionradius"));
+        mMapLibreMap.getStyle().addSource(actionRadiusSource);
+        RasterLayer actionRadiusLayer = new RasterLayer("action-radius-layer", "action-radius-source").withProperties(
+                PropertyFactory.rasterOpacity(0.5f)
+        );
+        mMapLibreMap.getStyle().addLayer(actionRadiusLayer);
     }
 
     // Method to update the action radius position (just update the GeoJsonSource)
     public void updateActionRadiusLocation(LatLng newLocation) {
-        if (mPlayerCursorSource != null) {
-            mPlayerCursorSource.setGeoJson(Point.fromLngLat(newLocation.getLongitude(), newLocation.getLatitude()));
-            mActionRadius.setProperties(circleRadius(metresToPixels(mActionRadiusM, newLocation)));
+        if (mMapLibreMap.getStyle() == null) {
+            return;
         }
+        ImageSource actionRadiusSource = (ImageSource) mMapLibreMap.getStyle().getSource("action-radius-source");
+        assert actionRadiusSource != null;
+        actionRadiusSource.setCoordinates(getRadialLatLngQuad(newLocation, mActionRadiusM));
     }
 
     private float metresToPixels(double meters, LatLng location) {
@@ -1369,13 +1381,18 @@ public class ScannerView extends Fragment {
 
     private void drawItem(GameEntityItem entity) {
         if (mMapView != null) {
-            // if marker already exists, remove it so it can be updated
             String guid = entity.getEntityGuid();
-//            if (mItemMarkers.containsKey(guid)) {
-//                mMapView.getOverlays().remove(mItemMarkers.get(guid));
-//                mItemMarkers.remove(guid);
-//            }
-            final net.opengress.slimgress.api.Common.Location location = entity.getItem().getItemLocation();
+            String sourceId = "item-source-" + guid;
+            String layerId = "item-layer-" + guid;
+
+            Style style = mMapLibreMap.getStyle();
+            if (style == null) {
+                return;
+            }
+
+            if (style.getLayer(layerId) != null) {
+                return;
+            }
 
             ActivityMain activity = (ActivityMain) getActivity();
             if (activity == null) {
@@ -1432,35 +1449,14 @@ public class ScannerView extends Fragment {
                     case PlayerPowerup -> portalIcon = mIcons.get("dap");
                 }
 
-//                GroundOverlay marker = new GroundOverlay() {
-//                    public boolean touchedBy(@NonNull final MotionEvent event) {
-//                        GeoPoint tappedGeoPoint = (GeoPoint) mMapView.getProjection().fromPixels((int) event.getX(), (int) event.getY());
-//                        return getBounds().contains(tappedGeoPoint);
-//                    }
-//
-//                    @Override
-//                    public boolean onSingleTapConfirmed(final MotionEvent e, final MapView mapView) {
-//                        if (touchedBy(e)) {
-//                            mGame.intPickupItem(entity.getEntityGuid(), new Handler(msg -> {
-//                                var data = msg.getData();
-//                                String error = getErrorStringFromAPI(data);
-//                                if (error != null && !error.isEmpty()) {
-//                                    SlimgressApplication.postPlainCommsMessage(error);
-//                                } else {
-//                                    SlimgressApplication.postPlainCommsMessage("Picked up a " + msg.getData().getString("description"));
-//                                }
-//                                return false;
-//                            }));
-//                            return true;
-//                        }
-//                        return false;
-//                    }
-//                };
-//                marker.setPosition(location.getLatLng().destinationPoint(5, TOP_LEFT_ANGLE), location.getLatLng().destinationPoint(5, BOTTOM_RIGHT_ANGLE));
-//                marker.setImage(portalIcon);
-//
-//                mMapView.getOverlays().add(marker);
-//                mItemMarkers.put(guid, marker);
+
+                final LatLng latLng = entity.getItem().getItemLocation().getLatLng();
+                LatLngQuad quad = getRotatedLatLngQuad(latLng, 5, 5, (int) (Math.random() * 360));
+                assert portalIcon != null;
+                ImageSource imageSource = new ImageSource(sourceId, quad, portalIcon);
+                style.addSource(imageSource);
+                RasterLayer rasterLayer = new RasterLayer(layerId, sourceId);
+                style.addLayer(rasterLayer);
             });
 
         }
@@ -1720,11 +1716,7 @@ public class ScannerView extends Fragment {
             entityNames[i] = getEntityDescription(gameEntities.get(i));
         }
 
-        builder.setItems(entityNames, (dialog, which) -> {
-            // Handle item selection
-            GameEntityBase selectedEntity = gameEntities.get(which);
-            interactWithEntity(selectedEntity);
-        });
+        builder.setItems(entityNames, (dialog, which) -> interactWithEntity(gameEntities.get(which)));
 
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -1742,6 +1734,18 @@ public class ScannerView extends Fragment {
             mGame.setCurrentPortal((GameEntityPortal) entity);
             mPortalActivityResultLauncher.launch(myIntent);
             return;
+        }
+        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {
+            mGame.intPickupItem(entity.getEntityGuid(), new Handler(msg -> {
+                var data = msg.getData();
+                String error = getErrorStringFromAPI(data);
+                if (error != null && !error.isEmpty()) {
+                    SlimgressApplication.postPlainCommsMessage(error);
+                } else {
+                    SlimgressApplication.postPlainCommsMessage("Picked up a " + msg.getData().getString("description"));
+                }
+                return false;
+            }));
         }
         Toast.makeText(requireContext(), "Interacting with: " + getEntityDescription(entity), Toast.LENGTH_SHORT).show();
     }
