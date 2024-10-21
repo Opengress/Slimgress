@@ -1085,56 +1085,37 @@ public class ScannerView extends Fragment {
         Map<Long, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
         Set<Long> keys = xmParticles.keySet();
 
+        Style style = mMapLibreMap.getStyle();
+        if (style == null) {
+            return;
+        }
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
         for (Long key : keys) {
             XMParticle particle = xmParticles.get(key);
             assert particle != null;
 
-            // only draw if not already in list
-//            if (!mXMMarkers.containsKey(particle.getCellId())) {
-//
-//                final net.opengress.slimgress.api.Common.Location location = particle.getCellLocation();
-//
-//                Activity activity = getActivity();
-//                if (activity == null) {
-//                    return;
-//                }
-//                activity.runOnUiThread(() -> {
-//                    Bitmap particleIcon = mIcons.get("particle");
-//
-//                    GroundOverlay marker = getOverlay();
-//                    marker.setPosition(location.getLatLng().destinationPoint(5, TOP_LEFT_ANGLE), location.getLatLng().destinationPoint(5, BOTTOM_RIGHT_ANGLE));
-//                    marker.setImage(particleIcon);
-//
-//                    mMapView.getOverlays().add(marker);
-//                    mXMMarkers.put(particle.getCellId(), marker);
-//                });
-//            }
+            String sourceId = "particle-source-" + particle.getCellId();
+            String layerId = "particle-layer-" + particle.getCellId();
+
+
+            activity.runOnUiThread(() -> {
+                // only draw if not already in list
+                if (style.getLayer(layerId) == null) {
+                    final net.opengress.slimgress.api.Common.Location location = particle.getCellLocation();
+                    final LatLng latLng = location.getLatLng();
+                    LatLngQuad quad = getRotatedLatLngQuad(latLng, 5, 5, 0);
+                    ImageSource imageSource = new ImageSource(sourceId, quad, mIcons.get("particle"));
+                    style.addSource(imageSource);
+                    RasterLayer rasterLayer = new RasterLayer(layerId, sourceId);
+                    style.addLayer(rasterLayer);
+                }
+            });
         }
     }
-
-//    private GroundOverlay getOverlay() {
-//        GroundOverlay overlay = mOverlayPool.poll();
-//        if (overlay == null) {
-//            overlay = new GroundOverlay();
-//        }
-//        return overlay;
-//    }
-//
-//    private void recycleOverlay(GroundOverlay overlay) {
-//        mOverlayPool.add(overlay);
-//    }
-//
-//    private Polyline getPolyline(MapView map) {
-//        Polyline overlay = mPolylinePool.poll();
-//        if (overlay == null) {
-//            overlay = new Polyline(map);
-//        }
-//        return overlay;
-//    }
-//
-//    private void recyclePolyline(Polyline overlay) {
-//        mPolylinePool.add(overlay);
-//    }
 
     private void drawPortal(@NonNull final GameEntityPortal portal) {
         final Team team = portal.getPortalTeam();
@@ -1169,7 +1150,11 @@ public class ScannerView extends Fragment {
 
                 mMapLibreMap.getStyle(style -> {
                     style.addSource(imageSource);
-                    style.addLayer(new RasterLayer(layerName, sourceName));
+                    style.addLayer(new RasterLayer(layerName, sourceName).withProperties(
+//                            PropertyFactory.rasterOpacity(getPortalOpacity(portal)),
+                            PropertyFactory.rasterSaturation(getPortalOpacity(portal))
+//                            PropertyFactory.rasterContrast(getPortalOpacity(portal))
+                    ));
                 });
 
                 for (var reso : portal.getPortalResonators()) {
@@ -1180,6 +1165,14 @@ public class ScannerView extends Fragment {
             });
 
         }
+    }
+
+    // Helper method to calculate portal opacity
+    private float getPortalOpacity(GameEntityPortal portal) {
+        float healthRatio = (float) portal.getPortalEnergy() / (float) portal.getPortalMaxEnergy();
+        // Clamp the value to avoid fully invisible portals
+//        return Math.max(0.3f, healthRatio);
+        return healthRatio;
     }
 
     public void removeInfoCard() {
