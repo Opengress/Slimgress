@@ -1078,7 +1078,11 @@ public class ScannerView extends Fragment {
                     } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
                         drawField((GameEntityControlField) entity);
                     } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {
-                        drawItem((GameEntityItem) entity);
+                        GameEntityItem item = (GameEntityItem) entity;
+                        drawItem(item);
+                        Feature feature = Feature.fromGeometry(Point.fromLngLat(item.getItem().getItemLocation().getLongitudeDegrees(), item.getItem().getItemLocation().getLatitudeDegrees()));
+                        feature.addStringProperty("guid", item.getEntityGuid());
+                        features.add(feature);
                     }
                 });
 
@@ -1744,7 +1748,7 @@ public class ScannerView extends Fragment {
                 } else {
                     SlimgressApplication.postPlainCommsMessage("Picked up a " + msg.getData().getString("description"));
                 }
-                return false;
+                return true;
             }));
         }
         Toast.makeText(requireContext(), "Interacting with: " + getEntityDescription(entity), Toast.LENGTH_SHORT).show();
