@@ -1185,6 +1185,9 @@ public class ScannerView extends Fragment {
 
     // Helper method to calculate portal opacity ... or saturation, or something idk
     private float getPortalOpacity(GameEntityPortal portal) {
+        if (portal.getPortalMaxEnergy() == 0) {
+            return 0;
+        }
         float healthRatio = (float) portal.getPortalEnergy() / (float) portal.getPortalMaxEnergy();
         // Clamp the value to avoid fully invisible portals
         return Math.max(0.45f, healthRatio);
@@ -1601,22 +1604,30 @@ public class ScannerView extends Fragment {
 
     @SuppressLint("DefaultLocale")
     public void displayDamage(int damageAmount, String targetGuid, int targetSlot, boolean criticalHit) {
-//        var marker = mPortalMarkers.get(targetGuid);
-//        if (marker == null) {
-//            return;
-//        }
-//
-//        var actualPortal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(targetGuid);
-//        assert actualPortal != null;
-//        var actualReso = actualPortal.getPortalResonator(targetSlot);
-//        // FIXME reso is deleted from gameWorld before damage is displayed, so we can't display damage
-//        if (actualReso != null) {
-//            // note that it is allowed to be more than 100%
-//            int percentage = (int) ((float) damageAmount / (float) actualReso.getMaxEnergy() * 100);
-//
-//            var location = actualReso.getResoCoordinates();
-//            new TextOverlay(mMapView, location, String.format("%d%%", percentage) + (criticalHit ? "!" : ""), 0xCCF8C03E);
-//        }
+        var actualPortal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(targetGuid);
+        assert actualPortal != null;
+        var actualReso = actualPortal.getPortalResonator(targetSlot);
+        // if reso is deleted from gameworld before damage display, we put the damage on the portal
+        LatLng location;
+        int percentage;
+        if (actualReso != null) {
+            location = actualReso.getResoLatLng();
+            // note that it is allowed to be more than 100%
+            percentage = (int) ((float) damageAmount / (float) actualReso.getMaxEnergy() * 100);
+        } else {
+            location = actualPortal.getPortalLocation().getLatLng();
+            percentage = 100;
+        }
+        SymbolOptions symbolOptions = new SymbolOptions()
+                .withLatLng(location)
+                .withTextField(String.format("%d%%", percentage) + (criticalHit ? "!" : ""))
+                .withTextColor(colorToRgbaString(0xCCF8C03E))
+//                    .withTextSize(14.0f)
+                ;
+
+        Symbol damage = mSymbolManager.create(symbolOptions);
+        new Handler().postDelayed(() -> mSymbolManager.delete(damage), 2000);
+
     }
 
     @SuppressLint("DefaultLocale")
@@ -1628,7 +1639,7 @@ public class ScannerView extends Fragment {
         GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(attackerGuid);
         assert portal != null;
 
-        LatLng playerLocation = mGame.getLocation().getLatLng();
+        net.opengress.slimgress.api.Common.Location playerLocation = mGame.getLocation();
 
         // create the zap line for player damage
 //        Polyline line = new Polyline();
@@ -1642,8 +1653,16 @@ public class ScannerView extends Fragment {
 //        line.getOutlinePaint().set(paint);
 //
 //        mMapView.getOverlays().add(line);
+
+        LineOptions lineOptions = new LineOptions()
+                .withLatLngs(Arrays.asList(portal.getPortalLocation().getLatLng(), playerLocation.getLatLng()))
+                .withLineColor(colorToRgbaString(colour))
+//                .withLineWidth(0.2f)
+                ;
+
+        Line line = mLineManager.create(lineOptions);
 //        // let it delete itself
-//        new Handler(Looper.getMainLooper()).postDelayed(() -> mMapView.getOverlays().remove(line), 2000);
+        new Handler(Looper.getMainLooper()).postDelayed(() -> mLineManager.delete(line), 2000);
 
         // now write up the text, but only if the damage was significant
 
@@ -1655,6 +1674,17 @@ public class ScannerView extends Fragment {
         }
 
 //        new TextOverlay(mMapView, playerLocation.destinationPoint(10, 0), String.format("%d%%", percentage), colour);
+
+        SymbolOptions symbolOptions = new SymbolOptions()
+                .withLatLng(playerLocation.destinationPoint(10, 0).getLatLng())
+                .withTextField(String.format("%d%%", percentage))
+                .withTextColor(colorToRgbaString(colour))
+//                    .withTextSize(14.0f)
+                ;
+
+        Symbol damage = mSymbolManager.create(symbolOptions);
+        new Handler().postDelayed(() -> mSymbolManager.delete(damage), 2000);
+
         if (getActivity() != null) {
             ((ActivityMain) getActivity()).updateAgent();
         }
