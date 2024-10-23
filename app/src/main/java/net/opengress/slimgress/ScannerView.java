@@ -103,6 +103,8 @@ import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapView;
 import org.maplibre.android.maps.Style;
 import org.maplibre.android.maps.UiSettings;
+import org.maplibre.android.plugins.annotation.FillManager;
+import org.maplibre.android.plugins.annotation.FillOptions;
 import org.maplibre.android.plugins.annotation.Line;
 import org.maplibre.android.plugins.annotation.LineManager;
 import org.maplibre.android.plugins.annotation.LineOptions;
@@ -122,6 +124,7 @@ import org.maplibre.geojson.Point;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -158,6 +161,7 @@ public class ScannerView extends Fragment {
     private MapLibreMap mMapLibreMap;
     private SymbolManager mSymbolManager;
     private LineManager mLineManager;
+    private FillManager mFillManager;
     private final HashMap<String, Bitmap> mIcons = new HashMap<>();
     //    private final HashMap<String, GroundOverlay> mPortalMarkers = new HashMap<>();
     /*
@@ -175,12 +179,8 @@ public class ScannerView extends Fragment {
     private final HashMap<String, HashMap<Integer, Pair<Symbol, Line>>> mResonatorMarkers = new HashMap<>();
     // for finding the portal marker when we delete it by Guid
     private final HashMap<String, Pair<String, Integer>> mResonatorToPortalSlotLookup = new HashMap<>();
-//    private final HashMap<Long, GroundOverlay> mXMMarkers = new HashMap<>();
-//    private final HashMap<String, Polyline> mLines = new HashMap<>();
-//    private final HashMap<String, Polygon> mPolygons = new HashMap<>();
-//    private final HashMap<String, GroundOverlay> mItemMarkers = new HashMap<>();
-//    private final Queue<GroundOverlay> mOverlayPool = new LinkedList<>();
-//    private final Queue<Polyline> mPolylinePool = new LinkedList<>();
+    private final ArrayList<String> mLines = new ArrayList<>();
+    private final ArrayList<String> mPolygons = new ArrayList<>();
 
     private ActivityResultLauncher<Intent> mPortalActivityResultLauncher;
 
@@ -566,13 +566,12 @@ public class ScannerView extends Fragment {
                 mMapLibreMap.getUiSettings().setCompassFadeFacingNorth(false);
                 // lets user pan away - do not want
                 mMapLibreMap.getUiSettings().setScrollGesturesEnabled(false);
-                // our version is better (and reverses the direction)
-                mMapLibreMap.getUiSettings().setQuickZoomGesturesEnabled(false);
+                // tilt and zoom stay enabled for now
                 // this is just not an appropriate way to zoom
                 mMapLibreMap.getUiSettings().setDoubleTapGesturesEnabled(false);
-                mMapLibreMap.getUiSettings().setRotateVelocityAnimationEnabled(false);
-                mMapLibreMap.getUiSettings().setScaleVelocityAnimationEnabled(false);
-                mMapLibreMap.getUiSettings().setFlingVelocityAnimationEnabled(false);
+                // our version is better (and reverses the direction)
+                mMapLibreMap.getUiSettings().setQuickZoomGesturesEnabled(false);
+                mMapLibreMap.getUiSettings().setAllVelocityAnimationsEnabled(false);
 
                 mMapLibreMap.addOnMapLongClickListener(point -> {
                     if (mIsRotating || mIsZooming || mIsClickingCompass) {
@@ -596,6 +595,11 @@ public class ScannerView extends Fragment {
                 );
                 style.addLayer(circleLayer);
 
+                mMapLibreMap.addOnCameraMoveListener(() -> {
+                    float radiusInPixels = metresToPixels(PORTAL_RADIUS_METRES / 1.5, Objects.requireNonNull(mMapLibreMap.getCameraPosition().target));
+                    circleLayer.setProperties(circleRadius(radiusInPixels));
+                });
+
 //                style.addImage("my-marker-image", BitmapFactory.decodeResource(getResources(), R.drawable.c2));
 
 //                addMarker(mSymbolManager, new LatLng(-42.673314, 171.025762));
@@ -606,11 +610,7 @@ public class ScannerView extends Fragment {
                 mSymbolManager = new SymbolManager(mMapView, mMapLibreMap, style);
                 mSymbolManager.setIconAllowOverlap(true);
                 mLineManager = new LineManager(mMapView, mapLibreMap, style);
-
-                mMapLibreMap.addOnCameraMoveListener(() -> {
-                    float radiusInPixels = metresToPixels(PORTAL_RADIUS_METRES / 1.5, Objects.requireNonNull(mMapLibreMap.getCameraPosition().target));
-                    circleLayer.setProperties(circleRadius(radiusInPixels));
-                });
+                mFillManager = new FillManager(mMapView, mapLibreMap, style);
             });
         });
 
@@ -1025,7 +1025,7 @@ public class ScannerView extends Fragment {
             if (oldXM + newXM >= maxXM) {
                 continue;
             }
-            Long key = entry.getKey();
+
             XMParticle particle = entry.getValue();
 
             // FIXME this is honestly the worst imaginable solution, but for now it's what i have...
@@ -1123,7 +1123,7 @@ public class ScannerView extends Fragment {
                 if (style.getLayer(layerId) == null) {
                     final net.opengress.slimgress.api.Common.Location location = particle.getCellLocation();
                     final LatLng latLng = location.getLatLng();
-                    LatLngQuad quad = getRotatedLatLngQuad(latLng, 5, 5, 0);
+                    LatLngQuad quad = getRotatedLatLngQuad(latLng, 10, 10, 0);
                     ImageSource imageSource = new ImageSource(sourceId, quad, mIcons.get("particle"));
                     style.addSource(imageSource);
                     RasterLayer rasterLayer = new RasterLayer(layerId, sourceId);
@@ -1168,7 +1168,7 @@ public class ScannerView extends Fragment {
                     style.addSource(imageSource);
                     style.addLayer(new RasterLayer(layerName, sourceName).withProperties(
 //                            PropertyFactory.rasterOpacity(getPortalOpacity(portal)),
-                            PropertyFactory.rasterSaturation(getPortalOpacity(portal))
+                            PropertyFactory.rasterSaturation(getPortalOpacity(portal) - 1)
 //                            PropertyFactory.rasterContrast(getPortalOpacity(portal))
                     ));
                 });
@@ -1183,12 +1183,12 @@ public class ScannerView extends Fragment {
         }
     }
 
-    // Helper method to calculate portal opacity
+    // Helper method to calculate portal opacity ... or saturation, or something idk
     private float getPortalOpacity(GameEntityPortal portal) {
         float healthRatio = (float) portal.getPortalEnergy() / (float) portal.getPortalMaxEnergy();
         // Clamp the value to avoid fully invisible portals
-//        return Math.max(0.3f, healthRatio);
-        return healthRatio;
+        return Math.max(0.45f, healthRatio);
+//        return healthRatio;
     }
 
     public void removeInfoCard() {
@@ -1236,7 +1236,7 @@ public class ScannerView extends Fragment {
         }
 
 
-        final double LINKED_RESO_SCALE = 1.75;
+        final double LINKED_RESO_SCALE = 3;
         Style style = mMapLibreMap.getStyle();
         assert style != null;
         assert mIcons != null;
@@ -1300,12 +1300,12 @@ public class ScannerView extends Fragment {
 
         int rgb = getColorFromResources(getResources(), getLevelColor(reso.level));
         // set opacity to half
-        rgb = (rgb & 0x00FFFFFF) | (128 << 24);
+        rgb = (rgb & 0x00FFFFFF) | ((int) (((float) reso.energyTotal / (float) reso.getMaxEnergy()) * (float) 128) << 24);
 
         LineOptions lineOptions = new LineOptions()
                 .withLatLngs(Arrays.asList(portal.getPortalLocation().getLatLng(), resoPos))
                 .withLineColor(colorToRgbaString(rgb))
-                .withLineWidth(0.1f);
+                .withLineWidth(0.2f);
 
         Line line = mLineManager.create(lineOptions);
 
@@ -1315,72 +1315,76 @@ public class ScannerView extends Fragment {
 
 
     private void drawLink(final GameEntityLink link) {
-        if (mMapView != null) {
-            // only update if line has not yet been added
-//            if (!mLines.containsKey(link.getEntityGuid())) {
-//                final net.opengress.slimgress.api.Common.Location origin = link.getLinkOriginLocation();
-//                final net.opengress.slimgress.api.Common.Location dest = link.getLinkDestinationLocation();
-//
-//                // TODO: decay link per portal health
-//                Activity activity = getActivity();
-//                if (activity == null) {
-//                    return;
-//                }
-//                activity.runOnUiThread(() -> {
-//                    Team team = link.getLinkControllingTeam();
-//                    int color = 0xff000000 + team.getColour(); // adding opacity
-//
-//                    Polyline line = new Polyline(mMapView);
-//                    line.addPoint(origin.getLatLng());
-//                    line.addPoint(dest.getLatLng());
-//                    Paint paint = new Paint();
-//                    paint.setColor(color);
-//                    paint.setStrokeWidth(2);
-//                    line.getOutlinePaint().set(paint);
-////                        line.zIndex(2);
-//                    line.setOnClickListener((poly, mapView, eventPos) -> false);
-//
-//                    mMapView.getOverlays().add(line);
-//                    mLines.put(link.getEntityGuid(), line);
-//                });
-//            }
+        if (mMapView == null) {
+            return;
         }
+        Style style = mMapLibreMap.getStyle();
+        assert style != null;
+
+        if (mLines.contains(link.getEntityGuid())) {
+            // maybe update ?
+            return;
+        }
+
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+
+        final net.opengress.slimgress.api.Common.Location origin = link.getLinkOriginLocation();
+        final net.opengress.slimgress.api.Common.Location dest = link.getLinkDestinationLocation();
+
+        activity.runOnUiThread(() -> {
+
+            // TODO: decay link per portal health
+            Team team = link.getLinkControllingTeam();
+            int color = 0xff000000 + team.getColour(); // adding opacity
+
+            LineOptions lineOptions = new LineOptions()
+                    .withLatLngs(Arrays.asList(origin.getLatLng(), dest.getLatLng()))
+                    .withLineColor(colorToRgbaString(color))
+                    .withLineWidth(0.2f);
+
+            mLineManager.create(lineOptions);
+
+            mLines.add(link.getEntityGuid());
+        });
     }
 
     private void drawField(final GameEntityControlField field) {
-        if (mMapView != null) {
-            // only update if line has not yet been added
-//            if (!mPolygons.containsKey(field.getEntityGuid())) {
-//                final net.opengress.slimgress.api.Common.Location vA = field.getFieldVertexA().getPortalLocation();
-//                final net.opengress.slimgress.api.Common.Location vB = field.getFieldVertexB().getPortalLocation();
-//                final net.opengress.slimgress.api.Common.Location vC = field.getFieldVertexC().getPortalLocation();
-//
-//                Activity activity = getActivity();
-//                if (activity == null) {
-//                    return;
-//                }
-//                activity.runOnUiThread(() -> {
-//
-//                    // todo: decay field per portal health
-//                    Team team = field.getFieldControllingTeam();
-//                    int color = 0x32000000 + team.getColour(); // adding alpha
-//
-//                    Polygon polygon = new Polygon(mMapView);
-//                    polygon.addPoint(new GeoPoint(vA.getLatLng()));
-//                    polygon.addPoint(new GeoPoint(vB.getLatLng()));
-//                    polygon.addPoint(new GeoPoint(vC.getLatLng()));
-//                    Paint paint = new Paint();
-//                    paint.setColor(color);
-//                    paint.setStrokeWidth(0);
-//                    polygon.getOutlinePaint().set(paint);
-////                        polygon.zIndex(1);
-//                    polygon.setOnClickListener((poly, mapView, eventPos) -> false);
-//
-//                    mMapView.getOverlays().add(polygon);
-//                    mPolygons.put(field.getEntityGuid(), polygon);
-//                });
-//            }
+        if (mMapView == null) {
+            return;
         }
+        if (mPolygons.contains(field.getEntityGuid())) {
+            // maybe update ?
+            return;
+        }
+
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+
+        final net.opengress.slimgress.api.Common.Location vA = field.getFieldVertexA().getPortalLocation();
+        final net.opengress.slimgress.api.Common.Location vB = field.getFieldVertexB().getPortalLocation();
+        final net.opengress.slimgress.api.Common.Location vC = field.getFieldVertexC().getPortalLocation();
+        activity.runOnUiThread(() -> {
+            Team team = field.getFieldControllingTeam();
+            int color = 0x32000000 + team.getColour(); // adding alpha
+
+            // Create a list with the vertices of the polygon
+            List<LatLng> polygonLatLngs = Arrays.asList(vA.getLatLng(), vB.getLatLng(), vC.getLatLng());
+
+            FillOptions polygonOptions = new FillOptions()
+                    .withLatLngs(Collections.singletonList(polygonLatLngs))
+                    .withFillColor(colorToRgbaString(color));
+
+            mFillManager.create(polygonOptions);
+            mPolygons.add(field.getEntityGuid());
+        });
+
     }
 
     private void drawItem(GameEntityItem entity) {
