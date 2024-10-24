@@ -32,6 +32,9 @@ import static net.opengress.slimgress.api.Common.Utils.notBouncing;
 import static net.opengress.slimgress.api.Item.ItemBase.ItemType.PortalKey;
 import static org.maplibre.android.style.layers.PropertyFactory.circleColor;
 import static org.maplibre.android.style.layers.PropertyFactory.circleRadius;
+import static org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor;
+import static org.maplibre.android.style.layers.PropertyFactory.circleStrokeOpacity;
+import static org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth;
 import static org.maplibre.android.utils.ColorUtils.colorToRgbaString;
 
 import android.Manifest;
@@ -53,6 +56,7 @@ import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Pair;
+import android.view.Choreographer;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -163,7 +167,6 @@ public class ScannerView extends Fragment {
     private LineManager mLineManager;
     private FillManager mFillManager;
     private final HashMap<String, Bitmap> mIcons = new HashMap<>();
-    //    private final HashMap<String, GroundOverlay> mPortalMarkers = new HashMap<>();
     /*
     do it by reso guid:
     - can receive guid in deletedentitiesguids (when?) and delete it directly
@@ -202,7 +205,6 @@ public class ScannerView extends Fragment {
     // ===========================================================
     private GeoJsonSource mPlayerCursorSource;
     private ImageSource mPlayerCursorImageSource;
-    private AnimatedCircleOverlay mSonarOverlay;
 
     // device sensor manager
     private int mBearing = 0;
@@ -227,6 +229,7 @@ public class ScannerView extends Fragment {
     private final float ZOOM_SENSITIVITY = 0.1f;
     private boolean mIsClickingCompass = false;
     GeoJsonSource mPortalGeoJsonSource;
+    private long mCircleId = 1;
 
 
     private void updateBearing(int bearing) {
@@ -600,13 +603,6 @@ public class ScannerView extends Fragment {
                     circleLayer.setProperties(circleRadius(radiusInPixels));
                 });
 
-//                style.addImage("my-marker-image", BitmapFactory.decodeResource(getResources(), R.drawable.c2));
-
-//                addMarker(mSymbolManager, new LatLng(-42.673314, 171.025762));
-
-//                enableLocationComponent(style);
-
-
                 mSymbolManager = new SymbolManager(mMapView, mMapLibreMap, style);
                 mSymbolManager.setIconAllowOverlap(true);
                 mLineManager = new LineManager(mMapView, mapLibreMap, style);
@@ -699,7 +695,7 @@ public class ScannerView extends Fragment {
         return rootView;
     }
 
-    private void addDummyFeatures(List<Feature> features) {
+    private void addTouchTargets(List<Feature> features) {
         mPortalGeoJsonSource.setGeoJson(FeatureCollection.fromFeatures(features));
     }
 
@@ -733,15 +729,61 @@ public class ScannerView extends Fragment {
         return false;
     }
 
-    private void addMarker(SymbolManager symbolManager, LatLng position) {
-        SymbolOptions symbolOptions = new SymbolOptions().withLatLng(position).withIconImage("my-marker-image").withIconSize(1.0f);
-
-        symbolManager.create(symbolOptions);
+    protected void makePermissionsRequest() {
+        ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, RECORD_REQUEST_CODE);
     }
 
 
-    protected void makeRequest() {
-        ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, RECORD_REQUEST_CODE);
+    private void addExpandingCircle(LatLng centerPoint, int durationMs, float radiusM, int colour, float width) {
+        if (mMapLibreMap == null || mMapLibreMap.getStyle() == null) {
+            Log.d("SCANNER", "No mapLibreMap");
+            return;
+        }
+        float radius = metresToPixels(radiusM, centerPoint);
+        String sourceId = "circle-source-" + ++mCircleId;
+        String layerId = "circle-layer-" + mCircleId;
+
+        GeoJsonSource circleSource = new GeoJsonSource(sourceId,
+                Feature.fromGeometry(Point.fromLngLat(centerPoint.getLongitude(), centerPoint.getLatitude())));
+
+        mMapLibreMap.getStyle().addSource(circleSource);
+
+        CircleLayer circleLayer = new CircleLayer(layerId, sourceId);
+        circleLayer.setProperties(
+                circleRadius(0f),
+                circleColor("rgba(0, 0, 0, 0)"),
+                circleStrokeColor(colour),
+                circleStrokeWidth(width),
+                circleStrokeOpacity(0.5f)
+        );
+        mMapLibreMap.getStyle().addLayer(circleLayer);
+
+        final long startTime = System.currentTimeMillis();
+        final Choreographer choreographer = Choreographer.getInstance();
+
+        final Choreographer.FrameCallback frameCallback = new Choreographer.FrameCallback() {
+            @Override
+            public void doFrame(long frameTimeNanos) {
+                long elapsed = System.currentTimeMillis() - startTime;
+                float progress = Math.min((float) elapsed / durationMs, 1f);
+                float radius1 = radius * progress;
+
+                circleLayer.setProperties(circleRadius(radius1));
+
+                // Continue animating or clean up
+                if (progress < 1f) {
+                    choreographer.postFrameCallback(this);
+                } else {
+                    mMapLibreMap.getStyle().removeLayer(layerId);
+                    mMapLibreMap.getStyle().removeSource(sourceId);
+                    choreographer.removeFrameCallback(this);
+                }
+            }
+        };
+
+        // Start the animation
+        choreographer.postFrameCallback(frameCallback);
+
     }
 
     @Override
@@ -762,14 +804,6 @@ public class ScannerView extends Fragment {
 //        final double latitude = Double.parseDouble(latitudeString);
 //        final double longitude = Double.parseDouble(longitudeString);
 //        mMapView.setExpectedCenter(new GeoPoint(latitude, longitude));
-//        mSonarOverlay = new AnimatedCircleOverlay(mMapView, 500, 60);
-//        mSonarOverlay.setColor(0x33FFFF00);
-//        mSonarOverlay.setWidth(1);
-//        mSonarOverlay.setRunOnce(false);
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-//            mSonarOverlay.setBlendMode(BlendMode.DIFFERENCE);
-//        }
-//        mSonarOverlay.start();
     }
 
     @Override
@@ -791,6 +825,30 @@ public class ScannerView extends Fragment {
         super.onDestroyView();
         mBearingProvider.stopBearingUpdates();
         mLocationProvider.stopLocationUpdates();
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mMapView.onLowMemory();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mMapView.onDestroy();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        mMapView.onStart();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        mMapView.onStop();
     }
 
     @Override
@@ -818,7 +876,7 @@ public class ScannerView extends Fragment {
             AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
             builder.setMessage("Permission to access the device location is required for this app to function correctly.").setTitle("Permission required");
 
-            builder.setPositiveButton("OK", (dialog, id) -> makeRequest());
+            builder.setPositiveButton("OK", (dialog, id) -> makePermissionsRequest());
 
             AlertDialog dialog = builder.create();
             dialog.show();
@@ -941,7 +999,7 @@ public class ScannerView extends Fragment {
         if (!notBouncing("updateWorld", mMinUpdateIntervalMS)) {
             return;
         }
-//        mSonarOverlay.trigger();
+        addExpandingCircle(mCurrentLocation, 500 * 1000 / 60, 500, 0x33FFFF00, 1);
         displayQuickMessage(getStringSafely(R.string.scanning_local_area));
 
         // handle interface result (on timer thread)
@@ -1089,7 +1147,7 @@ public class ScannerView extends Fragment {
             }
 
             uiHandler.post(() ->
-                    addDummyFeatures(features));
+                    addTouchTargets(features));
 
             mLastScan = System.currentTimeMillis() + mMinUpdateIntervalMS;
         }).start();
@@ -1522,7 +1580,7 @@ public class ScannerView extends Fragment {
     }
 
     public void fireBurster(int radius) {
-//        new AnimatedCircleOverlay(mMapView, radius, 100).start();
+        addExpandingCircle(mCurrentLocation, radius * 10, radius, 0xCCCC9900, metresToPixels(10, mCurrentLocation));
         if (getActivity() != null) {
             ((ActivityMain) getActivity()).updateAgent();
         }
@@ -1642,18 +1700,6 @@ public class ScannerView extends Fragment {
         net.opengress.slimgress.api.Common.Location playerLocation = mGame.getLocation();
 
         // create the zap line for player damage
-//        Polyline line = new Polyline();
-//        line.setPoints(Arrays.asList(portal.getPortalLocation().getLatLng(), playerLocation));
-//        Paint paint = new Paint();
-//        paint.setColor(colour);
-//        paint.setStrokeWidth(5f);
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-//            paint.setBlendMode(BlendMode.SCREEN);
-//        }
-//        line.getOutlinePaint().set(paint);
-//
-//        mMapView.getOverlays().add(line);
-
         LineOptions lineOptions = new LineOptions()
                 .withLatLngs(Arrays.asList(portal.getPortalLocation().getLatLng(), playerLocation.getLatLng()))
                 .withLineColor(colorToRgbaString(colour))
@@ -1672,8 +1718,6 @@ public class ScannerView extends Fragment {
         if (percentage < 1) {
             return;
         }
-
-//        new TextOverlay(mMapView, playerLocation.destinationPoint(10, 0), String.format("%d%%", percentage), colour);
 
         SymbolOptions symbolOptions = new SymbolOptions()
                 .withLatLng(playerLocation.destinationPoint(10, 0).getLatLng())
