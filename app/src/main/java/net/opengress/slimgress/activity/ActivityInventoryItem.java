@@ -321,7 +321,6 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     message = String.format(message, res, name);
                     SlimgressApplication.postPlainCommsMessage(message);
                     Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-//                    SlimgressApplication.postPlainCommsMessage("Should this say something?");
 
                     for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
                         mItem.remove(id);

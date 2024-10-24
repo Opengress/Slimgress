@@ -807,11 +807,11 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                     dialog.setMessage(error).setDismissDelay(1500).show();
                 } else {
                     var res = data.getString("result");
-                    DialogInfo dialog = new DialogInfo(this);
-                    String message = "Gained %s XM from using a powercube";
-                    dialog.setMessage(String.format(message, res)).setDismissDelay(1500).show();
-
-
+                    String message = "Gained %s XM from using a %s";
+                    message = String.format(message, res, item.getUsefulName());
+                    SlimgressApplication.postPlainCommsMessage(message);
+                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+                    updateAgent();
                     for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
                         mGame.getInventory().removeItem(id);
                     }
