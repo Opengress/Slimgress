@@ -107,7 +107,7 @@ public class ActivityPortal extends AppCompatActivity {
                 mGame.putAgentNames(names);
                 return false;
             });
-            new Thread(() -> mGame.intGetNicknamesFromUserGUIDs(guids.toArray(new String[0]), ownerResultHandler)).start();
+            mApp.runInThread_(() -> mGame.intGetNicknamesFromUserGUIDs(guids.toArray(new String[0]), ownerResultHandler));
         }
         ((TextView) findViewById(R.id.portalOwner)).setTextColor(0xFF000000 + portal.getPortalTeam().getColour());
 

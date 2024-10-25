@@ -21,6 +21,8 @@
 
 package net.opengress.slimgress.api.Interface;
 
+import static net.opengress.slimgress.SlimgressApplication.runInThread;
+
 import android.net.TrafficStats;
 import android.os.Build;
 import android.util.Log;
@@ -93,7 +95,7 @@ public class Interface
 
     public void handshake(final Handshake.Callback callback, Map<String, String> inParams)
     {
-        new Thread(() -> {
+        runInThread(() -> {
             JSONObject params = new JSONObject();
             try {
                 // set handshake parameters
@@ -162,7 +164,7 @@ public class Interface
                     ex.printStackTrace();
                 }
             }
-        }).start();
+        });
     }
 
     public void request(final Handshake handshake, final String requestString, final Location playerLocation,
@@ -170,8 +172,7 @@ public class Interface
         if (!handshake.isValid())
             throw new RuntimeException("handshake is not valid");
 
-        new Thread(() -> {
-
+        runInThread(() -> {
             // set additional parameters
             JSONObject params = new JSONObject();
             if (requestParams != null) {
@@ -254,7 +255,7 @@ public class Interface
                 result.finished();
                 e.printStackTrace();
             }
-        }).start();
+        });
     }
 
 

@@ -3,6 +3,7 @@ package net.opengress.slimgress.activity;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
 import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_NONE;
+import static net.opengress.slimgress.SlimgressApplication.runInThread;
 import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColor;
 import static net.opengress.slimgress.ViewHelpers.getMainActivity;
@@ -414,7 +415,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
      */
     @SuppressLint("DefaultLocale")
     private void incrementQuantity(Button buttonIncrement, TextView quantityDisplay, TextView recoveryInfo) {
-        new Thread(() -> {
+        runInThread(() -> {
             while (buttonIncrement.isPressed()) {
                 String quantityText = quantityDisplay.getText().toString();
                 String[] parts = quantityText.split("/");
@@ -433,7 +434,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-        }).start();
+        });
     }
 
     /**
@@ -441,7 +442,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
      */
     @SuppressLint("DefaultLocale")
     private void decrementQuantity(Button buttonDecrement, TextView quantityDisplay, TextView recoveryInfo) {
-        new Thread(() -> {
+        runInThread(() -> {
             while (buttonDecrement.isPressed()) {
                 String quantityText = quantityDisplay.getText().toString();
                 String[] parts = quantityText.split("/");
@@ -460,7 +461,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-        }).start();
+        });
     }
 
     private int calculateRecoveryAmount(int quantity) {
