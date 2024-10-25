@@ -108,6 +108,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public class ActivityMain extends FragmentActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
@@ -731,10 +732,10 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                     mapView.invalidate();
 
                     // Revert the color change after a short delay
-                    new Handler().postDelayed(() -> {
+                    mApp.schedule_(() -> {
                         rasterLayer.setProperties(visibility(Property.VISIBLE));
                         mapView.invalidate();
-                    }, 444);
+                    }, 444, TimeUnit.MILLISECONDS);
                 }
             }
         });

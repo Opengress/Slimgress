@@ -17,7 +17,6 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -48,6 +47,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public class ActivityInventoryItem extends AppCompatActivity {
 
@@ -289,7 +289,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                 }
                 if (mItem.getQuantity() == 0) {
-                    new Handler(Looper.getMainLooper()).postDelayed(this::finish, 100);
+                    SlimgressApplication.schedule(this::finish, 100, TimeUnit.MILLISECONDS);
                 }
             }
             return false;
@@ -329,7 +329,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                         ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                     }
                     if (mItem.getQuantity() == 0) {
-                        new Handler(Looper.getMainLooper()).postDelayed(this::finish, 100);
+                        SlimgressApplication.schedule(this::finish, 100, TimeUnit.MILLISECONDS);
                     }
                 }
                 return false;
@@ -535,7 +535,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                 }
                 if (mItem.getQuantity() == 0) {
-                    new Handler(Looper.getMainLooper()).postDelayed(this::finish, 100);
+                    SlimgressApplication.schedule(this::finish, 100, TimeUnit.MILLISECONDS);
                 }
             }
             return false;
