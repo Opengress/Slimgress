@@ -22,6 +22,7 @@
 package net.opengress.slimgress;
 
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE;
+import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE_DEFAULT;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromAsset;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromDrawable;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
@@ -97,6 +98,7 @@ import net.opengress.slimgress.positioning.AndroidBearingProvider;
 import net.opengress.slimgress.positioning.AndroidLocationProvider;
 import net.opengress.slimgress.positioning.LocationCallback;
 
+import org.json.JSONException;
 import org.maplibre.android.MapLibre;
 import org.maplibre.android.WellKnownTileServer;
 import org.maplibre.android.camera.CameraPosition;
@@ -120,8 +122,6 @@ import org.maplibre.android.style.layers.PropertyFactory;
 import org.maplibre.android.style.layers.RasterLayer;
 import org.maplibre.android.style.sources.GeoJsonSource;
 import org.maplibre.android.style.sources.ImageSource;
-import org.maplibre.android.style.sources.RasterSource;
-import org.maplibre.android.style.sources.TileSet;
 import org.maplibre.geojson.Feature;
 import org.maplibre.geojson.FeatureCollection;
 import org.maplibre.geojson.Point;
@@ -167,6 +167,7 @@ public class ScannerView extends Fragment {
     private LineManager mLineManager;
     private FillManager mFillManager;
     private final HashMap<String, Bitmap> mIcons = new HashMap<>();
+    private String mCurrentTileSource;
     /*
     do it by reso guid:
     - can receive guid in deletedentitiesguids (when?) and delete it directly
@@ -251,7 +252,7 @@ public class ScannerView extends Fragment {
     private void drawPlayerCursor() {
         // hardcoded and possibly incorrect, also not enough teams
 
-        if (mMapLibreMap == null || mPlayerCursorImageSource == null || mCurrentLocation == null) {
+        if (mMapLibreMap == null || mPlayerCursorImageSource == null || mCurrentLocation == null || mMapLibreMap.getStyle() == null) {
             return;
         }
         LatLngQuad newImagePosition = getRotatedLatLngQuad(mCurrentLocation, 25, 25, mBearing);
@@ -524,10 +525,13 @@ public class ScannerView extends Fragment {
 //        return tileProvider;
 //    }
 
-//    private MapTileProviderBasic getMapTileProvider(String name, String def) {
-//        MapProvider mapProvider = mGame.getKnobs().getMapCompositionRootKnobs().fromString(mPrefs.getString(name, def));
-//        return createTileProvider(mapProvider);
-//    }
+    private String getMapTileProvider(String name) {
+        try {
+            return mGame.getKnobs().getMapCompositionRootKnobs().getMapProvider(name).getStyleJson();
+        } catch (JSONException e) {
+            return null;
+        }
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -539,81 +543,62 @@ public class ScannerView extends Fragment {
         mMapView = rootView.findViewById(R.id.mapView);
 
         mPrefs = mApp.getApplicationContext().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE);
-        // allows map tiles to be cached so map draws properly
-//        Configuration.getInstance().load(requireContext(), mPrefs);
-//        Configuration.getInstance().setOsmdroidTileCache(new File(requireActivity().getCacheDir(), "osmdroid")); // Set the cache directory
-
-        mPrefs.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
-            Log.d("Scanner", String.format("PREFERENCE CHANGE IN ANOTHER THING: %s", key));
-            if (Objects.requireNonNull(key).equals(PREFS_DEVICE_TILE_SOURCE)) {
-//                mMapView.setTileProvider(getMapTileProvider(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT));
-            }
-        });
-
-        // set up map tile source before creating map, so we don't download wrong tiles wastefully
-//        final MapTileProviderBasic tileProvider = getMapTileProvider(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT);
-
 
         loadAssets();
 
+        mCurrentTileSource = mPrefs.getString(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT);
+        String styleJSON = getMapTileProvider(mCurrentTileSource);
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(mapLibreMap -> {
             mMapLibreMap = mapLibreMap;
             mMapLibreMap.setMinZoomPreference(16);
             mMapLibreMap.setMaxZoomPreference(22);
             // FIXME wrong layer name or layer needs to be dynamic
-            mMapLibreMap.setStyle(new Style.Builder().withSource(new RasterSource("carto-basemap", new TileSet("tileset", "https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png"))).withLayer(new RasterLayer("carto-basemap-layer", "carto-basemap")), style -> {
+            mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> setUpStyleForMap(mapLibreMap, style));
+            // Retrieve saved camera properties
+            float bearing = mPrefs.getFloat("camera_bearing", 0f);
+            double latitude = mPrefs.getFloat("camera_latitude", 0f);
+            double longitude = mPrefs.getFloat("camera_longitude", 0f);
+            float tilt = mPrefs.getFloat("camera_tilt", 0f);
+            float zoom = mPrefs.getFloat("camera_zoom", 18f);
 
-                // FIXME zoom, bearing and latlng should be in prefs
-                Location initialLocation = new Location(-42.673314, 171.025762);
-                setupPlayerCursor(initialLocation, 0);
-                mMapLibreMap.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLocation.getLatLng(), 18));
+            // Build the saved camera position
+            Location initialLocation = new Location(latitude, longitude);
+            CameraPosition position = new CameraPosition.Builder()
+                    .target(initialLocation.getLatLng())
+                    .bearing(bearing)
+                    .tilt(tilt)
+                    .zoom(zoom)
+                    .build();
+
+            // Set camera position on the map
+            mMapLibreMap.setCameraPosition(position);
+
+            setupPlayerCursor(initialLocation, (int) bearing);
 
 //                mMapLibreMap.getUiSettings().setCompassMargins(5, 150, 0, 0);
-                mMapLibreMap.getUiSettings().setCompassMargins(5, 100, 0, 0);
-                mMapLibreMap.getUiSettings().setCompassGravity(Gravity.LEFT);
-                mMapLibreMap.getUiSettings().setCompassFadeFacingNorth(false);
-                // lets user pan away - do not want
-                mMapLibreMap.getUiSettings().setScrollGesturesEnabled(false);
-                // tilt and zoom stay enabled for now
-                // this is just not an appropriate way to zoom
-                mMapLibreMap.getUiSettings().setDoubleTapGesturesEnabled(false);
-                // our version is better (and reverses the direction)
-                mMapLibreMap.getUiSettings().setQuickZoomGesturesEnabled(false);
-                mMapLibreMap.getUiSettings().setAllVelocityAnimationsEnabled(false);
+            mMapLibreMap.getUiSettings().setCompassMargins(5, 100, 0, 0);
+            mMapLibreMap.getUiSettings().setCompassGravity(Gravity.LEFT);
+            mMapLibreMap.getUiSettings().setCompassFadeFacingNorth(false);
+            // lets user pan away - do not want
+            mMapLibreMap.getUiSettings().setScrollGesturesEnabled(false);
+            // tilt and zoom stay enabled for now
+            // this is just not an appropriate way to zoom
+            mMapLibreMap.getUiSettings().setDoubleTapGesturesEnabled(false);
+            // our version is better (and reverses the direction)
+            mMapLibreMap.getUiSettings().setQuickZoomGesturesEnabled(false);
+            mMapLibreMap.getUiSettings().setAllVelocityAnimationsEnabled(false);
 
-                mMapLibreMap.addOnMapLongClickListener(point -> {
-                    if (mIsRotating || mIsZooming || mIsClickingCompass) {
-                        mIsClickingCompass = false;
-                        return false;
-                    }
-                    ((ActivityMain) requireActivity()).showFireMenu(point);
-                    return true;
-                });
-
-                mMapLibreMap.addOnMapClickListener(this::onMapClick);
-
-
-                mPortalGeoJsonSource = new GeoJsonSource("portal-data-layer");
-                style.addSource(mPortalGeoJsonSource);
-
-                CircleLayer circleLayer = new CircleLayer("portal-hit-layer", "portal-data-layer");
-                circleLayer.setProperties(
-                        circleRadius(30f),
-                        circleColor("rgba(255, 0, 0, 0)")
-                );
-                style.addLayer(circleLayer);
-
-                mMapLibreMap.addOnCameraMoveListener(() -> {
-                    float radiusInPixels = metresToPixels(PORTAL_DIAMETER_METRES / 3, Objects.requireNonNull(mMapLibreMap.getCameraPosition().target));
-                    circleLayer.setProperties(circleRadius(radiusInPixels));
-                });
-
-                mSymbolManager = new SymbolManager(mMapView, mMapLibreMap, style);
-                mSymbolManager.setIconAllowOverlap(true);
-                mLineManager = new LineManager(mMapView, mapLibreMap, style);
-                mFillManager = new FillManager(mMapView, mapLibreMap, style);
+            mMapLibreMap.addOnMapLongClickListener(point -> {
+                if (mIsRotating || mIsZooming || mIsClickingCompass) {
+                    mIsClickingCompass = false;
+                    return false;
+                }
+                ((ActivityMain) requireActivity()).showFireMenu(point);
+                return true;
             });
+
+            mMapLibreMap.addOnMapClickListener(this::onMapClick);
         });
 
         mGestureDetector = new GestureDetector(requireContext(), new GestureDetector.SimpleOnGestureListener() {
@@ -699,6 +684,43 @@ public class ScannerView extends Fragment {
         });
 
         return rootView;
+    }
+
+    private void setUpStyleForMap(MapLibreMap mapLibreMap, Style style) {
+
+        if (mPortalGeoJsonSource == null) {
+            mPortalGeoJsonSource = new GeoJsonSource("portal-data-layer");
+        }
+        if (style.getSource("portal-data-layer") == null) {
+            style.addSource(mPortalGeoJsonSource);
+        }
+
+        CircleLayer circleLayer = (CircleLayer) style.getLayer("portal-hit-layer");
+        if (circleLayer == null) {
+            circleLayer = new CircleLayer("portal-hit-layer", "portal-data-layer");
+            circleLayer.setProperties(
+                    circleRadius(30f),
+                    circleColor("rgba(255, 0, 0, 0)")
+            );
+            style.addLayer(circleLayer);
+        }
+
+        CircleLayer finalCircleLayer = circleLayer;
+        mMapLibreMap.addOnCameraMoveListener(() -> {
+            float radiusInPixels = metresToPixels((double) PORTAL_DIAMETER_METRES / 3, Objects.requireNonNull(mMapLibreMap.getCameraPosition().target));
+            finalCircleLayer.setProperties(circleRadius(radiusInPixels));
+        });
+
+        if (mSymbolManager == null) {
+            mSymbolManager = new SymbolManager(mMapView, mMapLibreMap, style);
+            mSymbolManager.setIconAllowOverlap(true);
+        }
+        if (mLineManager == null) {
+            mLineManager = new LineManager(mMapView, mapLibreMap, style);
+        }
+        if (mFillManager == null) {
+            mFillManager = new FillManager(mMapView, mapLibreMap, style);
+        }
     }
 
     private void addTouchTargets(List<Feature> features) {
@@ -814,12 +836,20 @@ public class ScannerView extends Fragment {
 
     @Override
     public void onPause() {
-        //save the current location
-//        final SharedPreferences.Editor edit = mPrefs.edit();
-//        edit.putString(PREFS_OSM_LATITUDE_STRING, String.valueOf(mMapView.getMapCenter().getLatitude()));
-//        edit.putString(PREFS_OSM_LONGITUDE_STRING, String.valueOf(mMapView.getMapCenter().getLongitude()));
-//        edit.putFloat(PREFS_OSM_ZOOM_LEVEL_DOUBLE, (float) mMapView.getZoomLevelDouble());
-//        edit.apply();
+        // Get the current camera position
+        if (mMapLibreMap != null) {
+            CameraPosition cameraPosition = mMapLibreMap.getCameraPosition();
+            SharedPreferences.Editor editor = mPrefs.edit();
+
+            editor.putFloat("camera_bearing", (float) cameraPosition.bearing);
+            assert cameraPosition.target != null;
+            editor.putFloat("camera_latitude", (float) cameraPosition.target.getLatitude());
+            editor.putFloat("camera_longitude", (float) cameraPosition.target.getLongitude());
+            editor.putFloat("camera_tilt", (float) cameraPosition.tilt);
+            editor.putFloat("camera_zoom", (float) cameraPosition.zoom);
+
+            editor.apply();
+        }
 
         mMapView.onPause();
         super.onPause();
@@ -862,9 +892,13 @@ public class ScannerView extends Fragment {
         super.onResume();
         mMapView.onResume();
 
-        // technically this probably means we're setting this up twice.
-        // probably mostly harmless, but maybe try to fix later.
-//        mMapView.setTileProvider(getMapTileProvider(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT));
+        String newTileSource = mPrefs.getString(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT);
+        if (!Objects.equals(newTileSource, mCurrentTileSource)) {
+            mCurrentTileSource = newTileSource;
+            String styleJSON = getMapTileProvider(mCurrentTileSource);
+            assert styleJSON != null;
+            mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> setUpStyleForMap(mMapLibreMap, style));
+        }
 
         if (mLastLocationAcquired == null || mLastLocationAcquired.before(new Date(System.currentTimeMillis() - mUpdateIntervalMS))) {
             setLocationInaccurate(true);
@@ -1222,7 +1256,8 @@ public class ScannerView extends Fragment {
 
                     ImageSource imageSource = (ImageSource) style.getSource(sourceName);
                     if (imageSource == null) {
-                        imageSource = new ImageSource(sourceName, getRotatedLatLngQuad(location, PORTAL_DIAMETER_METRES, PORTAL_DIAMETER_METRES, location.getLatitude() % 360), portalIcon);
+                        imageSource = new ImageSource(sourceName, getRotatedLatLngQuad(location, PORTAL_DIAMETER_METRES, PORTAL_DIAMETER_METRES, location.getLatitudeE6() % 360), portalIcon);
+                        Log.d("SCANNER", "Image rotation: " + location.getLatitudeE6() % 360 + " for " + portal.getPortalTitle() + " because latitude is " + location.getLatitudeE6());
                         style.addSource(imageSource);
                     } else {
                         imageSource.setImage(portalIcon);
@@ -1307,8 +1342,8 @@ public class ScannerView extends Fragment {
         final double LINKED_RESO_SCALE = 3;
         float saturation = -0.85f * (0.95f - (float) reso.energyTotal / (float) reso.getMaxEnergy());
 
-        if (mResonatorToPortalSlotLookup.containsKey(reso.id)) {
-            Objects.requireNonNull(style.getLayer("reso-layer-" + reso.id)).setProperties(PropertyFactory.rasterContrast(saturation));
+        if (mResonatorToPortalSlotLookup.containsKey(reso.id) && style.getLayer("reso-layer-" + reso.id) != null) {
+            style.getLayer("reso-layer-" + reso.id).setProperties(PropertyFactory.rasterContrast(saturation));
             return;
         }
 
