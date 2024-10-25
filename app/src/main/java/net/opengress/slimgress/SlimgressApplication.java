@@ -51,6 +51,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class SlimgressApplication extends Application {
     private static SlimgressApplication mSingleton;
@@ -67,9 +70,7 @@ public class SlimgressApplication extends Application {
     private LevelUpViewModel mLevelUpViewModel;
     private ActivityMain mMainActivity;
     private final ExecutorService mExecutorService = Executors.newFixedThreadPool(4);
-
-
-    private final Handler mSepticycleHander = new Handler();
+    private final ScheduledExecutorService mScheduledExecutorService = Executors.newScheduledThreadPool(1);
 
     @Override
     public void onCreate() {
@@ -92,6 +93,7 @@ public class SlimgressApplication extends Application {
     public void onTerminate() {
         super.onTerminate();
         mExecutorService.shutdown();
+        mScheduledExecutorService.shutdown();
     }
 
     @Override
@@ -159,7 +161,7 @@ public class SlimgressApplication extends Application {
 
         long timeDifferenceMillis = currentTimeMillis - unixEpochMillis;
         long remainingMillis = fiveHoursMillis - (timeDifferenceMillis % fiveHoursMillis);
-        mSepticycleHander.postDelayed(this::postGameScore, remainingMillis);
+        schedule_(this::postGameScore, remainingMillis, TimeUnit.MILLISECONDS);
         runInThread_(() -> {
             Handler mainHandler = new Handler(Looper.getMainLooper());
             mainHandler.post(() -> mGame.intGetGameScore(new Handler(msg -> {
@@ -189,6 +191,28 @@ public class SlimgressApplication extends Application {
 
     public Future<?> runInThread_(Runnable task) {
         return getExecutorService().submit(task);
+    }
+
+    public static <V> ScheduledFuture<V> schedule(Callable<V> callable,
+                                                  long delay, TimeUnit unit) {
+        return getInstance().schedule_(callable, delay, unit);
+    }
+
+    public static ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+        return getInstance().schedule_(command, delay, unit);
+    }
+
+    public <V> ScheduledFuture<V> schedule_(Callable<V> callable,
+                                            long delay, TimeUnit unit) {
+        return getScheduler().schedule(callable, delay, unit);
+    }
+
+    public ScheduledFuture<?> schedule_(Runnable command, long delay, TimeUnit unit) {
+        return getScheduler().schedule(command, delay, unit);
+    }
+
+    public ScheduledExecutorService getScheduler() {
+        return mScheduledExecutorService;
     }
 
     public GameState getGame() {
