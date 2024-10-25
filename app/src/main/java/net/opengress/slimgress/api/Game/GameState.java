@@ -301,7 +301,7 @@ public class GameState {
 
             final double earthKM = 2 * Math.PI * 6371;    // circumference
 
-            S2LatLng center = S2LatLng.fromE6(mLocation.getLatitude(), mLocation.getLongitude());
+            S2LatLng center = S2LatLng.fromE6(mLocation.getLatitudeE6(), mLocation.getLongitudeE6());
             S2LatLng size = S2LatLng.fromRadians((Math.PI / earthKM) * radiusKM, (2 * Math.PI / earthKM) * radiusKM);
             S2LatLngRect region = S2LatLngRect.fromCenterSize(center, size);
 

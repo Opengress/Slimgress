@@ -170,7 +170,7 @@ public class ActivityDeploy extends AppCompatActivity {
             }
         }
 
-        int dist = (int) mGame.getLocation().getLatLng().distanceTo(mGame.getCurrentPortal().getPortalLocation().getLatLng());
+        int dist = (int) mGame.getLocation().distanceTo(mGame.getCurrentPortal().getPortalLocation());
         updateInfoText(dist);
         setButtonsEnabled(dist <= mActionRadiusM);
     }
@@ -281,7 +281,7 @@ public class ActivityDeploy extends AppCompatActivity {
 
     private void onReceiveLocation(Location location) {
         if (location != null) {
-            int dist = (int) location.getLatLng().distanceTo(mGame.getCurrentPortal().getPortalLocation().getLatLng());
+            int dist = (int) location.distanceTo(mGame.getCurrentPortal().getPortalLocation());
             setButtonsEnabled(dist <= mActionRadiusM);
             updateInfoText(dist);
         } else {
