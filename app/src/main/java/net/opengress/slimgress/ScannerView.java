@@ -160,7 +160,7 @@ public class ScannerView extends Fragment {
     // ===========================================================
     final int TOP_LEFT_ANGLE = 315;
     final int BOTTOM_RIGHT_ANGLE = 135;
-    final int PORTAL_RADIUS_METRES = 20;
+    final int PORTAL_DIAMETER_METRES = 40;
     private MapView mMapView = null;
     private MapLibreMap mMapLibreMap;
     private SymbolManager mSymbolManager;
@@ -599,7 +599,7 @@ public class ScannerView extends Fragment {
                 style.addLayer(circleLayer);
 
                 mMapLibreMap.addOnCameraMoveListener(() -> {
-                    float radiusInPixels = metresToPixels(PORTAL_RADIUS_METRES / 1.5, Objects.requireNonNull(mMapLibreMap.getCameraPosition().target));
+                    float radiusInPixels = metresToPixels(PORTAL_DIAMETER_METRES / 3, Objects.requireNonNull(mMapLibreMap.getCameraPosition().target));
                     circleLayer.setProperties(circleRadius(radiusInPixels));
                 });
 
@@ -1194,16 +1194,10 @@ public class ScannerView extends Fragment {
     private void drawPortal(@NonNull final GameEntityPortal portal) {
         final Team team = portal.getPortalTeam();
         if (mMapView != null) {
-            // if marker already exists, remove it so it can be updated
             String guid = portal.getEntityGuid();
             String layerName = "portal-" + guid + "-layer";
             String sourceName = "portal-" + guid;
 
-            mMapLibreMap.getStyle(style -> {
-                style.removeLayer(layerName);
-                style.removeSource(sourceName);
-            });
-//            }
             final net.opengress.slimgress.api.Common.Location location = portal.getPortalLocation();
 
             ActivityMain activity = (ActivityMain) getActivity();
@@ -1215,20 +1209,27 @@ public class ScannerView extends Fragment {
                 // it's quite possible that resonators can live in a separate Hash of markers,
                 //   as long as the guids are stored with the portal info
                 Bitmap portalIcon = mIcons.get(team.toString());
-                net.opengress.slimgress.api.Common.Location topLeft = location.destinationPoint(PORTAL_RADIUS_METRES, TOP_LEFT_ANGLE);
-                net.opengress.slimgress.api.Common.Location bottomRight = location.destinationPoint(PORTAL_RADIUS_METRES, BOTTOM_RIGHT_ANGLE);
-
                 assert portalIcon != null;
-                ImageSource imageSource = new ImageSource(sourceName, new LatLngQuad(topLeft.getLatLng(), new LatLng(topLeft.getLatitudeDegrees(), bottomRight.getLongitudeDegrees()), bottomRight.getLatLng(), new LatLng(bottomRight.getLatitudeDegrees(), topLeft.getLongitudeDegrees())), portalIcon // this could be a drawable id
-                );
-
                 mMapLibreMap.getStyle(style -> {
-                    style.addSource(imageSource);
-                    style.addLayer(new RasterLayer(layerName, sourceName).withProperties(
+
+                    ImageSource imageSource = (ImageSource) style.getSource(sourceName);
+                    if (imageSource == null) {
+                        imageSource = new ImageSource(sourceName, getRotatedLatLngQuad(location.getLatLng(), PORTAL_DIAMETER_METRES, PORTAL_DIAMETER_METRES, location.getLatitude() % 360), portalIcon);
+                        style.addSource(imageSource);
+                    } else {
+                        imageSource.setImage(portalIcon);
+                    }
+
+                    RasterLayer rasterLayer = (RasterLayer) style.getLayer(layerName);
+                    if (rasterLayer == null) {
+                        style.addLayer(new RasterLayer(layerName, sourceName).withProperties(
 //                            PropertyFactory.rasterOpacity(getPortalOpacity(portal)),
-                            PropertyFactory.rasterSaturation(getPortalOpacity(portal) - 1)
+                                PropertyFactory.rasterSaturation(getPortalOpacity(portal) - 1)
 //                            PropertyFactory.rasterContrast(getPortalOpacity(portal))
-                    ));
+                        ));
+                    } else {
+                        rasterLayer.setProperties(PropertyFactory.rasterSaturation(getPortalOpacity(portal) - 1));
+                    }
                 });
 
                 for (var reso : portal.getPortalResonators()) {
@@ -1343,20 +1344,27 @@ public class ScannerView extends Fragment {
         // Calculate positions
         LatLng resoPos = reso.getResoLatLng();
 
-        style.addImage("reso-icon-" + reso.level, mIcons.get("r" + reso.level));
 
-        // Create the ImageLayer
-        RasterLayer portalImageLayer = new RasterLayer("reso-layer-" + reso.id, "reso-source-" + reso.id)
-                .withProperties(
-                        PropertyFactory.rasterContrast(saturation)
-                );
+        ImageSource rasterSource = (ImageSource) style.getSource("reso-source-" + reso.id);
+        if (rasterSource == null) {
+            // Position the image using its coordinates (longitude, latitude)
+            LatLngQuad quad = getRotatedLatLngQuad(new LatLng(resoPos.getLatitude(), resoPos.getLongitude()), LINKED_RESO_SCALE, LINKED_RESO_SCALE, reso.slot * 45);
+            rasterSource = new ImageSource("reso-source-" + reso.id, quad, mIcons.get("r" + reso.level));
+            style.addSource(rasterSource);
+        } else {
+            rasterSource.setImage(mIcons.get("r" + reso.level));
+        }
 
-        // Position the image using its coordinates (longitude, latitude)
-        LatLngQuad quad = getRotatedLatLngQuad(new LatLng(resoPos.getLatitude(), resoPos.getLongitude()), LINKED_RESO_SCALE, LINKED_RESO_SCALE, 0);
-
-        ImageSource rasterSource = new ImageSource("reso-source-" + reso.id, quad, mIcons.get("r" + reso.level));
-        style.addSource(rasterSource);
-        style.addLayer(portalImageLayer);
+        RasterLayer portalImageLayer = (RasterLayer) style.getLayer("reso-layer-" + reso.id);
+        if (portalImageLayer == null) {
+            portalImageLayer = new RasterLayer("reso-layer-" + reso.id, "reso-source-" + reso.id)
+                    .withProperties(
+                            PropertyFactory.rasterContrast(saturation)
+                    );
+            style.addLayer(portalImageLayer);
+        } else {
+            portalImageLayer.setProperties(PropertyFactory.rasterContrast(saturation));
+        }
 
 
         int rgb = getColorFromResources(getResources(), getLevelColor(reso.level));
@@ -1448,6 +1456,12 @@ public class ScannerView extends Fragment {
 
     }
 
+    public int hashGuidToMod360(String guid) {
+        int hexAsInt = Integer.parseInt(guid.substring(0, 3), 16);
+        return hexAsInt % 360;
+    }
+
+
     private void drawItem(GameEntityItem entity) {
         if (mMapView != null) {
             String guid = entity.getEntityGuid();
@@ -1520,7 +1534,7 @@ public class ScannerView extends Fragment {
 
 
                 final LatLng latLng = entity.getItem().getItemLocation().getLatLng();
-                LatLngQuad quad = getRotatedLatLngQuad(latLng, 5, 5, (int) (Math.random() * 360));
+                LatLngQuad quad = getRotatedLatLngQuad(latLng, 5, 5, hashGuidToMod360(entity.getEntityGuid()));
                 assert portalIcon != null;
                 ImageSource imageSource = new ImageSource(sourceId, quad, portalIcon);
                 style.addSource(imageSource);
