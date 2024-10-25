@@ -24,9 +24,9 @@ package net.opengress.slimgress;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
 import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_NONE;
-import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
+import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getImageForResoLevel;
-import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
 
 import android.annotation.SuppressLint;
@@ -193,8 +193,8 @@ public class InventoryList extends BaseExpandableListAdapter {
 
                     // show portal level
                     ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_level)).setText(String.format("L%d", portal.getPortalLevel()));
-                    int levelColour = getLevelColor(portal.getPortalLevel());
-                    ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_level)).setTextColor(getColorFromResources(convertView.getResources(), levelColour));
+                    int levelColour = getLevelColour(portal.getPortalLevel());
+                    ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_level)).setTextColor(getColourFromResources(convertView.getResources(), levelColour));
 
 
                     // get distance to portal and show ownership in the colour

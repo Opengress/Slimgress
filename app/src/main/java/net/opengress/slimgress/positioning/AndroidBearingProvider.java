@@ -9,10 +9,14 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 public class AndroidBearingProvider implements BearingProvider, SensorEventListener {
-    private Context context;
-    private SensorManager sensorManager;
+    private final Context context;
+    private final SensorManager sensorManager;
     private Sensor rotationVectorSensor;
     private BearingCallback bearingCallback;
+
+    private final float[] rotationMatrix = new float[9];
+    private final float[] adjustedRotationMatrix = new float[9];
+    private final float[] orientation = new float[3];
 
     public AndroidBearingProvider(Context context) {
         this.context = context;
@@ -26,7 +30,7 @@ public class AndroidBearingProvider implements BearingProvider, SensorEventListe
     @Override
     public void startBearingUpdates() {
         if (rotationVectorSensor != null) {
-            sensorManager.registerListener(this, rotationVectorSensor, SensorManager.SENSOR_DELAY_FASTEST);
+            sensorManager.registerListener(this, rotationVectorSensor, SensorManager.SENSOR_DELAY_GAME);
         }
     }
 
@@ -45,11 +49,9 @@ public class AndroidBearingProvider implements BearingProvider, SensorEventListe
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR || event.sensor.getType() == Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR) {
-            float[] rotationMatrix = new float[9];
             SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values);
 
             // Adjust rotation matrix based on the device's orientation
-            float[] adjustedRotationMatrix = new float[9];
             int axisX = SensorManager.AXIS_X;
             int axisY = SensorManager.AXIS_Y;
 
@@ -77,7 +79,6 @@ public class AndroidBearingProvider implements BearingProvider, SensorEventListe
             SensorManager.remapCoordinateSystem(rotationMatrix, axisX, axisY, adjustedRotationMatrix);
 
             // Get orientation
-            float[] orientation = new float[3];
             SensorManager.getOrientation(adjustedRotationMatrix, orientation);
 
             double azimuth = Math.toDegrees(orientation[0]);

@@ -24,8 +24,8 @@ package net.opengress.slimgress;
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromAsset;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromDrawable;
-import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
-import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
+import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.getRgbaStringFromColour;
 import static net.opengress.slimgress.ViewHelpers.getTintedImage;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
@@ -178,7 +178,7 @@ public class ScannerView extends Fragment {
     if we do it the first way, we need to ensure that the reso always gets deleted on upgrade or other-player-attack
      */
     // for getting rid of the resonators when we get rid of the portals
-    private final HashMap<String, HashMap<Integer, Pair<Symbol, Line>>> mResonatorMarkers = new HashMap<>();
+    private final HashMap<String, HashMap<Integer, Line>> mResonatorThreads = new HashMap<>();
     // for finding the portal marker when we delete it by Guid
     private final HashMap<String, Pair<String, Integer>> mResonatorToPortalSlotLookup = new HashMap<>();
     private final ArrayList<String> mLines = new ArrayList<>();
@@ -1279,7 +1279,7 @@ public class ScannerView extends Fragment {
         TextView textview4 = markerView.findViewById(R.id.marker_info_card_portal_distance);
 
         textView1.setText(String.format(Locale.getDefault(), "L%d ", portal.getPortalLevel()));
-        textView1.setTextColor(0xFF000000 + getColorFromResources(getResources(), getLevelColor(portal.getPortalLevel())));
+        textView1.setTextColor(0xFF000000 + getColourFromResources(getResources(), getLevelColour(portal.getPortalLevel())));
         textView2.setText(R.string.portal);
         textView2.setTextColor(0xFF000000 + Objects.requireNonNull(mGame.getKnobs().getTeamKnobs().getTeams().get(portal.getPortalTeam().toString())).getColour());
         textView3.setText(portal.getPortalTitle());
@@ -1297,18 +1297,14 @@ public class ScannerView extends Fragment {
 
     private void drawResonatorForPortal(GameEntityPortal portal, GameEntityPortal.LinkedResonator reso) {
         if (portal == null || reso == null) {
-            Log.e("SCANNER", "Invalid input parameters");
             return;
         }
 
-
-        final double LINKED_RESO_SCALE = 3;
         Style style = mMapLibreMap.getStyle();
         assert style != null;
-        assert mIcons != null;
 
-        float saturation = (float) reso.energyTotal / (float) reso.getMaxEnergy();
-        saturation = -0.85f * (0.95f - saturation);
+        final double LINKED_RESO_SCALE = 3;
+        float saturation = -0.85f * (0.95f - (float) reso.energyTotal / (float) reso.getMaxEnergy());
 
         if (mResonatorToPortalSlotLookup.containsKey(reso.id)) {
             Objects.requireNonNull(style.getLayer("reso-layer-" + reso.id)).setProperties(PropertyFactory.rasterContrast(saturation));
@@ -1317,16 +1313,10 @@ public class ScannerView extends Fragment {
 
 
         // Remove existing marker if present
-        var m = mResonatorMarkers.get(portal.getEntityGuid());
+        var m = mResonatorThreads.get(portal.getEntityGuid());
         if (m != null && m.containsKey(reso.slot)) {
-            Symbol resoSymbol = Objects.requireNonNull(m.get(reso.slot)).first;
-            Line resoLine = Objects.requireNonNull(m.get(reso.slot)).second;
-            if (resoSymbol != null) {
-                mSymbolManager.delete(resoSymbol);
-            }
-            if (resoLine != null) {
-                mLineManager.delete(resoLine);
-            }
+            Line resoLine = Objects.requireNonNull(m.get(reso.slot));
+            mLineManager.delete(resoLine);
             m.remove(reso.slot);
         }
 //        if (mResonatorToPortalSlotLookup.containsKey(reso.id)) {
@@ -1336,12 +1326,12 @@ public class ScannerView extends Fragment {
 //        }
 
         // Update markers map
-        HashMap<Integer, Pair<Symbol, Line>> markers;
-        if (mResonatorMarkers.containsKey(portal.getEntityGuid())) {
-            markers = mResonatorMarkers.get(portal.getEntityGuid());
+        HashMap<Integer, Line> markers;
+        if (mResonatorThreads.containsKey(portal.getEntityGuid())) {
+            markers = mResonatorThreads.get(portal.getEntityGuid());
         } else {
             markers = new HashMap<>();
-            mResonatorMarkers.put(portal.getEntityGuid(), markers);
+            mResonatorThreads.put(portal.getEntityGuid(), markers);
         }
         assert markers != null;
 
@@ -1369,18 +1359,16 @@ public class ScannerView extends Fragment {
         }
 
 
-        int rgb = getColorFromResources(getResources(), getLevelColor(reso.level));
+        int rgb = getColourFromResources(getResources(), getLevelColour(reso.level));
         // set opacity to half
-        rgb = (rgb & 0x00FFFFFF) | ((int) (((float) reso.energyTotal / (float) reso.getMaxEnergy()) * (float) 128) << 24);
+        rgb = (rgb & 0x00FFFFFF) | ((int) Math.max(48, ((float) reso.energyTotal / (float) reso.getMaxEnergy()) * (float) 128) << 24);
 
         LineOptions lineOptions = new LineOptions()
                 .withLatLngs(Arrays.asList(portal.getPortalLocation().getLatLng(), resoPos.getLatLng()))
                 .withLineColor(getRgbaStringFromColour(rgb))
-                .withLineWidth(0.2f);
+                .withLineWidth(0.5f);
 
-        Line line = mLineManager.create(lineOptions);
-
-        markers.put(reso.slot, new Pair<>(null, line));
+        markers.put(reso.slot, mLineManager.create(lineOptions));
         mResonatorToPortalSlotLookup.put(reso.id, new Pair<>(portal.getEntityGuid(), reso.slot));
     }
 

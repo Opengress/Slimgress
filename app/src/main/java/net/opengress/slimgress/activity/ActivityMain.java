@@ -21,10 +21,10 @@
 
 package net.opengress.slimgress.activity;
 
-import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
+import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getImageForUltrastrikeLevel;
 import static net.opengress.slimgress.ViewHelpers.getImageForXMPLevel;
-import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.getPrettyItemName;
 import static net.opengress.slimgress.ViewHelpers.putItemInMap;
 import static net.opengress.slimgress.ViewHelpers.saveScreenshot;
@@ -320,7 +320,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         int textColor;
         Team team = agent.getTeam();
         textColor = 0xff000000 + team.getColour();
-        int levelColor = getColorFromResources(getResources(), getLevelColor(agent.getLevel()));
+        int levelColor = getColourFromResources(getResources(), getLevelColour(agent.getLevel()));
 
         ((TextView) findViewById(R.id.agentname)).setText(agent.getNickname());
         ((TextView) findViewById(R.id.agentname)).setTextColor(textColor);
@@ -389,7 +389,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     public void showLevelUpDialog(HashMap<String, Integer> items) {
         DialogLevelUp dialog = new DialogLevelUp(this);
         int level = mGame.getAgent().getVerifiedLevel();
-        dialog.setMessage(String.format("LEVEL %d", level), getColorFromResources(getResources(), getLevelColor(level)));
+        dialog.setMessage(String.format("LEVEL %d", level), getColourFromResources(getResources(), getLevelColour(level)));
         dialog.setCancelable(true); // Allow dialog to be dismissed by tapping outside
 
         dialog.setOnDismissListener(dialog1 -> {

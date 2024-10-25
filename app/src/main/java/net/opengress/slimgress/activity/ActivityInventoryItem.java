@@ -4,11 +4,11 @@ import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLU
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
 import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_NONE;
 import static net.opengress.slimgress.SlimgressApplication.runInThread;
-import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
-import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
+import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.getMainActivity;
 import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
-import static net.opengress.slimgress.ViewHelpers.getRarityColor;
+import static net.opengress.slimgress.ViewHelpers.getRarityColour;
 import static net.opengress.slimgress.ViewHelpers.getRarityText;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 
@@ -94,8 +94,8 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 // Portal Key L1
                 itemTitle.setText(R.string.item_name_portal_key);
                 mItemLevel.setText(String.format("L%d", portal.getPortalLevel()));
-                mLevelColour = getLevelColor(portal.getPortalLevel());
-                mItemLevel.setTextColor(getColorFromResources(getResources(), mLevelColour));
+                mLevelColour = getLevelColour(portal.getPortalLevel());
+                mItemLevel.setTextColor(getColourFromResources(getResources(), mLevelColour));
 
 
                 // bonanza at south beach
@@ -204,8 +204,8 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 itemName.setText(mItem.getPrettyDescription());
                 itemDescription.setText(mItem.getDescription());
                 mItemLevel.setText(String.format("L%d", actual.getItemLevel()));
-                mLevelColour = getLevelColor(actual.getItemLevel());
-                mItemLevel.setTextColor(getColorFromResources(getResources(), mLevelColour));
+                mLevelColour = getLevelColour(actual.getItemLevel());
+                mItemLevel.setTextColor(getColourFromResources(getResources(), mLevelColour));
             }
         }
 
@@ -261,12 +261,12 @@ public class ActivityInventoryItem extends AppCompatActivity {
     @SuppressLint("DefaultLocale")
     private void inflateResource(InventoryListItem item, ItemBase actual) {
         mItemRarity.setText(getRarityText(item.getRarity()));
-        int rarityColor = getRarityColor(item.getRarity());
-        mItemRarity.setTextColor(getColorFromResources(getResources(), rarityColor));
+        int rarityColor = getRarityColour(item.getRarity());
+        mItemRarity.setTextColor(getColourFromResources(getResources(), rarityColor));
         if (actual.getItemLevel() > 0) {
             mItemLevel.setText(String.format("L%d", actual.getItemLevel()));
-            mLevelColour = getLevelColor(actual.getItemLevel());
-            mItemLevel.setTextColor(getColorFromResources(getResources(), mLevelColour));
+            mLevelColour = getLevelColour(actual.getItemLevel());
+            mItemLevel.setTextColor(getColourFromResources(getResources(), mLevelColour));
         }
     }
 
