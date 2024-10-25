@@ -1,5 +1,7 @@
 package net.opengress.slimgress;
 
+import static org.maplibre.android.utils.ColorUtils.colorToRgbaString;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -36,6 +38,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ViewHelpers {
+    private static HashMap<Integer, String> mColourStrings = new HashMap<>();
+
     @Nullable
     static Bitmap getBitmapFromAsset(String name, @NonNull AssetManager assetManager) {
 
@@ -198,6 +202,15 @@ public class ViewHelpers {
             result = r.getColor(id);
         }
         return result;
+    }
+
+    public static String getRgbaStringFromColour(int colour) {
+        if (mColourStrings.containsKey(colour)) {
+            return mColourStrings.get(colour);
+        }
+        String rgbaString = colorToRgbaString(colour);
+        mColourStrings.put(colour, rgbaString);
+        return rgbaString;
     }
 
     @NonNull

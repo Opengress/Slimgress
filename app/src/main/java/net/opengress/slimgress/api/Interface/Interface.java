@@ -210,7 +210,6 @@ public class Interface
             }
 
             // create post
-            String postString = mApiBaseURL + mApiRequest + requestString;
             RequestBody body = RequestBody.create(params.toString(), MediaType.get("application/json"));
             Request post = new Request.Builder()
                     .post(body)
@@ -220,7 +219,7 @@ public class Interface
                     .header("Host", mApiBase)
                     .header("Connection", "Keep-Alive")
                     .addHeader("Cookie", mCookie)
-                    .url(postString).build();
+                    .url(mApiBaseURL + mApiRequest + requestString).build();
 
             // execute and get the response.
             try {
@@ -244,9 +243,7 @@ public class Interface
 
                 // handle request result
                 if (content != null) {
-//                    Log.d("Interface.request", content);
-                    JSONObject json = new JSONObject(content);
-                    RequestResult.handleRequest(json, result);
+                    RequestResult.handleRequest(new JSONObject(content), result);
                     mSlurpableXMParticles.clear();
                 }
             }

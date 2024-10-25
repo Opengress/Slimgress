@@ -43,7 +43,7 @@ public class Utils
         final double radius_m2 = 6371 * 1000;
         final double sr = areaM2 / (radius_m2 * radius_m2);
 
-        S2LatLng pointLatLng = S2LatLng.fromE6(location.getLatitude(), location.getLongitude());
+        S2LatLng pointLatLng = S2LatLng.fromE6(location.getLatitudeE6(), location.getLongitudeE6());
         S2Cap cap = S2Cap.fromAxisArea(pointLatLng.toPoint(), sr);
 
         return getCellIdsFromRegion(cap, minLevel, maxLevel);
@@ -51,8 +51,8 @@ public class Utils
 
     public static String[] getCellIdsFromMinMax(Location min, Location max, int minLevel, int maxLevel)
     {
-        S2LatLngRect region = S2LatLngRect.fromPointPair(S2LatLng.fromE6(min.getLatitude(), min.getLongitude()),
-                S2LatLng.fromE6(max.getLatitude(), max.getLongitude()));
+        S2LatLngRect region = S2LatLngRect.fromPointPair(S2LatLng.fromE6(min.getLatitudeE6(), min.getLongitudeE6()),
+                S2LatLng.fromE6(max.getLatitudeE6(), max.getLongitudeE6()));
         return getCellIdsFromRegion(region, minLevel, maxLevel);
     }
 

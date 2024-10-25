@@ -26,6 +26,7 @@ import static net.opengress.slimgress.ViewHelpers.getBitmapFromAsset;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromDrawable;
 import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getRgbaStringFromColour;
 import static net.opengress.slimgress.ViewHelpers.getTintedImage;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
@@ -35,7 +36,6 @@ import static org.maplibre.android.style.layers.PropertyFactory.circleRadius;
 import static org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor;
 import static org.maplibre.android.style.layers.PropertyFactory.circleStrokeOpacity;
 import static org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth;
-import static org.maplibre.android.utils.ColorUtils.colorToRgbaString;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -49,7 +49,6 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.PointF;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -80,6 +79,7 @@ import com.google.common.geometry.S2LatLng;
 import net.opengress.slimgress.activity.ActivityMain;
 import net.opengress.slimgress.activity.ActivityPortal;
 import net.opengress.slimgress.activity.ActivitySplash;
+import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Game.XMParticle;
@@ -158,8 +158,6 @@ public class ScannerView extends Fragment {
     // ===========================================================
     // Map basics
     // ===========================================================
-    final int TOP_LEFT_ANGLE = 315;
-    final int BOTTOM_RIGHT_ANGLE = 135;
     final int PORTAL_DIAMETER_METRES = 40;
     private MapView mMapView = null;
     private MapLibreMap mMapLibreMap;
@@ -192,12 +190,12 @@ public class ScannerView extends Fragment {
     // ===========================================================
     private SharedPreferences mPrefs;
 
-    private LatLng mCurrentLocation = null;
+    private net.opengress.slimgress.api.Common.Location mCurrentLocation = null;
     private static final int RECORD_REQUEST_CODE = 101;
     private long mLastScan = 0;
     // FIXME this should be used to set "location inaccurate" if updates mysteriously stop
     private Date mLastLocationAcquired = null;
-    private LatLng mLastLocation = null;
+    private net.opengress.slimgress.api.Common.Location mLastLocation = null;
 
 
     // ===========================================================
@@ -254,10 +252,10 @@ public class ScannerView extends Fragment {
         mPlayerCursorImageSource.setCoordinates(newImagePosition);
 
         if (CURRENT_MAP_ORIENTATION_SCHEME == MAP_ROTATION_ARBITRARY) {
-            mMapLibreMap.easeCamera(CameraUpdateFactory.newLatLngZoom(mCurrentLocation, mMapLibreMap.getCameraPosition().zoom));
+            mMapLibreMap.easeCamera(CameraUpdateFactory.newLatLngZoom(mCurrentLocation.getLatLng(), mMapLibreMap.getCameraPosition().zoom));
         } else {
             mMapLibreMap.easeCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
-                    .target(mCurrentLocation)
+                    .target(mCurrentLocation.getLatLng())
                     .zoom(mMapLibreMap.getCameraPosition().zoom)
                     .bearing((360 - mBearing + 360) % 360)
                     .build()));
@@ -266,7 +264,7 @@ public class ScannerView extends Fragment {
         updateActionRadiusLocation(mCurrentLocation);
     }
 
-    public void setupPlayerCursor(LatLng initialLocation, int bearing) {
+    public void setupPlayerCursor(Location initialLocation, int bearing) {
         if (mMapLibreMap.getStyle() == null) {
             return;
         }
@@ -287,7 +285,7 @@ public class ScannerView extends Fragment {
     }
 
     // Function to calculate LatLngQuad for the given radius in meters
-    private LatLngQuad getRadialLatLngQuad(LatLng center, double radiusMeters) {
+    private LatLngQuad getRadialLatLngQuad(Location center, double radiusMeters) {
         LatLng topLeft = calculateOffset(center, -radiusMeters, radiusMeters);
         LatLng topRight = calculateOffset(center, radiusMeters, radiusMeters);
         LatLng bottomRight = calculateOffset(center, radiusMeters, -radiusMeters);
@@ -297,7 +295,7 @@ public class ScannerView extends Fragment {
     }
 
     // Helper function to calculate the offset LatLng
-    private LatLng calculateOffset(LatLng center, double offsetX, double offsetY) {
+    private LatLng calculateOffset(Location center, double offsetX, double offsetY) {
         double latOffset = offsetY / S2LatLng.EARTH_RADIUS_METERS * (180 / Math.PI);
         double lngOffset = offsetX / (S2LatLng.EARTH_RADIUS_METERS * Math.cos(Math.toRadians(center.getLatitude()))) * (180 / Math.PI);
 
@@ -305,7 +303,7 @@ public class ScannerView extends Fragment {
     }
 
     // Function to calculate a rotated LatLngQuad based on bearing
-    private LatLngQuad getRotatedLatLngQuad(LatLng center, double width, double height, double bearing) {
+    private LatLngQuad getRotatedLatLngQuad(Location center, double width, double height, double bearing) {
         // Convert bearing from degrees to radians
         bearing = ((bearing % 360) + 360) % 360;
         double bearingRad = Math.toRadians(bearing);
@@ -324,7 +322,7 @@ public class ScannerView extends Fragment {
     }
 
     // Helper function to calculate the rotated point around the center
-    private LatLng calculateRotatedPoint(LatLng center, double offsetX, double offsetY, double bearingRad) {
+    private LatLng calculateRotatedPoint(Location center, double offsetX, double offsetY, double bearingRad) {
         // Apply the rotation matrix to the point
         double rotatedX = offsetX * Math.cos(bearingRad) - offsetY * Math.sin(bearingRad);
         double rotatedY = offsetX * Math.sin(bearingRad) + offsetY * Math.cos(bearingRad);
@@ -333,7 +331,7 @@ public class ScannerView extends Fragment {
     }
 
 
-    public void setupActionRadius(LatLng initialLocation) {
+    public void setupActionRadius(Location initialLocation) {
         if (mMapLibreMap.getStyle() == null) {
             return;
         }
@@ -347,7 +345,7 @@ public class ScannerView extends Fragment {
     }
 
     // Method to update the action radius position (just update the GeoJsonSource)
-    public void updateActionRadiusLocation(LatLng newLocation) {
+    public void updateActionRadiusLocation(Location newLocation) {
         if (mMapLibreMap.getStyle() == null) {
             return;
         }
@@ -356,12 +354,16 @@ public class ScannerView extends Fragment {
         actionRadiusSource.setCoordinates(getRadialLatLngQuad(newLocation, mActionRadiusM));
     }
 
+    private float metresToPixels(double meters, Location location) {
+        return (float) (meters / mMapLibreMap.getProjection().getMetersPerPixelAtLatitude(location.getLatitude()));
+    }
+
     private float metresToPixels(double meters, LatLng location) {
         return (float) (meters / mMapLibreMap.getProjection().getMetersPerPixelAtLatitude(location.getLatitude()));
     }
 
 
-    private void displayMyCurrentLocationOverlay(LatLng currentLocation) {
+    private void displayMyCurrentLocationOverlay(Location currentLocation) {
 
         long now = System.currentTimeMillis();
 
@@ -400,12 +402,11 @@ public class ScannerView extends Fragment {
         mBearingProvider.setBearingCallback(bearing -> updateBearing((int) bearing));
         mLocationProvider.setLocationCallback(new LocationCallback() {
             @Override
-            public void onLocationUpdated(Location location) {
+            public void onLocationUpdated(android.location.Location location) {
                 slurp();
-                mCurrentLocation = new LatLng(location);
-                var loc = new net.opengress.slimgress.api.Common.Location(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
-                mApp.getLocationViewModel().setLocationData(loc);
-                mGame.updateLocation(loc);
+                mCurrentLocation = new Location(location.getLatitude(), location.getLongitude());
+                mApp.getLocationViewModel().setLocationData(mCurrentLocation);
+                mGame.updateLocation(mCurrentLocation);
                 mLastLocationAcquired = new Date();
 
                 if (!mHaveRotationSensor && location.hasBearing()) {
@@ -425,7 +426,6 @@ public class ScannerView extends Fragment {
                 setLocationInaccurate(true);
             }
         });
-//        requestLocationUpdates();
         setLocationInaccurate(true);
 
         mApp.getDeletedEntityGuidsModel().getDeletedEntityGuids().observe(this, this::onReceiveDeletedEntityGuids);
@@ -556,12 +556,12 @@ public class ScannerView extends Fragment {
             mMapLibreMap.setMinZoomPreference(16);
             mMapLibreMap.setMaxZoomPreference(22);
             // FIXME wrong layer name or layer needs to be dynamic
-            mMapLibreMap.setStyle(new Style.Builder().fromUri("https://demotiles.maplibre.org/style.json").withSource(new RasterSource("carto-basemap", new TileSet("tileset", "https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png"))).withLayer(new RasterLayer("carto-basemap-layer", "carto-basemap")), style -> {
+            mMapLibreMap.setStyle(new Style.Builder().withSource(new RasterSource("carto-basemap", new TileSet("tileset", "https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png"))).withLayer(new RasterLayer("carto-basemap-layer", "carto-basemap")), style -> {
 
                 // FIXME zoom, bearing and latlng should be in prefs
-                LatLng initialLocation = new LatLng(-42.673314, 171.025762);
+                Location initialLocation = new Location(-42.673314, 171.025762);
                 setupPlayerCursor(initialLocation, 0);
-                mMapLibreMap.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLocation, 18));
+                mMapLibreMap.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLocation.getLatLng(), 18));
 
 //                mMapLibreMap.getUiSettings().setCompassMargins(5, 150, 0, 0);
                 mMapLibreMap.getUiSettings().setCompassMargins(5, 100, 0, 0);
@@ -734,7 +734,7 @@ public class ScannerView extends Fragment {
     }
 
 
-    private void addExpandingCircle(LatLng centerPoint, int durationMs, float radiusM, int colour, float width) {
+    private void addExpandingCircle(Location centerPoint, int durationMs, float radiusM, int colour, float width) {
         if (mMapLibreMap == null || mMapLibreMap.getStyle() == null) {
             Log.d("SCANNER", "No mapLibreMap");
             return;
@@ -1058,7 +1058,7 @@ public class ScannerView extends Fragment {
 
     private void slurp() {
 
-        final net.opengress.slimgress.api.Common.Location playerLoc = mGame.getLocation();
+        final Location playerLoc = mGame.getLocation();
         if (mGame.getAgent() == null || playerLoc == null) {
             return;
         }
@@ -1077,8 +1077,6 @@ public class ScannerView extends Fragment {
         Map<Long, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
         ArrayList<String> slurpableParticles = new ArrayList<>();
 
-        final LatLng playerLatLng = playerLoc.getLatLng();
-
         for (Map.Entry<Long, XMParticle> entry : xmParticles.entrySet()) {
             if (oldXM + newXM >= maxXM) {
                 continue;
@@ -1088,8 +1086,8 @@ public class ScannerView extends Fragment {
 
             // FIXME this is honestly the worst imaginable solution, but for now it's what i have...
             assert particle != null;
-            final net.opengress.slimgress.api.Common.Location location = particle.getCellLocation();
-            if (location.getLatLng().distanceTo(playerLatLng) < mActionRadiusM) {
+            final Location location = particle.getCellLocation();
+            if (location.distanceTo(playerLoc) < mActionRadiusM) {
 
                 slurpableParticles.add(particle.getGuid());
                 newXM += particle.getAmount();
@@ -1128,7 +1126,7 @@ public class ScannerView extends Fragment {
                     if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
                         GameEntityPortal portal = (GameEntityPortal) entity;
                         drawPortal(portal);
-                        Feature feature = Feature.fromGeometry(Point.fromLngLat(portal.getPortalLocation().getLongitudeDegrees(), portal.getPortalLocation().getLatitudeDegrees()));
+                        Feature feature = Feature.fromGeometry(Point.fromLngLat(portal.getPortalLocation().getLongitude(), portal.getPortalLocation().getLatitude()));
                         feature.addStringProperty("guid", portal.getEntityGuid());
                         features.add(feature);
                     } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
@@ -1138,7 +1136,7 @@ public class ScannerView extends Fragment {
                     } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {
                         GameEntityItem item = (GameEntityItem) entity;
                         drawItem(item);
-                        Feature feature = Feature.fromGeometry(Point.fromLngLat(item.getItem().getItemLocation().getLongitudeDegrees(), item.getItem().getItemLocation().getLatitudeDegrees()));
+                        Feature feature = Feature.fromGeometry(Point.fromLngLat(item.getItem().getItemLocation().getLongitude(), item.getItem().getItemLocation().getLatitude()));
                         feature.addStringProperty("guid", item.getEntityGuid());
                         features.add(feature);
                     }
@@ -1179,9 +1177,7 @@ public class ScannerView extends Fragment {
             activity.runOnUiThread(() -> {
                 // only draw if not already in list
                 if (style.getLayer(layerId) == null) {
-                    final net.opengress.slimgress.api.Common.Location location = particle.getCellLocation();
-                    final LatLng latLng = location.getLatLng();
-                    LatLngQuad quad = getRotatedLatLngQuad(latLng, 10, 10, 0);
+                    LatLngQuad quad = getRotatedLatLngQuad(particle.getCellLocation(), 10, 10, 0);
                     ImageSource imageSource = new ImageSource(sourceId, quad, mIcons.get("particle"));
                     style.addSource(imageSource);
                     RasterLayer rasterLayer = new RasterLayer(layerId, sourceId);
@@ -1198,7 +1194,7 @@ public class ScannerView extends Fragment {
             String layerName = "portal-" + guid + "-layer";
             String sourceName = "portal-" + guid;
 
-            final net.opengress.slimgress.api.Common.Location location = portal.getPortalLocation();
+            final Location location = portal.getPortalLocation();
 
             ActivityMain activity = (ActivityMain) getActivity();
             if (activity == null) {
@@ -1214,7 +1210,7 @@ public class ScannerView extends Fragment {
 
                     ImageSource imageSource = (ImageSource) style.getSource(sourceName);
                     if (imageSource == null) {
-                        imageSource = new ImageSource(sourceName, getRotatedLatLngQuad(location.getLatLng(), PORTAL_DIAMETER_METRES, PORTAL_DIAMETER_METRES, location.getLatitude() % 360), portalIcon);
+                        imageSource = new ImageSource(sourceName, getRotatedLatLngQuad(location, PORTAL_DIAMETER_METRES, PORTAL_DIAMETER_METRES, location.getLatitude() % 360), portalIcon);
                         style.addSource(imageSource);
                     } else {
                         imageSource.setImage(portalIcon);
@@ -1259,9 +1255,6 @@ public class ScannerView extends Fragment {
             mSymbolManager.delete(mMarkerInfoCard);
             mMarkerInfoCard = null;
         }
-
-        // Remove the image from the map style
-        Objects.requireNonNull(mMapLibreMap.getStyle()).removeImage("info_card");
     }
 
     @SuppressLint("InflateParams")
@@ -1279,14 +1272,14 @@ public class ScannerView extends Fragment {
         textView2.setText(R.string.portal);
         textView2.setTextColor(0xFF000000 + Objects.requireNonNull(mGame.getKnobs().getTeamKnobs().getTeams().get(portal.getPortalTeam().toString())).getColour());
         textView3.setText(portal.getPortalTitle());
-        int dist = (int) mCurrentLocation.distanceTo(portal.getPortalLocation().getLatLng());
+        int dist = (int) mCurrentLocation.distanceTo(portal.getPortalLocation());
         textview4.setText(String.format(Locale.getDefault(), "Distance: %dm", dist));
 
 
         Bitmap bitmap = createDrawableFromView(requireContext(), markerView);
         Objects.requireNonNull(mMapLibreMap.getStyle()).addImage("info_card", bitmap);
         mMarkerInfoCard = mSymbolManager.create(new SymbolOptions()
-                .withLatLng(new LatLng(portal.getPortalLocation().getLatitudeDegrees(), portal.getPortalLocation().getLongitudeDegrees()))
+                .withLatLng(new LatLng(portal.getPortalLocation().getLatitude(), portal.getPortalLocation().getLongitude()))
                 .withIconImage("info_card")
                 .withIconSize(1.0f));
     }
@@ -1342,13 +1335,11 @@ public class ScannerView extends Fragment {
         assert markers != null;
 
         // Calculate positions
-        LatLng resoPos = reso.getResoLatLng();
-
-
+        Location resoPos = reso.getResoLocation();
         ImageSource rasterSource = (ImageSource) style.getSource("reso-source-" + reso.id);
         if (rasterSource == null) {
             // Position the image using its coordinates (longitude, latitude)
-            LatLngQuad quad = getRotatedLatLngQuad(new LatLng(resoPos.getLatitude(), resoPos.getLongitude()), LINKED_RESO_SCALE, LINKED_RESO_SCALE, reso.slot * 45);
+            LatLngQuad quad = getRotatedLatLngQuad(resoPos, LINKED_RESO_SCALE, LINKED_RESO_SCALE, reso.slot * 45);
             rasterSource = new ImageSource("reso-source-" + reso.id, quad, mIcons.get("r" + reso.level));
             style.addSource(rasterSource);
         } else {
@@ -1372,8 +1363,8 @@ public class ScannerView extends Fragment {
         rgb = (rgb & 0x00FFFFFF) | ((int) (((float) reso.energyTotal / (float) reso.getMaxEnergy()) * (float) 128) << 24);
 
         LineOptions lineOptions = new LineOptions()
-                .withLatLngs(Arrays.asList(portal.getPortalLocation().getLatLng(), resoPos))
-                .withLineColor(colorToRgbaString(rgb))
+                .withLatLngs(Arrays.asList(portal.getPortalLocation().getLatLng(), resoPos.getLatLng()))
+                .withLineColor(getRgbaStringFromColour(rgb))
                 .withLineWidth(0.2f);
 
         Line line = mLineManager.create(lineOptions);
@@ -1401,18 +1392,18 @@ public class ScannerView extends Fragment {
         }
 
 
-        final net.opengress.slimgress.api.Common.Location origin = link.getLinkOriginLocation();
-        final net.opengress.slimgress.api.Common.Location dest = link.getLinkDestinationLocation();
+        final Location origin = link.getLinkOriginLocation();
+        final Location dest = link.getLinkDestinationLocation();
 
         activity.runOnUiThread(() -> {
 
             // TODO: decay link per portal health
             Team team = link.getLinkControllingTeam();
-            int color = 0xff000000 + team.getColour(); // adding opacity
+            int colour = 0xff000000 + team.getColour(); // adding opacity
 
             LineOptions lineOptions = new LineOptions()
                     .withLatLngs(Arrays.asList(origin.getLatLng(), dest.getLatLng()))
-                    .withLineColor(colorToRgbaString(color))
+                    .withLineColor(getRgbaStringFromColour(colour))
                     .withLineWidth(0.2f);
 
             mLineManager.create(lineOptions);
@@ -1436,19 +1427,19 @@ public class ScannerView extends Fragment {
         }
 
 
-        final net.opengress.slimgress.api.Common.Location vA = field.getFieldVertexA().getPortalLocation();
-        final net.opengress.slimgress.api.Common.Location vB = field.getFieldVertexB().getPortalLocation();
-        final net.opengress.slimgress.api.Common.Location vC = field.getFieldVertexC().getPortalLocation();
+        final Location vA = field.getFieldVertexA().getPortalLocation();
+        final Location vB = field.getFieldVertexB().getPortalLocation();
+        final Location vC = field.getFieldVertexC().getPortalLocation();
         activity.runOnUiThread(() -> {
             Team team = field.getFieldControllingTeam();
-            int color = 0x32000000 + team.getColour(); // adding alpha
+            int colour = 0x32000000 + team.getColour(); // adding alpha
 
             // Create a list with the vertices of the polygon
             List<LatLng> polygonLatLngs = Arrays.asList(vA.getLatLng(), vB.getLatLng(), vC.getLatLng());
 
             FillOptions polygonOptions = new FillOptions()
                     .withLatLngs(Collections.singletonList(polygonLatLngs))
-                    .withFillColor(colorToRgbaString(color));
+                    .withFillColor(getRgbaStringFromColour(colour));
 
             mFillManager.create(polygonOptions);
             mPolygons.add(field.getEntityGuid());
@@ -1532,9 +1523,7 @@ public class ScannerView extends Fragment {
                     case PlayerPowerup -> portalIcon = mIcons.get("dap");
                 }
 
-
-                final LatLng latLng = entity.getItem().getItemLocation().getLatLng();
-                LatLngQuad quad = getRotatedLatLngQuad(latLng, 5, 5, hashGuidToMod360(entity.getEntityGuid()));
+                LatLngQuad quad = getRotatedLatLngQuad(entity.getItem().getItemLocation(), 5, 5, hashGuidToMod360(entity.getEntityGuid()));
                 assert portalIcon != null;
                 ImageSource imageSource = new ImageSource(sourceId, quad, portalIcon);
                 style.addSource(imageSource);
@@ -1693,7 +1682,7 @@ public class ScannerView extends Fragment {
         SymbolOptions symbolOptions = new SymbolOptions()
                 .withLatLng(location)
                 .withTextField(String.format("%d%%", percentage) + (criticalHit ? "!" : ""))
-                .withTextColor(colorToRgbaString(0xCCF8C03E))
+                .withTextColor(getRgbaStringFromColour(0xCCF8C03E))
 //                    .withTextSize(14.0f)
                 ;
 
@@ -1711,12 +1700,12 @@ public class ScannerView extends Fragment {
         GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(attackerGuid);
         assert portal != null;
 
-        net.opengress.slimgress.api.Common.Location playerLocation = mGame.getLocation();
+        Location playerLocation = mGame.getLocation();
 
         // create the zap line for player damage
         LineOptions lineOptions = new LineOptions()
                 .withLatLngs(Arrays.asList(portal.getPortalLocation().getLatLng(), playerLocation.getLatLng()))
-                .withLineColor(colorToRgbaString(colour))
+                .withLineColor(getRgbaStringFromColour(colour))
 //                .withLineWidth(0.2f)
                 ;
 
@@ -1736,7 +1725,7 @@ public class ScannerView extends Fragment {
         SymbolOptions symbolOptions = new SymbolOptions()
                 .withLatLng(playerLocation.destinationPoint(10, 0).getLatLng())
                 .withTextField(String.format("%d%%", percentage))
-                .withTextColor(colorToRgbaString(colour))
+                .withTextColor(getRgbaStringFromColour(colour))
 //                    .withTextSize(14.0f)
                 ;
 
