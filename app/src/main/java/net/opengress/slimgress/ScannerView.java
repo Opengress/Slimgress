@@ -553,7 +553,7 @@ public class ScannerView extends Fragment {
             mMapLibreMap = mapLibreMap;
             mMapLibreMap.setMinZoomPreference(16);
             mMapLibreMap.setMaxZoomPreference(22);
-            // FIXME wrong layer name or layer needs to be dynamic
+
             mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> setUpStyleForMap(mapLibreMap, style));
             // Retrieve saved camera properties
             float bearing = mPrefs.getFloat("camera_bearing", 0f);
@@ -561,6 +561,7 @@ public class ScannerView extends Fragment {
             double longitude = mPrefs.getFloat("camera_longitude", 0f);
             float tilt = mPrefs.getFloat("camera_tilt", 0f);
             float zoom = mPrefs.getFloat("camera_zoom", 18f);
+            CURRENT_MAP_ORIENTATION_SCHEME = mPrefs.getInt("orientation_scheme", CURRENT_MAP_ORIENTATION_SCHEME);
 
             // Build the saved camera position
             Location initialLocation = new Location(latitude, longitude);
@@ -817,21 +818,6 @@ public class ScannerView extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        final Context context = this.requireActivity();
-
-
-//        Configuration.getInstance().setUserAgentValue("Slimgress/Openflux (OSMDroid)");
-
-//        //the rest of this is restoring the last map location the user looked at
-//        final float zoomLevel = mPrefs.getFloat(PREFS_OSM_ZOOM_LEVEL_DOUBLE, 18);
-//        mMapView.getController().setZoom(zoomLevel);
-//        mMapView.setMapOrientation(0, false);
-//        final String latitudeString = mPrefs.getString(PREFS_OSM_LATITUDE_STRING, "1.0");
-//        final String longitudeString = mPrefs.getString(PREFS_OSM_LONGITUDE_STRING, "1.0");
-//        final double latitude = Double.parseDouble(latitudeString);
-//        final double longitude = Double.parseDouble(longitudeString);
-//        mMapView.setExpectedCenter(new GeoPoint(latitude, longitude));
     }
 
     @Override
@@ -847,10 +833,12 @@ public class ScannerView extends Fragment {
             editor.putFloat("camera_longitude", (float) cameraPosition.target.getLongitude());
             editor.putFloat("camera_tilt", (float) cameraPosition.tilt);
             editor.putFloat("camera_zoom", (float) cameraPosition.zoom);
+            editor.putInt("orientation_scheme", CURRENT_MAP_ORIENTATION_SCHEME);
+
+            Log.d("SCANNER", editor.toString());
 
             editor.apply();
         }
-
         mMapView.onPause();
         super.onPause();
     }
@@ -1257,7 +1245,6 @@ public class ScannerView extends Fragment {
                     ImageSource imageSource = (ImageSource) style.getSource(sourceName);
                     if (imageSource == null) {
                         imageSource = new ImageSource(sourceName, getRotatedLatLngQuad(location, PORTAL_DIAMETER_METRES, PORTAL_DIAMETER_METRES, location.getLatitudeE6() % 360), portalIcon);
-                        Log.d("SCANNER", "Image rotation: " + location.getLatitudeE6() % 360 + " for " + portal.getPortalTitle() + " because latitude is " + location.getLatitudeE6());
                         style.addSource(imageSource);
                     } else {
                         imageSource.setImage(portalIcon);
