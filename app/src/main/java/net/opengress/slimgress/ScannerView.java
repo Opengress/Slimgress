@@ -132,6 +132,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -229,6 +230,10 @@ public class ScannerView extends Fragment {
     GeoJsonSource mPortalGeoJsonSource;
     private long mCircleId = 1;
 
+    // ===========================================================
+    // Misc
+    // ===========================================================
+    private ArrayList<String> mSlurpableParticles = new ArrayList<>();
 
     private void updateBearing(int bearing) {
         if (mMapLibreMap == null) {
@@ -1075,11 +1080,16 @@ public class ScannerView extends Fragment {
         //  -- note that we may need to sort the particles and pick out the optimal configuration
         //  -- also note that if we're really cheeky we may want/be able to do that serverside
         Map<Long, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
-        ArrayList<String> slurpableParticles = new ArrayList<>();
+        mSlurpableParticles.clear();
 
-        for (Map.Entry<Long, XMParticle> entry : xmParticles.entrySet()) {
+
+        Iterator<Map.Entry<Long, XMParticle>> iterator = xmParticles.entrySet().iterator();
+
+        while (iterator.hasNext()) {
+            Map.Entry<Long, XMParticle> entry = iterator.next();
             if (oldXM + newXM >= maxXM) {
-                continue;
+                // continue is more computationally expensive and USUALLY not needed
+                break;
             }
 
             XMParticle particle = entry.getValue();
@@ -1089,14 +1099,15 @@ public class ScannerView extends Fragment {
             final Location location = particle.getCellLocation();
             if (location.distanceTo(playerLoc) < mActionRadiusM) {
 
-                slurpableParticles.add(particle.getGuid());
+                mSlurpableParticles.add(particle.getGuid());
                 newXM += particle.getAmount();
 //                var marker = mXMMarkers.remove(key);
 //                mMapView.getOverlays().remove(marker);
+                iterator.remove();
             }
         }
 
-        mGame.addSlurpableXMParticles(slurpableParticles);
+        mGame.addSlurpableXMParticles(mSlurpableParticles);
         mGame.getAgent().addEnergy(newXM);
 
         if (getActivity() != null && newXM > 0) {
