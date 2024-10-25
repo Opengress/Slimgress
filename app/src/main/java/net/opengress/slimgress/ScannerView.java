@@ -590,6 +590,9 @@ public class ScannerView extends Fragment {
             mMapLibreMap.getUiSettings().setQuickZoomGesturesEnabled(false);
             mMapLibreMap.getUiSettings().setAllVelocityAnimationsEnabled(false);
 
+            mMapLibreMap.getUiSettings().setAttributionEnabled(false);
+            mMapLibreMap.getUiSettings().setLogoEnabled(false);
+
             mMapLibreMap.addOnMapLongClickListener(point -> {
                 if (mIsRotating || mIsZooming || mIsClickingCompass) {
                     mIsClickingCompass = false;

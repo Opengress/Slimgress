@@ -39,11 +39,11 @@
         <h1>Assets, libraries and services used in this application</h1>
         <ul>
         <li>AppCompat and Material Design components for most widgets (Apache 2)</li>
-        <li><a href="https://github.com/google/guava">Guava</a> for various android utilities (Apache 2)</li>
-        <li><a href="https://github.com/square/okhttp">OkHttp</a> for HTTP(s) requests, generally (Apache 2)</li>
-        <li><a href="https://github.com/osmdroid/osmdroid">OSMDroid</a> for the map taking centre stage in the scanner (Apache 2)</li>
-        <li><a href="https://github.com/ACRA/acra">ACRA</a> for crash reporting (Apache 2)</li>
-        <li><a href="https://github.com/bumptech/glide">Glide</a> for making image loading much simpler (Apache 2)</li>
+        <li><a href="https://github.com/google/guava">Guava</a> for various android utilities (<a href="https://github.com/google/guava/blob/master/LICENSE">Apache 2</a>)</li>
+        <li><a href="https://github.com/square/okhttp">OkHttp</a> for HTTP(s) requests, generally (<a href="https://github.com/square/okhttp/blob/master/LICENSE.txt">Apache 2</a>)</li>
+        <li><a href="https://github.com/maplibre/maplibre-native">MapLibre Native</a> is the map taking centre stage in the scanner (<a href="https://github.com/maplibre/maplibre-native/blob/main/LICENSE.md">BSD 2-Clause</a> et <a href="https://github.com/maplibre/maplibre-native/blob/main/LICENSES.core.md">al</a>)</li>
+        <li><a href="https://github.com/ACRA/acra">ACRA</a> for crash reporting (<a href="https://github.com/ACRA/acra/blob/master/LICENSE">Apache 2</a>)</li>
+        <li><a href="https://github.com/bumptech/glide">Glide</a> for making image loading much simpler (<a href="https://github.com/google/guava/blob/master/LICENSE">Apache 2</a>)</li>
         </ul>
         <h1>Authors</h1>
         <ul>
