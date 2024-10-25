@@ -1,7 +1,7 @@
 package net.opengress.slimgress.activity;
 
-import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
-import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
+import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 
@@ -131,8 +131,8 @@ public class ActivityDeploy extends AppCompatActivity {
             }
             View widget = findViewById(resoSlotToLayoutId(reso.slot));
             ((TextView) widget.findViewById(R.id.resoLevelText)).setText(String.format("L%d", reso.level));
-            int levelColour = getLevelColor(reso.level);
-            ((TextView) widget.findViewById(R.id.resoLevelText)).setTextColor(getColorFromResources(getResources(), levelColour));
+            int levelColour = getLevelColour(reso.level);
+            ((TextView) widget.findViewById(R.id.resoLevelText)).setTextColor(getColourFromResources(getResources(), levelColour));
             ((TextView) widget.findViewById(R.id.positionText)).setText(String.format("%dm %s", reso.distanceToPortal, resoSlotToOctantText(reso.slot)));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setText(mGame.getAgentName(reso.ownerGuid));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());

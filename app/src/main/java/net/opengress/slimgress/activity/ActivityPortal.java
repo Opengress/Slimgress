@@ -3,8 +3,8 @@ package net.opengress.slimgress.activity;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
 import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_NONE;
-import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
-import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
+import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.getPrettyItemName;
 import static net.opengress.slimgress.ViewHelpers.putItemInMap;
 
@@ -60,8 +60,8 @@ public class ActivityPortal extends AppCompatActivity {
 
         String portalLevel = "L" + Math.max(1, portal.getPortalLevel());
         ((TextView) findViewById(R.id.portalLevel)).setText(portalLevel);
-        int levelColour = getLevelColor(portal.getPortalLevel());
-        ((TextView) findViewById(R.id.portalLevel)).setTextColor(getColorFromResources(getResources(), levelColour));
+        int levelColour = getLevelColour(portal.getPortalLevel());
+        ((TextView) findViewById(R.id.portalLevel)).setTextColor(getColourFromResources(getResources(), levelColour));
 
 
         // FIXME: format this nicely

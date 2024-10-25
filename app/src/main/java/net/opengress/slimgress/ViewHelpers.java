@@ -67,7 +67,7 @@ public class ViewHelpers {
         return bitmapResult;
     }
 
-    public static int getLevelColor(int level) {
+    public static int getLevelColour(int level) {
         return switch (level) {
             case 2 -> R.color.level_two;
             case 3 -> R.color.level_three;
@@ -80,7 +80,7 @@ public class ViewHelpers {
         };
     }
 
-    public static int getRarityColor(@NonNull ItemBase.Rarity rarity) {
+    public static int getRarityColour(@NonNull ItemBase.Rarity rarity) {
         return switch (rarity) {
             case Common -> R.color.rarity_common;
             case LessCommon -> R.color.rarity_less_common;
@@ -194,7 +194,7 @@ public class ViewHelpers {
      *
      * @return A single color value in the form 0xAARRGGBB.
      */
-    public static int getColorFromResources(Resources r, int id) {
+    public static int getColourFromResources(Resources r, int id) {
         int result;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             result = r.getColor(id, null);
@@ -256,14 +256,14 @@ public class ViewHelpers {
         // rarity will maybe eventually expressed by colour, not text. that's why html
         switch (item.getItemRarity()) {
             case VeryCommon, Common, LessCommon, Rare, VeryRare, ExtraRare -> {
-                String hexColor = String.format("#%06X", (0xFFFFFF & resources.getColor(getRarityColor(item.getItemRarity()))));
+                String hexColor = String.format("#%06X", (0xFFFFFF & resources.getColor(getRarityColour(item.getItemRarity()))));
                 html = String.format("<span style='color: %s'>%s</span>", hexColor, item.getDisplayName());
             }
             default -> {
                 if (item.getItemLevel() == 0) {
                     html = item.getDisplayName();
                 } else {
-                    String hexColor = String.format("#%06X", (0xFFFFFF & resources.getColor(getLevelColor(item.getItemLevel()))));
+                    String hexColor = String.format("#%06X", (0xFFFFFF & resources.getColor(getLevelColour(item.getItemLevel()))));
                     html = String.format("<span style='color: %s'>L%d</span> %s", hexColor, item.getItemLevel(), item.getDisplayName());
                 }
             }

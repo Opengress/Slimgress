@@ -1,11 +1,11 @@
 package net.opengress.slimgress;
 
-import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
+import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getImageForCubeLevel;
 import static net.opengress.slimgress.ViewHelpers.getImageForResoLevel;
 import static net.opengress.slimgress.ViewHelpers.getImageForUltrastrikeLevel;
 import static net.opengress.slimgress.ViewHelpers.getImageForXMPLevel;
-import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -72,7 +72,7 @@ public class FireCarouselAdapter extends RecyclerView.Adapter<FireCarouselAdapte
 
         GradientDrawable drawable = new GradientDrawable();
         drawable.setShape(GradientDrawable.RECTANGLE);
-        drawable.setStroke(4, getColorFromResources(mContext.getResources(), getLevelColor(item.getLevel())));
+        drawable.setStroke(4, getColourFromResources(mContext.getResources(), getLevelColour(item.getLevel())));
         drawable.setCornerRadius(8);
         drawable.setAlpha(position == mSelectedPosition ? 255 : 0);
         holder.itemView.setBackground(drawable);
