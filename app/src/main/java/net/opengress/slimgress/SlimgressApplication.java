@@ -47,6 +47,11 @@ import org.acra.config.CoreConfigurationBuilder;
 import org.acra.config.HttpSenderConfigurationBuilder;
 import org.acra.data.StringFormat;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 public class SlimgressApplication extends Application {
     private static SlimgressApplication mSingleton;
     private boolean mLoggedIn = false;
@@ -61,6 +66,8 @@ public class SlimgressApplication extends Application {
     private CommsViewModel mFactionCommsViewModel;
     private LevelUpViewModel mLevelUpViewModel;
     private ActivityMain mMainActivity;
+    private final ExecutorService mExecutorService = Executors.newFixedThreadPool(4);
+
 
     private final Handler mSepticycleHander = new Handler();
 
@@ -79,6 +86,12 @@ public class SlimgressApplication extends Application {
 
         mSingleton = this;
         mGame = new GameState();
+    }
+
+    @Override
+    public void onTerminate() {
+        super.onTerminate();
+        mExecutorService.shutdown();
     }
 
     @Override
@@ -141,13 +154,13 @@ public class SlimgressApplication extends Application {
 
     public void postGameScore() {
         long currentTimeMillis = System.currentTimeMillis();
-        long unixEpochMillis = 0; // Unix epoch time in milliseconds
-        long fiveHoursMillis = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
+        long unixEpochMillis = 0;
+        long fiveHoursMillis = 5 * 60 * 60 * 1000;
 
         long timeDifferenceMillis = currentTimeMillis - unixEpochMillis;
         long remainingMillis = fiveHoursMillis - (timeDifferenceMillis % fiveHoursMillis);
         mSepticycleHander.postDelayed(this::postGameScore, remainingMillis);
-        new Thread(() -> {
+        runInThread_(() -> {
             Handler mainHandler = new Handler(Looper.getMainLooper());
             mainHandler.post(() -> mGame.intGetGameScore(new Handler(msg -> {
                 var enl = msg.getData().getInt("EnlightenedScore");
@@ -155,11 +168,27 @@ public class SlimgressApplication extends Application {
                 mAllCommsViewModel.addMessage(PlextBase.createByScores(enl, res));
                 return true;
             })));
-        }).start();
+        });
     }
 
     public static SlimgressApplication getInstance() {
         return mSingleton;
+    }
+
+    public static <T> Future<T> runInThread(Callable<T> task) {
+        return getInstance().runInThread_(task);
+    }
+
+    public static Future<?> runInThread(Runnable task) {
+        return getInstance().runInThread_(task);
+    }
+
+    public <T> Future<T> runInThread_(Callable<T> task) {
+        return getExecutorService().submit(task);
+    }
+
+    public Future<?> runInThread_(Runnable task) {
+        return getExecutorService().submit(task);
     }
 
     public GameState getGame() {
@@ -208,6 +237,10 @@ public class SlimgressApplication extends Application {
 
     public LevelUpViewModel getLevelUpViewModel() {
         return mLevelUpViewModel;
+    }
+
+    public ExecutorService getExecutorService() {
+        return mExecutorService;
     }
 
     public boolean isLoggedIn() {

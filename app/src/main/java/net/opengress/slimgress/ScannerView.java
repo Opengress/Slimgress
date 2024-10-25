@@ -1051,9 +1051,9 @@ public class ScannerView extends Fragment {
         slurp();
 
         // get objects (on new thread)
-        new Thread(() -> mGame.intGetObjectsInCells(mGame.getLocation(), resultHandler)).start();
+        mApp.getExecutorService().submit(() -> mGame.intGetObjectsInCells(mGame.getLocation(), resultHandler));
         final Handler commsHandler = new Handler(Looper.getMainLooper());
-        new Thread(() -> mGame.intLoadCommunication(false, 50, false, commsHandler)).start();
+        mApp.getExecutorService().submit(() -> mGame.intLoadCommunication(false, 50, false, commsHandler));
     }
 
     private void slurp() {
@@ -1113,7 +1113,7 @@ public class ScannerView extends Fragment {
 
         List<Feature> features = new ArrayList<>();
 
-        new Thread(() -> {
+        mApp.getExecutorService().submit(() -> {
             // draw xm particles
             drawXMParticles();
 
@@ -1150,7 +1150,7 @@ public class ScannerView extends Fragment {
                     addTouchTargets(features));
 
             mLastScan = System.currentTimeMillis() + mMinUpdateIntervalMS;
-        }).start();
+        });
 
     }
 
