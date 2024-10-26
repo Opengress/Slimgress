@@ -88,6 +88,7 @@ public class GameState {
     private Location mLocation;
     private GameEntityPortal mPortal;
     private final HashMap<String, String> mAgentNames = new HashMap<>();
+    private boolean mLocationIsAccurate = false;
 
     public GameState() {
         mInterface = new Interface();
@@ -1522,4 +1523,11 @@ public class GameState {
         return rejects;
     }
 
+    public void setLocationAccurate(boolean b) {
+        mLocationIsAccurate = b;
+    }
+
+    public boolean isLocationAccurate() {
+        return mLocationIsAccurate;
+    }
 }
