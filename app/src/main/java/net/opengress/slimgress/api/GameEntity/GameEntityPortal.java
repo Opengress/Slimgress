@@ -75,16 +75,12 @@ public class GameEntityPortal extends GameEntityBase
 
         public LatLng getResoLatLng() {
             int angle = getBearingFromSlot(slot);
-            net.opengress.slimgress.api.Common.Location location = getPortalLocation();
-            LatLng portalLatLng = location.getLatLng();
-            return destinationPoint(portalLatLng, distanceToPortal, angle);
+            return destinationPoint(getPortalLocation().getLatLng(), distanceToPortal, angle);
         }
 
         public S2LatLng getResoS2LatLng() {
             int angle = getBearingFromSlot(slot);
-            net.opengress.slimgress.api.Common.Location location = getPortalLocation();
-            S2LatLng portalS2LatLng = location.getS2LatLng();
-            return destinationPoint(portalS2LatLng, distanceToPortal, angle);
+            return destinationPoint(getPortalLocation().getS2LatLng(), distanceToPortal, angle);
         }
 
         // Helper method to calculate the destination point using S2LatLng directly

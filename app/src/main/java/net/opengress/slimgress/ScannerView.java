@@ -23,6 +23,7 @@ package net.opengress.slimgress;
 
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE;
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE_DEFAULT;
+import static net.opengress.slimgress.Constants.UNTRANSLATABLE_MAP_TILE_SOURCE_BLANK;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromAsset;
 import static net.opengress.slimgress.ViewHelpers.getBitmapFromDrawable;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
@@ -54,7 +55,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.Pair;
 import android.view.Choreographer;
 import android.view.GestureDetector;
@@ -109,6 +109,7 @@ import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapView;
 import org.maplibre.android.maps.Style;
 import org.maplibre.android.maps.UiSettings;
+import org.maplibre.android.plugins.annotation.Fill;
 import org.maplibre.android.plugins.annotation.FillManager;
 import org.maplibre.android.plugins.annotation.FillOptions;
 import org.maplibre.android.plugins.annotation.Line;
@@ -118,6 +119,7 @@ import org.maplibre.android.plugins.annotation.Symbol;
 import org.maplibre.android.plugins.annotation.SymbolManager;
 import org.maplibre.android.plugins.annotation.SymbolOptions;
 import org.maplibre.android.style.layers.CircleLayer;
+import org.maplibre.android.style.layers.FillLayer;
 import org.maplibre.android.style.layers.PropertyFactory;
 import org.maplibre.android.style.layers.RasterLayer;
 import org.maplibre.android.style.sources.GeoJsonSource;
@@ -125,6 +127,7 @@ import org.maplibre.android.style.sources.ImageSource;
 import org.maplibre.geojson.Feature;
 import org.maplibre.geojson.FeatureCollection;
 import org.maplibre.geojson.Point;
+import org.maplibre.geojson.Polygon;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -139,6 +142,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ScannerView extends Fragment {
     // ===========================================================
@@ -167,7 +171,7 @@ public class ScannerView extends Fragment {
     private LineManager mLineManager;
     private FillManager mFillManager;
     private final HashMap<String, Bitmap> mIcons = new HashMap<>();
-    private String mCurrentTileSource;
+    private String mCurrentTileSource = UNTRANSLATABLE_MAP_TILE_SOURCE_BLANK;
     /*
     do it by reso guid:
     - can receive guid in deletedentitiesguids (when?) and delete it directly
@@ -183,8 +187,8 @@ public class ScannerView extends Fragment {
     private final HashMap<String, HashMap<Integer, Line>> mResonatorThreads = new HashMap<>();
     // for finding the portal marker when we delete it by Guid
     private final HashMap<String, Pair<String, Integer>> mResonatorToPortalSlotLookup = new HashMap<>();
-    private final ArrayList<String> mLines = new ArrayList<>();
-    private final ArrayList<String> mPolygons = new ArrayList<>();
+    private final HashMap<String, Line> mLines = new HashMap<>();
+    private final HashMap<String, Fill> mPolygons = new HashMap<>();
 
     private ActivityResultLauncher<Intent> mPortalActivityResultLauncher;
 
@@ -231,6 +235,7 @@ public class ScannerView extends Fragment {
     private boolean mIsClickingCompass = false;
     GeoJsonSource mPortalGeoJsonSource;
     private long mCircleId = 1;
+    private MapLibreMap.OnCameraIdleListener mOnCameraIdleListener;
 
     // ===========================================================
     // Misc
@@ -448,86 +453,76 @@ public class ScannerView extends Fragment {
     }
 
     public void onReceiveDeletedEntityGuids(List<String> deletedEntityGuids) {
-//        for (String guid : deletedEntityGuids) {
-//
-//            // for XM particles
-//            if (guid.contains(".")) {
-//                long particle = Long.parseLong(guid.substring(0, 16), 16);
-//                if (mXMMarkers.containsKey(particle)) {
-//                    mMapView.getOverlays().remove(mXMMarkers.get(particle));
-//                    recycleOverlay(mXMMarkers.get(particle));
-//                    mXMMarkers.remove(particle);
-//                }
-//                continue;
-//            }
-//
-//            // for portals
-//            if (mPortalMarkers.containsKey(guid)) {
-//                mMapView.getOverlays().remove(mPortalMarkers.get(guid));
-//                mPortalMarkers.remove(guid);
-//                continue;
-//            }
-//
-//            // for resonators
-//            if (mResonatorToPortalSlotLookup.containsKey(guid)) {
-//                var portal = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).first;
-//                var slot = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).second;
-//                var resoParts = Objects.requireNonNull(mResonatorMarkers.get(portal)).get(slot);
-//                if (resoParts != null) {
-//                    mMapView.getOverlays().remove(resoParts.first);
-//                    mMapView.getOverlays().remove(resoParts.second);
-//                    recycleOverlay(Objects.requireNonNull(resoParts.first));
-//                    recyclePolyline(Objects.requireNonNull(resoParts.second));
-//                }
-//                mResonatorToPortalSlotLookup.remove(guid);
-//                Objects.requireNonNull(mResonatorMarkers.get(portal)).remove(slot);
-//                continue;
-//            }
-//
-//            // for links
-//            if (mLines.containsKey(guid)) {
-//                mMapView.getOverlays().remove(mLines.get(guid));
-//                recyclePolyline(mLines.get(guid));
-//                mLines.remove(guid);
-//                continue;
-//            }
-//
-//            // for fields
-//            if (mPolygons.containsKey(guid)) {
-//                mMapView.getOverlays().remove(mPolygons.get(guid));
-//                mPolygons.remove(guid);
-//            }
-//
-//            // for dropped items
-//            if (mItemMarkers.containsKey(guid)) {
-//                mMapView.getOverlays().remove(mItemMarkers.get(guid));
-//                recycleOverlay(mItemMarkers.get(guid));
-//                mItemMarkers.remove(guid);
-//            }
-//
-//        }
+        if (mMapLibreMap == null || mMapLibreMap.getStyle() == null) {
+            return;
+        }
+        // suddenly i understand why each guid in other games has a suffix indicating the type
+        for (String guid : deletedEntityGuids) {
+            AtomicBoolean shouldContinue = new AtomicBoolean(false);
+
+            // for XM particles
+            // FIXME - other game entities actually can contain a "."
+            if (guid.contains(".")) {
+                long particle = Long.parseLong(guid.substring(0, 16), 16);
+                mMapLibreMap.getStyle(style -> {
+                    style.removeLayer("particle-layer-" + particle);
+                    style.removeSource("particle-source-" + particle);
+                });
+                continue;
+            }
+
+            // for portals
+            mMapLibreMap.getStyle(style -> {
+                style.removeLayer("portal-" + guid + "-layer");
+                shouldContinue.set(style.removeSource("portal-" + guid));
+            });
+            if (shouldContinue.get()) {
+                continue;
+            }
+
+            // for resonators
+            if (mResonatorToPortalSlotLookup.containsKey(guid)) {
+                var portal = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).first;
+                var slot = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).second;
+                var resoParts = Objects.requireNonNull(mResonatorThreads.get(portal)).get(slot);
+                if (resoParts != null) {
+                    mLineManager.delete(resoParts);
+                }
+                mResonatorToPortalSlotLookup.remove(guid);
+                Objects.requireNonNull(mResonatorThreads.get(portal)).remove(slot);
+                mMapLibreMap.getStyle(style -> {
+                    style.removeLayer("reso-layer-" + guid);
+                    style.removeSource("reso-source-" + guid);
+                });
+                continue;
+            }
+
+            // for links
+            if (mLines.containsKey(guid)) {
+                mLineManager.delete(mLines.get(guid));
+                mLines.remove(guid);
+                continue;
+            }
+
+            // for fields
+            if (mPolygons.containsKey(guid)) {
+                mFillManager.delete(mPolygons.get(guid));
+                mPolygons.remove(guid);
+                continue;
+            }
+
+            // for dropped items
+            mMapLibreMap.getStyle(style -> {
+                style.removeLayer("item-layer-" + guid);
+                style.removeSource("item-source-" + guid);
+            });
+
+        }
     }
 
-//    private MapTileProviderBasic createTileProvider(MapProvider provider) {
-//        ITileSource tileSource;
-//        if (provider == null) {
-//            tileSource = new BlankTileSource();
-//        } else if (provider.getCoordinateSystem() == XYZ) {
-//            tileSource = new XYTileSource(provider.getName(), provider.getMinZoom(), provider.getMaxZoom(), provider.getTileSize(), provider.getFilenameEnding(),
-//                    provider.getBaseUrls());
-//        } else {
-//            throw new RuntimeException("Unknown slippy map coordinate system!");
-//        }
-//        var tileProvider = new MapTileProviderBasic(mApp.getApplicationContext(), tileSource);
-//        if (provider == null) {
-//            tileProvider.detach();
-//        }
-//        return tileProvider;
-//    }
-
-    private String getMapTileProvider(String name) {
+    private String getMapTileProviderStyleJSON(String name) {
         try {
-            return mGame.getKnobs().getMapCompositionRootKnobs().getMapProvider(name).getStyleJson();
+            return mGame.getKnobs().getMapCompositionRootKnobs().getMapProvider(name).getStyleJSON();
         } catch (JSONException e) {
             return null;
         }
@@ -547,13 +542,14 @@ public class ScannerView extends Fragment {
         loadAssets();
 
         mCurrentTileSource = mPrefs.getString(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT);
-        String styleJSON = getMapTileProvider(mCurrentTileSource);
+        String styleJSON = getMapTileProviderStyleJSON(mCurrentTileSource);
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(mapLibreMap -> {
             mMapLibreMap = mapLibreMap;
             mMapLibreMap.setMinZoomPreference(16);
             mMapLibreMap.setMaxZoomPreference(22);
 
+//            mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> setUpStyleForMap(mapLibreMap, style));
             mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> setUpStyleForMap(mapLibreMap, style));
             // Retrieve saved camera properties
             float bearing = mPrefs.getFloat("camera_bearing", 0f);
@@ -692,11 +688,29 @@ public class ScannerView extends Fragment {
 
     private void setUpStyleForMap(MapLibreMap mapLibreMap, Style style) {
 
-        if (mPortalGeoJsonSource == null) {
-            mPortalGeoJsonSource = new GeoJsonSource("portal-data-layer");
-        }
         if (style.getSource("portal-data-layer") == null) {
+            mPortalGeoJsonSource = new GeoJsonSource("portal-data-layer");
             style.addSource(mPortalGeoJsonSource);
+        }
+
+        String flashLayerId = "flash-overlay-layer";
+        String flashSourceId = "flash-overlay-source";
+
+        if (style.getSource(flashLayerId) == null) {
+            List<Point> worldCoordinates = Arrays.asList(
+                    Point.fromLngLat(-180, 90),    // Top-left
+                    Point.fromLngLat(180, 90),     // Top-right
+                    Point.fromLngLat(180, -90),    // Bottom-right
+                    Point.fromLngLat(-180, -90),   // Bottom-left
+                    Point.fromLngLat(-180, 90)     // Closing the polygon
+            );
+
+            // Create world-covering polygon
+            Polygon worldPolygon = Polygon.fromLngLats(Collections.singletonList(worldCoordinates));
+            style.addSource(new GeoJsonSource(flashSourceId, FeatureCollection.fromFeature(Feature.fromGeometry(worldPolygon))));
+
+            style.addLayerBelow(new FillLayer(flashLayerId, flashSourceId).withProperties(PropertyFactory.fillColor("rgba(255, 255, 255, 0.0)")), "player-cursor-image");
+
         }
 
         CircleLayer circleLayer = (CircleLayer) style.getLayer("portal-hit-layer");
@@ -709,22 +723,28 @@ public class ScannerView extends Fragment {
             style.addLayer(circleLayer);
         }
 
-        CircleLayer finalCircleLayer = circleLayer;
-        mMapLibreMap.addOnCameraMoveListener(() -> {
+        mMapLibreMap.addOnCameraIdleListener(getOnCameraIdleListener(circleLayer));
+
+        mSymbolManager = new SymbolManager(mMapView, mMapLibreMap, style);
+        mSymbolManager.setIconAllowOverlap(true);
+        mSymbolManager.setTextAllowOverlap(true);
+        mSymbolManager.setIconIgnorePlacement(true);
+        mSymbolManager.setTextIgnorePlacement(true);
+
+        mLineManager = new LineManager(mMapView, mapLibreMap, style);
+        mFillManager = new FillManager(mMapView, mapLibreMap, style);
+
+    }
+
+    private MapLibreMap.OnCameraIdleListener getOnCameraIdleListener(CircleLayer finalCircleLayer) {
+        if (mOnCameraIdleListener != null) {
+            mMapLibreMap.removeOnCameraIdleListener(mOnCameraIdleListener);
+        }
+        mOnCameraIdleListener = () -> {
             float radiusInPixels = metresToPixels((double) PORTAL_DIAMETER_METRES / 3, Objects.requireNonNull(mMapLibreMap.getCameraPosition().target));
             finalCircleLayer.setProperties(circleRadius(radiusInPixels));
-        });
-
-        if (mSymbolManager == null) {
-            mSymbolManager = new SymbolManager(mMapView, mMapLibreMap, style);
-            mSymbolManager.setIconAllowOverlap(true);
-        }
-        if (mLineManager == null) {
-            mLineManager = new LineManager(mMapView, mapLibreMap, style);
-        }
-        if (mFillManager == null) {
-            mFillManager = new FillManager(mMapView, mapLibreMap, style);
-        }
+        };
+        return mOnCameraIdleListener;
     }
 
     private void addTouchTargets(List<Feature> features) {
@@ -768,7 +788,6 @@ public class ScannerView extends Fragment {
 
     private void addExpandingCircle(Location centerPoint, int durationMs, float radiusM, int colour, float width) {
         if (mMapLibreMap == null || mMapLibreMap.getStyle() == null) {
-            Log.d("SCANNER", "No mapLibreMap");
             return;
         }
         float radius = metresToPixels(radiusM, centerPoint);
@@ -806,8 +825,10 @@ public class ScannerView extends Fragment {
                 if (progress < 1f) {
                     choreographer.postFrameCallback(this);
                 } else {
-                    mMapLibreMap.getStyle().removeLayer(layerId);
-                    mMapLibreMap.getStyle().removeSource(sourceId);
+                    mMapLibreMap.getStyle(style -> {
+                        mMapLibreMap.getStyle().removeLayer(layerId);
+                        mMapLibreMap.getStyle().removeSource(sourceId);
+                    });
                     choreographer.removeFrameCallback(this);
                 }
             }
@@ -837,8 +858,6 @@ public class ScannerView extends Fragment {
             editor.putFloat("camera_tilt", (float) cameraPosition.tilt);
             editor.putFloat("camera_zoom", (float) cameraPosition.zoom);
             editor.putInt("orientation_scheme", CURRENT_MAP_ORIENTATION_SCHEME);
-
-            Log.d("SCANNER", editor.toString());
 
             editor.apply();
         }
@@ -886,9 +905,13 @@ public class ScannerView extends Fragment {
         String newTileSource = mPrefs.getString(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT);
         if (!Objects.equals(newTileSource, mCurrentTileSource)) {
             mCurrentTileSource = newTileSource;
-            String styleJSON = getMapTileProvider(mCurrentTileSource);
+            String styleJSON = getMapTileProviderStyleJSON(mCurrentTileSource);
             assert styleJSON != null;
-            mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> setUpStyleForMap(mMapLibreMap, style));
+            mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> {
+                setUpStyleForMap(mMapLibreMap, style);
+                updateScreen(new Handler(Looper.getMainLooper()));
+                setupPlayerCursor(mCurrentLocation, mBearing);
+            });
         }
 
         if (mLastLocationAcquired == null || mLastLocationAcquired.before(new Date(System.currentTimeMillis() - mUpdateIntervalMS))) {
@@ -922,6 +945,9 @@ public class ScannerView extends Fragment {
     }
 
     public void requestLocationUpdates() {
+        if (mGame.isLocationAccurate()) {
+            return;
+        }
         if (!mLocationProvider.startLocationUpdates()) {
             setLocationInaccurate(true);
         }
@@ -943,6 +969,8 @@ public class ScannerView extends Fragment {
         if (getActivity() == null || getActivity().findViewById(R.id.quickMessage) == null) {
             return;
         }
+
+        mGame.setLocationAccurate(!isInaccurate);
 
         // FIXME this is fine, but really the game state needs to know about it.
         //  for example, if i'm about to hack a portal and i switch my GPS off, that shouldn't work!
@@ -1127,8 +1155,10 @@ public class ScannerView extends Fragment {
 
                 mSlurpableParticles.add(particle.getGuid());
                 newXM += particle.getAmount();
-//                var marker = mXMMarkers.remove(key);
-//                mMapView.getOverlays().remove(marker);
+                mMapLibreMap.getStyle(style -> {
+                    style.removeLayer("particle-layer-" + particle.getCellId());
+                    style.removeSource("particle-source-" + particle.getCellId());
+                });
                 iterator.remove();
             }
         }
@@ -1192,7 +1222,6 @@ public class ScannerView extends Fragment {
     private void drawXMParticles() {
         // draw xm particles (as groundoverlays)
         Map<Long, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
-        Set<Long> keys = xmParticles.keySet();
 
         Style style = mMapLibreMap.getStyle();
         if (style == null) {
@@ -1203,7 +1232,7 @@ public class ScannerView extends Fragment {
             return;
         }
 
-        for (Long key : keys) {
+        for (Long key : xmParticles.keySet()) {
             XMParticle particle = xmParticles.get(key);
             assert particle != null;
 
@@ -1316,7 +1345,7 @@ public class ScannerView extends Fragment {
         Bitmap bitmap = createDrawableFromView(requireContext(), markerView);
         Objects.requireNonNull(mMapLibreMap.getStyle()).addImage("info_card", bitmap);
         mMarkerInfoCard = mSymbolManager.create(new SymbolOptions()
-                .withLatLng(new LatLng(portal.getPortalLocation().getLatitude(), portal.getPortalLocation().getLongitude()))
+                .withLatLng(portal.getPortalLocation().getLatLng())
                 .withIconImage("info_card")
                 .withIconSize(1.0f));
     }
@@ -1326,6 +1355,9 @@ public class ScannerView extends Fragment {
             return;
         }
 
+
+        Location resoPos = reso.getResoLocation();
+
         Style style = mMapLibreMap.getStyle();
         assert style != null;
 
@@ -1334,6 +1366,10 @@ public class ScannerView extends Fragment {
 
         if (mResonatorToPortalSlotLookup.containsKey(reso.id) && style.getLayer("reso-layer-" + reso.id) != null) {
             style.getLayer("reso-layer-" + reso.id).setProperties(PropertyFactory.rasterContrast(saturation));
+            int rgb = getColourFromResources(getResources(), getLevelColour(reso.level));
+            // set opacity
+            rgb = (rgb & 0x00FFFFFF) | ((int) Math.max(48, ((float) reso.energyTotal / (float) reso.getMaxEnergy()) * (float) 128) << 24);
+            mResonatorThreads.get(portal.getEntityGuid()).get(reso.slot).setLineColor(getRgbaStringFromColour(rgb));
             return;
         }
 
@@ -1351,18 +1387,17 @@ public class ScannerView extends Fragment {
 //            style.removeSource("reso-source-" + reso.id);
 //        }
 
-        // Update markers map
-        HashMap<Integer, Line> markers;
+        // Update threads map
+        HashMap<Integer, Line> threads;
         if (mResonatorThreads.containsKey(portal.getEntityGuid())) {
-            markers = mResonatorThreads.get(portal.getEntityGuid());
+            threads = mResonatorThreads.get(portal.getEntityGuid());
         } else {
-            markers = new HashMap<>();
-            mResonatorThreads.put(portal.getEntityGuid(), markers);
+            threads = new HashMap<>();
+            mResonatorThreads.put(portal.getEntityGuid(), threads);
         }
-        assert markers != null;
+        assert threads != null;
 
         // Calculate positions
-        Location resoPos = reso.getResoLocation();
         ImageSource rasterSource = (ImageSource) style.getSource("reso-source-" + reso.id);
         if (rasterSource == null) {
             // Position the image using its coordinates (longitude, latitude)
@@ -1373,20 +1408,20 @@ public class ScannerView extends Fragment {
             rasterSource.setImage(mIcons.get("r" + reso.level));
         }
 
-        RasterLayer portalImageLayer = (RasterLayer) style.getLayer("reso-layer-" + reso.id);
-        if (portalImageLayer == null) {
-            portalImageLayer = new RasterLayer("reso-layer-" + reso.id, "reso-source-" + reso.id)
+        RasterLayer resoImageLayer = (RasterLayer) style.getLayer("reso-layer-" + reso.id);
+        if (resoImageLayer == null) {
+            resoImageLayer = new RasterLayer("reso-layer-" + reso.id, "reso-source-" + reso.id)
                     .withProperties(
                             PropertyFactory.rasterContrast(saturation)
                     );
-            style.addLayer(portalImageLayer);
+            style.addLayer(resoImageLayer);
         } else {
-            portalImageLayer.setProperties(PropertyFactory.rasterContrast(saturation));
+            resoImageLayer.setProperties(PropertyFactory.rasterContrast(saturation));
         }
 
 
         int rgb = getColourFromResources(getResources(), getLevelColour(reso.level));
-        // set opacity to half
+        // set opacity
         rgb = (rgb & 0x00FFFFFF) | ((int) Math.max(48, ((float) reso.energyTotal / (float) reso.getMaxEnergy()) * (float) 128) << 24);
 
         LineOptions lineOptions = new LineOptions()
@@ -1394,7 +1429,7 @@ public class ScannerView extends Fragment {
                 .withLineColor(getRgbaStringFromColour(rgb))
                 .withLineWidth(0.5f);
 
-        markers.put(reso.slot, mLineManager.create(lineOptions));
+        threads.put(reso.slot, mLineManager.create(lineOptions));
         mResonatorToPortalSlotLookup.put(reso.id, new Pair<>(portal.getEntityGuid(), reso.slot));
     }
 
@@ -1406,7 +1441,7 @@ public class ScannerView extends Fragment {
         Style style = mMapLibreMap.getStyle();
         assert style != null;
 
-        if (mLines.contains(link.getEntityGuid())) {
+        if (mLines.containsKey(link.getEntityGuid())) {
             // maybe update ?
             return;
         }
@@ -1431,9 +1466,7 @@ public class ScannerView extends Fragment {
                     .withLineColor(getRgbaStringFromColour(colour))
                     .withLineWidth(0.2f);
 
-            mLineManager.create(lineOptions);
-
-            mLines.add(link.getEntityGuid());
+            mLines.put(link.getEntityGuid(), mLineManager.create(lineOptions));
         });
     }
 
@@ -1441,7 +1474,7 @@ public class ScannerView extends Fragment {
         if (mMapView == null) {
             return;
         }
-        if (mPolygons.contains(field.getEntityGuid())) {
+        if (mPolygons.containsKey(field.getEntityGuid())) {
             // maybe update ?
             return;
         }
@@ -1466,8 +1499,7 @@ public class ScannerView extends Fragment {
                     .withLatLngs(Collections.singletonList(polygonLatLngs))
                     .withFillColor(getRgbaStringFromColour(colour));
 
-            mFillManager.create(polygonOptions);
-            mPolygons.add(field.getEntityGuid());
+            mPolygons.put(field.getEntityGuid(), mFillManager.create(polygonOptions));
         });
 
     }
@@ -1704,6 +1736,7 @@ public class ScannerView extends Fragment {
             location = actualPortal.getPortalLocation().getLatLng();
             percentage = 100;
         }
+
         SymbolOptions symbolOptions = new SymbolOptions()
                 .withLatLng(location)
                 .withTextField(String.format("%d%%", percentage) + (criticalHit ? "!" : ""))
@@ -1855,6 +1888,7 @@ public class ScannerView extends Fragment {
                 }
                 return true;
             }));
+            return;
         }
         Toast.makeText(requireContext(), "Interacting with: " + getEntityDescription(entity), Toast.LENGTH_SHORT).show();
     }

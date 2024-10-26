@@ -91,11 +91,13 @@ public class Location
     }
 
     public double getLatitude() {
-        return latE6 * 1e-6;
+//        return latE6 * 1e-6;
+        return latE6 / 1e6;
     }
 
     public double getLongitude() {
-        return lngE6 * 1e-6;
+//        return lngE6 * 1e-6;
+        return lngE6 / 1e6;
     }
 
     public S2LatLng getS2LatLng() {
@@ -145,7 +147,7 @@ public class Location
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-        // Distance in kilometers
+        // Distance in meters
         return S2LatLng.EARTH_RADIUS_METERS * c;
     }
 
@@ -168,7 +170,7 @@ public class Location
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-        // Distance in kilometers
+        // Distance in meters
         return S2LatLng.EARTH_RADIUS_METERS * c;
     }
 }

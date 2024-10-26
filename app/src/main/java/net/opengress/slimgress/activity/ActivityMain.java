@@ -30,7 +30,6 @@ import static net.opengress.slimgress.ViewHelpers.putItemInMap;
 import static net.opengress.slimgress.ViewHelpers.saveScreenshot;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
-import static org.maplibre.android.style.layers.PropertyFactory.visibility;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
@@ -93,9 +92,8 @@ import net.opengress.slimgress.dialog.DialogLevelUp;
 
 import org.maplibre.android.geometry.LatLng;
 import org.maplibre.android.maps.MapView;
-import org.maplibre.android.maps.Style;
-import org.maplibre.android.style.layers.Property;
-import org.maplibre.android.style.layers.RasterLayer;
+import org.maplibre.android.style.layers.FillLayer;
+import org.maplibre.android.style.layers.PropertyFactory;
 
 import java.io.File;
 import java.io.Serializable;
@@ -108,7 +106,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 public class ActivityMain extends FragmentActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
@@ -722,23 +719,12 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
         assert scanner != null;
         MapView mapView = scanner.getMap();
-        mapView.getMapAsync(maplibreMap -> {
-            Style style = maplibreMap.getStyle();
-            if (style != null) {
-                // FIXME wrong layer name or it might be dynamic
-                RasterLayer rasterLayer = style.getLayerAs("carto-basemap-layer");
-                if (rasterLayer != null) {
-                    rasterLayer.setProperties(visibility(Property.NONE));
-                    mapView.invalidate();
-
-                    // Revert the color change after a short delay
-                    mApp.schedule_(() -> {
-                        rasterLayer.setProperties(visibility(Property.VISIBLE));
-                        mapView.invalidate();
-                    }, 444, TimeUnit.MILLISECONDS);
-                }
-            }
-        });
+        mapView.getMapAsync(maplibreMap -> maplibreMap.getStyle(style -> {
+            FillLayer layer = style.getLayerAs("flash-overlay-layer");
+            assert layer != null;
+            layer.setProperties(PropertyFactory.fillColor("rgba(255, 255, 255, 1.0)"));
+            mapView.postDelayed(() -> layer.setProperties(PropertyFactory.fillColor("rgba(255, 255, 255, 0.0)")), 444);
+        }));
     }
 
     private boolean fireBurster(int level, ItemBase.ItemType type) {
@@ -811,7 +797,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                     String message = "Gained %s XM from using a %s";
                     message = String.format(message, res, item.getUsefulName());
                     SlimgressApplication.postPlainCommsMessage(message);
-                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
                     updateAgent();
                     for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
                         mGame.getInventory().removeItem(id);

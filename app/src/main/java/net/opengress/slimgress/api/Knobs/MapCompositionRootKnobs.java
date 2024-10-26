@@ -37,6 +37,7 @@ public class MapCompositionRootKnobs extends Knobs {
         private final MapType mType;
         private final String mAttribution;
         private final String[] mBaseUrls;
+        private final String mTileUrl;
         private final String mFilenameEnding;
         private final int mMinZoom;
         private final int mMaxZoom;
@@ -67,6 +68,7 @@ public class MapCompositionRootKnobs extends Knobs {
                 urls.add(baseUrls.getString(x));
             }
             mBaseUrls = urls.toArray(new String[0]);
+            mTileUrl = json.getString("tileUrl");
             mFilenameEnding = json.getString("filenameEnding");
             mMinZoom = json.getInt("minZoom");
             mMaxZoom = json.getInt("maxZoom");
@@ -78,43 +80,80 @@ public class MapCompositionRootKnobs extends Knobs {
             }
         }
 
+        /**
+         * @return Pretty name of the map provider, such as "Carto DarkMatter (no labels)"
+         */
         public String getName() {
             return mName;
         }
 
+        /**
+         * @return Type of the map, currently being either raster or vector
+         */
         public MapType getType() {
             return mType;
         }
 
+        /**
+         * @return An attribution string as usually required when using map tiles
+         */
         public String getAttribution() {
             return mAttribution;
         }
 
+        /**
+         * @return The minimum zoom at which this tileset will display
+         */
         public int getMinZoom() {
             return mMinZoom;
         }
 
+        /**
+         * @return The maximum zoom at which this tileset will display
+         */
         public int getMaxZoom() {
             return mMaxZoom;
         }
 
+        /**
+         * @return A list of base URLs suitable for loading into OSMDroid
+         */
         public String[] getBaseUrls() {
             return mBaseUrls;
         }
 
+        /**
+         * @return A tileUrl suitable for use in MapLibre or similar
+         */
+        public String getTileUrl() {
+            return mTileUrl;
+        }
+
+        /**
+         * @return Tile size in pixels
+         */
         public int getTileSize() {
             return mTileSize;
         }
 
+        /**
+         * @return a file extension such as ".png" or ".webp" to append to URLs
+         */
         public String getFilenameEnding() {
             return mFilenameEnding;
         }
 
+        /**
+         * @return A TMS or XYZ coordinate system. Usually XYZ is correct
+         */
         public CoordinateSystem getCoordinateSystem() {
             return mCoordinateSystem;
         }
 
-        public String getStyleJson() throws JSONException {
+        /**
+         * @return The JSON style for displaying this map alone.
+         */
+        public String getStyleJSON() throws JSONException {
             var provider = this;
             JSONObject source = new JSONObject();
             source.put("type", provider.getType() == MapType.RASTER ? "raster" : "vector");
@@ -159,6 +198,8 @@ public class MapCompositionRootKnobs extends Knobs {
             styleJson.put("version", 8);
             styleJson.put("name", provider.getName());
             styleJson.put("sources", sources);
+            // FIXME awful and wrong thing to hardcode?
+            styleJson.put("glyphs", "https://opengress.net/pbf/{range}.pbf");
             styleJson.put("layers", layersArray);
 
             return styleJson.toString();

@@ -192,8 +192,8 @@ public class Interface
 
                         // TODO: check that this works
                         JSONArray collectedEnergy = new JSONArray(mSlurpableXMParticles);
-
                         params.getJSONObject("params").put("energyGlobGuids", collectedEnergy);
+                        mSlurpableXMParticles.clear();
                     }
                     catch (JSONException e) {
                         e.printStackTrace();
@@ -244,7 +244,6 @@ public class Interface
                 // handle request result
                 if (content != null) {
                     RequestResult.handleRequest(new JSONObject(content), result);
-                    mSlurpableXMParticles.clear();
                 }
             }
             catch (Exception e) {
