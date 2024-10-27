@@ -69,7 +69,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 public class GameState {
     private final Interface mInterface;
@@ -857,20 +856,17 @@ public class GameState {
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
                     super.handleGameBasket(gameBasket);
+                    getData().putSerializable("resonator", resonator);
                 }
 
                 @Override
                 public void finished() {
                     Map<String, GameEntityBase> entities = getWorld().getGameEntities();
-                    Set<String> keys = entities.keySet();
-                    for (String key : keys) {
-                        final GameEntityBase entity = entities.get(key);
-                        assert entity != null;
-                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
-                            if (Objects.equals(entity.getEntityGuid(), portal.getEntityGuid())) {
-                                setCurrentPortal((GameEntityPortal) entity);
-                                break;
-                            }
+                    for (GameEntityBase entity : entities.values()) {
+                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal &&
+                                Objects.equals(entity.getEntityGuid(), portal.getEntityGuid())) {
+                            setCurrentPortal((GameEntityPortal) entity);
+                            break;
                         }
                     }
                     super.finished();
@@ -926,20 +922,16 @@ public class GameState {
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
                     super.handleGameBasket(gameBasket);
+                    getData().putSerializable("resonator", resonator);
                 }
 
-                @Override
                 public void finished() {
                     Map<String, GameEntityBase> entities = getWorld().getGameEntities();
-                    Set<String> keys = entities.keySet();
-                    for (String key : keys) {
-                        final GameEntityBase entity = entities.get(key);
-                        assert entity != null;
-                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
-                            if (Objects.equals(entity.getEntityGuid(), portal.getEntityGuid())) {
-                                setCurrentPortal((GameEntityPortal) entity);
-                                break;
-                            }
+                    for (GameEntityBase entity : entities.values()) {
+                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal &&
+                                Objects.equals(entity.getEntityGuid(), portal.getEntityGuid())) {
+                            setCurrentPortal((GameEntityPortal) entity);
+                            break;
                         }
                     }
                     super.finished();

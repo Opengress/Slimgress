@@ -1701,7 +1701,7 @@ public class ScannerView extends Fragment {
                 if (main != null) {
                     main.updateAgent();
                 }
-                
+
                 if (items != null) {
                     DialogHackResult newDialog = new DialogHackResult(getContext());
                     newDialog.setTitle("Acquired items");
