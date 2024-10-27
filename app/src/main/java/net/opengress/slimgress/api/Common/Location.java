@@ -29,10 +29,12 @@ import com.google.common.geometry.S2LatLng;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.maplibre.android.geometry.LatLng;
+import org.maplibre.geojson.Point;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
-public class Location
+public class Location implements Serializable
 {
     private final long latE6;
     private final long lngE6;
@@ -107,6 +109,10 @@ public class Location
     public LatLng getLatLng()
     {
         return new LatLng(getLatitude(), getLongitude());
+    }
+
+    public Point getPoint() {
+        return Point.fromLngLat(getLongitude(), getLatitude());
     }
 
     @NonNull

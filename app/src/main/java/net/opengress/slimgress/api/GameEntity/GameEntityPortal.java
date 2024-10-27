@@ -78,9 +78,9 @@ public class GameEntityPortal extends GameEntityBase
             return destinationPoint(getPortalLocation().getLatLng(), distanceToPortal, angle);
         }
 
-        public S2LatLng getResoS2LatLng() {
+        public Location getResoS2LatLng() {
             int angle = getBearingFromSlot(slot);
-            return destinationPoint(getPortalLocation().getS2LatLng(), distanceToPortal, angle);
+            return mPortalLocation.destinationPoint(distanceToPortal, angle);
         }
 
         // Helper method to calculate the destination point using S2LatLng directly

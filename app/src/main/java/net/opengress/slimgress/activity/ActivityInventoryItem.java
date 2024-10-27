@@ -253,7 +253,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
         Location loc = mGame.getLocation();
         if (loc != null) {
             // crashes on next line if there aren't exclusions in proguard config
-            dist = (int) (loc.getS2LatLng().getEarthDistance(mItem.getLocation()));
+            dist = (int) (loc.distanceTo(mItem.getLocation()));
         }
         ((TextView) findViewById(R.id.activity_inventory_item_distance)).setText(getPrettyDistanceString(dist));
     }

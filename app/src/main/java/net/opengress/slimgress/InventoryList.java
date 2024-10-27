@@ -202,7 +202,7 @@ public class InventoryList extends BaseExpandableListAdapter {
                     int dist = 999999000;
                     Location loc = mGame.getLocation();
                     if (loc != null) {
-                        dist = (int) (mGame.getLocation().getS2LatLng().getEarthDistance(item.getLocation()));
+                        dist = (int) (mGame.getLocation().distanceTo(item.getLocation()));
                     }
                     String distanceText = getPrettyDistanceString(dist);
                     ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_distance)).setText(distanceText);
