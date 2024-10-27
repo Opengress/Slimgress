@@ -1681,26 +1681,27 @@ public class ScannerView extends Fragment {
             String error = hackResultBundle.getString("error");
 
             if (error != null) {
-                int portalLevel = mGame.getCurrentPortal().getPortalLevel();
-                Team portalTeam = mGame.getCurrentPortal().getPortalTeam();
-                if (portalTeam.toString().equalsIgnoreCase(mGame.getAgent().getTeam().toString())) {
-                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackFriendlyCostByLevel().get(portalLevel));
-                } else if (portalTeam.toString().equalsIgnoreCase("neutral")) {
-                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackNeutralCostByLevel().get(portalLevel));
-                } else {
-                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackEnemyCostByLevel().get(portalLevel));
-                }
-
-                var main = ((ActivityMain) getActivity());
-                if (main != null) {
-                    main.updateAgent();
-                }
 
                 DialogHackResult newDialog = new DialogHackResult(getContext());
 //                newDialog.setTitle("");
                 newDialog.setMessage(error);
                 newDialog.show();
             } else {
+                int portalLevel = mGame.getCurrentPortal().getPortalLevel();
+                Team portalTeam = mGame.getCurrentPortal().getPortalTeam();
+                if (portalTeam.toString().equalsIgnoreCase(mGame.getAgent().getTeam().toString())) {
+                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackFriendlyCostByLevel().get(portalLevel - 1));
+                } else if (portalTeam.toString().equalsIgnoreCase("neutral")) {
+                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackNeutralCostByLevel().get(portalLevel - 1));
+                } else {
+                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackEnemyCostByLevel().get(portalLevel - 1));
+                }
+
+                var main = ((ActivityMain) getActivity());
+                if (main != null) {
+                    main.updateAgent();
+                }
+                
                 if (items != null) {
                     DialogHackResult newDialog = new DialogHackResult(getContext());
                     newDialog.setTitle("Acquired items");
