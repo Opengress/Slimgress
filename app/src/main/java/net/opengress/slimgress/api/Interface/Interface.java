@@ -21,6 +21,8 @@
 
 package net.opengress.slimgress.api.Interface;
 
+import static net.opengress.slimgress.SlimgressApplication.runInThread;
+
 import android.net.TrafficStats;
 import android.os.Build;
 import android.util.Log;
@@ -93,7 +95,7 @@ public class Interface
 
     public void handshake(final Handshake.Callback callback, Map<String, String> inParams)
     {
-        new Thread(() -> {
+        runInThread(() -> {
             JSONObject params = new JSONObject();
             try {
                 // set handshake parameters
@@ -162,7 +164,7 @@ public class Interface
                     ex.printStackTrace();
                 }
             }
-        }).start();
+        });
     }
 
     public void request(final Handshake handshake, final String requestString, final Location playerLocation,
@@ -170,8 +172,7 @@ public class Interface
         if (!handshake.isValid())
             throw new RuntimeException("handshake is not valid");
 
-        new Thread(() -> {
-
+        runInThread(() -> {
             // set additional parameters
             JSONObject params = new JSONObject();
             if (requestParams != null) {
@@ -183,7 +184,7 @@ public class Interface
 
                         // add persistent request parameters
                         if (playerLocation != null) {
-                            String loc = playerLocation.getLatLng().toDoubleString();
+                            String loc = playerLocation.toString();
                             params.getJSONObject("params").put("playerLocation", loc);
                             params.getJSONObject("params").put("location", loc);
                         }
@@ -191,8 +192,8 @@ public class Interface
 
                         // TODO: check that this works
                         JSONArray collectedEnergy = new JSONArray(mSlurpableXMParticles);
-
                         params.getJSONObject("params").put("energyGlobGuids", collectedEnergy);
+                        mSlurpableXMParticles.clear();
                     }
                     catch (JSONException e) {
                         e.printStackTrace();
@@ -209,7 +210,6 @@ public class Interface
             }
 
             // create post
-            String postString = mApiBaseURL + mApiRequest + requestString;
             RequestBody body = RequestBody.create(params.toString(), MediaType.get("application/json"));
             Request post = new Request.Builder()
                     .post(body)
@@ -219,7 +219,7 @@ public class Interface
                     .header("Host", mApiBase)
                     .header("Connection", "Keep-Alive")
                     .addHeader("Cookie", mCookie)
-                    .url(postString).build();
+                    .url(mApiBaseURL + mApiRequest + requestString).build();
 
             // execute and get the response.
             try {
@@ -243,10 +243,7 @@ public class Interface
 
                 // handle request result
                 if (content != null) {
-//                    Log.d("Interface.request", content);
-                    JSONObject json = new JSONObject(content);
-                    RequestResult.handleRequest(json, result);
-                    mSlurpableXMParticles.clear();
+                    RequestResult.handleRequest(new JSONObject(content), result);
                 }
             }
             catch (Exception e) {
@@ -254,7 +251,7 @@ public class Interface
                 result.finished();
                 e.printStackTrace();
             }
-        }).start();
+        });
     }
 
 

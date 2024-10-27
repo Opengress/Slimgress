@@ -93,7 +93,8 @@ dependencies {
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'com.google.guava:guava:33.3.0-jre'
     implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.14'
-    implementation 'org.osmdroid:osmdroid-android:6.1.20'
+    implementation 'org.maplibre.gl:android-sdk:11.5.1'
+    implementation group: 'org.maplibre.gl', name: 'android-plugin-annotation-v9', version: '3.0.1'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.0'
     testImplementation 'org.testng:testng:7.10.2'
 }

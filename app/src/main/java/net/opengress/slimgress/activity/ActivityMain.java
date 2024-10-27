@@ -21,10 +21,10 @@
 
 package net.opengress.slimgress.activity;
 
-import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
+import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getImageForUltrastrikeLevel;
 import static net.opengress.slimgress.ViewHelpers.getImageForXMPLevel;
-import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.getPrettyItemName;
 import static net.opengress.slimgress.ViewHelpers.putItemInMap;
 import static net.opengress.slimgress.ViewHelpers.saveScreenshot;
@@ -36,8 +36,6 @@ import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.PorterDuff;
 import android.net.Uri;
@@ -92,7 +90,10 @@ import net.opengress.slimgress.dialog.DialogHackResult;
 import net.opengress.slimgress.dialog.DialogInfo;
 import net.opengress.slimgress.dialog.DialogLevelUp;
 
-import org.osmdroid.util.GeoPoint;
+import org.maplibre.android.geometry.LatLng;
+import org.maplibre.android.maps.MapView;
+import org.maplibre.android.style.layers.FillLayer;
+import org.maplibre.android.style.layers.PropertyFactory;
 
 import java.io.File;
 import java.io.Serializable;
@@ -301,8 +302,8 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
-        Objects.requireNonNull(scanner).requestLocationUpdates();
+//        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
+//        Objects.requireNonNull(scanner).requestLocationUpdates();
     }
 
     private void showComms() {
@@ -317,7 +318,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         int textColor;
         Team team = agent.getTeam();
         textColor = 0xff000000 + team.getColour();
-        int levelColor = getColorFromResources(getResources(), getLevelColor(agent.getLevel()));
+        int levelColor = getColourFromResources(getResources(), getLevelColour(agent.getLevel()));
 
         ((TextView) findViewById(R.id.agentname)).setText(agent.getNickname());
         ((TextView) findViewById(R.id.agentname)).setTextColor(textColor);
@@ -386,7 +387,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     public void showLevelUpDialog(HashMap<String, Integer> items) {
         DialogLevelUp dialog = new DialogLevelUp(this);
         int level = mGame.getAgent().getVerifiedLevel();
-        dialog.setMessage(String.format("LEVEL %d", level), getColorFromResources(getResources(), getLevelColor(level)));
+        dialog.setMessage(String.format("LEVEL %d", level), getColourFromResources(getResources(), getLevelColour(level)));
         dialog.setCancelable(true); // Allow dialog to be dismissed by tapping outside
 
         dialog.setOnDismissListener(dialog1 -> {
@@ -525,7 +526,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     @SuppressLint("RestrictedApi")
-    public void showFireMenu(GeoPoint p) {
+    public void showFireMenu(LatLng p) {
 
         var anchor = findViewById(R.id.buttonComm);
         PopupMenu popup = new PopupMenu(ActivityMain.this, anchor);
@@ -716,21 +717,14 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
     private void flashMap() {
         ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
-        // Invert colors
         assert scanner != null;
-        scanner.getMap().getOverlayManager().getTilesOverlay().setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(new float[]{
-                -1, 0, 0, 0, 255,
-                0, -1, 0, 0, 255,
-                0, 0, -1, 0, 255,
-                0, 0, 0, 1, 0
-        })));
-//        scanner.getMap().invalidate();
-
-        // Revert colors after a short delay
-        new Handler().postDelayed(() -> {
-            scanner.getMap().getOverlayManager().getTilesOverlay().setColorFilter(null);
-//            scanner.getMap().invalidate();
-        }, 444);
+        MapView mapView = scanner.getMap();
+        mapView.getMapAsync(maplibreMap -> maplibreMap.getStyle(style -> {
+            FillLayer layer = style.getLayerAs("flash-overlay-layer");
+            assert layer != null;
+            layer.setProperties(PropertyFactory.fillColor("rgba(255, 255, 255, 1.0)"));
+            mapView.postDelayed(() -> layer.setProperties(PropertyFactory.fillColor("rgba(255, 255, 255, 0.0)")), 444);
+        }));
     }
 
     private boolean fireBurster(int level, ItemBase.ItemType type) {
@@ -800,11 +794,11 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                     dialog.setMessage(error).setDismissDelay(1500).show();
                 } else {
                     var res = data.getString("result");
-                    DialogInfo dialog = new DialogInfo(this);
-                    String message = "Gained %s XM from using a powercube";
-                    dialog.setMessage(String.format(message, res)).setDismissDelay(1500).show();
-
-
+                    String message = "Gained %s XM from using a %s";
+                    message = String.format(message, res, item.getUsefulName());
+                    SlimgressApplication.postPlainCommsMessage(message);
+                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+                    updateAgent();
                     for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
                         mGame.getInventory().removeItem(id);
                     }
@@ -863,6 +857,9 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 dialog.setMessage(error).setDismissDelay(1500).show();
             } else {
                 flashMap();
+                ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
+                assert scanner != null;
+                scanner.removeInfoCard();
             }
             return false;
         }));
@@ -875,7 +872,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     public void setTargetPortal(String entityGuid) {
         GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(entityGuid);
         assert portal != null;
-        int dist = (int) mGame.getLocation().getLatLng().distanceToAsDouble(portal.getPortalLocation().getLatLng());
+        int dist = (int) mGame.getLocation().getLatLng().distanceTo(portal.getPortalLocation().getLatLng());
         mSelectTargetText.setText(dist < 41 ? R.string.flipcard_confirm_selection : R.string.flipcard_select_target);
         mSelectedPortalGuid = entityGuid;
         mConfirmButton.setEnabled(dist < 41);

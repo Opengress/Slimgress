@@ -88,6 +88,7 @@ public class GameState {
     private Location mLocation;
     private GameEntityPortal mPortal;
     private final HashMap<String, String> mAgentNames = new HashMap<>();
+    private boolean mLocationIsAccurate = false;
 
     public GameState() {
         mInterface = new Interface();
@@ -260,6 +261,10 @@ public class GameState {
                 String lastQueried = "0";
                 if (mCellUpdateTimeStamps.containsKey(cellId)) {
                     lastQueried = mCellUpdateTimeStamps.get(cellId);
+                    mCellUpdateTimeStamps.get(cellId);
+                    if (lastQueried == null || lastQueried.isEmpty()) {
+                        lastQueried = "0";
+                    }
                 }
                 dates.put(Long.parseLong(lastQueried));
             }
@@ -297,9 +302,8 @@ public class GameState {
 
             final double earthKM = 2 * Math.PI * 6371;    // circumference
 
-            S2LatLng center = S2LatLng.fromE6(mLocation.getLatitude(), mLocation.getLongitude());
             S2LatLng size = S2LatLng.fromRadians((Math.PI / earthKM) * radiusKM, (2 * Math.PI / earthKM) * radiusKM);
-            S2LatLngRect region = S2LatLngRect.fromCenterSize(center, size);
+            S2LatLngRect region = S2LatLngRect.fromCenterSize(mLocation.getS2LatLng(), size);
 
             // get cell ids for area
             String[] cellIds = Utils.getCellIdsFromRegion(region, 8, 12);
@@ -1518,4 +1522,11 @@ public class GameState {
         return rejects;
     }
 
+    public void setLocationAccurate(boolean b) {
+        mLocationIsAccurate = b;
+    }
+
+    public boolean isLocationAccurate() {
+        return mLocationIsAccurate;
+    }
 }

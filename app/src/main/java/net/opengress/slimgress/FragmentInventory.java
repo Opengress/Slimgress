@@ -270,7 +270,7 @@ public class FragmentInventory extends Fragment {
                     return portal1.getPortalResonatorCount() - portal2.getPortalResonatorCount();
                 });
                 case "Distance" ->
-                        mGroupPortalKeys.sort(Comparator.comparingInt(inventoryListItem -> (int) inventoryListItem.getDistance(mGame.getLocation().getS2LatLng())));
+                        mGroupPortalKeys.sort(Comparator.comparingInt(inventoryListItem -> (int) inventoryListItem.getDistance(mGame.getLocation())));
                 case "Level" -> mGroupPortalKeys.sort((item1, item2) -> {
                     ItemPortalKey key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
                     assert key1 != null;
@@ -341,7 +341,7 @@ public class FragmentInventory extends Fragment {
                         }
                     }
                     case "Distance" -> {
-                        if ((item1.getDistance(mGame.getLocation().getS2LatLng()) - item2.getDistance(mGame.getLocation().getS2LatLng())) > 0) {
+                        if ((item1.getDistance(mGame.getLocation()) - item2.getDistance(mGame.getLocation())) > 0) {
                             mGroupPortalKeys.set(j, item2);
                             mGroupPortalKeys.set(j + 1, item1);
                         }
@@ -745,7 +745,7 @@ public class FragmentInventory extends Fragment {
             }
 
             InventoryListItem key = new InventoryListItem(descr, ItemType.PortalKey, getDrawable(requireContext(), R.drawable.portalkey), R.drawable.portalkey, keys, items.get(0).getItemRarity());
-            key.setLocation(new Location(theItem1.getPortalLocation()).getS2LatLng());
+            key.setLocation(new Location(theItem1.getPortalLocation()));
             key.setImage(theItem1.getPortalImageUrl());
             portalGUIDs.add(theItem1.getPortalGuid());
             mGroupPortalKeys.add(key);

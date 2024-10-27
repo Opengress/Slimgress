@@ -1,7 +1,7 @@
 package net.opengress.slimgress.activity;
 
-import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
-import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
+import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 
@@ -131,8 +131,8 @@ public class ActivityDeploy extends AppCompatActivity {
             }
             View widget = findViewById(resoSlotToLayoutId(reso.slot));
             ((TextView) widget.findViewById(R.id.resoLevelText)).setText(String.format("L%d", reso.level));
-            int levelColour = getLevelColor(reso.level);
-            ((TextView) widget.findViewById(R.id.resoLevelText)).setTextColor(getColorFromResources(getResources(), levelColour));
+            int levelColour = getLevelColour(reso.level);
+            ((TextView) widget.findViewById(R.id.resoLevelText)).setTextColor(getColourFromResources(getResources(), levelColour));
             ((TextView) widget.findViewById(R.id.positionText)).setText(String.format("%dm %s", reso.distanceToPortal, resoSlotToOctantText(reso.slot)));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setText(mGame.getAgentName(reso.ownerGuid));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());
@@ -143,11 +143,7 @@ public class ActivityDeploy extends AppCompatActivity {
             }
 
             HashMap<Integer, String> levels = getAvailableDeployLevels(resosForUpgrade, resoCountForLevel);
-            Log.d(this.getLocalClassName(), "Checking resonator on level " + reso.level);
-            Log.d(this.getLocalClassName(), "Got levels: " + levels);
-            Log.d(this.getLocalClassName(), "Got levels keySet: " + levels.keySet());
             boolean canInstall = !levels.isEmpty();
-            Log.d(this.getLocalClassName(), "Can install? " + canInstall);
             if (resosForUpgrade.isEmpty()) {
                 widget.findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
                 widget.findViewById(R.id.widgetActionButton).setEnabled(false);
@@ -170,7 +166,7 @@ public class ActivityDeploy extends AppCompatActivity {
             }
         }
 
-        int dist = (int) mGame.getLocation().getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng());
+        int dist = (int) mGame.getLocation().distanceTo(mGame.getCurrentPortal().getPortalLocation());
         updateInfoText(dist);
         setButtonsEnabled(dist <= mActionRadiusM);
     }
@@ -210,7 +206,6 @@ public class ActivityDeploy extends AppCompatActivity {
     @SuppressWarnings("ConstantConditions")
     private void onUpgradeButtonPressed(View view) {
         int slot = layoutIdToResoSlot((Integer) view.getTag());
-        Log.d("ActivityDeploy", "Pressed UPGRADE button: " + slot);
         var reso = mGame.getCurrentPortal().getPortalResonator(slot);
         var resosForUpgrade = inventory.getResosForUpgrade(reso.level);
         var resoCountForLevel = getResoCountsForLevels(mGame.getCurrentPortal().getPortalResonators());
@@ -229,10 +224,8 @@ public class ActivityDeploy extends AppCompatActivity {
                     break;
                 }
             }
-            Log.d("ActivityDeploy", String.format("Picked resonator: %d on slot %d", which, slot));
         });
         builder.show();
-        Log.d("ActivityDeploy", "Resos for upgrade:" + levels);
     }
 
     @SuppressLint("DefaultLocale")
@@ -259,7 +252,6 @@ public class ActivityDeploy extends AppCompatActivity {
     @SuppressWarnings("ConstantConditions")
     private void onDeployButtonPressed(View view) {
         int slot = layoutIdToResoSlot((Integer) view.getTag());
-        Log.d("ActivityDeploy", "Pressed DEPLOY button: " + slot);
         var resosForUpgrade = inventory.getResosForUpgrade(0);
         var resoCountForLevel = getResoCountsForLevels(mGame.getCurrentPortal().getPortalResonators());
         HashMap<Integer, String> levels = getAvailableDeployLevels(resosForUpgrade, resoCountForLevel);
@@ -273,15 +265,13 @@ public class ActivityDeploy extends AppCompatActivity {
             mGame.getInventory().removeItem(r);
             // FIXME probable crash on error which will show its head when agents race to deploy
             mGame.intDeployResonator(r, mGame.getCurrentPortal(), slot, deployResultHandler);
-            Log.d("ActivityDeploy", String.format("Picked resonator: %d on slot %d", which, slot));
         });
         builder.show();
-        Log.d("ActivityDeploy", "Resos for deployment:" + levels);
     }
 
     private void onReceiveLocation(Location location) {
         if (location != null) {
-            int dist = (int) location.getLatLng().distanceToAsDouble(mGame.getCurrentPortal().getPortalLocation().getLatLng());
+            int dist = (int) location.distanceTo(mGame.getCurrentPortal().getPortalLocation());
             setButtonsEnabled(dist <= mActionRadiusM);
             updateInfoText(dist);
         } else {

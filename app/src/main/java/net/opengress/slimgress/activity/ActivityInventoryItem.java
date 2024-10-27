@@ -3,11 +3,12 @@ package net.opengress.slimgress.activity;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
 import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_NONE;
-import static net.opengress.slimgress.ViewHelpers.getColorFromResources;
-import static net.opengress.slimgress.ViewHelpers.getLevelColor;
+import static net.opengress.slimgress.SlimgressApplication.runInThread;
+import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
+import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.getMainActivity;
 import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
-import static net.opengress.slimgress.ViewHelpers.getRarityColor;
+import static net.opengress.slimgress.ViewHelpers.getRarityColour;
 import static net.opengress.slimgress.ViewHelpers.getRarityText;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 
@@ -16,7 +17,6 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -47,6 +47,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public class ActivityInventoryItem extends AppCompatActivity {
 
@@ -93,8 +94,8 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 // Portal Key L1
                 itemTitle.setText(R.string.item_name_portal_key);
                 mItemLevel.setText(String.format("L%d", portal.getPortalLevel()));
-                mLevelColour = getLevelColor(portal.getPortalLevel());
-                mItemLevel.setTextColor(getColorFromResources(getResources(), mLevelColour));
+                mLevelColour = getLevelColour(portal.getPortalLevel());
+                mItemLevel.setTextColor(getColourFromResources(getResources(), mLevelColour));
 
 
                 // bonanza at south beach
@@ -203,8 +204,8 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 itemName.setText(mItem.getPrettyDescription());
                 itemDescription.setText(mItem.getDescription());
                 mItemLevel.setText(String.format("L%d", actual.getItemLevel()));
-                mLevelColour = getLevelColor(actual.getItemLevel());
-                mItemLevel.setTextColor(getColorFromResources(getResources(), mLevelColour));
+                mLevelColour = getLevelColour(actual.getItemLevel());
+                mItemLevel.setTextColor(getColourFromResources(getResources(), mLevelColour));
             }
         }
 
@@ -252,7 +253,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
         Location loc = mGame.getLocation();
         if (loc != null) {
             // crashes on next line if there aren't exclusions in proguard config
-            dist = (int) (loc.getS2LatLng().getEarthDistance(mItem.getLocation()));
+            dist = (int) (loc.distanceTo(mItem.getLocation()));
         }
         ((TextView) findViewById(R.id.activity_inventory_item_distance)).setText(getPrettyDistanceString(dist));
     }
@@ -260,12 +261,12 @@ public class ActivityInventoryItem extends AppCompatActivity {
     @SuppressLint("DefaultLocale")
     private void inflateResource(InventoryListItem item, ItemBase actual) {
         mItemRarity.setText(getRarityText(item.getRarity()));
-        int rarityColor = getRarityColor(item.getRarity());
-        mItemRarity.setTextColor(getColorFromResources(getResources(), rarityColor));
+        int rarityColor = getRarityColour(item.getRarity());
+        mItemRarity.setTextColor(getColourFromResources(getResources(), rarityColor));
         if (actual.getItemLevel() > 0) {
             mItemLevel.setText(String.format("L%d", actual.getItemLevel()));
-            mLevelColour = getLevelColor(actual.getItemLevel());
-            mItemLevel.setTextColor(getColorFromResources(getResources(), mLevelColour));
+            mLevelColour = getLevelColour(actual.getItemLevel());
+            mItemLevel.setTextColor(getColourFromResources(getResources(), mLevelColour));
         }
     }
 
@@ -288,7 +289,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                 }
                 if (mItem.getQuantity() == 0) {
-                    new Handler(Looper.getMainLooper()).postDelayed(this::finish, 100);
+                    SlimgressApplication.schedule(this::finish, 100, TimeUnit.MILLISECONDS);
                 }
             }
             return false;
@@ -321,7 +322,6 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     message = String.format(message, res, name);
                     SlimgressApplication.postPlainCommsMessage(message);
                     Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-//                    SlimgressApplication.postPlainCommsMessage("Should this say something?");
 
                     for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
                         mItem.remove(id);
@@ -329,7 +329,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                         ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                     }
                     if (mItem.getQuantity() == 0) {
-                        new Handler(Looper.getMainLooper()).postDelayed(this::finish, 100);
+                        SlimgressApplication.schedule(this::finish, 100, TimeUnit.MILLISECONDS);
                     }
                 }
                 return false;
@@ -415,7 +415,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
      */
     @SuppressLint("DefaultLocale")
     private void incrementQuantity(Button buttonIncrement, TextView quantityDisplay, TextView recoveryInfo) {
-        new Thread(() -> {
+        runInThread(() -> {
             while (buttonIncrement.isPressed()) {
                 String quantityText = quantityDisplay.getText().toString();
                 String[] parts = quantityText.split("/");
@@ -434,7 +434,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-        }).start();
+        });
     }
 
     /**
@@ -442,7 +442,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
      */
     @SuppressLint("DefaultLocale")
     private void decrementQuantity(Button buttonDecrement, TextView quantityDisplay, TextView recoveryInfo) {
-        new Thread(() -> {
+        runInThread(() -> {
             while (buttonDecrement.isPressed()) {
                 String quantityText = quantityDisplay.getText().toString();
                 String[] parts = quantityText.split("/");
@@ -461,7 +461,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-        }).start();
+        });
     }
 
     private int calculateRecoveryAmount(int quantity) {
@@ -535,7 +535,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                 }
                 if (mItem.getQuantity() == 0) {
-                    new Handler(Looper.getMainLooper()).postDelayed(this::finish, 100);
+                    SlimgressApplication.schedule(this::finish, 100, TimeUnit.MILLISECONDS);
                 }
             }
             return false;

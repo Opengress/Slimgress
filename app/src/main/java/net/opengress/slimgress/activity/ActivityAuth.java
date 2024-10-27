@@ -272,7 +272,7 @@ public class ActivityAuth extends Activity {
         mNumAttempts++;
         System.out.println("AUTH FINISHED");
 
-        new Thread(() -> {
+        mApp.runInThread_(() -> {
             // authenticate ingress
             Interface.AuthSuccess success = mGame.intAuthenticate(session_name, session_id);
 
@@ -300,7 +300,7 @@ public class ActivityAuth extends Activity {
                 // some error occurred
                 authFailed();
             }
-        }).start();
+        });
 
     }
 
