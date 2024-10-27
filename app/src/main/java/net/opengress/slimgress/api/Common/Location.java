@@ -21,19 +21,23 @@
 
 package net.opengress.slimgress.api.Common;
 
+import androidx.annotation.NonNull;
+
 import com.google.common.geometry.S2CellId;
 import com.google.common.geometry.S2LatLng;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osmdroid.util.GeoPoint;
+import org.maplibre.android.geometry.LatLng;
+import org.maplibre.geojson.Point;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
-public class Location
+public class Location implements Serializable
 {
-    private final long latitude;
-    private final long longitude;
+    private final long latE6;
+    private final long lngE6;
 
     private double hexToDecimal(String hex) {
         BigInteger bigInt = new BigInteger(hex, 16);
@@ -46,8 +50,8 @@ public class Location
 
     public Location(JSONObject json) throws JSONException
     {
-        latitude = json.getInt("latE6");
-        longitude = json.getInt("lngE6");
+        latE6 = json.getInt("latE6");
+        lngE6 = json.getInt("lngE6");
     }
 
     public Location(long cellId)
@@ -55,48 +59,124 @@ public class Location
         S2CellId cell = new S2CellId(cellId);
 
         S2LatLng pos = cell.toLatLng();
-        latitude = pos.lat().e6();
-        longitude = pos.lng().e6();
+        latE6 = pos.lat().e6();
+        lngE6 = pos.lng().e6();
     }
 
     public Location(double latDeg, double lngDeg)
     {
-        S2LatLng pos = S2LatLng.fromDegrees(latDeg, lngDeg);
-
-        latitude = pos.lat().e6();
-        longitude = pos.lng().e6();
+        latE6 = Math.round(latDeg * 1e6);
+        lngE6 = Math.round(lngDeg * 1e6);
     }
 
     public Location(long latE6, long lngE6)
     {
-        latitude = latE6;
-        longitude = lngE6;
+        this.latE6 = latE6;
+        this.lngE6 = lngE6;
     }
 
     public Location(String hexLatLng)
     {
         String[] parts = hexLatLng.split(",");
-        latitude = (long) hexToDecimal(parts[0]);
-        longitude = (long) hexToDecimal(parts[1]);
+        latE6 = (long) hexToDecimal(parts[0]);
+        lngE6 = (long) hexToDecimal(parts[1]);
     }
 
-    public long getLatitude()
+    public long getLatitudeE6()
     {
-        return latitude;
+        return latE6;
     }
 
-    public long getLongitude()
+    public long getLongitudeE6()
     {
-        return longitude;
+        return lngE6;
+    }
+
+    public double getLatitude() {
+//        return latE6 * 1e-6;
+        return latE6 / 1e6;
+    }
+
+    public double getLongitude() {
+//        return lngE6 * 1e-6;
+        return lngE6 / 1e6;
     }
 
     public S2LatLng getS2LatLng() {
-        return S2LatLng.fromE6(latitude, longitude);
+        return S2LatLng.fromE6(latE6, lngE6);
     }
 
-    public GeoPoint getLatLng()
+    public LatLng getLatLng()
     {
-        S2LatLng pos = S2LatLng.fromE6(latitude, longitude);
-        return new GeoPoint(pos.latDegrees(), pos.lngDegrees());
+        return new LatLng(getLatitude(), getLongitude());
+    }
+
+    public Point getPoint() {
+        return Point.fromLngLat(getLongitude(), getLatitude());
+    }
+
+    @NonNull
+    public String toString() {
+        return getLatitude() + "," + getLongitude();
+    }
+
+    public Location destinationPoint(int distMetres, int bearingDegrees) {
+        double lat1 = Math.toRadians(getLatitude());
+        double lon1 = Math.toRadians(getLongitude());
+        double angularDistance = distMetres / S2LatLng.EARTH_RADIUS_METERS;
+        double bearingRad = Math.toRadians(bearingDegrees);
+
+        double lat2 = Math.asin(Math.sin(lat1) * Math.cos(angularDistance) +
+                Math.cos(lat1) * Math.sin(angularDistance) * Math.cos(bearingRad));
+        double lon2 = lon1 + Math.atan2(Math.sin(bearingRad) * Math.sin(angularDistance) * Math.cos(lat1),
+                Math.cos(angularDistance) - Math.sin(lat1) * Math.sin(lat2));
+
+        return new Location(Math.toDegrees(lat2), Math.toDegrees(lon2));
+    }
+
+    // Method to calculate distance between this point and another point
+    public double distanceTo(Location other) {
+
+        // Convert latitude and longitude from degrees to radians
+        double lat1 = Math.toRadians(getLatitude());
+        double lon1 = Math.toRadians(getLongitude());
+        double lat2 = Math.toRadians(other.getLatitude());
+        double lon2 = Math.toRadians(other.getLongitude());
+
+        // Haversine formula
+        double dLat = lat2 - lat1;
+        double dLon = lon2 - lon1;
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(lat1) * Math.cos(lat2)
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        // Distance in meters
+        return S2LatLng.EARTH_RADIUS_METERS * c;
+    }
+
+    // Method to calculate distance between this point and another point
+    public double distanceTo(android.location.Location other) {
+
+        // Convert latitude and longitude from degrees to radians
+        double lat1 = Math.toRadians(getLatitude());
+        double lon1 = Math.toRadians(getLongitude());
+        double lat2 = Math.toRadians(other.getLatitude());
+        double lon2 = Math.toRadians(other.getLongitude());
+
+        // Haversine formula
+        double dLat = lat2 - lat1;
+        double dLon = lon2 - lon1;
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(lat1) * Math.cos(lat2)
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        // Distance in meters
+        return S2LatLng.EARTH_RADIUS_METERS * c;
     }
 }

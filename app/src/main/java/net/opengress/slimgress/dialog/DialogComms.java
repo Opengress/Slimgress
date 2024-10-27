@@ -1,5 +1,6 @@
 package net.opengress.slimgress.dialog;
 
+import static net.opengress.slimgress.SlimgressApplication.runInThread;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 
 import android.app.Dialog;
@@ -107,7 +108,7 @@ public class DialogComms extends BottomSheetDialogFragment {
         mTimerRunnable = new Runnable() {
             @Override
             public void run() {
-                new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(false, commsRadiusKM, mIsInFactionTab, commsRefreshHandler)).start();
+                runInThread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(false, commsRadiusKM, mIsInFactionTab, commsRefreshHandler));
                 mTimerHandler.postDelayed(this, 15000);
             }
         };
@@ -194,7 +195,7 @@ public class DialogComms extends BottomSheetDialogFragment {
                     // get plexts, probably, and...
                     input.setText("");
                     sendButton.setEnabled(true);
-                    new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(false, commsRadiusKM, mIsInFactionTab, commsRefreshHandler)).start();
+                    runInThread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(false, commsRadiusKM, mIsInFactionTab, commsRefreshHandler));
                 }
                 return false;
             });
@@ -203,8 +204,8 @@ public class DialogComms extends BottomSheetDialogFragment {
         });
 
         // GUARANTEE that both tabs are loaded
-        new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(false, commsRadiusKM, true, commsRefreshHandler)).start();
-        new Thread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(false, commsRadiusKM, false, commsRefreshHandler)).start();
+        runInThread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(false, commsRadiusKM, true, commsRefreshHandler));
+        runInThread(() -> SlimgressApplication.getInstance().getGame().intLoadCommunication(false, commsRadiusKM, false, commsRefreshHandler));
 
         return mDialog;
     }
