@@ -35,9 +35,6 @@ import static net.opengress.slimgress.api.Common.Utils.notBouncing;
 import static net.opengress.slimgress.api.Item.ItemBase.ItemType.PortalKey;
 import static org.maplibre.android.style.layers.PropertyFactory.circleColor;
 import static org.maplibre.android.style.layers.PropertyFactory.circleRadius;
-import static org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor;
-import static org.maplibre.android.style.layers.PropertyFactory.circleStrokeOpacity;
-import static org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -50,6 +47,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Handler;
@@ -136,10 +134,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -189,6 +189,7 @@ public class ScannerView extends Fragment {
     private final HashMap<String, Pair<String, Integer>> mResonatorToPortalSlotLookup = new HashMap<>();
     private final HashMap<String, Line> mLines = new HashMap<>();
     private final HashMap<String, Fill> mPolygons = new HashMap<>();
+    private final Queue<ImageSource> mImageSourcePool = new LinkedList<>();
 
     private ActivityResultLauncher<Intent> mPortalActivityResultLauncher;
 
@@ -279,6 +280,10 @@ public class ScannerView extends Fragment {
     public void setupPlayerCursor(Location initialLocation, int bearing) {
         if (mMapLibreMap.getStyle() == null) {
             return;
+        }
+
+        if (mPlayerCursorImageSource != null) {
+            mPlayerCursorImageSource = null;
         }
 
         mPlayerCursorSource = new GeoJsonSource("player-cursor-source", Feature.fromGeometry(Point.fromLngLat(initialLocation.getLongitude(), initialLocation.getLatitude())));
@@ -523,8 +528,8 @@ public class ScannerView extends Fragment {
     private String getMapTileProviderStyleJSON(String name) {
         try {
             return mGame.getKnobs().getMapCompositionRootKnobs().getMapProvider(name).getStyleJSON();
-        } catch (JSONException e) {
-            return null;
+        } catch (JSONException | NullPointerException e) {
+            return "{}";
         }
     }
 
@@ -785,8 +790,7 @@ public class ScannerView extends Fragment {
         ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, RECORD_REQUEST_CODE);
     }
 
-
-    private void addExpandingCircle(Location centerPoint, int durationMs, float radiusM, int colour, float width) {
+    private void addExpandingCircle(Location centerPoint, int durationMs, float radiusM, Bitmap bm) {
         if (mMapLibreMap == null || mMapLibreMap.getStyle() == null) {
             return;
         }
@@ -794,42 +798,47 @@ public class ScannerView extends Fragment {
         String sourceId = "circle-source-" + ++mCircleId;
         String layerId = "circle-layer-" + mCircleId;
 
-        GeoJsonSource circleSource = new GeoJsonSource(sourceId,
-                Feature.fromGeometry(Point.fromLngLat(centerPoint.getLongitude(), centerPoint.getLatitude())));
+        // Create the initial circular bitmap from scratch
+        ImageSource imageSource = new ImageSource(sourceId, getRadialLatLngQuad(centerPoint, 0), bm);
+        mMapLibreMap.getStyle().addSource(imageSource);
 
-        mMapLibreMap.getStyle().addSource(circleSource);
-
-        CircleLayer circleLayer = new CircleLayer(layerId, sourceId);
-        circleLayer.setProperties(
-                circleRadius(0f),
-                circleColor("rgba(0, 0, 0, 0)"),
-                circleStrokeColor(colour),
-                circleStrokeWidth(width),
-                circleStrokeOpacity(0.5f)
-        );
+        RasterLayer circleLayer = new RasterLayer(layerId, sourceId);
         mMapLibreMap.getStyle().addLayer(circleLayer);
 
         final long startTime = System.currentTimeMillis();
         final Choreographer choreographer = Choreographer.getInstance();
 
         final Choreographer.FrameCallback frameCallback = new Choreographer.FrameCallback() {
+            private void cleanUp() {
+                mMapLibreMap.getStyle(style -> {
+                    mMapLibreMap.getStyle().removeLayer(layerId);
+                    mMapLibreMap.getStyle().removeSource(sourceId);
+                });
+                choreographer.removeFrameCallback(this);
+            }
+
             @Override
             public void doFrame(long frameTimeNanos) {
                 long elapsed = System.currentTimeMillis() - startTime;
                 float progress = Math.min((float) elapsed / durationMs, 1f);
                 float radius1 = radius * progress;
 
-                circleLayer.setProperties(circleRadius(radius1));
+                try {
+                    imageSource.setCoordinates(getRadialLatLngQuad(centerPoint, radius1));
+                    RasterLayer circleLayer = (RasterLayer) mMapLibreMap.getStyle().getLayer(layerId);
+                    if (circleLayer != null) {
+                        circleLayer.setProperties(PropertyFactory.rasterOpacity(1f - (progress)));
+                    }
+                } catch (IllegalStateException e) {
+                    cleanUp();
+                    return;
+                }
 
                 // Continue animating or clean up
                 if (progress < 1f) {
                     choreographer.postFrameCallback(this);
                 } else {
-                    mMapLibreMap.getStyle(style -> {
-                        mMapLibreMap.getStyle().removeLayer(layerId);
-                        mMapLibreMap.getStyle().removeSource(sourceId);
-                    });
-                    choreographer.removeFrameCallback(this);
+                    cleanUp();
                 }
             }
         };
@@ -1051,6 +1060,8 @@ public class ScannerView extends Fragment {
         mIcons.put("x6", getBitmapFromDrawable(getContext(), R.drawable.x6));
         mIcons.put("x7", getBitmapFromDrawable(getContext(), R.drawable.x7));
         mIcons.put("x8", getBitmapFromDrawable(getContext(), R.drawable.x8));
+        mIcons.put("bursterRing", getBitmapFromAsset("rainbowburst.png", assetManager));
+        mIcons.put("sonarRing", createCircleBitmap(1024, 0x33FFFF00, 3));
     }
 
     @SuppressLint("DefaultLocale")
@@ -1058,7 +1069,7 @@ public class ScannerView extends Fragment {
         if (!notBouncing("updateWorld", mMinUpdateIntervalMS)) {
             return;
         }
-        addExpandingCircle(mCurrentLocation, 500 * 1000 / 60, 500, 0x33FFFF00, 1);
+        addExpandingCircle(mCurrentLocation, 1000 * 1000 / 60, 1000, mIcons.get("sonarRing"));
         displayQuickMessage(getStringSafely(R.string.scanning_local_area));
 
         // handle interface result (on timer thread)
@@ -1150,8 +1161,7 @@ public class ScannerView extends Fragment {
 
             // FIXME this is honestly the worst imaginable solution, but for now it's what i have...
             assert particle != null;
-            final Location location = particle.getCellLocation();
-            if (location.distanceTo(playerLoc) < mActionRadiusM) {
+            if (particle.getCellLocation().distanceTo(playerLoc) < mActionRadiusM) {
 
                 mSlurpableParticles.add(particle.getGuid());
                 newXM += particle.getAmount();
@@ -1193,7 +1203,7 @@ public class ScannerView extends Fragment {
                     if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
                         GameEntityPortal portal = (GameEntityPortal) entity;
                         drawPortal(portal);
-                        Feature feature = Feature.fromGeometry(Point.fromLngLat(portal.getPortalLocation().getLongitude(), portal.getPortalLocation().getLatitude()));
+                        Feature feature = Feature.fromGeometry(portal.getPortalLocation().getPoint());
                         feature.addStringProperty("guid", portal.getEntityGuid());
                         features.add(feature);
                     } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
@@ -1203,7 +1213,7 @@ public class ScannerView extends Fragment {
                     } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {
                         GameEntityItem item = (GameEntityItem) entity;
                         drawItem(item);
-                        Feature feature = Feature.fromGeometry(Point.fromLngLat(item.getItem().getItemLocation().getLongitude(), item.getItem().getItemLocation().getLatitude()));
+                        Feature feature = Feature.fromGeometry(item.getItem().getItemLocation().getPoint());
                         feature.addStringProperty("guid", item.getEntityGuid());
                         features.add(feature);
                     }
@@ -1640,7 +1650,7 @@ public class ScannerView extends Fragment {
     }
 
     public void fireBurster(int radius) {
-        addExpandingCircle(mCurrentLocation, radius * 10, radius, 0xCCCC9900, metresToPixels(10, mCurrentLocation));
+        addExpandingCircle(mCurrentLocation, radius * 10, radius, mIcons.get("bursterRing"));
         if (getActivity() != null) {
             ((ActivityMain) getActivity()).updateAgent();
         }
@@ -1891,6 +1901,18 @@ public class ScannerView extends Fragment {
             return;
         }
         Toast.makeText(requireContext(), "Interacting with: " + getEntityDescription(entity), Toast.LENGTH_SHORT).show();
+    }
+
+    private Bitmap createCircleBitmap(float diameter, int colour, float strokeWidth) {
+        Bitmap bitmap = Bitmap.createBitmap((int) diameter, (int) diameter, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(strokeWidth);
+        paint.setAntiAlias(true);
+        paint.setColor(colour);
+        canvas.drawCircle(diameter / 2, diameter / 2, diameter / 2, paint);
+        return bitmap;
     }
 
 }

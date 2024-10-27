@@ -2,8 +2,7 @@ package net.opengress.slimgress;
 
 import android.graphics.drawable.Drawable;
 
-import com.google.common.geometry.S2LatLng;
-
+import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Item.ItemBase.ItemType;
 import net.opengress.slimgress.api.Item.ItemBase.Rarity;
 import net.opengress.slimgress.api.Item.ItemFlipCard.FlipCardType;
@@ -25,8 +24,7 @@ public class InventoryListItem implements Serializable {
     private final ArrayList<String> mIDs;
     private FlipCardType mFlipCardType;
     private Rarity mRarity = Rarity.None;
-    private transient S2LatLng mLocation;
-    private String mSerializableLocation;
+    private Location mLocation;
     private int mLevel = -999;
 
     public InventoryListItem(String description, ItemType type, Drawable icon, int iconID, ArrayList<String> IDs) {
@@ -136,20 +134,16 @@ public class InventoryListItem implements Serializable {
         mFlipCardType = flipCardType;
     }
 
-    public void setLocation(S2LatLng loc) {
+    public void setLocation(Location loc) {
         mLocation = loc;
     }
 
-    public S2LatLng getLocation() {
-        if (mLocation == null && mSerializableLocation != null) {
-            String[] lls = mSerializableLocation.substring(1, mSerializableLocation.length() - 1).split(",");
-            mLocation = S2LatLng.fromDegrees(Double.parseDouble(lls[0]), Double.parseDouble(lls[1]));
-        }
+    public Location getLocation() {
         return mLocation;
     }
 
-    public double getDistance(S2LatLng playerLocation) {
-        return mLocation.getEarthDistance(playerLocation);
+    public double getDistance(Location playerLocation) {
+        return mLocation.distanceTo(playerLocation);
     }
 
     public Rarity getRarity() {
@@ -174,10 +168,6 @@ public class InventoryListItem implements Serializable {
 
     @Serial
     private void writeObject(ObjectOutputStream oos) throws IOException {
-        if (mLocation != null) {
-            mSerializableLocation = mLocation.toStringDegrees();
-        }
-
         // Default serialization
         oos.defaultWriteObject();
     }
