@@ -143,11 +143,7 @@ public class ActivityDeploy extends AppCompatActivity {
             }
 
             HashMap<Integer, String> levels = getAvailableDeployLevels(resosForUpgrade, resoCountForLevel);
-            Log.d(this.getLocalClassName(), "Checking resonator on level " + reso.level);
-            Log.d(this.getLocalClassName(), "Got levels: " + levels);
-            Log.d(this.getLocalClassName(), "Got levels keySet: " + levels.keySet());
             boolean canInstall = !levels.isEmpty();
-            Log.d(this.getLocalClassName(), "Can install? " + canInstall);
             if (resosForUpgrade.isEmpty()) {
                 widget.findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
                 widget.findViewById(R.id.widgetActionButton).setEnabled(false);
@@ -210,7 +206,6 @@ public class ActivityDeploy extends AppCompatActivity {
     @SuppressWarnings("ConstantConditions")
     private void onUpgradeButtonPressed(View view) {
         int slot = layoutIdToResoSlot((Integer) view.getTag());
-        Log.d("ActivityDeploy", "Pressed UPGRADE button: " + slot);
         var reso = mGame.getCurrentPortal().getPortalResonator(slot);
         var resosForUpgrade = inventory.getResosForUpgrade(reso.level);
         var resoCountForLevel = getResoCountsForLevels(mGame.getCurrentPortal().getPortalResonators());
@@ -229,10 +224,8 @@ public class ActivityDeploy extends AppCompatActivity {
                     break;
                 }
             }
-            Log.d("ActivityDeploy", String.format("Picked resonator: %d on slot %d", which, slot));
         });
         builder.show();
-        Log.d("ActivityDeploy", "Resos for upgrade:" + levels);
     }
 
     @SuppressLint("DefaultLocale")
@@ -259,7 +252,6 @@ public class ActivityDeploy extends AppCompatActivity {
     @SuppressWarnings("ConstantConditions")
     private void onDeployButtonPressed(View view) {
         int slot = layoutIdToResoSlot((Integer) view.getTag());
-        Log.d("ActivityDeploy", "Pressed DEPLOY button: " + slot);
         var resosForUpgrade = inventory.getResosForUpgrade(0);
         var resoCountForLevel = getResoCountsForLevels(mGame.getCurrentPortal().getPortalResonators());
         HashMap<Integer, String> levels = getAvailableDeployLevels(resosForUpgrade, resoCountForLevel);
@@ -273,10 +265,8 @@ public class ActivityDeploy extends AppCompatActivity {
             mGame.getInventory().removeItem(r);
             // FIXME probable crash on error which will show its head when agents race to deploy
             mGame.intDeployResonator(r, mGame.getCurrentPortal(), slot, deployResultHandler);
-            Log.d("ActivityDeploy", String.format("Picked resonator: %d on slot %d", which, slot));
         });
         builder.show();
-        Log.d("ActivityDeploy", "Resos for deployment:" + levels);
     }
 
     private void onReceiveLocation(Location location) {
