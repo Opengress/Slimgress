@@ -10,6 +10,7 @@ import static net.opengress.slimgress.ViewHelpers.putItemInMap;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -162,6 +163,12 @@ public class ActivityPortal extends AppCompatActivity {
 //        String agentinfo = "AP: " + agent.getAp() + " / XM: " + (agent.getEnergy() * 100 / agent.getEnergyMax()) + " %";
 //        ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);
 //        ((TextView)findViewById(R.id.agentinfo)).setTextColor(textColor);
+
+        findViewById(R.id.navigateButton).setOnClickListener(v -> {
+            String uri = "geo:?q=" + mGame.getCurrentPortal().getPortalLocation();
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(uri)));
+        });
+
 
         setButtonsEnabled(mGame.getLocation().getLatLng().distanceTo(mGame.getCurrentPortal().getPortalLocation().getLatLng()) <= mActionRadiusM);
         mApp.getLocationViewModel().getLocationData().observe(this, this::onReceiveLocation);
