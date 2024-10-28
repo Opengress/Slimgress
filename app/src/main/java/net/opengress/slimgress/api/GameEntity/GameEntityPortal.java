@@ -23,12 +23,20 @@ package net.opengress.slimgress.api.GameEntity;
 
 import static com.google.common.geometry.S2LatLng.EARTH_RADIUS_METERS;
 import static net.opengress.slimgress.ViewHelpers.getBearingFromSlot;
+import static net.opengress.slimgress.api.Item.ItemBase.ItemType;
+import static net.opengress.slimgress.api.Item.ItemBase.Rarity;
 
 import com.google.common.geometry.S2LatLng;
 
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Common.Team;
+import net.opengress.slimgress.api.Item.ItemModForceAmp;
+import net.opengress.slimgress.api.Item.ItemModHeatsink;
+import net.opengress.slimgress.api.Item.ItemModLinkAmp;
+import net.opengress.slimgress.api.Item.ItemModMultihack;
+import net.opengress.slimgress.api.Item.ItemModShield;
+import net.opengress.slimgress.api.Item.ItemModTurret;
 import net.opengress.slimgress.api.Knobs.PortalKnobs;
 
 import org.json.JSONArray;
@@ -36,6 +44,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.maplibre.android.geometry.LatLng;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -53,7 +63,11 @@ public class GameEntityPortal extends GameEntityBase
         // TODO: UNDONE: link with ItemMod?
 
         public String installingUser;
+        public HashMap<String, String> stats = new HashMap<>();
+        public Rarity rarity;
         public String displayName;
+        public ItemType type;
+//        public int slot;
     }
 
     public class LinkedResonator
@@ -197,8 +211,34 @@ public class GameEntityPortal extends GameEntityBase
                 LinkedMod newMod = new LinkedMod();
                 newMod.installingUser = mod.getString("installingUser");
                 newMod.displayName = mod.getString("displayName");
-
-                // TODO: UNDONE
+                switch (mod.getString("rarity")) {
+                    case "VERY_COMMON" -> newMod.rarity = Rarity.VeryCommon;
+                    case "COMMON" -> newMod.rarity = Rarity.Common;
+                    case "LESS_COMMON" -> newMod.rarity = Rarity.LessCommon;
+                    case "RARE" -> newMod.rarity = Rarity.Rare;
+                    case "VERY_RARE" -> newMod.rarity = Rarity.VeryRare;
+                    case "EXTREMELY_RARE" -> newMod.rarity = Rarity.ExtraRare;
+                }
+                String type = mod.getString("type");
+                if (type.equals(ItemModShield.getNameStatic())) {
+                    newMod.type = ItemType.ModShield;
+                } else if (type.equals(ItemModForceAmp.getNameStatic())) {
+                    newMod.type = ItemType.ModForceAmp;
+                } else if (type.equals(ItemModHeatsink.getNameStatic())) {
+                    newMod.type = ItemType.ModHeatsink;
+                } else if (type.equals(ItemModLinkAmp.getNameStatic())) {
+                    newMod.type = ItemType.ModLinkAmp;
+                } else if (type.equals(ItemModTurret.getNameStatic())) {
+                    newMod.type = ItemType.ModTurret;
+                } else if (type.equals(ItemModMultihack.getNameStatic())) {
+                    newMod.type = ItemType.ModMultihack;
+                }
+//                newMod.slot = i;
+                var stats = mod.getJSONObject("stats");
+                for (Iterator<String> it = stats.keys(); it.hasNext(); ) {
+                    var key = it.next();
+                    newMod.stats.put(key, stats.getString(key));
+                }
 
                 mPortalMods.add(newMod);
             }

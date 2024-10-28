@@ -1681,14 +1681,20 @@ public class ScannerView extends Fragment {
             String error = hackResultBundle.getString("error");
 
             if (error != null) {
+
+                DialogHackResult newDialog = new DialogHackResult(getContext());
+//                newDialog.setTitle("");
+                newDialog.setMessage(error);
+                newDialog.show();
+            } else {
                 int portalLevel = mGame.getCurrentPortal().getPortalLevel();
                 Team portalTeam = mGame.getCurrentPortal().getPortalTeam();
                 if (portalTeam.toString().equalsIgnoreCase(mGame.getAgent().getTeam().toString())) {
-                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackFriendlyCostByLevel().get(portalLevel));
+                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackFriendlyCostByLevel().get(portalLevel - 1));
                 } else if (portalTeam.toString().equalsIgnoreCase("neutral")) {
-                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackNeutralCostByLevel().get(portalLevel));
+                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackNeutralCostByLevel().get(portalLevel - 1));
                 } else {
-                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackEnemyCostByLevel().get(portalLevel));
+                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackEnemyCostByLevel().get(portalLevel - 1));
                 }
 
                 var main = ((ActivityMain) getActivity());
@@ -1696,11 +1702,6 @@ public class ScannerView extends Fragment {
                     main.updateAgent();
                 }
 
-                DialogHackResult newDialog = new DialogHackResult(getContext());
-//                newDialog.setTitle("");
-                newDialog.setMessage(error);
-                newDialog.show();
-            } else {
                 if (items != null) {
                     DialogHackResult newDialog = new DialogHackResult(getContext());
                     newDialog.setTitle("Acquired items");

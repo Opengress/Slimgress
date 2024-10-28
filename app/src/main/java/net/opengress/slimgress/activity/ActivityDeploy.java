@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-// FIXME user can't deploy on portal if portal belongs to wrong team!
 public class ActivityDeploy extends AppCompatActivity {
 
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
@@ -60,7 +59,9 @@ public class ActivityDeploy extends AppCompatActivity {
             DialogInfo dialog = new DialogInfo(ActivityDeploy.this);
             dialog.setMessage(error).setDismissDelay(1500).show();
         } else {
-            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getResonatorDeployCostByLevel().get(mGame.getCurrentPortal().getPortalLevel()));
+            ItemResonator reso = (ItemResonator) msg.getData().getSerializable("resonator");
+            assert reso != null;
+            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getResonatorDeployCostByLevel().get(reso.getItemLevel() - 1));
         }
 
         setUpView();
@@ -74,7 +75,9 @@ public class ActivityDeploy extends AppCompatActivity {
             DialogInfo dialog = new DialogInfo(ActivityDeploy.this);
             dialog.setMessage(error).setDismissDelay(1500).show();
         } else {
-            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getResonatorUpgradeCostByLevel().get(mGame.getCurrentPortal().getPortalLevel()));
+            ItemResonator reso = (ItemResonator) msg.getData().getSerializable("resonator");
+            assert reso != null;
+            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getResonatorDeployCostByLevel().get(reso.getItemLevel() - 1));
         }
 
         setUpView();
