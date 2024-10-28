@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:ignore="RtlHardcoded, HardcodedText">
+
+    <TextView
+        android:id="@+id/modInfoTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text=""
+        app:layout_constraintBottom_toTopOf="@id/modScreenMod2"
+        app:layout_constraintLeft_toRightOf="@id/modScreenMod3"
+        app:layout_constraintRight_toLeftOf="@id/modScreenMod1"
+        app:layout_constraintTop_toBottomOf="@id/modScreenMod0" />
+
+    <net.opengress.slimgress.WidgetMod
+        android:id="@+id/modScreenMod0"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="103dp"
+        android:layout_marginBottom="119dp"
+        app:layout_constraintBottom_toTopOf="@+id/modScreenMod2"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <net.opengress.slimgress.WidgetMod
+        android:id="@+id/modScreenMod1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="117dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <net.opengress.slimgress.WidgetMod
+        android:id="@+id/modScreenMod2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="103dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <net.opengress.slimgress.WidgetMod
+        android:id="@+id/modScreenMod3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="95dp"
+        android:layout_marginBottom="117dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/modScreenMod1" />
+
+    <TextView
+        android:id="@+id/modScreenPortalInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="LVL: L?\nRNG: ?km\nENR: ?????? / ??????\nMOD: ?\nMOD: ?\nMOD: ?\nMOD: ?\nLNK: ?? in, ?? out"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
