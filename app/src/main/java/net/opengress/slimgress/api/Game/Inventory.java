@@ -26,6 +26,7 @@ import net.opengress.slimgress.api.Item.ItemBase;
 import net.opengress.slimgress.api.Item.ItemFlipCard;
 import net.opengress.slimgress.api.Item.ItemMod;
 import net.opengress.slimgress.api.Item.ItemResonator;
+import net.opengress.slimgress.api.Item.ModKey;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -201,7 +202,7 @@ public class Inventory {
         List<ItemMod> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
             ItemBase item = pair.getValue();
-            if (item.getClass().isInstance(ItemMod.class)) {
+            if (item instanceof ItemMod) {
                 items.add((ItemMod) item);
             }
         }
@@ -213,12 +214,23 @@ public class Inventory {
         List<ItemMod> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
             ItemBase item = pair.getValue();
-            if (item.getClass().isInstance(ItemMod.class) &&
+            if (item instanceof ItemMod &&
                     item.getItemRarity() == rarity) {
                 items.add((ItemMod) item);
             }
         }
 
         return items;
+    }
+
+    public final ItemMod getModForDeployment(ModKey key) {
+        for (ItemBase item : mItems.values()) {
+            if (item instanceof ItemMod mod) {
+                if (mod.getItemRarity() == key.rarity && mod.getModDisplayName().equals(key.modDisplayName)) {
+                    return mod;
+                }
+            }
+        }
+        return null;
     }
 }
