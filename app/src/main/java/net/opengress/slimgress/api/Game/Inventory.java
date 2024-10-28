@@ -24,7 +24,9 @@ package net.opengress.slimgress.api.Game;
 import net.opengress.slimgress.api.Interface.GameBasket;
 import net.opengress.slimgress.api.Item.ItemBase;
 import net.opengress.slimgress.api.Item.ItemFlipCard;
+import net.opengress.slimgress.api.Item.ItemMod;
 import net.opengress.slimgress.api.Item.ItemResonator;
+import net.opengress.slimgress.api.Item.ModKey;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -194,5 +196,41 @@ public class Inventory {
 
     public final void removeItem(ItemBase item) {
         removeItem(item.getEntityGuid());
+    }
+
+    public List<ItemMod> getMods() {
+        List<ItemMod> items = new LinkedList<>();
+        for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
+            ItemBase item = pair.getValue();
+            if (item instanceof ItemMod) {
+                items.add((ItemMod) item);
+            }
+        }
+
+        return items;
+    }
+
+    public final List<ItemMod> getMods(ItemBase.Rarity rarity) {
+        List<ItemMod> items = new LinkedList<>();
+        for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
+            ItemBase item = pair.getValue();
+            if (item instanceof ItemMod &&
+                    item.getItemRarity() == rarity) {
+                items.add((ItemMod) item);
+            }
+        }
+
+        return items;
+    }
+
+    public final ItemMod getModForDeployment(ModKey key) {
+        for (ItemBase item : mItems.values()) {
+            if (item instanceof ItemMod mod) {
+                if (mod.getItemRarity() == key.rarity && mod.getModDisplayName().equals(key.modDisplayName)) {
+                    return mod;
+                }
+            }
+        }
+        return null;
     }
 }

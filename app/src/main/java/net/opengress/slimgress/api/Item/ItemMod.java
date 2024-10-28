@@ -55,4 +55,5 @@ public abstract class ItemMod extends ItemBase
     public String getUsefulName() {
         return getItemRarity() + " " + getDisplayName();
     }
+
 }

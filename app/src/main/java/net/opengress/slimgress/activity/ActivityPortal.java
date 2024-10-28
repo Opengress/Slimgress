@@ -151,18 +151,19 @@ public class ActivityPortal extends AppCompatActivity {
             return false;
         });
 
-        // FIXME make this work OK
         findViewById(R.id.deployButton).setEnabled(true);
         findViewById(R.id.deployButton).setOnClickListener(v -> {
             Intent myIntent = new Intent(getApplicationContext(), ActivityDeploy.class);
             deployActivityResultLauncher.launch(myIntent);
         });
-//        ((ProgressBar)findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
-//        ((ProgressBar)findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
-//
-//        String agentinfo = "AP: " + agent.getAp() + " / XM: " + (agent.getEnergy() * 100 / agent.getEnergyMax()) + " %";
-//        ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);
-//        ((TextView)findViewById(R.id.agentinfo)).setTextColor(textColor);
+
+        if (mGame.getAgent().getNickname().startsWith("MT") || mGame.getAgent().getNickname().startsWith("I_") || mGame.getAgent().getNickname().startsWith("ca")) {
+            findViewById(R.id.modButton).setEnabled(true);
+            findViewById(R.id.modButton).setOnClickListener(v -> {
+                Intent myIntent = new Intent(getApplicationContext(), ActivityMod.class);
+                deployActivityResultLauncher.launch(myIntent);
+            });
+        }
 
         findViewById(R.id.navigateButton).setOnClickListener(v -> {
             String uri = "geo:?q=" + mGame.getCurrentPortal().getPortalLocation();
