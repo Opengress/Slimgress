@@ -52,17 +52,8 @@ public class DialogComms extends BottomSheetDialogFragment {
     private boolean mIsTimerRunning = false;
     private int commsRadiusKM = 50;
     private BottomSheetDialog mDialog;
-    private final Handler commsRefreshHandler = new Handler(msg -> {
-//        mFactionAdaptor.updateData(mAllCommsViewModel.getMessages().getValue());
-//        RecyclerView factionView = mDialog.findViewById(R.id.recyclerViewFaction);
-//        assert factionView != null;
-//        factionView.scrollToPosition(mFactionAdaptor.getItemCount() - 1);
-//        mAllAdaptor.updateData(mFactionCommsViewModel.getMessages().getValue());
-//        RecyclerView allView = mDialog.findViewById(R.id.recyclerViewAll);
-//        assert allView != null;
-//        allView.scrollToPosition(mAllAdaptor.getItemCount() - 1);
-        return true;
-    });
+    // legacy idea
+    private final Handler commsRefreshHandler = new Handler(msg -> true);
 
     @NonNull
     @Override
@@ -118,6 +109,7 @@ public class DialogComms extends BottomSheetDialogFragment {
         assert sendButton != null;
         assert input != null;
 
+        assert tabLayout != null;
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {

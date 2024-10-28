@@ -347,11 +347,19 @@ public class GameState {
                                 assert newPlext != null;
                                 plexts.add(newPlext);
                                 long time = Long.parseLong(newPlext.getEntityTimestamp());
+                                // FIXME i think that what i should actually do is
+                                //  override the mix/max times with -1
+                                //  (which is our molly value in the server)
+                                //  if the user wants earlier/later comms
                                 if (finalMinTimeStampMs == -1 || finalMinTimeStampMs > time) {
-                                    mMaxCommTimestamps.put(categoryName, time);
+                                    if (getOlderMessages) {
+                                        mMaxCommTimestamps.put(categoryName, time);
+                                    }
                                 }
                                 if (finalMaxTimeStampMs == -1 || finalMaxTimeStampMs < time) {
-                                    mMinCommTimestamps.put(categoryName, time);
+                                    if (!getOlderMessages) {
+                                        mMinCommTimestamps.put(categoryName, time);
+                                    }
                                 }
                             }
 
