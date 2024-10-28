@@ -24,6 +24,7 @@ package net.opengress.slimgress.api.Game;
 import net.opengress.slimgress.api.Interface.GameBasket;
 import net.opengress.slimgress.api.Item.ItemBase;
 import net.opengress.slimgress.api.Item.ItemFlipCard;
+import net.opengress.slimgress.api.Item.ItemMod;
 import net.opengress.slimgress.api.Item.ItemResonator;
 
 import java.util.ArrayList;
@@ -194,5 +195,30 @@ public class Inventory {
 
     public final void removeItem(ItemBase item) {
         removeItem(item.getEntityGuid());
+    }
+
+    public List<ItemMod> getMods() {
+        List<ItemMod> items = new LinkedList<>();
+        for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
+            ItemBase item = pair.getValue();
+            if (item.getClass().isInstance(ItemMod.class)) {
+                items.add((ItemMod) item);
+            }
+        }
+
+        return items;
+    }
+
+    public final List<ItemMod> getMods(ItemBase.Rarity rarity) {
+        List<ItemMod> items = new LinkedList<>();
+        for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
+            ItemBase item = pair.getValue();
+            if (item.getClass().isInstance(ItemMod.class) &&
+                    item.getItemRarity() == rarity) {
+                items.add((ItemMod) item);
+            }
+        }
+
+        return items;
     }
 }
