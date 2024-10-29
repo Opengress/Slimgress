@@ -310,7 +310,6 @@ public class ActivitySplash extends Activity {
 
                 if (msg.getData().keySet().contains("Error")) {
                     // do something with error
-                    Log.e("validateNicknameError", Objects.requireNonNull(msg.getData().getString("Error")));
                     showValidateUsernameDialog(msg.getData().getString("Error"));
                     return false;
                 }

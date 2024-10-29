@@ -882,8 +882,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        Log.d("MAIN", "GETTING ACTIVITY RESULT");
-
         if (resultCode == RESULT_OK && data.hasExtra("selected_weapon")) {
             InventoryListItem selectedItem = (InventoryListItem) data.getSerializableExtra("selected_weapon");
             showFireCarousel(selectedItem);
