@@ -397,7 +397,6 @@ public class GameState {
                         case "TOO_LONG" -> // new!
                                 "Message can't be longer than 512 characters.";
                         default -> {
-                            Log.d("GameState/SendMessage", error);
                             yield getString(R.string.server_error);
                         }
                     };
@@ -766,7 +765,6 @@ public class GameState {
                                 "Too many items in Inventory. Your Inventory can have no more than 2000 items";
                         default -> {
 //                            pretty_error = "An unknown error occurred";
-                            Log.d("GameState/Hack", error);
                             yield "Hack acquired no items";
                         }
                     };
