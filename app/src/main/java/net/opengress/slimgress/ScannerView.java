@@ -1642,7 +1642,7 @@ public class ScannerView extends Fragment {
         if (activity == null) {
             return;
         }
-        mApp.schedule_(() -> activity.runOnUiThread(() -> activity.findViewById(R.id.quickMessage).setVisibility(View.GONE)), 3000, TimeUnit.MILLISECONDS);
+        mApp.schedule_(() -> mApp.getMainActivity().runOnUiThread(() -> mApp.getMainActivity().findViewById(R.id.quickMessage).setVisibility(View.GONE)), 3000, TimeUnit.MILLISECONDS);
     }
 
     public MapView getMap() {
@@ -1756,7 +1756,7 @@ public class ScannerView extends Fragment {
                 ;
 
         Symbol damage = mSymbolManager.create(symbolOptions);
-        mApp.schedule_(() -> mSymbolManager.delete(damage), 2000, TimeUnit.MILLISECONDS);
+        mApp.schedule_(() -> mApp.getMainActivity().runOnUiThread(() -> mSymbolManager.delete(damage)), 2000, TimeUnit.MILLISECONDS);
 
     }
 
@@ -1780,7 +1780,9 @@ public class ScannerView extends Fragment {
 
         Line line = mLineManager.create(lineOptions);
 //        // let it delete itself
-        mApp.schedule_(() -> mLineManager.delete(line), 2000, TimeUnit.MILLISECONDS);
+        mApp.schedule_(() -> mApp.getMainActivity().runOnUiThread(
+                () -> mLineManager.delete(line)
+        ), 2000, TimeUnit.MILLISECONDS);
 
         // now write up the text, but only if the damage was significant
 
