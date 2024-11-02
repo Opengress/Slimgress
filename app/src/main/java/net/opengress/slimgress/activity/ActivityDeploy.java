@@ -77,7 +77,7 @@ public class ActivityDeploy extends AppCompatActivity {
         } else {
             ItemResonator reso = (ItemResonator) msg.getData().getSerializable("resonator");
             assert reso != null;
-            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getResonatorDeployCostByLevel().get(reso.getItemLevel() - 1));
+            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getResonatorUpgradeCostByLevel().get(reso.getItemLevel() - 1));
         }
 
         setUpView();
