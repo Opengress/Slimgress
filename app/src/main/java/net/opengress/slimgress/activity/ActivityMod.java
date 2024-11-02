@@ -78,17 +78,12 @@ public class ActivityMod extends AppCompatActivity {
     @SuppressLint({"DefaultLocale", "ObsoleteSdkInt", "SetTextI18n"})
     public void setUpView() {
         GameEntityPortal portal = mGame.getCurrentPortal();
-        boolean teamOK = portal.getPortalTeam().toString().equalsIgnoreCase("neutral") || portal.getPortalTeam().toString().equals(mGame.getAgent().getTeam().toString());
+        boolean teamOK = portal.getPortalTeam().toString().equals(mGame.getAgent().getTeam().toString());
 
         // iterate over the mods (maybe unrolled) and set up their info and any relevant callbacks
         for (int id : mModViewIds) {
-            ((Button) findViewById(id).findViewById(R.id.widgetActionButton)).setText(R.string.dply);
-            if (teamOK) {
-                findViewById(id).findViewById(R.id.widgetActionButton).setOnClickListener(this::onInstallModButtonPressed);
-            } else {
-                findViewById(id).findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
-                findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(false);
-            }
+            findViewById(id).findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
+            findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(false);
             findViewById(id).findViewById(R.id.widgetActionButton).setTag(id);
             // we don't do this in the reso widget because it's also used for recharging
 //            ((TextView) findViewById(id).findViewById(R.id.resoLevelText)).setText(R.string.l0);
@@ -111,8 +106,7 @@ public class ActivityMod extends AppCompatActivity {
         if (teamOK) {
             deployableMods = inventory.getMods();
         } else {
-            // FIXME duplicate branch while testing
-            deployableMods = inventory.getMods();
+            deployableMods = null;
         }
 
         // iterate again to set up resonator deployment user interface
@@ -120,9 +114,8 @@ public class ActivityMod extends AppCompatActivity {
             View widget = findViewById(modSlotToLayoutId(slot));
             LinkedMod mod = mods.get(slot);
             if (mod == null) {
-                // FIXME mod limit 4 while testing - probably in a knob. also slot count determined by server?
-                boolean canInstall = yourMods < 4 && modCount < 4;
-                if (!deployableMods.isEmpty() && canInstall) {
+                boolean canInstall = yourMods < 2 && modCount < 4;
+                if (deployableMods != null && !deployableMods.isEmpty() && canInstall) {
                     widget.findViewById(R.id.widgetActionButton).setVisibility(View.VISIBLE);
                     widget.findViewById(R.id.widgetActionButton).setEnabled(true);
                     ((Button) widget.findViewById(R.id.widgetActionButton)).setText(R.string.dply);
@@ -130,7 +123,7 @@ public class ActivityMod extends AppCompatActivity {
                 }
                 continue;
             }
-            ((TextView) widget.findViewById(R.id.resoLevelText)).setText(mod.rarity.name() + "\n" + mod.type.name());
+            ((TextView) widget.findViewById(R.id.resoLevelText)).setText(mod.rarity.name() + "\n" + mod.displayName);
             int rarityColour = getRarityColour(mod.rarity);
             ((TextView) widget.findViewById(R.id.resoLevelText)).setTextColor(getColourFromResources(getResources(), rarityColour));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setText(mGame.getAgentName(mod.installingUser));
