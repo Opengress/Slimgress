@@ -112,7 +112,16 @@ public class FireCarouselAdapter extends RecyclerView.Adapter<FireCarouselAdapte
         void onClick(ImageView imageView, InventoryListItem item);
     }
 
+    public void removeItem(int position) {
+        mArrayList.remove(position);
+        notifyItemRemoved(position);
+        notifyItemRangeChanged(position, mArrayList.size());
+    }
+
     public void setSelectedPosition(int index) {
+        int previousPosition = mSelectedPosition;
         mSelectedPosition = index;
+        notifyItemChanged(previousPosition);
+        notifyItemChanged(mSelectedPosition);
     }
 }
