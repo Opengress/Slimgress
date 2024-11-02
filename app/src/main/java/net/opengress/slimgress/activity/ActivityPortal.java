@@ -90,6 +90,11 @@ public class ActivityPortal extends AppCompatActivity {
                 guids.add(reso.ownerGuid);
             }
         }
+        for (var reso : portal.getPortalMods()) {
+            if (reso != null) {
+                guids.add(reso.installingUser);
+            }
+        }
         if (portal.getOwnerGuid() != null) {
             guids.add(portal.getOwnerGuid());
         }

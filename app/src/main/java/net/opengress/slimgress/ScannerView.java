@@ -53,6 +53,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.Pair;
 import android.view.Choreographer;
 import android.view.GestureDetector;
@@ -261,12 +262,14 @@ public class ScannerView extends Fragment {
         if (mMapLibreMap == null || mPlayerCursorImageSource == null || mCurrentLocation == null || mMapLibreMap.getStyle() == null) {
             return;
         }
+        // FIXME allocations
         LatLngQuad newImagePosition = getRotatedLatLngQuad(mCurrentLocation, 25, 25, mBearing);
         mPlayerCursorImageSource.setCoordinates(newImagePosition);
 
         if (CURRENT_MAP_ORIENTATION_SCHEME == MAP_ROTATION_ARBITRARY) {
             mMapLibreMap.easeCamera(CameraUpdateFactory.newLatLngZoom(mCurrentLocation.getLatLng(), mMapLibreMap.getCameraPosition().zoom));
         } else {
+            // FIXME allocations
             mMapLibreMap.easeCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
                     .target(mCurrentLocation.getLatLng())
                     .zoom(mMapLibreMap.getCameraPosition().zoom)
@@ -303,6 +306,7 @@ public class ScannerView extends Fragment {
 
     // Function to calculate LatLngQuad for the given radius in meters
     private LatLngQuad getRadialLatLngQuad(Location center, double radiusMeters) {
+        // FIXME allocations
         LatLng topLeft = calculateOffset(center, -radiusMeters, radiusMeters);
         LatLng topRight = calculateOffset(center, radiusMeters, radiusMeters);
         LatLng bottomRight = calculateOffset(center, radiusMeters, -radiusMeters);
@@ -313,6 +317,7 @@ public class ScannerView extends Fragment {
 
     // Helper function to calculate the offset LatLng
     private LatLng calculateOffset(Location center, double offsetX, double offsetY) {
+        // FIXME allocations (LatLng)
         double latOffset = offsetY / S2LatLng.EARTH_RADIUS_METERS * (180 / Math.PI);
         double lngOffset = offsetX / (S2LatLng.EARTH_RADIUS_METERS * Math.cos(Math.toRadians(center.getLatitude()))) * (180 / Math.PI);
 
@@ -321,6 +326,7 @@ public class ScannerView extends Fragment {
 
     // Function to calculate a rotated LatLngQuad based on bearing
     private LatLngQuad getRotatedLatLngQuad(Location center, double width, double height, double bearing) {
+        // FIXME allocations
         // Convert bearing from degrees to radians
         bearing = ((bearing % 360) + 360) % 360;
         double bearingRad = Math.toRadians(bearing);
@@ -1375,11 +1381,17 @@ public class ScannerView extends Fragment {
         float saturation = -0.85f * (0.95f - (float) reso.energyTotal / (float) reso.getMaxEnergy());
 
         if (mResonatorToPortalSlotLookup.containsKey(reso.id) && style.getLayer("reso-layer-" + reso.id) != null) {
-            style.getLayer("reso-layer-" + reso.id).setProperties(PropertyFactory.rasterContrast(saturation));
-            int rgb = getColourFromResources(getResources(), getLevelColour(reso.level));
-            // set opacity
-            rgb = (rgb & 0x00FFFFFF) | ((int) Math.max(48, ((float) reso.energyTotal / (float) reso.getMaxEnergy()) * (float) 128) << 24);
-            mResonatorThreads.get(portal.getEntityGuid()).get(reso.slot).setLineColor(getRgbaStringFromColour(rgb));
+            try {
+                style.getLayer("reso-layer-" + reso.id).setProperties(PropertyFactory.rasterContrast(saturation));
+                int rgb = getColourFromResources(getResources(), getLevelColour(reso.level));
+                // set opacity
+                rgb = (rgb & 0x00FFFFFF) | ((int) Math.max(48, ((float) reso.energyTotal / (float) reso.getMaxEnergy()) * (float) 128) << 24);
+                mResonatorThreads.get(portal.getEntityGuid()).get(reso.slot).setLineColor(getRgbaStringFromColour(rgb));
+            } catch (NullPointerException npe) {
+                // TODO understand how we got here
+                Log.e("SCANNER", "NPE in drawResonatorForPortal");
+                Log.e("SCANNER", Log.getStackTraceString(npe));
+            }
             return;
         }
 
@@ -1787,7 +1799,7 @@ public class ScannerView extends Fragment {
         // now write up the text, but only if the damage was significant
 
         // max energy or just regular energy?
-        // it is once again allowed to be ore than 100%
+        // it is once again allowed to be more than 100%
         int percentage = (int) ((float) amount / (float) mGame.getAgent().getEnergyMax() * 100);
         if (percentage < 1) {
             return;
