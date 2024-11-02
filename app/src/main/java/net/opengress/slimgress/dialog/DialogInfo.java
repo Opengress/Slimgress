@@ -21,25 +21,33 @@
 
 package net.opengress.slimgress.dialog;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import net.opengress.slimgress.R;
+import net.opengress.slimgress.SlimgressApplication;
 
+import java.lang.ref.WeakReference;
 import java.util.Objects;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class DialogInfo extends Dialog
 {
+    private ScheduledFuture<?> mDismissTask;
+    private WeakReference<Context> mContextRef;
+
     public DialogInfo(Context context)
     {
         super(context);
         setContentView(R.layout.dialog_infobox);
+        mContextRef = new WeakReference<>(context);
 
         Objects.requireNonNull(getWindow()).setWindowAnimations(R.style.FadeAnimation);
         //getWindow().setBackgroundDrawable(new ColorDrawable(android.R.color.transparent));
@@ -78,13 +86,7 @@ public class DialogInfo extends Dialog
     public DialogInfo setDismissDelay(int delay)
     {
         // automatically dismiss dialog after x seconds
-        setOnShowListener(dialog -> new Timer().schedule(new TimerTask() {
-            @Override
-            public void run()
-            {
-                dialog.dismiss();
-            }
-        }, delay));
+        setOnShowListener(dialog -> mDismissTask = SlimgressApplication.schedule(dialog::dismiss, delay, TimeUnit.MILLISECONDS));
         return this;
     }
 
@@ -100,5 +102,23 @@ public class DialogInfo extends Dialog
         }
 
         return this;
+    }
+
+    @Override
+    public void show() {
+        Context context = mContextRef.get();
+        if (context instanceof Activity && !((Activity) context).isFinishing()) {
+            super.show();
+        } else {
+            Toast.makeText(SlimgressApplication.getInstance(), ((TextView) findViewById(R.id.message)).getText(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onDetachedFromWindow() {
+        if (mDismissTask != null && !mDismissTask.isDone()) {
+            mDismissTask.cancel(true);
+        }
+        super.onDetachedFromWindow();
     }
 }
