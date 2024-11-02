@@ -992,6 +992,20 @@ public class GameState {
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
+                    super.handleGameBasket(gameBasket);
+                }
+                
+                @Override
+                public void finished() {
+                    Map<String, GameEntityBase> entities = getWorld().getGameEntities();
+                    for (GameEntityBase entity : entities.values()) {
+                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal &&
+                                Objects.equals(entity.getEntityGuid(), portal.getEntityGuid())) {
+                            setCurrentPortal((GameEntityPortal) entity);
+                            break;
+                        }
+                    }
+                    super.finished();
                 }
             });
         } catch (JSONException e) {
