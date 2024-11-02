@@ -45,7 +45,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -64,6 +63,7 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import com.google.android.material.carousel.CarouselLayoutManager;
 import com.google.android.material.carousel.UncontainedCarouselStrategy;
@@ -146,6 +146,12 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setNestedScrollingEnabled(false);
 
+        // Disable change animations
+        RecyclerView.ItemAnimator animator = mRecyclerView.getItemAnimator();
+        if (animator instanceof SimpleItemAnimator) {
+            ((SimpleItemAnimator) animator).setSupportsChangeAnimations(false);
+        }
+
 
         // create ops button callback
         mOpsActivityResultLauncher = registerForActivityResult(
@@ -172,22 +178,14 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         mConfirmButton = findViewById(R.id.btn_flipcard_confirm);
         mCancelButton = findViewById(R.id.btn_flipcard_cancel);
 
-        mConfirmButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mSelectedPortalGuid != null && mSelectedFlipCardGuid != null) {
-                    flipPortal(mSelectedPortalGuid, mSelectedFlipCardGuid);
-                }
-                resetSelection();
+        mConfirmButton.setOnClickListener(v -> {
+            if (mSelectedPortalGuid != null && mSelectedFlipCardGuid != null) {
+                flipPortal(mSelectedPortalGuid, mSelectedFlipCardGuid);
             }
+            resetSelection();
         });
 
-        mCancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                resetSelection();
-            }
-        });
+        mCancelButton.setOnClickListener(v -> resetSelection());
     }
 
     private void onOpsResult(ActivityResult activityResult) {
@@ -531,31 +529,28 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         var anchor = findViewById(R.id.buttonComm);
         PopupMenu popup = new PopupMenu(ActivityMain.this, anchor);
         popup.getMenuInflater().inflate(R.menu.map, popup.getMenu());
-        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                int itemId = item.getItemId();
-                if (itemId == R.id.action_fire_xmp) {
-                    return showFireCarousel(null);
-                } else if (itemId == R.id.action_new_portal) {
-                    String url = "https://opengress.net/new/?remote";
-                    Intent i = new Intent(Intent.ACTION_VIEW);
-                    i.setData(Uri.parse(url));
-                    startActivity(i);
-                    return true;
-                } else if (itemId == R.id.action_navigate) {
-                    String uri = "geo:?q=" + p.getLatitude() + "," + p.getLongitude();
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(uri)));
-                    return true;
-                } else if (itemId == R.id.action_opr) {
-                    String url = "https://opengress.net/opr/go";
-                    Intent i = new Intent(Intent.ACTION_VIEW);
-                    i.setData(Uri.parse(url));
-                    startActivity(i);
-                    return true;
-                } else {
-                    return false;
-                }
+        popup.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.action_fire_xmp) {
+                return showFireCarousel(null);
+            } else if (itemId == R.id.action_new_portal) {
+                String url = "https://opengress.net/new/?remote";
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(url));
+                startActivity(i);
+                return true;
+            } else if (itemId == R.id.action_navigate) {
+                String uri = "geo:?q=" + p.getLatitude() + "," + p.getLongitude();
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(uri)));
+                return true;
+            } else if (itemId == R.id.action_opr) {
+                String url = "https://opengress.net/opr/go";
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(url));
+                startActivity(i);
+                return true;
+            } else {
+                return false;
             }
         });
         popup.show();
@@ -663,8 +658,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
             // if current stack is depleted
             if (mCurrentFireItem.getQuantity() == 0) {
-                arrayList.remove(mCurrentFireItem);
-                adapter.notifyItemRemoved(index);
+                adapter.removeItem(index);
 
                 // Check for a higher level stack of the same type
                 newIndex = findNextHigherLevelItem(arrayList, mCurrentFireItem);
@@ -678,7 +672,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                     mCurrentFireItem = arrayList.get(newIndex);
                     adapter.setSelectedPosition(newIndex);
                     mRecyclerView.scrollToPosition(newIndex);
-                    adapter.notifyItemChanged(newIndex);
                 } else {
                     findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
                 }
@@ -728,12 +721,18 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     private boolean fireBurster(int level, ItemBase.ItemType type) {
-        ItemBase item = Objects.requireNonNull(mGame.getInventory().findItem(mCurrentFireItem.getFirstID()));
+        ItemBase item = mGame.getInventory().findItem(mCurrentFireItem.getFirstID());
+        // FIXME i don't think these null checks are quite right.
+        if (item == null) {
+            return false;
+        }
         ItemBase.ItemType itemType = item.getItemType();
+        if (itemType == null) {
+            return false;
+        }
         ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
         assert scanner != null;
         // todo: rate limiting etc per knobs
-
         if (itemType == ItemBase.ItemType.WeaponXMP || itemType == ItemBase.ItemType.WeaponUltraStrike) {
 
             if (mGame.getKnobs().getXMCostKnobs().getXmpFiringCostByLevel().get(item.getItemLevel() - 1) > mGame.getAgent().getEnergy()) {
