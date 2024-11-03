@@ -30,7 +30,6 @@ import net.opengress.slimgress.dialog.DialogInfo;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -179,12 +178,7 @@ public class ActivityMod extends AppCompatActivity {
         List<Map.Entry<ModKey, Integer>> modEntries = new ArrayList<>(counts.entrySet());
 
         // Sort the list based on ModKey's compareTo method
-        Collections.sort(modEntries, new Comparator<Map.Entry<ModKey, Integer>>() {
-            @Override
-            public int compare(Map.Entry<ModKey, Integer> e1, Map.Entry<ModKey, Integer> e2) {
-                return e1.getKey().compareTo(e2.getKey());
-            }
-        });
+        Collections.sort(modEntries, (e1, e2) -> e1.getKey().compareTo(e2.getKey()));
 
         return modEntries;
     }
@@ -216,21 +210,28 @@ public class ActivityMod extends AppCompatActivity {
     }
 
     private void setButtonsEnabled(boolean shouldEnableButton) {
-//        for (int id : mResoViewIds) {
-//            findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(shouldEnableButton);
-//        }
+        for (int id : mModViewIds) {
+            findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(shouldEnableButton);
+        }
     }
 
     private void updateInfoText(int dist) {
         String distanceText = getPrettyDistanceString(dist);
         GameEntityPortal portal = mGame.getCurrentPortal();
+
+        StringBuilder modText = new StringBuilder();
+        for (LinkedMod mod : portal.getPortalMods()) {
+            if (mod == null) {
+                modText.append("MOD: ").append("\n");
+            } else {
+                modText.append("MOD: ").append(mod.rarity.name()).append(" ").append(mod.displayName).append("\n");
+            }
+        }
+
         String portalInfoText = "LVL: L" + portal.getPortalLevel() + "\n"
                 + "RNG: " + portal.getPortalLinkRange() + "m\n"
                 + "ENR: " + portal.getPortalEnergy() + " / " + portal.getPortalMaxEnergy() + "\n"
-//                + "MOD: [unimplemented]\n"
-//                + "MOD: [unimplemented]\n"
-//                + "MOD: [unimplemented]\n"
-//                + "MOD: [unimplemented]\n"
+                + modText
 //                + "LNK: 0 in, 0 out (unimplemented)"
                 + "DST: " + distanceText;
         ((TextView) (findViewById(R.id.modScreenPortalInfo))).setText(portalInfoText);

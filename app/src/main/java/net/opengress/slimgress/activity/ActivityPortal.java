@@ -162,13 +162,11 @@ public class ActivityPortal extends AppCompatActivity {
             deployActivityResultLauncher.launch(myIntent);
         });
 
-        if (mGame.getAgent().getNickname().startsWith("MT") || mGame.getAgent().getNickname().startsWith("I_") || mGame.getAgent().getNickname().startsWith("ca")) {
-            findViewById(R.id.modButton).setEnabled(true);
-            findViewById(R.id.modButton).setOnClickListener(v -> {
-                Intent myIntent = new Intent(getApplicationContext(), ActivityMod.class);
-                deployActivityResultLauncher.launch(myIntent);
-            });
-        }
+        findViewById(R.id.modButton).setEnabled(true);
+        findViewById(R.id.modButton).setOnClickListener(v -> {
+            Intent myIntent = new Intent(getApplicationContext(), ActivityMod.class);
+            deployActivityResultLauncher.launch(myIntent);
+        });
 
         findViewById(R.id.navigateButton).setOnClickListener(v -> {
             String uri = "geo:?q=" + mGame.getCurrentPortal().getPortalLocation();
