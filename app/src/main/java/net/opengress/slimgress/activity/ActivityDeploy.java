@@ -292,13 +292,20 @@ public class ActivityDeploy extends AppCompatActivity {
     private void updateInfoText(int dist) {
         String distanceText = getPrettyDistanceString(dist);
         GameEntityPortal portal = mGame.getCurrentPortal();
+
+        StringBuilder modText = new StringBuilder();
+        for (GameEntityPortal.LinkedMod mod : portal.getPortalMods()) {
+            if (mod == null) {
+                modText.append("MOD: ").append("\n");
+            } else {
+                modText.append("MOD: ").append(mod.rarity.name()).append(" ").append(mod.displayName).append("\n");
+            }
+        }
+
         String portalInfoText = "LVL: L" + portal.getPortalLevel() + "\n"
                 + "RNG: " + portal.getPortalLinkRange() + "m\n"
                 + "ENR: " + portal.getPortalEnergy() + " / " + portal.getPortalMaxEnergy() + "\n"
-//                + "MOD: [unimplemented]\n"
-//                + "MOD: [unimplemented]\n"
-//                + "MOD: [unimplemented]\n"
-//                + "MOD: [unimplemented]\n"
+                + modText
 //                + "LNK: 0 in, 0 out (unimplemented)"
                 + "DST: " + distanceText;
         ((TextView) (findViewById(R.id.deployScreenPortalInfo))).setText(portalInfoText);
