@@ -22,19 +22,17 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/resoLevelText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:id="@+id/modDescriptionText"
+            android:layout_width="90dp"
+            android:layout_height="40dp"
             android:text=""
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:layout_conversion_absoluteHeight="19dp"
-            tools:layout_conversion_absoluteWidth="16dp" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
 
         <Button
             android:id="@+id/widgetActionButton"
-            android:layout_width="70dp"
+            android:layout_width="90dp"
             android:layout_height="@dimen/button_height"
             android:text="⚡"
             android:textAppearance="@style/TextAppearance.AppCompat.Small" />

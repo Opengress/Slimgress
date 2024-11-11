@@ -34,6 +34,7 @@ import java.util.Map;
 public class PortalModSharedKnobs extends Knobs
 {
     private final Map<String, List<Integer>> mDiminishingValues;
+    private final Map<String, List<Integer>> mDirectValues;
 
     public PortalModSharedKnobs(JSONObject json) throws JSONException
     {
@@ -45,6 +46,13 @@ public class PortalModSharedKnobs extends Knobs
             String key = (String)it.next();
             mDiminishingValues.put(key, getIntArray(diminishingValues, key));
         }
+        mDirectValues = new HashMap<>();
+        JSONObject directValues = json.getJSONObject("directValues");
+        Iterator<?> it2 = directValues.keys();
+        while (it2.hasNext()) {
+            String key = (String) it2.next();
+            mDirectValues.put(key, getIntArray(directValues, key));
+        }
     }
 
     public List<Integer> getDiminishingValues(String key)
@@ -53,5 +61,13 @@ public class PortalModSharedKnobs extends Knobs
             Log.e("PortalModSharedKnobs", "key not found in hash map: " + key);
 
         return mDiminishingValues.get(key);
+    }
+
+    public List<Integer> getDirectValues(String key) {
+        if (!mDirectValues.containsKey(key)) {
+            Log.e("PortalModSharedKnobs", "key not found in hash map: " + key);
+        }
+
+        return mDirectValues.get(key);
     }
 }

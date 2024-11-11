@@ -6,52 +6,53 @@
     android:layout_height="match_parent"
     tools:ignore="RtlHardcoded, HardcodedText">
 
-    <TextView
-        android:id="@+id/modInfoTextView"
+
+    <GridLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text=""
-        app:layout_constraintBottom_toTopOf="@id/modScreenMod2"
-        app:layout_constraintLeft_toRightOf="@id/modScreenMod3"
-        app:layout_constraintRight_toLeftOf="@id/modScreenMod1"
-        app:layout_constraintTop_toBottomOf="@id/modScreenMod0" />
+        android:rowCount="3"
+        android:columnCount="3"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:id="@+id/modInfoTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_row="1"
+            android:layout_column="1" />
 
     <net.opengress.slimgress.WidgetMod
         android:id="@+id/modScreenMod0"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="103dp"
-        android:layout_marginBottom="119dp"
-        app:layout_constraintBottom_toTopOf="@+id/modScreenMod2"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:layout_row="0"
+        android:layout_column="1" />
 
     <net.opengress.slimgress.WidgetMod
         android:id="@+id/modScreenMod1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="117dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:layout_row="1"
+        android:layout_column="2" />
 
     <net.opengress.slimgress.WidgetMod
         android:id="@+id/modScreenMod2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="103dp"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:layout_row="2"
+        android:layout_column="1" />
 
     <net.opengress.slimgress.WidgetMod
         android:id="@+id/modScreenMod3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="95dp"
-        android:layout_marginBottom="117dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/modScreenMod1" />
+        android:layout_row="1"
+        android:layout_column="0" />
+
+    </GridLayout>
 
     <TextView
         android:id="@+id/modScreenPortalInfo"

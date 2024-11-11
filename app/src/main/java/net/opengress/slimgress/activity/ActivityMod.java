@@ -1,8 +1,8 @@
 package net.opengress.slimgress.activity;
 
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
-import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
 import static net.opengress.slimgress.ViewHelpers.getRarityColour;
+import static net.opengress.slimgress.ViewHelpers.updateInfoText;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 
 import android.annotation.SuppressLint;
@@ -41,6 +41,7 @@ public class ActivityMod extends AppCompatActivity {
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private final int mActionRadiusM = mGame.getKnobs().getScannerKnobs().getActionRadiusM();
+    private final int mMaxModsPerPlayer = mGame.getKnobs().getPortalKnobs().getMaxModsPerPlayer();
     private final Inventory inventory = mGame.getInventory();
     private final int[] mModViewIds = {
             R.id.modScreenMod0,
@@ -84,8 +85,7 @@ public class ActivityMod extends AppCompatActivity {
             findViewById(id).findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
             findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(false);
             findViewById(id).findViewById(R.id.widgetActionButton).setTag(id);
-            // we don't do this in the reso widget because it's also used for recharging
-//            ((TextView) findViewById(id).findViewById(R.id.resoLevelText)).setText(R.string.l0);
+//            ((TextView) findViewById(id).findViewById(R.id.modDescriptionText)).setText(R.string.l0);
         }
 
         List<LinkedMod> mods = portal.getPortalMods();
@@ -113,7 +113,7 @@ public class ActivityMod extends AppCompatActivity {
             View widget = findViewById(modSlotToLayoutId(slot));
             LinkedMod mod = mods.get(slot);
             if (mod == null) {
-                boolean canInstall = yourMods < 2 && modCount < 4;
+                boolean canInstall = yourMods < mMaxModsPerPlayer && modCount < 4;
                 if (deployableMods != null && !deployableMods.isEmpty() && canInstall) {
                     widget.findViewById(R.id.widgetActionButton).setVisibility(View.VISIBLE);
                     widget.findViewById(R.id.widgetActionButton).setEnabled(true);
@@ -122,9 +122,9 @@ public class ActivityMod extends AppCompatActivity {
                 }
                 continue;
             }
-            ((TextView) widget.findViewById(R.id.resoLevelText)).setText(mod.rarity.name() + "\n" + mod.displayName);
+            ((TextView) widget.findViewById(R.id.modDescriptionText)).setText(mod.rarity.name() + "\n" + mod.displayName);
             int rarityColour = getRarityColour(mod.rarity);
-            ((TextView) widget.findViewById(R.id.resoLevelText)).setTextColor(getColourFromResources(getResources(), rarityColour));
+            ((TextView) widget.findViewById(R.id.modDescriptionText)).setTextColor(getColourFromResources(getResources(), rarityColour));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setText(mGame.getAgentName(mod.installingUser));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());
             widget.findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
@@ -132,7 +132,7 @@ public class ActivityMod extends AppCompatActivity {
         }
 
         int dist = (int) mGame.getLocation().distanceTo(mGame.getCurrentPortal().getPortalLocation());
-        updateInfoText(dist);
+        updateInfoText(dist, mGame.getCurrentPortal(), findViewById(R.id.modScreenPortalInfo));
         setButtonsEnabled(dist <= mActionRadiusM);
     }
 
@@ -202,10 +202,10 @@ public class ActivityMod extends AppCompatActivity {
         if (location != null) {
             int dist = (int) location.distanceTo(mGame.getCurrentPortal().getPortalLocation());
             setButtonsEnabled(dist <= mActionRadiusM);
-            updateInfoText(dist);
+            updateInfoText(dist, mGame.getCurrentPortal(), findViewById(R.id.modScreenPortalInfo));
         } else {
             setButtonsEnabled(false);
-            updateInfoText(999999000);
+            updateInfoText(999999000, mGame.getCurrentPortal(), findViewById(R.id.modScreenPortalInfo));
         }
     }
 
@@ -213,28 +213,6 @@ public class ActivityMod extends AppCompatActivity {
         for (int id : mModViewIds) {
             findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(shouldEnableButton);
         }
-    }
-
-    private void updateInfoText(int dist) {
-        String distanceText = getPrettyDistanceString(dist);
-        GameEntityPortal portal = mGame.getCurrentPortal();
-
-        StringBuilder modText = new StringBuilder();
-        for (LinkedMod mod : portal.getPortalMods()) {
-            if (mod == null) {
-                modText.append("MOD: ").append("\n");
-            } else {
-                modText.append("MOD: ").append(mod.rarity.name()).append(" ").append(mod.displayName).append("\n");
-            }
-        }
-
-        String portalInfoText = "LVL: L" + portal.getPortalLevel() + "\n"
-                + "RNG: " + portal.getPortalLinkRange() + "m\n"
-                + "ENR: " + portal.getPortalEnergy() + " / " + portal.getPortalMaxEnergy() + "\n"
-                + modText
-//                + "LNK: 0 in, 0 out (unimplemented)"
-                + "DST: " + distanceText;
-        ((TextView) (findViewById(R.id.modScreenPortalInfo))).setText(portalInfoText);
     }
 
     private int modSlotToLayoutId(int slot) {

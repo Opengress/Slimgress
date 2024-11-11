@@ -17,12 +17,14 @@ import android.os.Build;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
 import net.opengress.slimgress.activity.ActivityMain;
+import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.Interface.APGain;
 import net.opengress.slimgress.api.Item.ItemBase;
 
@@ -38,7 +40,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ViewHelpers {
-    private static HashMap<Integer, String> mColourStrings = new HashMap<>();
+    private static final HashMap<Integer, String> mColourStrings = new HashMap<>();
 
     @Nullable
     static Bitmap getBitmapFromAsset(String name, @NonNull AssetManager assetManager) {
@@ -315,5 +317,64 @@ public class ViewHelpers {
         drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         drawable.draw(canvas);
         return bitmap;
+    }
+
+    public static void updateInfoText(int dist, GameEntityPortal portal, TextView container) {
+        String distanceText = getPrettyDistanceString(dist);
+
+        StringBuilder modText = new StringBuilder();
+        for (GameEntityPortal.LinkedMod mod : portal.getPortalMods()) {
+            if (mod == null) {
+                modText.append("\nMOD:");
+            } else {
+                modText.append("\nMOD: ").append(mod.rarity.name()).append(" ").append(mod.displayName);
+            }
+        }
+
+        StringBuilder modEffectsText = new StringBuilder("\n");
+        int mitigation = portal.getPortalMitigation();
+        if (mitigation > 0) {
+            modEffectsText.append("\nShielding: ").append(mitigation);
+        }
+        int hacks = portal.getHacksUntilBurnout();
+        modEffectsText.append("\nHacks: ").append(hacks);
+        int cooldownSecs = portal.getCooldownSecs();
+        modEffectsText.append("\nCooldown: ").append(cooldownSecs).append(" seconds");
+        int forceAmplification = portal.getForceAmplification();
+        if (forceAmplification > 0) {
+            modEffectsText.append("\nForce Amplification: ").append(forceAmplification).append("x");
+        }
+        int attackFrequency = portal.getAttackFrequency();
+        if (attackFrequency > 0) {
+            modEffectsText.append("\nAttack Frequency: ").append(attackFrequency).append("%");
+        }
+        int hitBonus = portal.getHitBonus();
+        if (hitBonus > 0) {
+            modEffectsText.append("\nHit bonus: ").append(hitBonus).append("%");
+        }
+        int linkRangeMultiplier = portal.getLinkRangeMultiplier();
+        if (linkRangeMultiplier != 1) {
+            modEffectsText.append("\nLink Range Multiplier: ").append(linkRangeMultiplier);
+        }
+        int outgoingLinksBonus = portal.getOutgoingLinksBonus();
+        if (outgoingLinksBonus > 0) {
+            modEffectsText.append("\nOutgoing Links Bonus: ").append(outgoingLinksBonus);
+        }
+        float linkDefenseBoost = portal.getLinkDefenseBoost();
+        if (linkDefenseBoost > 0) {
+            modEffectsText.append("\nLink Defense Boost: ").append(linkDefenseBoost).append("x");
+        }
+
+        StringBuilder portalInfoText = new StringBuilder();
+        portalInfoText.append("LVL: L").append(portal.getPortalLevel())
+                .append("\nRNG: ").append(portal.getPortalLinkRange()).append("m")
+                .append("\nENR: ").append(portal.getPortalEnergy()).append(" / ").append(portal.getPortalMaxEnergy())
+                .append(modText)
+                .append(modEffectsText)
+//                + "LNK: 0 in, 0 out (unimplemented)"
+
+                .append("\n\nDST: ").append(distanceText)
+        ;
+        container.setText(portalInfoText);
     }
 }

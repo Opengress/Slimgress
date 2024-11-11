@@ -324,7 +324,125 @@ public class GameEntityPortal extends GameEntityBase
         if (mPortalResonators.size() < 8) {
             return 0;
         }
-        return (int) Math.pow(getPortalLevel(), 4) * 160;
+        return (int) Math.pow(getPortalLevel(), 4) * 160 * getLinkRangeMultiplier();
+    }
+
+    public int getPortalMitigation() {
+        // TODO consider links, don't recalculate every time
+        int mitigation = 0;
+        for (LinkedMod mod : getPortalMods()) {
+            if (mod != null && mod.stats.containsKey("MITIGATION")) {
+                mitigation += Integer.parseInt(mod.stats.get("MITIGATION"));
+            }
+        }
+        return Math.min(mitigation, 95);
+    }
+
+    public int getHacksUntilBurnout() {
+        // TODO don't recalculate every time
+        int hacks = 4;
+        int multihacks = 0;
+        for (LinkedMod mod : getPortalMods()) {
+            if (mod != null && mod.stats.containsKey("BURNOUT_INSULATION")) {
+                int multiplier = getDiminishingValue("BURNOUT_INSULATION", multihacks) / 1000;
+                hacks += multiplier * Integer.parseInt(mod.stats.get("BURNOUT_INSULATION"));
+                multihacks++;
+            }
+        }
+        return hacks;
+    }
+
+
+    public int getCooldownSecs() {
+        // TODO don't recalculate every time
+        float hack_speed = 0;
+        int heatsinks = 0;
+        for (LinkedMod mod : getPortalMods()) {
+            if (mod != null && mod.stats.containsKey("HACK_SPEED")) {
+                int multiplier = getDiminishingValue("HACK_SPEED", heatsinks);
+                hack_speed += multiplier * Float.parseFloat(mod.stats.get("HACK_SPEED")) / 1000000000;
+                heatsinks++;
+            }
+        }
+        return Math.round(300 * (1 - hack_speed));
+    }
+
+    public int getForceAmplification() {
+        // TODO don't recalculate every time
+        int force_amplification = 0;
+        int forceAmps = 0;
+        for (LinkedMod mod : getPortalMods()) {
+            if (mod != null && mod.stats.containsKey("FORCE_AMPLIFIER")) {
+                int multiplier = getDiminishingValue("FORCE_AMPLIFIER", forceAmps) / 1000;
+                force_amplification += multiplier * Integer.parseInt(mod.stats.get("FORCE_AMPLIFIER")) / 1000;
+                forceAmps++;
+            }
+        }
+        return force_amplification;
+    }
+
+    public int getAttackFrequency() {
+        // TODO don't recalculate every time
+        int attackFrequency = 0;
+        int turrets = 0;
+        for (LinkedMod mod : getPortalMods()) {
+            if (mod != null && mod.stats.containsKey("ATTACK_FREQUENCY")) {
+                int multiplier = getDiminishingValue("ATTACK_FREQUENCY", turrets) / 1000;
+                attackFrequency += multiplier * Integer.parseInt(mod.stats.get("ATTACK_FREQUENCY")) / 10;
+                turrets++;
+            }
+        }
+        return attackFrequency;
+    }
+
+    public int getHitBonus() {
+        // TODO don't recalculate every time
+        int hitBonus = 0;
+        for (LinkedMod mod : getPortalMods()) {
+            if (mod != null && mod.stats.containsKey("HIT_BONUS")) {
+                hitBonus += Integer.parseInt(mod.stats.get("HIT_BONUS")) / 10000;
+            }
+        }
+        return hitBonus;
+    }
+
+    public int getLinkRangeMultiplier() {
+        // TODO don't recalculate every time
+        int linkRangeMultiplier = 0;
+        int linkAmps = 0;
+        for (LinkedMod mod : getPortalMods()) {
+            if (mod != null && mod.stats.containsKey("LINK_RANGE_MULTIPLIER")) {
+                int multiplier = getDiminishingValue("LINK_RANGE_MULTIPLIER", linkAmps) / 1000;
+                linkRangeMultiplier += multiplier * Integer.parseInt(mod.stats.get("LINK_RANGE_MULTIPLIER")) / 1000;
+                linkAmps++;
+            }
+        }
+        if (linkRangeMultiplier == 0) {
+            linkRangeMultiplier = 1;
+        }
+        return linkRangeMultiplier;
+    }
+
+    public int getOutgoingLinksBonus() {
+        // TODO don't recalculate every time
+        int outgoingLinksBonus = 0;
+        for (LinkedMod mod : getPortalMods()) {
+            if (mod != null && mod.stats.containsKey("OUTGOING_LINKS_BONUS")) {
+                outgoingLinksBonus += Integer.parseInt(mod.stats.get("OUTGOING_LINKS_BONUS"));
+            }
+        }
+        return outgoingLinksBonus;
+    }
+
+    public float getLinkDefenseBoost() {
+        // TODO don't recalculate every time
+        float linkDefenseBoost = 0;
+        for (LinkedMod mod : getPortalMods()) {
+            if (mod != null && mod.stats.containsKey("LINK_DEFENSE_BOOST")) {
+                linkDefenseBoost += Float.parseFloat(mod.stats.get("LINK_DEFENSE_BOOST")) / 1000;
+            }
+        }
+        return linkDefenseBoost;
     }
 
     public Location getPortalLocation()
@@ -394,5 +512,13 @@ public class GameEntityPortal extends GameEntityBase
             }
         }
         return null;
+    }
+
+    private int getDiminishingValue(String key, int index) {
+        return SlimgressApplication.getInstance().getGame().getKnobs().getPortalModSharedKnobs().getDiminishingValues(key).get(index);
+    }
+
+    private int getDirectValue(String key, int index) {
+        return SlimgressApplication.getInstance().getGame().getKnobs().getPortalModSharedKnobs().getDirectValues(key).get(index);
     }
 }

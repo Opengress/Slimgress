@@ -2,7 +2,7 @@ package net.opengress.slimgress.activity;
 
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColour;
-import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
+import static net.opengress.slimgress.ViewHelpers.updateInfoText;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 
 import android.annotation.SuppressLint;
@@ -170,7 +170,7 @@ public class ActivityDeploy extends AppCompatActivity {
         }
 
         int dist = (int) mGame.getLocation().distanceTo(mGame.getCurrentPortal().getPortalLocation());
-        updateInfoText(dist);
+        updateInfoText(dist, mGame.getCurrentPortal(), findViewById(R.id.deployScreenPortalInfo));
         setButtonsEnabled(dist <= mActionRadiusM);
     }
 
@@ -276,10 +276,10 @@ public class ActivityDeploy extends AppCompatActivity {
         if (location != null) {
             int dist = (int) location.distanceTo(mGame.getCurrentPortal().getPortalLocation());
             setButtonsEnabled(dist <= mActionRadiusM);
-            updateInfoText(dist);
+            updateInfoText(dist, mGame.getCurrentPortal(), findViewById(R.id.deployScreenPortalInfo));
         } else {
             setButtonsEnabled(false);
-            updateInfoText(999999000);
+            updateInfoText(999999000, mGame.getCurrentPortal(), findViewById(R.id.deployScreenPortalInfo));
         }
     }
 
@@ -287,28 +287,6 @@ public class ActivityDeploy extends AppCompatActivity {
         for (int id : mResoViewIds) {
             findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(shouldEnableButton);
         }
-    }
-
-    private void updateInfoText(int dist) {
-        String distanceText = getPrettyDistanceString(dist);
-        GameEntityPortal portal = mGame.getCurrentPortal();
-
-        StringBuilder modText = new StringBuilder();
-        for (GameEntityPortal.LinkedMod mod : portal.getPortalMods()) {
-            if (mod == null) {
-                modText.append("MOD: ").append("\n");
-            } else {
-                modText.append("MOD: ").append(mod.rarity.name()).append(" ").append(mod.displayName).append("\n");
-            }
-        }
-
-        String portalInfoText = "LVL: L" + portal.getPortalLevel() + "\n"
-                + "RNG: " + portal.getPortalLinkRange() + "m\n"
-                + "ENR: " + portal.getPortalEnergy() + " / " + portal.getPortalMaxEnergy() + "\n"
-                + modText
-//                + "LNK: 0 in, 0 out (unimplemented)"
-                + "DST: " + distanceText;
-        ((TextView) (findViewById(R.id.deployScreenPortalInfo))).setText(portalInfoText);
     }
 
     private int resoSlotToLayoutId(int slot) {
