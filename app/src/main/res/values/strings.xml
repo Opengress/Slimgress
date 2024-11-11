@@ -136,4 +136,5 @@
     <string name="force_clear_data_and_resync">Force clear data and resync</string>
     <string name="data">Data</string>
     <string name="force_sync">Force Sync</string>
+    <string name="mod_text_remove_mod">REMV</string>
 </resources>

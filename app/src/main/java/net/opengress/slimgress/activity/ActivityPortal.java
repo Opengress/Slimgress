@@ -43,6 +43,7 @@ public class ActivityPortal extends AppCompatActivity {
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private final int mActionRadiusM = mGame.getKnobs().getScannerKnobs().getActionRadiusM();
+    private boolean mIsHacking = false;
     private final ActivityResultLauncher<Intent> deployActivityResultLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -146,6 +147,7 @@ public class ActivityPortal extends AppCompatActivity {
         findViewById(R.id.hackButton).setOnClickListener(v -> {
             findViewById(R.id.hackButton).setEnabled(false);
             ((Button) findViewById(R.id.hackButton)).setText(R.string.hacking_in_progress);
+            mIsHacking = true;
             mGame.intHackPortal(portal, hackResultHandler);
         });
         findViewById(R.id.hackButton).setOnLongClickListener(v -> {
@@ -187,7 +189,7 @@ public class ActivityPortal extends AppCompatActivity {
     }
 
     private void setButtonsEnabled(boolean shouldEnableButton) {
-        findViewById(R.id.hackButton).setEnabled(shouldEnableButton);
+        findViewById(R.id.hackButton).setEnabled(!mIsHacking && shouldEnableButton);
     }
 
     @SuppressWarnings("unchecked")

@@ -42,6 +42,7 @@ public class ActivityMod extends AppCompatActivity {
     private final GameState mGame = mApp.getGame();
     private final int mActionRadiusM = mGame.getKnobs().getScannerKnobs().getActionRadiusM();
     private final int mMaxModsPerPlayer = mGame.getKnobs().getPortalKnobs().getMaxModsPerPlayer();
+    private final boolean mPlayerCanRemoveMods = mGame.getKnobs().getPortalKnobs().getCanPlayerRemoveMod();
     private final Inventory inventory = mGame.getInventory();
     private final int[] mModViewIds = {
             R.id.modScreenMod0,
@@ -113,6 +114,8 @@ public class ActivityMod extends AppCompatActivity {
             View widget = findViewById(modSlotToLayoutId(slot));
             LinkedMod mod = mods.get(slot);
             if (mod == null) {
+                ((TextView) widget.findViewById(R.id.modDescriptionText)).setText(null);
+                ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setText(null);
                 boolean canInstall = yourMods < mMaxModsPerPlayer && modCount < 4;
                 if (deployableMods != null && !deployableMods.isEmpty() && canInstall) {
                     widget.findViewById(R.id.widgetActionButton).setVisibility(View.VISIBLE);
@@ -127,8 +130,15 @@ public class ActivityMod extends AppCompatActivity {
             ((TextView) widget.findViewById(R.id.modDescriptionText)).setTextColor(getColourFromResources(getResources(), rarityColour));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setText(mGame.getAgentName(mod.installingUser));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());
-            widget.findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
-            widget.findViewById(R.id.widgetActionButton).setEnabled(false);
+            if (teamOK && mPlayerCanRemoveMods) {
+                widget.findViewById(R.id.widgetActionButton).setVisibility(View.VISIBLE);
+                widget.findViewById(R.id.widgetActionButton).setEnabled(true);
+                ((Button) widget.findViewById(R.id.widgetActionButton)).setText(R.string.mod_text_remove_mod);
+                widget.findViewById(R.id.widgetActionButton).setOnClickListener(this::onRemoveModButtonPressed);
+            } else {
+                widget.findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
+                widget.findViewById(R.id.widgetActionButton).setEnabled(false);
+            }
         }
 
         int dist = (int) mGame.getLocation().distanceTo(mGame.getCurrentPortal().getPortalLocation());
@@ -174,6 +184,19 @@ public class ActivityMod extends AppCompatActivity {
         builder.show();
     }
 
+    @SuppressLint("DefaultLocale")
+    @SuppressWarnings("ConstantConditions")
+    private void onRemoveModButtonPressed(View view) {
+        int slot = layoutIdToModSlot((Integer) view.getTag());
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Confirm Removal");
+        builder.setMessage("You are about to remove a mod. It will be erased from existence. Are you sure?")
+                .setPositiveButton("Yes", (dialogInterface, which) -> mGame.intRemoveMod(mGame.getCurrentPortal(), slot, deployResultHandler))
+                .setNegativeButton("No", (dialogInterface, which) -> dialogInterface.dismiss());
+        builder.show();
+    }
+
     private List<Map.Entry<ModKey, Integer>> getSortedModCounts(HashMap<ModKey, Integer> counts) {
         List<Map.Entry<ModKey, Integer>> modEntries = new ArrayList<>(counts.entrySet());
 
@@ -187,7 +210,7 @@ public class ActivityMod extends AppCompatActivity {
     private HashMap<ModKey, Integer> getAvailableMods(List<ItemMod> mods) {
         HashMap<ModKey, Integer> counts = new HashMap<>();
         for (ItemMod mod : mods) {
-            ModKey key = new ModKey(mod.getItemRarity(), mod.getModDisplayName());
+            ModKey key = new ModKey(mod.getItemType(), mod.getItemRarity(), mod.getModDisplayName());
             if (counts.containsKey(key)) {
                 counts.put(key, counts.get(key) + 1);
             } else {

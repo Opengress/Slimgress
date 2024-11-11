@@ -970,7 +970,7 @@ public class GameState {
                         case "NO_EMPTY_SLOTS" ->
                                 "This portal already has the maximum number of mods";
                         case "MOD_DOES_NOT_EXIST" ->
-                                "The resonator you tried to deploy is not in your inventory";
+                                "The mod you tried to deploy is not in your inventory";
                         case "SERVER_ERROR" -> // new!
                                 "Server error";
                         case "PLAYER_DEPLETED", "NEED_MORE_ENERGY" ->
@@ -983,7 +983,7 @@ public class GameState {
                             String t = error.substring(error.lastIndexOf("_") + 1);
                             yield "You are moving too fast! You will be ready to play in " + t + "seconds"; // new!
                         }
-                        default -> "Upgrade failed: unknown error: " + error;
+                        default -> "Adding mod failed: unknown error: " + error;
                     };
                     // some of these error message strings might be a bit clumsy
                     super.handleError(pretty_error);
@@ -994,7 +994,7 @@ public class GameState {
                     processGameBasket(gameBasket);
                     super.handleGameBasket(gameBasket);
                 }
-                
+
                 @Override
                 public void finished() {
                     Map<String, GameEntityBase> entities = getWorld().getGameEntities();
@@ -1013,7 +1013,6 @@ public class GameState {
         }
     }
 
-    // implementing this is not a priority...
     public void intRemoveMod(GameEntityPortal portal, int slot, final Handler handler) {
         try {
             checkInterface();
@@ -1027,12 +1026,47 @@ public class GameState {
                 public void handleError(String error) {
                     // PORTAL_OUT_OF_RANGE, MODABLE_DOES_NOT_EXIST, MOD_DOES_NOT_EXIST,
                     // NOT_A_TEAMMATE, MOD_SLOT_EMPTY, SERVER_ERROR, INDEX_OUT_OF_BOUNDS??
+                    String pretty_error = switch (error.replaceAll("\\d", "")) {
+                        case "OUT_OF_RANGE", "PORTAL_OUT_OF_RANGE" -> "Portal is out of range";
+                        case "NO_EMPTY_SLOTS" ->
+                                "This portal already has the maximum number of mods";
+                        case "MOD_SLOT_EMPTY" -> "Theat mod slot is empty";
+                        case "MOD_DOES_NOT_EXIST" ->
+                                "The mod you tried to remove is not on the portal";
+                        case "SERVER_ERROR" -> // new!
+                                "Server error";
+                        case "PLAYER_DEPLETED", "NEED_MORE_ENERGY" ->
+                                getString(R.string.you_don_t_have_enough_xm);
+                        case "NOT_A_TEAMMATE" -> "That portal belongs to the wrong team!";
+                        case "SPEED_LOCKED" -> // new!
+                                "You are moving too fast";
+                        case "SPEED_LOCKED_" -> {
+                            // TODO: maybe format this as "x hours, x minutes, x seconds"
+                            String t = error.substring(error.lastIndexOf("_") + 1);
+                            yield "You are moving too fast! You will be ready to play in " + t + "seconds"; // new!
+                        }
+                        default -> "Removing mod failed: unknown error: " + error;
+                    };
                     super.handleError(error);
                 }
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
+                    super.handleGameBasket(gameBasket);
+                }
+
+                @Override
+                public void finished() {
+                    Map<String, GameEntityBase> entities = getWorld().getGameEntities();
+                    for (GameEntityBase entity : entities.values()) {
+                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal &&
+                                Objects.equals(entity.getEntityGuid(), portal.getEntityGuid())) {
+                            setCurrentPortal((GameEntityPortal) entity);
+                            break;
+                        }
+                    }
+                    super.finished();
                 }
             });
         } catch (JSONException e) {

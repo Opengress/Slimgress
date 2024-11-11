@@ -1,10 +1,12 @@
 package net.opengress.slimgress.api.Item;
 
 public class ModKey implements Comparable<ModKey> {
-    public ItemBase.Rarity rarity;
-    public String modDisplayName;
+    private final ItemBase.ItemType type;
+    public final ItemBase.Rarity rarity;
+    public final String modDisplayName;
 
-    public ModKey(ItemBase.Rarity rarity, String modDisplayName) {
+    public ModKey(ItemBase.ItemType itemType, ItemBase.Rarity rarity, String modDisplayName) {
+        this.type = itemType;
         this.rarity = rarity;
         this.modDisplayName = modDisplayName;
     }
@@ -35,12 +37,17 @@ public class ModKey implements Comparable<ModKey> {
 
     @Override
     public int compareTo(ModKey other) {
-        // First, compare rarity based on assigned values
-        int rarityCompare = rarity.compareTo(other.rarity);
-        if (rarityCompare != 0) {
-            return rarityCompare;
+
+        int compare = type.compareTo(other.type);
+        if (compare != 0) {
+            return compare;
         }
-        // If rarities are the same, compare modDisplayName
+
+        compare = rarity.compareTo(other.rarity);
+        if (compare != 0) {
+            return compare;
+        }
+
         return this.modDisplayName.compareTo(other.modDisplayName);
     }
 }
