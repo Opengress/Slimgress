@@ -313,60 +313,62 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     private void updateAgent(Agent agent) {
 //        Log.d("Main/updateAgent", "Updating agent in display!");
         // TODO move some of this style info into onCreate
-        int textColor;
-        Team team = agent.getTeam();
-        textColor = 0xff000000 + team.getColour();
-        int levelColor = getColourFromResources(getResources(), getLevelColour(agent.getLevel()));
+        runOnUiThread(() -> {
+            int textColor;
+            Team team = agent.getTeam();
+            textColor = 0xff000000 + team.getColour();
+            int levelColor = getColourFromResources(getResources(), getLevelColour(agent.getLevel()));
 
-        ((TextView) findViewById(R.id.agentname)).setText(agent.getNickname());
-        ((TextView) findViewById(R.id.agentname)).setTextColor(textColor);
+            ((TextView) findViewById(R.id.agentname)).setText(agent.getNickname());
+            ((TextView) findViewById(R.id.agentname)).setTextColor(textColor);
 
-        String agentlevel = "L" + agent.getLevel();
-        ((TextView) findViewById(R.id.agentLevel)).setText(agentlevel);
-        ((TextView) findViewById(R.id.agentLevel)).setTextColor(levelColor);
+            String agentlevel = "L" + agent.getLevel();
+            ((TextView) findViewById(R.id.agentLevel)).setText(agentlevel);
+            ((TextView) findViewById(R.id.agentLevel)).setTextColor(levelColor);
 
 
-        String nextLevel = String.valueOf(Math.min(agent.getLevel() + 1, 8));
-        int thisLevelAP;
-        try {
-            thisLevelAP = mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(agent.getLevel()).getApRequired();
-        } catch (Exception ignored) {
+            String nextLevel = String.valueOf(Math.min(agent.getLevel() + 1, 8));
+            int thisLevelAP;
+            try {
+                thisLevelAP = mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(agent.getLevel()).getApRequired();
+            } catch (Exception ignored) {
             /*
             there's a race condition which can cause a crash here,
             but if we won the race with the wrong code path we can just bail and it should be fine
             :-)
              */
-            return;
-        }
-        int nextLevelAP = mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(nextLevel).getApRequired();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            ((ProgressBar) findViewById(R.id.agentap)).setMin(thisLevelAP);
-        }
-        ((ProgressBar) findViewById(R.id.agentap)).setMax(nextLevelAP);
-        ((ProgressBar) findViewById(R.id.agentap)).setProgress(agent.getAp());
+                return;
+            }
+            int nextLevelAP = mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(nextLevel).getApRequired();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ((ProgressBar) findViewById(R.id.agentap)).setMin(thisLevelAP);
+            }
+            ((ProgressBar) findViewById(R.id.agentap)).setMax(nextLevelAP);
+            ((ProgressBar) findViewById(R.id.agentap)).setProgress(agent.getAp());
 //        Log.d("Main/updateAgent", "New AP: " + agent.getAp());
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            ((ProgressBar) findViewById(R.id.agentap)).getProgressDrawable().setTint(levelColor);
-        } else {
-            ((ProgressBar) findViewById(R.id.agentap)).getProgressDrawable().setColorFilter(levelColor, PorterDuff.Mode.SRC_IN);
-        }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                ((ProgressBar) findViewById(R.id.agentap)).getProgressDrawable().setTint(levelColor);
+            } else {
+                ((ProgressBar) findViewById(R.id.agentap)).getProgressDrawable().setColorFilter(levelColor, PorterDuff.Mode.SRC_IN);
+            }
 
-        ((ProgressBar) findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
-        ((ProgressBar) findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
+            ((ProgressBar) findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
+            ((ProgressBar) findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
 //        Log.d("Main/updateAgent", "New XM: " + agent.getEnergy());
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setTint(textColor);
-        } else {
-            ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setColorFilter(textColor, PorterDuff.Mode.SRC_IN);
-        }
-        findViewById(R.id.activity_main_header).setOnClickListener(view -> {
-            String agentinfo = "AP: " + agent.getAp() + " / " + nextLevelAP + "\nXM: " + agent.getEnergy() + " / " + agent.getEnergyMax();
-            Toast.makeText(getApplicationContext(), agentinfo, Toast.LENGTH_LONG).show();
-        });
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setTint(textColor);
+            } else {
+                ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setColorFilter(textColor, PorterDuff.Mode.SRC_IN);
+            }
+            findViewById(R.id.activity_main_header).setOnClickListener(view -> {
+                String agentinfo = "AP: " + agent.getAp() + " / " + nextLevelAP + "\nXM: " + agent.getEnergy() + " / " + agent.getEnergyMax();
+                Toast.makeText(getApplicationContext(), agentinfo, Toast.LENGTH_LONG).show();
+            });
 
 //            String agentinfo = "AP: " + agent.getAp() + " / XM: " + (agent.getEnergy() * 100 / agent.getEnergyMax()) + " %";
 //            ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);
 //            ((TextView)findViewById(R.id.agentinfo)).setTextColor(0x99999999);
+        });
     }
 
     public void updateAgent() {

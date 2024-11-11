@@ -135,12 +135,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -190,9 +188,11 @@ public class ScannerView extends Fragment {
     private final HashMap<String, Pair<String, Integer>> mResonatorToPortalSlotLookup = new HashMap<>();
     private final HashMap<String, Line> mLines = new HashMap<>();
     private final HashMap<String, Fill> mPolygons = new HashMap<>();
-    private final Queue<ImageSource> mImageSourcePool = new LinkedList<>();
 
     private ActivityResultLauncher<Intent> mPortalActivityResultLauncher;
+
+    private LatLngQuad mPlayerCursorPosition;
+    private final CameraPosition.Builder mCameraPositionBuilder = new CameraPosition.Builder();
 
     // ===========================================================
     // Fields and permissions
@@ -205,6 +205,8 @@ public class ScannerView extends Fragment {
     // FIXME this should be used to set "location inaccurate" if updates mysteriously stop
     private Date mLastLocationAcquired = null;
     private net.opengress.slimgress.api.Common.Location mLastLocation = null;
+
+    private final LatLngPool mLatLngPool = new LatLngPool();
 
 
     // ===========================================================
@@ -242,7 +244,7 @@ public class ScannerView extends Fragment {
     // ===========================================================
     // Misc
     // ===========================================================
-    private ArrayList<String> mSlurpableParticles = new ArrayList<>();
+    private final ArrayList<String> mSlurpableParticles = new ArrayList<>();
 
     private void updateBearing(int bearing) {
         if (mMapLibreMap == null) {
@@ -262,15 +264,14 @@ public class ScannerView extends Fragment {
         if (mMapLibreMap == null || mPlayerCursorImageSource == null || mCurrentLocation == null || mMapLibreMap.getStyle() == null) {
             return;
         }
-        // FIXME allocations
-        LatLngQuad newImagePosition = getRotatedLatLngQuad(mCurrentLocation, 25, 25, mBearing);
-        mPlayerCursorImageSource.setCoordinates(newImagePosition);
+
+        mPlayerCursorPosition = getRotatedLatLngQuad(mCurrentLocation, 25, 25, mBearing);
+        mPlayerCursorImageSource.setCoordinates(mPlayerCursorPosition);
 
         if (CURRENT_MAP_ORIENTATION_SCHEME == MAP_ROTATION_ARBITRARY) {
             mMapLibreMap.easeCamera(CameraUpdateFactory.newLatLngZoom(mCurrentLocation.getLatLng(), mMapLibreMap.getCameraPosition().zoom));
         } else {
-            // FIXME allocations
-            mMapLibreMap.easeCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
+            mMapLibreMap.easeCamera(CameraUpdateFactory.newCameraPosition(mCameraPositionBuilder
                     .target(mCurrentLocation.getLatLng())
                     .zoom(mMapLibreMap.getCameraPosition().zoom)
                     .bearing((360 - mBearing + 360) % 360)
@@ -306,51 +307,83 @@ public class ScannerView extends Fragment {
 
     // Function to calculate LatLngQuad for the given radius in meters
     private LatLngQuad getRadialLatLngQuad(Location center, double radiusMeters) {
-        // FIXME allocations
-        LatLng topLeft = calculateOffset(center, -radiusMeters, radiusMeters);
-        LatLng topRight = calculateOffset(center, radiusMeters, radiusMeters);
-        LatLng bottomRight = calculateOffset(center, radiusMeters, -radiusMeters);
-        LatLng bottomLeft = calculateOffset(center, -radiusMeters, -radiusMeters);
+        // Obtain LatLng instances from the pool
+        LatLng topLeft = mLatLngPool.obtain();
+        LatLng topRight = mLatLngPool.obtain();
+        LatLng bottomRight = mLatLngPool.obtain();
+        LatLng bottomLeft = mLatLngPool.obtain();
 
-        return new LatLngQuad(topLeft, topRight, bottomRight, bottomLeft);
+        // Calculate offsets and update LatLng instances
+        calculateOffset(center, -radiusMeters, radiusMeters, topLeft);
+        calculateOffset(center, radiusMeters, radiusMeters, topRight);
+        calculateOffset(center, radiusMeters, -radiusMeters, bottomRight);
+        calculateOffset(center, -radiusMeters, -radiusMeters, bottomLeft);
+
+        // Create LatLngQuad (assuming it can accept mutable LatLng instances)
+        LatLngQuad quad = new LatLngQuad(topLeft, topRight, bottomRight, bottomLeft);
+
+        // Return LatLng instances to the pool after use (if they are not needed elsewhere)
+        mLatLngPool.recycle(topLeft);
+        mLatLngPool.recycle(topRight);
+        mLatLngPool.recycle(bottomRight);
+        mLatLngPool.recycle(bottomLeft);
+
+        return quad;
     }
 
     // Helper function to calculate the offset LatLng
-    private LatLng calculateOffset(Location center, double offsetX, double offsetY) {
-        // FIXME allocations (LatLng)
+    private void calculateOffset(Location center, double offsetX, double offsetY, LatLng result) {
+        // Perform calculations
         double latOffset = offsetY / S2LatLng.EARTH_RADIUS_METERS * (180 / Math.PI);
-        double lngOffset = offsetX / (S2LatLng.EARTH_RADIUS_METERS * Math.cos(Math.toRadians(center.getLatitude()))) * (180 / Math.PI);
+        double lngOffset = offsetX / (S2LatLng.EARTH_RADIUS_METERS *
+                Math.cos(Math.toRadians(center.getLatitude()))) * (180 / Math.PI);
 
-        return new LatLng(center.getLatitude() + latOffset, center.getLongitude() + lngOffset);
+        // Update the result LatLng instance
+        result.setLatitude(center.getLatitude() + latOffset);
+        result.setLongitude(center.getLongitude() + lngOffset);
     }
 
     // Function to calculate a rotated LatLngQuad based on bearing
     private LatLngQuad getRotatedLatLngQuad(Location center, double width, double height, double bearing) {
-        // FIXME allocations
         // Convert bearing from degrees to radians
         bearing = ((bearing % 360) + 360) % 360;
         double bearingRad = Math.toRadians(bearing);
 
-        // Define the offsets for the image's width and height (in meters)
         double halfWidth = width / 2;
         double halfHeight = height / 2;
 
-        // Calculate the rotated points for each corner of the image
-        LatLng topLeft = calculateRotatedPoint(center, -halfWidth, halfHeight, bearingRad);
-        LatLng topRight = calculateRotatedPoint(center, halfWidth, halfHeight, bearingRad);
-        LatLng bottomRight = calculateRotatedPoint(center, halfWidth, -halfHeight, bearingRad);
-        LatLng bottomLeft = calculateRotatedPoint(center, -halfWidth, -halfHeight, bearingRad);
+        // Obtain LatLng instances from the pool
+        LatLng topLeft = mLatLngPool.obtain();
+        LatLng topRight = mLatLngPool.obtain();
+        LatLng bottomRight = mLatLngPool.obtain();
+        LatLng bottomLeft = mLatLngPool.obtain();
 
-        return new LatLngQuad(topLeft, topRight, bottomRight, bottomLeft);
+        // Calculate rotated points and update LatLng instances
+        calculateRotatedPoint(center, -halfWidth, halfHeight, bearingRad, topLeft);
+        calculateRotatedPoint(center, halfWidth, halfHeight, bearingRad, topRight);
+        calculateRotatedPoint(center, halfWidth, -halfHeight, bearingRad, bottomRight);
+        calculateRotatedPoint(center, -halfWidth, -halfHeight, bearingRad, bottomLeft);
+
+        // Create LatLngQuad
+        LatLngQuad quad = new LatLngQuad(topLeft, topRight, bottomRight, bottomLeft);
+
+        // Return LatLng instances to the pool after use
+        mLatLngPool.recycle(topLeft);
+        mLatLngPool.recycle(topRight);
+        mLatLngPool.recycle(bottomRight);
+        mLatLngPool.recycle(bottomLeft);
+
+        return quad;
     }
 
     // Helper function to calculate the rotated point around the center
-    private LatLng calculateRotatedPoint(Location center, double offsetX, double offsetY, double bearingRad) {
-        // Apply the rotation matrix to the point
+    private void calculateRotatedPoint(Location center, double offsetX, double offsetY, double bearingRad, LatLng result) {
+        // Apply rotation matrix
         double rotatedX = offsetX * Math.cos(bearingRad) - offsetY * Math.sin(bearingRad);
         double rotatedY = offsetX * Math.sin(bearingRad) + offsetY * Math.cos(bearingRad);
 
-        return calculateOffset(center, rotatedX, rotatedY);
+        // Calculate offset and update the result LatLng
+        calculateOffset(center, rotatedX, rotatedY, result);
     }
 
 
@@ -402,11 +435,12 @@ public class ScannerView extends Fragment {
             }
         }
         mLastLocationAcquired = new Date();
-        mLastLocation = currentLocation;
 
+        if (mLastLocation == null || !mLastLocation.equals(currentLocation)) {
+            mLastLocation = currentLocation;
+            drawPlayerCursor();
+        }
         setLocationInaccurate(false);
-
-        drawPlayerCursor();
 
     }
 
