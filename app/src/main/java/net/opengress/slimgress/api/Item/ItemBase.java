@@ -36,12 +36,12 @@ import java.util.Objects;
 public abstract class ItemBase extends EntityBase implements Serializable {
     public enum ItemType {
         Media,
-        ModForceAmp,
-        ModHeatsink,
-        ModLinkAmp,
-        ModMultihack,
         ModShield,
+        ModForceAmp,
         ModTurret,
+        ModHeatsink,
+        ModMultihack,
+        ModLinkAmp,
         PortalKey,
         PowerCube,
         Resonator,
