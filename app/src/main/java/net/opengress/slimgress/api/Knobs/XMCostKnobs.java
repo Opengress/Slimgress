@@ -36,18 +36,24 @@ public class XMCostKnobs extends Knobs
     // these are annoying: passing in the level you're interested in gives an off-by-one error.
     // maybe i should fix that in more sophisticated getters.
 
+    @Deprecated
     private final List<Integer> mHeatsinkDeployCostByLevel;
     private final List<Integer> mFlipCardCostByLevel;
+    @Deprecated
     private final List<Integer> mTurretDeployCostByLevel;
     private final List<Integer> mPortalHackNeutralCostByLevel;
+    @Deprecated
     private final List<Integer> mShieldDeployCostByLevel;
     private final List<Integer> mXmpFiringCostByLevel;
     private final List<Integer> mResonatorUpgradeCostByLevel;
     private final List<Integer> mPortalHackFriendlyCostByLevel;
+    @Deprecated
     private final List<Integer> mMultihackDeployCostByLevel;
     private final List<Integer> mPortalHackEnemyCostByLevel;
     private final List<Integer> mResonatorDeployCostByLevel;
+    @Deprecated
     private final List<Integer> mForceAmplifierDeployCostByLevel;
+    @Deprecated
     private final List<Integer> mLinkAmplifierDeployCostByLevel;
     private final Map<String, List<Integer>> mPortalModByLevel;
 

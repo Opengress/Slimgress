@@ -993,6 +993,7 @@ public class GameState {
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
                     super.handleGameBasket(gameBasket);
+                    getData().putSerializable("mod", mod);
                 }
 
                 @Override
