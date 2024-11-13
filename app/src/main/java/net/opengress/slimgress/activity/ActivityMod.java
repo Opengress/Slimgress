@@ -59,7 +59,9 @@ public class ActivityMod extends AppCompatActivity {
             DialogInfo dialog = new DialogInfo(ActivityMod.this);
             dialog.setMessage(error).setDismissDelay(1500).show();
         } else {
-            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getResonatorDeployCostByLevel().get(mGame.getCurrentPortal().getPortalLevel()));
+            ItemMod mod = (ItemMod) msg.getData().getSerializable("mod");
+            String name = (mod == null) ? "RES_SHIELD" : mod.getName();
+            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalModByLevel(name).get(mGame.getCurrentPortal().getPortalLevel() - 1));
         }
 
         setUpView();
