@@ -506,8 +506,7 @@ public class ScannerView extends Fragment {
             AtomicBoolean shouldContinue = new AtomicBoolean(false);
 
             // for XM particles
-            // FIXME - other game entities actually can contain a "."
-            if (guid.contains(".")) {
+            if (guid.contains(".6")) {
                 long particle = Long.parseLong(guid.substring(0, 16), 16);
                 mMapLibreMap.getStyle(style -> {
                     style.removeLayer("particle-layer-" + particle);
@@ -1166,7 +1165,7 @@ public class ScannerView extends Fragment {
         mApp.getExecutorService().submit(() -> mGame.intLoadCommunication(false, 50, false, commsHandler));
     }
 
-    private void slurp() {
+    private synchronized void slurp() {
 
         final Location playerLoc = mGame.getLocation();
         if (mGame.getAgent() == null || playerLoc == null) {

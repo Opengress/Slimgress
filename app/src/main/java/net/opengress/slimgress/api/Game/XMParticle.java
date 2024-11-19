@@ -40,7 +40,7 @@ public class XMParticle
         mCellLocation = new Location(mCellId);
 
         // NOTE: API differs from ingress because our globs can be HUGE
-        String amountStr = guid.substring(16);
+        String amountStr = guid.substring(16, guid.length() - 2);
         mAmount = Integer.parseInt(amountStr, 16);
 
     }

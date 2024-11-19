@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-10-24T05:29:37.978987818Z">
+        <DropdownSelection timestamp="2024-11-16T07:42:42.898853541Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/home/sneaky/.android/avd/Small_x86_phone_API35.avd" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=/home/sneaky/.android/avd/nexus28.avd" />
             </handle>
           </Target>
         </DropdownSelection>
