@@ -814,6 +814,7 @@ public class GameState {
         }
     }
 
+    // FIXME instead of one resonator this should ultimately accept multiple and then send a set of Guids
     public void intDeployResonator(ItemResonator resonator, GameEntityPortal portal, int slot, final Handler handler) {
         try {
             checkInterface();
