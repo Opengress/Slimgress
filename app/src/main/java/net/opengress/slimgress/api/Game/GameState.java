@@ -69,6 +69,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class GameState {
     private final Interface mInterface;
@@ -1563,7 +1564,7 @@ public class GameState {
         return mPortal;
     }
 
-    public void addSlurpableXMParticles(ArrayList<String> slurpableParticles) {
+    public void addSlurpableXMParticles(Set<String> slurpableParticles) {
         mInterface.addSlurpableParticles(slurpableParticles);
         for (var particle : slurpableParticles) {
             mWorld.getXMParticles().remove(Long.parseLong(particle.substring(0, 16), 16));
