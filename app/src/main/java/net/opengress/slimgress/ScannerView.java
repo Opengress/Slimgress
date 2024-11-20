@@ -1043,12 +1043,12 @@ public class ScannerView extends Fragment {
         AssetManager assetManager = requireActivity().getAssets();
         Map<String, TeamKnobs.TeamType> teams = mGame.getKnobs().getTeamKnobs().getTeams();
         for (String team : teams.keySet()) {
-            mIcons.put(team, getTintedImage("portalTexture_NEUTRAL.png", 0xff000000 + Objects.requireNonNull(teams.get(team)).getColour(), assetManager));
+            mIcons.put(team, getTintedImage("portalTexture_NEUTRAL.webp", 0xff000000 + Objects.requireNonNull(teams.get(team)).getColour(), assetManager));
         }
 
-        mIcons.put("particle", getBitmapFromAsset("particle.png", assetManager));
+        mIcons.put("particle", getBitmapFromAsset("particle.webp", assetManager));
         mIcons.put("actionradius", getBitmapFromAsset("actionradius.png", assetManager));
-        mIcons.put("playercursor", getTintedImage("playercursor.png", 0xff000000 + Objects.requireNonNull(mGame.getAgent().getTeam()).getColour(), assetManager));
+        mIcons.put("playercursor", getTintedImage("playercursor.webp", 0xff000000 + Objects.requireNonNull(mGame.getAgent().getTeam()).getColour(), assetManager));
         mIcons.put("ada", getBitmapFromDrawable(getContext(), R.drawable.ada));
         mIcons.put("c1", getBitmapFromDrawable(getContext(), R.drawable.c1));
         mIcons.put("c2", getBitmapFromDrawable(getContext(), R.drawable.c2));
@@ -1099,7 +1099,7 @@ public class ScannerView extends Fragment {
         mIcons.put("x6", getBitmapFromDrawable(getContext(), R.drawable.x6));
         mIcons.put("x7", getBitmapFromDrawable(getContext(), R.drawable.x7));
         mIcons.put("x8", getBitmapFromDrawable(getContext(), R.drawable.x8));
-        mIcons.put("bursterRing", getBitmapFromAsset("rainbowburst.png", assetManager));
+        mIcons.put("bursterRing", getBitmapFromAsset("rainbowburst.webp", assetManager));
         mIcons.put("sonarRing", createCircleBitmap(1024, 0x33FFFF00, 3));
     }
 
