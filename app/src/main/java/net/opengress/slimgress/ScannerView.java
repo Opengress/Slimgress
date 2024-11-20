@@ -244,7 +244,7 @@ public class ScannerView extends Fragment {
     // ===========================================================
     // Misc
     // ===========================================================
-    private final ArrayList<String> mSlurpableParticles = new ArrayList<>();
+    private final Set<String> mSlurpableParticles = new HashSet<>();
 
     private void updateBearing(int bearing) {
         if (mMapLibreMap == null) {
@@ -506,7 +506,7 @@ public class ScannerView extends Fragment {
             AtomicBoolean shouldContinue = new AtomicBoolean(false);
 
             // for XM particles
-            if (guid.contains(".6")) {
+            if (guid.endsWith(".6")) {
                 long particle = Long.parseLong(guid.substring(0, 16), 16);
                 mMapLibreMap.getStyle(style -> {
                     style.removeLayer("particle-layer-" + particle);

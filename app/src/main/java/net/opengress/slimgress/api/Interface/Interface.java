@@ -35,10 +35,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -69,7 +70,7 @@ public class Interface
     public static final String mUserAgent = "Opengress/Slimgress (API dev)";
 
     // kludge: interface can say the right things about collecting globs without asking GameState
-    private final ArrayList<String> mSlurpableXMParticles = new ArrayList<>();
+    private final Set<String> mSlurpableXMParticles = new HashSet<>();
 
     public Interface()
     {
@@ -255,7 +256,7 @@ public class Interface
     }
 
 
-    public void addSlurpableParticles(ArrayList<String> slurpableParticles) {
+    public void addSlurpableParticles(Set<String> slurpableParticles) {
         mSlurpableXMParticles.addAll(slurpableParticles);
     }
 
