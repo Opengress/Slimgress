@@ -53,7 +53,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.Pair;
 import android.view.Choreographer;
 import android.view.GestureDetector;
@@ -529,6 +528,11 @@ public class ScannerView extends Fragment {
                 var portal = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).first;
                 var slot = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).second;
                 var resoParts = Objects.requireNonNull(mResonatorThreads.get(portal)).get(slot);
+
+                if (mGame.getCurrentPortal() != null && Objects.equals(mGame.getCurrentPortal().getPortalResonator(slot).id, guid)) {
+                    // ugly hack to protect upgrade/deploy/whatever case
+                    continue;
+                }
                 if (resoParts != null) {
                     mLineManager.delete(resoParts);
                 }
@@ -1404,27 +1408,19 @@ public class ScannerView extends Fragment {
             return;
         }
 
-
         Location resoPos = reso.getResoLocation();
 
         Style style = mMapLibreMap.getStyle();
         assert style != null;
 
-        final double LINKED_RESO_SCALE = 3;
         float saturation = -0.85f * (0.95f - (float) reso.energyTotal / (float) reso.getMaxEnergy());
+        int rgb = getColourFromResources(getResources(), getLevelColour(reso.level));
+        // set opacity
+        rgb = (rgb & 0x00FFFFFF) | ((int) Math.max(48, ((float) reso.energyTotal / (float) reso.getMaxEnergy()) * (float) 128) << 24);
 
         if (mResonatorToPortalSlotLookup.containsKey(reso.id) && style.getLayer("reso-layer-" + reso.id) != null) {
-            try {
                 style.getLayer("reso-layer-" + reso.id).setProperties(PropertyFactory.rasterContrast(saturation));
-                int rgb = getColourFromResources(getResources(), getLevelColour(reso.level));
-                // set opacity
-                rgb = (rgb & 0x00FFFFFF) | ((int) Math.max(48, ((float) reso.energyTotal / (float) reso.getMaxEnergy()) * (float) 128) << 24);
                 mResonatorThreads.get(portal.getEntityGuid()).get(reso.slot).setLineColor(getRgbaStringFromColour(rgb));
-            } catch (NullPointerException npe) {
-                // TODO understand how we got here
-                Log.e("SCANNER", "NPE in drawResonatorForPortal");
-                Log.e("SCANNER", Log.getStackTraceString(npe));
-            }
             return;
         }
 
@@ -1436,11 +1432,6 @@ public class ScannerView extends Fragment {
             mLineManager.delete(resoLine);
             m.remove(reso.slot);
         }
-//        if (mResonatorToPortalSlotLookup.containsKey(reso.id)) {
-//            mResonatorToPortalSlotLookup.remove(reso.id);
-//            style.removeLayer("reso-layer-" + reso.id);
-//            style.removeSource("reso-source-" + reso.id);
-//        }
 
         // Update threads map
         HashMap<Integer, Line> threads;
@@ -1456,7 +1447,7 @@ public class ScannerView extends Fragment {
         ImageSource rasterSource = (ImageSource) style.getSource("reso-source-" + reso.id);
         if (rasterSource == null) {
             // Position the image using its coordinates (longitude, latitude)
-            LatLngQuad quad = getRotatedLatLngQuad(resoPos, LINKED_RESO_SCALE, LINKED_RESO_SCALE, reso.slot * 45);
+            LatLngQuad quad = getRotatedLatLngQuad(resoPos, 3, 3, reso.slot * 45);
             rasterSource = new ImageSource("reso-source-" + reso.id, quad, mIcons.get("r" + reso.level));
             style.addSource(rasterSource);
         } else {
@@ -1473,11 +1464,6 @@ public class ScannerView extends Fragment {
         } else {
             resoImageLayer.setProperties(PropertyFactory.rasterContrast(saturation));
         }
-
-
-        int rgb = getColourFromResources(getResources(), getLevelColour(reso.level));
-        // set opacity
-        rgb = (rgb & 0x00FFFFFF) | ((int) Math.max(48, ((float) reso.energyTotal / (float) reso.getMaxEnergy()) * (float) 128) << 24);
 
         LineOptions lineOptions = new LineOptions()
                 .withLatLngs(Arrays.asList(portal.getPortalLocation().getLatLng(), resoPos.getLatLng()))
