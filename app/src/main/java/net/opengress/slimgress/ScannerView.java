@@ -182,7 +182,7 @@ public class ScannerView extends Fragment {
     if we do it the first way, we need to ensure that the reso always gets deleted on upgrade or other-player-attack
      */
     // for getting rid of the resonators when we get rid of the portals
-    private final HashMap<String, HashMap<Integer, Line>> mResonatorThreads = new HashMap<>();
+    private final HashMap<String, HashMap<String, Line>> mResonatorThreads = new HashMap<>();
     // for finding the portal marker when we delete it by Guid
     private final HashMap<String, Pair<String, Integer>> mResonatorToPortalSlotLookup = new HashMap<>();
     private final HashMap<String, Line> mLines = new HashMap<>();
@@ -527,17 +527,18 @@ public class ScannerView extends Fragment {
             if (mResonatorToPortalSlotLookup.containsKey(guid)) {
                 var portal = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).first;
                 var slot = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).second;
-                var resoParts = Objects.requireNonNull(mResonatorThreads.get(portal)).get(slot);
+                var resoParts = Objects.requireNonNull(mResonatorThreads.get(portal)).get(guid);
 
                 if (mGame.getCurrentPortal() != null && Objects.equals(mGame.getCurrentPortal().getPortalResonator(slot).id, guid)) {
                     // ugly hack to protect upgrade/deploy/whatever case
                     continue;
                 }
+
                 if (resoParts != null) {
                     mLineManager.delete(resoParts);
                 }
                 mResonatorToPortalSlotLookup.remove(guid);
-                Objects.requireNonNull(mResonatorThreads.get(portal)).remove(slot);
+                Objects.requireNonNull(mResonatorThreads.get(portal)).remove(guid);
                 mMapLibreMap.getStyle(style -> {
                     style.removeLayer("reso-layer-" + guid);
                     style.removeSource("reso-source-" + guid);
@@ -1420,21 +1421,22 @@ public class ScannerView extends Fragment {
 
         if (mResonatorToPortalSlotLookup.containsKey(reso.id) && style.getLayer("reso-layer-" + reso.id) != null) {
                 style.getLayer("reso-layer-" + reso.id).setProperties(PropertyFactory.rasterContrast(saturation));
-                mResonatorThreads.get(portal.getEntityGuid()).get(reso.slot).setLineColor(getRgbaStringFromColour(rgb));
+            mResonatorThreads.get(portal.getEntityGuid()).get(reso.id).setLineColor(getRgbaStringFromColour(rgb));
             return;
         }
 
 
         // Remove existing marker if present
         var m = mResonatorThreads.get(portal.getEntityGuid());
-        if (m != null && m.containsKey(reso.slot)) {
-            Line resoLine = Objects.requireNonNull(m.get(reso.slot));
+        if (m != null && m.containsKey(reso.id)) {
+            Line resoLine = Objects.requireNonNull(m.get(reso.id));
             mLineManager.delete(resoLine);
-            m.remove(reso.slot);
+            m.remove(reso.id);
+            mResonatorToPortalSlotLookup.remove(reso.id);
         }
 
         // Update threads map
-        HashMap<Integer, Line> threads;
+        HashMap<String, Line> threads;
         if (mResonatorThreads.containsKey(portal.getEntityGuid())) {
             threads = mResonatorThreads.get(portal.getEntityGuid());
         } else {
@@ -1470,7 +1472,7 @@ public class ScannerView extends Fragment {
                 .withLineColor(getRgbaStringFromColour(rgb))
                 .withLineWidth(0.5f);
 
-        threads.put(reso.slot, mLineManager.create(lineOptions));
+        threads.put(reso.id, mLineManager.create(lineOptions));
         mResonatorToPortalSlotLookup.put(reso.id, new Pair<>(portal.getEntityGuid(), reso.slot));
     }
 
