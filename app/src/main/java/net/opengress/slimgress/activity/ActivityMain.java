@@ -120,6 +120,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     private Button mConfirmButton;
     private Button mCancelButton;
     private ActivityResultLauncher<Intent> mOpsActivityResultLauncher;
+    private ScannerView mScannerView;
 
     @Override
     protected void onDestroy() {
@@ -711,7 +712,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     private void flashMap() {
-        MapView mapView = getScanner().getMap();
+        MapView mapView = mScannerView.getMap();
         mapView.getMapAsync(maplibreMap -> maplibreMap.getStyle(style -> {
             FillLayer layer = style.getLayerAs("flash-overlay-layer");
             assert layer != null;
@@ -819,11 +820,11 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     public void damagePlayer(int amount, String attackerGuid) {
-        getScanner().displayPlayerDamage(amount, attackerGuid);
+        mScannerView.displayPlayerDamage(amount, attackerGuid);
     }
 
     public void refreshDisplay() {
-        getScanner().updateScreen(new Handler(Looper.getMainLooper()));
+        mScannerView.updateScreen(new Handler(Looper.getMainLooper()));
     }
 
     private void resetSelection() {
@@ -834,7 +835,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         mCancelButton.setVisibility(View.GONE);
         mSelectedPortalGuid = null;
         mSelectedFlipCardGuid = null;
-        getScanner().removeInfoCard();
+        mScannerView.removeInfoCard();
     }
 
     private void flipPortal(String portalGuid, String mSelectedFlipCardGuid) {
@@ -850,7 +851,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 dialog.setMessage(error).setDismissDelay(1500).show();
             } else {
                 flashMap();
-                getScanner().removeInfoCard();
+                mScannerView.removeInfoCard();
             }
             return false;
         }));
@@ -880,10 +881,10 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     public void processDeletedEntityGuids(List<String> deletedEntityGuids) {
-        runOnUiThread(() -> getScanner().onReceiveDeletedEntityGuids(deletedEntityGuids));
+        runOnUiThread(() -> mScannerView.onReceiveDeletedEntityGuids(deletedEntityGuids));
     }
 
-    public ScannerView getScanner() {
-        return (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
+    public void setScanner(ScannerView scanner) {
+        mScannerView = scanner;
     }
 }
