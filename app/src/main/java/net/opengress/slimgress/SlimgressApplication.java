@@ -35,7 +35,6 @@ import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Plext.PlextBase;
 import net.opengress.slimgress.api.ViewModels.APGainsViewModel;
 import net.opengress.slimgress.api.ViewModels.CommsViewModel;
-import net.opengress.slimgress.api.ViewModels.DeletedEntityGuidsViewModel;
 import net.opengress.slimgress.api.ViewModels.InventoryViewModel;
 import net.opengress.slimgress.api.ViewModels.LevelUpViewModel;
 import net.opengress.slimgress.api.ViewModels.LocationViewModel;
@@ -61,7 +60,6 @@ public class SlimgressApplication extends Application {
     protected GameState mGame;
     private LocationViewModel mLocationViewModel;
     private InventoryViewModel mInventoryViewModel;
-    private DeletedEntityGuidsViewModel mDeletedEntityGuidsModel;
     private APGainsViewModel mAPGainsViewModel;
     private PlayerDamagesViewModel mPlayerDamagesViewModel;
     private PlayerDataViewModel mPlayerDataViewModel;
@@ -77,7 +75,6 @@ public class SlimgressApplication extends Application {
         super.onCreate();
         mLocationViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(LocationViewModel.class);
         mInventoryViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(InventoryViewModel.class);
-        mDeletedEntityGuidsModel = new ViewModelProvider.AndroidViewModelFactory(this).create(DeletedEntityGuidsViewModel.class);
         mAPGainsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(APGainsViewModel.class);
         mPlayerDamagesViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDamagesViewModel.class);
         mPlayerDataViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDataViewModel.class);
@@ -233,10 +230,6 @@ public class SlimgressApplication extends Application {
 
     public InventoryViewModel getInventoryViewModel() {
         return mInventoryViewModel;
-    }
-
-    public DeletedEntityGuidsViewModel getDeletedEntityGuidsModel() {
-        return mDeletedEntityGuidsModel;
     }
 
     public APGainsViewModel getAPGainsModel() {

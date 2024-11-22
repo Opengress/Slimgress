@@ -66,7 +66,6 @@ public class Interface
     private static final String mApiBaseURL = "https://" + mApiBase + "/";
     private static final String mApiHandshake = "handshake?json=";
     private static final String mApiRequest = "rpc/";
-    // would like to use android resources here... will figure that out later
     public static final String mUserAgent = "Opengress/Slimgress (API dev)";
 
     // kludge: interface can say the right things about collecting globs without asking GameState
@@ -105,10 +104,8 @@ public class Interface
                 params.put("deviceHardwareVersion", Build.MODEL);
                 params.put("deviceOperatingSystem", "Android");
 
-                if (params != null) {
-                    for (Map.Entry<String, String> param : inParams.entrySet()) {
-                        params.put(param.getKey(), param.getValue());
-                    }
+                for (Map.Entry<String, String> param : inParams.entrySet()) {
+                    params.put(param.getKey(), param.getValue());
                 }
                 // TODO:
                 /*params.put("activationCode", "");
@@ -262,6 +259,7 @@ public class Interface
 
     private long getCurrentTimestamp()
     {
+        // TODO check that this is the correct value for KnobSyncTimeStamp
         return (new Date()).getTime();
     }
 }

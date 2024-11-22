@@ -110,7 +110,7 @@ public class Inventory {
 
 
     public final List<ItemBase> getItems(ItemBase.ItemType type, String displayName) {
-        // currently seems like a reasonavble way to fetch DoubleAP objects from DB
+        // currently seems like a reasonable way to fetch DoubleAP objects from DB
         List<ItemBase> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
             ItemBase item = pair.getValue();
