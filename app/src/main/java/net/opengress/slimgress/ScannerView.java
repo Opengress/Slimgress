@@ -53,7 +53,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
-import android.util.Pair;
 import android.view.Choreographer;
 import android.view.GestureDetector;
 import android.view.Gravity;
@@ -184,7 +183,7 @@ public class ScannerView extends Fragment {
     // for getting rid of the resonators when we get rid of the portals
     private final HashMap<String, HashMap<String, Line>> mResonatorThreads = new HashMap<>();
     // for finding the portal marker when we delete it by Guid
-    private final HashMap<String, Pair<String, Integer>> mResonatorToPortalSlotLookup = new HashMap<>();
+    private final HashMap<String, String> mResonatorToPortalLookup = new HashMap<>();
     private final HashMap<String, Line> mLines = new HashMap<>();
     private final HashMap<String, Fill> mPolygons = new HashMap<>();
 
@@ -391,7 +390,7 @@ public class ScannerView extends Fragment {
             return;
         }
         LatLngQuad actionRadiusQuad = getRadialLatLngQuad(initialLocation, mActionRadiusM);
-        ImageSource actionRadiusSource = new ImageSource("action-radius-source", actionRadiusQuad, mIcons.get("actionradius"));
+        ImageSource actionRadiusSource = new ImageSource("action-radius-source", actionRadiusQuad, Objects.requireNonNull(mIcons.get("actionradius")));
         mMapLibreMap.getStyle().addSource(actionRadiusSource);
         RasterLayer actionRadiusLayer = new RasterLayer("action-radius-layer", "action-radius-source").withProperties(
                 PropertyFactory.rasterOpacity(0.5f)
@@ -500,7 +499,7 @@ public class ScannerView extends Fragment {
         }
         // suddenly i understand why each guid in other games has a suffix indicating the type
         for (String guid : deletedEntityGuids) {
-            AtomicBoolean shouldContinue = new AtomicBoolean(false);
+            AtomicBoolean shouldContinue = new AtomicBoolean(true);
 
             // for XM particles
             if (guid.endsWith(".6")) {
@@ -516,21 +515,33 @@ public class ScannerView extends Fragment {
             mMapLibreMap.getStyle(style -> {
                 style.removeLayer("portal-" + guid + "-layer");
                 shouldContinue.set(style.removeSource("portal-" + guid));
+                if (shouldContinue.get() && mResonatorThreads.containsKey(guid)) {
+                    for (var k : Objects.requireNonNull(mResonatorThreads.get(guid)).keySet()) {
+                        var resoParts = Objects.requireNonNull(mResonatorThreads.get(guid)).get(k);
+
+                        if (resoParts != null) {
+                            mLineManager.delete(resoParts);
+                        }
+                        mResonatorToPortalLookup.remove(k);
+                        Objects.requireNonNull(mResonatorThreads.get(guid)).remove(k);
+                        style.removeLayer("reso-layer-" + k);
+                        style.removeSource("reso-source-" + k);
+                    }
+                }
             });
             if (shouldContinue.get()) {
                 continue;
             }
 
             // for resonators
-            if (mResonatorToPortalSlotLookup.containsKey(guid)) {
-                var portal = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).first;
-                var slot = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).second;
+            if (mResonatorToPortalLookup.containsKey(guid)) {
+                var portal = Objects.requireNonNull(mResonatorToPortalLookup.get(guid));
                 var resoParts = Objects.requireNonNull(mResonatorThreads.get(portal)).get(guid);
 
                 if (resoParts != null) {
                     mLineManager.delete(resoParts);
                 }
-                mResonatorToPortalSlotLookup.remove(guid);
+                mResonatorToPortalLookup.remove(guid);
                 Objects.requireNonNull(mResonatorThreads.get(portal)).remove(guid);
                 mMapLibreMap.getStyle(style -> {
                     style.removeLayer("reso-layer-" + guid);
@@ -724,6 +735,8 @@ public class ScannerView extends Fragment {
 
             return true;
         });
+
+        ((ActivityMain) requireActivity()).setScanner(this);
 
         return rootView;
     }
@@ -1098,7 +1111,14 @@ public class ScannerView extends Fragment {
         mIcons.put("x7", getBitmapFromDrawable(getContext(), R.drawable.x7));
         mIcons.put("x8", getBitmapFromDrawable(getContext(), R.drawable.x8));
         mIcons.put("bursterRing", getBitmapFromAsset("rainbowburst.webp", assetManager));
-        mIcons.put("sonarRing", createCircleBitmap(1024, 0x33FFFF00, 3));
+        Bitmap bitmap = Bitmap.createBitmap((int) (float) 1024, (int) (float) 1024, Bitmap.Config.ARGB_8888);
+        Paint paint = new Paint();
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth((float) 3);
+        paint.setAntiAlias(true);
+        paint.setColor(0x33FFFF00);
+        new Canvas(bitmap).drawCircle((float) 1024 / 2, (float) 1024 / 2, (float) 1024 / 2, paint);
+        mIcons.put("sonarRing", bitmap);
     }
 
     @SuppressLint("DefaultLocale")
@@ -1291,7 +1311,7 @@ public class ScannerView extends Fragment {
                 // only draw if not already in list
                 if (style.getLayer(layerId) == null) {
                     LatLngQuad quad = getRotatedLatLngQuad(particle.getCellLocation(), 10, 10, 0);
-                    ImageSource imageSource = new ImageSource(sourceId, quad, mIcons.get("particle"));
+                    ImageSource imageSource = new ImageSource(sourceId, quad, Objects.requireNonNull(mIcons.get("particle")));
                     style.addSource(imageSource);
                     RasterLayer rasterLayer = new RasterLayer(layerId, sourceId);
                     style.addLayer(rasterLayer);
@@ -1412,9 +1432,9 @@ public class ScannerView extends Fragment {
         // set opacity
         rgb = (rgb & 0x00FFFFFF) | ((int) Math.max(48, ((float) reso.energyTotal / (float) reso.getMaxEnergy()) * (float) 128) << 24);
 
-        if (mResonatorToPortalSlotLookup.containsKey(reso.id) && style.getLayer("reso-layer-" + reso.id) != null) {
-                style.getLayer("reso-layer-" + reso.id).setProperties(PropertyFactory.rasterContrast(saturation));
-            mResonatorThreads.get(portal.getEntityGuid()).get(reso.id).setLineColor(getRgbaStringFromColour(rgb));
+        if (mResonatorToPortalLookup.containsKey(reso.id) && style.getLayer("reso-layer-" + reso.id) != null) {
+            Objects.requireNonNull(style.getLayer("reso-layer-" + reso.id)).setProperties(PropertyFactory.rasterContrast(saturation));
+            Objects.requireNonNull(Objects.requireNonNull(mResonatorThreads.get(portal.getEntityGuid())).get(reso.id)).setLineColor(getRgbaStringFromColour(rgb));
             return;
         }
 
@@ -1425,7 +1445,7 @@ public class ScannerView extends Fragment {
             Line resoLine = Objects.requireNonNull(m.get(reso.id));
             mLineManager.delete(resoLine);
             m.remove(reso.id);
-            mResonatorToPortalSlotLookup.remove(reso.id);
+            mResonatorToPortalLookup.remove(reso.id);
         }
 
         // Update threads map
@@ -1443,10 +1463,10 @@ public class ScannerView extends Fragment {
         if (rasterSource == null) {
             // Position the image using its coordinates (longitude, latitude)
             LatLngQuad quad = getRotatedLatLngQuad(resoPos, 3, 3, reso.slot * 45);
-            rasterSource = new ImageSource("reso-source-" + reso.id, quad, mIcons.get("r" + reso.level));
+            rasterSource = new ImageSource("reso-source-" + reso.id, quad, Objects.requireNonNull(mIcons.get("r" + reso.level)));
             style.addSource(rasterSource);
         } else {
-            rasterSource.setImage(mIcons.get("r" + reso.level));
+            rasterSource.setImage(Objects.requireNonNull(mIcons.get("r" + reso.level)));
         }
 
         RasterLayer resoImageLayer = (RasterLayer) style.getLayer("reso-layer-" + reso.id);
@@ -1466,7 +1486,7 @@ public class ScannerView extends Fragment {
                 .withLineWidth(0.5f);
 
         threads.put(reso.id, mLineManager.create(lineOptions));
-        mResonatorToPortalSlotLookup.put(reso.id, new Pair<>(portal.getEntityGuid(), reso.slot));
+        mResonatorToPortalLookup.put(reso.id, portal.getEntityGuid());
     }
 
 
@@ -1930,18 +1950,6 @@ public class ScannerView extends Fragment {
             return;
         }
         Toast.makeText(requireContext(), "Interacting with: " + getEntityDescription(entity), Toast.LENGTH_SHORT).show();
-    }
-
-    private Bitmap createCircleBitmap(float diameter, int colour, float strokeWidth) {
-        Bitmap bitmap = Bitmap.createBitmap((int) diameter, (int) diameter, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        Paint paint = new Paint();
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(strokeWidth);
-        paint.setAntiAlias(true);
-        paint.setColor(colour);
-        canvas.drawCircle(diameter / 2, diameter / 2, diameter / 2, paint);
-        return bitmap;
     }
 
 }
