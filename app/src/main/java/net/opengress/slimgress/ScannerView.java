@@ -484,8 +484,6 @@ public class ScannerView extends Fragment {
         });
         setLocationInaccurate(true);
 
-        mApp.getDeletedEntityGuidsModel().getDeletedEntityGuids().observe(this, this::onReceiveDeletedEntityGuids);
-
         mPortalActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::onPortalActivityResult);
 
         mScannerKnobs = mGame.getKnobs().getScannerKnobs();
@@ -528,11 +526,6 @@ public class ScannerView extends Fragment {
                 var portal = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).first;
                 var slot = Objects.requireNonNull(mResonatorToPortalSlotLookup.get(guid)).second;
                 var resoParts = Objects.requireNonNull(mResonatorThreads.get(portal)).get(guid);
-
-                if (mGame.getCurrentPortal() != null && Objects.equals(mGame.getCurrentPortal().getPortalResonator(slot).id, guid)) {
-                    // ugly hack to protect upgrade/deploy/whatever case
-                    continue;
-                }
 
                 if (resoParts != null) {
                     mLineManager.delete(resoParts);

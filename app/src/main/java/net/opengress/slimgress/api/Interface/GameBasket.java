@@ -83,7 +83,7 @@ public class GameBasket
 
     private void processGameEntities(JSONArray gameEntities) throws JSONException
     {
-        // iterate over game entites
+        // iterate over game entities
         for (int i = 0; i < gameEntities.length(); i++) {
             JSONArray resource = gameEntities.getJSONArray(i);
 

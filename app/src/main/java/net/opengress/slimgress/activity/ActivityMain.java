@@ -656,7 +656,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 mCurrentFireItem.remove(mCurrentFireItem.getFirstID());
             }
             int index = arrayList.indexOf(mCurrentFireItem);
-            int newIndex = 0;
+            int newIndex;
 
             // if current stack is depleted
             if (mCurrentFireItem.getQuantity() == 0) {
@@ -711,9 +711,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     private void flashMap() {
-        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
-        assert scanner != null;
-        MapView mapView = scanner.getMap();
+        MapView mapView = getScanner().getMap();
         mapView.getMapAsync(maplibreMap -> maplibreMap.getStyle(style -> {
             FillLayer layer = style.getLayerAs("flash-overlay-layer");
             assert layer != null;
@@ -821,15 +819,11 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     public void damagePlayer(int amount, String attackerGuid) {
-        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
-        assert scanner != null;
-        scanner.displayPlayerDamage(amount, attackerGuid);
+        getScanner().displayPlayerDamage(amount, attackerGuid);
     }
 
     public void refreshDisplay() {
-        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
-        assert scanner != null;
-        scanner.updateScreen(new Handler(Looper.getMainLooper()));
+        getScanner().updateScreen(new Handler(Looper.getMainLooper()));
     }
 
     private void resetSelection() {
@@ -840,9 +834,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         mCancelButton.setVisibility(View.GONE);
         mSelectedPortalGuid = null;
         mSelectedFlipCardGuid = null;
-        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
-        assert scanner != null;
-        scanner.removeInfoCard();
+        getScanner().removeInfoCard();
     }
 
     private void flipPortal(String portalGuid, String mSelectedFlipCardGuid) {
@@ -858,9 +850,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 dialog.setMessage(error).setDismissDelay(1500).show();
             } else {
                 flashMap();
-                ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
-                assert scanner != null;
-                scanner.removeInfoCard();
+                getScanner().removeInfoCard();
             }
             return false;
         }));
@@ -889,4 +879,11 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         }
     }
 
+    public void processDeletedEntityGuids(List<String> deletedEntityGuids) {
+        runOnUiThread(() -> getScanner().onReceiveDeletedEntityGuids(deletedEntityGuids));
+    }
+
+    public ScannerView getScanner() {
+        return (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
+    }
 }

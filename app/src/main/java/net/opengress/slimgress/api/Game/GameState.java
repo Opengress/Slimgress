@@ -128,14 +128,14 @@ public class GameState {
         } else {
 //            Log.d("Game", "processing game basket");
             // really we should get info back about what changed
-            mInventory.processGameBasket(gameBasket);
-            mWorld.processGameBasket(gameBasket);
             if (!gameBasket.getInventory().isEmpty() || !gameBasket.getDeletedEntityGuids().isEmpty()) {
                 app.getInventoryViewModel().postInventory(mInventory);
             }
             if (!gameBasket.getDeletedEntityGuids().isEmpty()) {
-                app.getDeletedEntityGuidsModel().postDeletedEntityGuids(gameBasket.getDeletedEntityGuids());
+                app.getMainActivity().processDeletedEntityGuids(gameBasket.getDeletedEntityGuids());
             }
+            mInventory.processGameBasket(gameBasket);
+            mWorld.processGameBasket(gameBasket);
             if (!gameBasket.getAPGains().isEmpty()) {
                 // FIXME i ... don't need to add this to player data manually, do i??? yes
                 app.getAPGainsModel().postAPGains(gameBasket.getAPGains());
@@ -393,13 +393,10 @@ public class GameState {
                 @Override
                 public void handleError(String error) {
                     String pretty_error = switch (error) {
-                        case "SERVER_ERROR" -> getString(R.string.server_error);
                         case "MESSAGE_REJECTED" -> "You are not allowed to talk!";
                         case "TOO_LONG" -> // new!
                                 "Message can't be longer than 512 characters.";
-                        default -> {
-                            yield getString(R.string.server_error);
-                        }
+                        default -> getString(R.string.server_error);
                     };
                     super.handleError(pretty_error);
                     super.handleError(error);
@@ -486,9 +483,9 @@ public class GameState {
                 public void handleError(String error) {
                     switch (error) {
                         case "INVALID_PASSCODE" -> super.handleError("Passcode invalid");
-                        case "ALREADY_REDEEMED" -> super.handleError("Passcode already redemmed");
+                        case "ALREADY_REDEEMED" -> super.handleError("Passcode already redeemed");
                         case "ALREADY_REDEEMED_BY_PLAYER" ->
-                                super.handleError("Passcode already redemmed by you");
+                                super.handleError("Passcode already redeemed by you");
                         default -> super.handleError("Unknown error: " + error);
                     }
 
@@ -742,7 +739,7 @@ public class GameState {
                                 "Portal running hot! Unsafe to acquire items. Estimated time to cooldown: 300 seconds";
                         case "TOO_SOON_", "TOO_SOON__SECS" -> {
                             // TODO: maybe format this as "x minutes, x seconds"
-                            String seconds = error.replaceAll("[^\\d]", "");
+                            String seconds = error.replaceAll("\\D", "");
                             yield "Portal running hot! Unsafe to acquire items. Estimated time to cooldown: " + seconds + " seconds";
                         }
                         case "TOO_OFTEN" ->
@@ -764,10 +761,8 @@ public class GameState {
                         }
                         case "INVENTORY_FULL" -> // new!
                                 "Too many items in Inventory. Your Inventory can have no more than 2000 items";
-                        default -> {
-//                            pretty_error = "An unknown error occurred";
-                            yield "Hack acquired no items";
-                        }
+                        default -> //                            pretty_error = "An unknown error occurred";
+                                "Hack acquired no items";
                     };
                     super.handleError(pretty_error);
                 }
@@ -1033,7 +1028,7 @@ public class GameState {
                         case "OUT_OF_RANGE", "PORTAL_OUT_OF_RANGE" -> "Portal is out of range";
                         case "NO_EMPTY_SLOTS" ->
                                 "This portal already has the maximum number of mods";
-                        case "MOD_SLOT_EMPTY" -> "Theat mod slot is empty";
+                        case "MOD_SLOT_EMPTY" -> "That mod slot is empty";
                         case "MOD_DOES_NOT_EXIST" ->
                                 "The mod you tried to remove is not on the portal";
                         case "SERVER_ERROR" -> // new!
@@ -1050,7 +1045,7 @@ public class GameState {
                         }
                         default -> "Removing mod failed: unknown error: " + error;
                     };
-                    super.handleError(error);
+                    super.handleError(pretty_error);
                 }
 
                 @Override
