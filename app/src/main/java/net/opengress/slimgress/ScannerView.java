@@ -267,9 +267,9 @@ public class ScannerView extends Fragment {
         mPlayerCursorImageSource.setCoordinates(mPlayerCursorPosition);
 
         if (CURRENT_MAP_ORIENTATION_SCHEME == MAP_ROTATION_ARBITRARY) {
-            mMapLibreMap.easeCamera(CameraUpdateFactory.newLatLngZoom(mCurrentLocation.getLatLng(), mMapLibreMap.getCameraPosition().zoom));
+            mMapLibreMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mCurrentLocation.getLatLng(), mMapLibreMap.getCameraPosition().zoom));
         } else {
-            mMapLibreMap.easeCamera(CameraUpdateFactory.newCameraPosition(mCameraPositionBuilder
+            mMapLibreMap.moveCamera(CameraUpdateFactory.newCameraPosition(mCameraPositionBuilder
                     .target(mCurrentLocation.getLatLng())
                     .zoom(mMapLibreMap.getCameraPosition().zoom)
                     .bearing((360 - mBearing + 360) % 360)
