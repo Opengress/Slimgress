@@ -77,7 +77,7 @@ public class FragmentDevice extends Fragment
 
         mRootView.findViewById(R.id.device_button_force_sync).setEnabled(true);
         mRootView.findViewById(R.id.device_button_force_sync).setOnClickListener(v -> {
-            mGame.clear();
+            SlimgressApplication.getInstance().getMainActivity().forceSync();
             requireActivity().finish();
         });
 

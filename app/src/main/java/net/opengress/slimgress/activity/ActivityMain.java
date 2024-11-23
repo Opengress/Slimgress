@@ -887,4 +887,8 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     public void setScanner(ScannerView scanner) {
         mScannerView = scanner;
     }
+
+    public void forceSync() {
+        mScannerView.forceSync();
+    }
 }
