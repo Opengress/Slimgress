@@ -595,6 +595,7 @@ public class ScannerView extends Fragment {
         loadAssets();
 
         mCurrentTileSource = mPrefs.getString(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT);
+        // COULD use setUpTileSource - but do not need updateScreen() so maybe not ??
         String styleJSON = getMapTileProviderStyleJSON(mCurrentTileSource);
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(mapLibreMap -> {
@@ -964,13 +965,7 @@ public class ScannerView extends Fragment {
         String newTileSource = mPrefs.getString(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT);
         if (!Objects.equals(newTileSource, mCurrentTileSource)) {
             mCurrentTileSource = newTileSource;
-            String styleJSON = getMapTileProviderStyleJSON(mCurrentTileSource);
-            assert styleJSON != null;
-            mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> {
-                setUpStyleForMap(mMapLibreMap, style);
-                updateScreen(new Handler(Looper.getMainLooper()));
-                setupPlayerCursor(mCurrentLocation, mBearing);
-            });
+            setUpTileSource();
         }
 
         if (mLastLocationAcquired == null || mLastLocationAcquired.before(new Date(System.currentTimeMillis() - mUpdateIntervalMS))) {
@@ -1001,6 +996,16 @@ public class ScannerView extends Fragment {
         if (getActivity() != null) {
             ((ActivityMain) getActivity()).updateAgent();
         }
+    }
+
+    private void setUpTileSource() {
+        String styleJSON = getMapTileProviderStyleJSON(mCurrentTileSource);
+        assert styleJSON != null;
+        mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> {
+            setUpStyleForMap(mMapLibreMap, style);
+            updateScreen(new Handler(Looper.getMainLooper()));
+            setupPlayerCursor(mCurrentLocation, mBearing);
+        });
     }
 
     public void requestLocationUpdates() {
@@ -1952,4 +1957,13 @@ public class ScannerView extends Fragment {
         Toast.makeText(requireContext(), "Interacting with: " + getEntityDescription(entity), Toast.LENGTH_SHORT).show();
     }
 
+    public void forceSync() {
+        ArrayList<String> guids = new ArrayList<>();
+        for (var entity : mGame.getWorld().getGameEntitiesList()) {
+            guids.add(entity.getEntityGuid());
+        }
+        setUpTileSource();
+        onReceiveDeletedEntityGuids(guids);
+        mGame.clear();
+    }
 }
