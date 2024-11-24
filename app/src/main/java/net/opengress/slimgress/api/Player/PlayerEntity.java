@@ -216,6 +216,10 @@ public class PlayerEntity extends EntityBase
         return mTeam;
     }
 
+    public void setTeam(Team team) {
+        mTeam = team;
+    }
+
     public int getAp()
     {
         return mAP;
@@ -249,9 +253,17 @@ public class PlayerEntity extends EntityBase
         return mAllowNicknameEdit;
     }
 
+    public void setAllowedNicknameEdit(boolean allowed) {
+        mAllowNicknameEdit = allowed;
+    }
+
     public boolean isAllowedFactionChoice()
     {
         return mAllowFactionChoice;
+    }
+
+    public void setAllowedFactionChoice(boolean allowed) {
+        mAllowFactionChoice = allowed;
     }
 
     public NotificationSettings getNotificationSettings() {

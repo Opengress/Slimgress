@@ -71,6 +71,11 @@ public class Team
     }
 
     @NonNull
+    public String getID() {
+        return mTeam.getId();
+    }
+
+    @NonNull
     public String toString()
     {
         return mTeam.getName();

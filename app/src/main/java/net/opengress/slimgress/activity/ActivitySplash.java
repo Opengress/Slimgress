@@ -31,6 +31,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -40,9 +41,13 @@ import android.text.InputFilter;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
@@ -51,8 +56,10 @@ import net.opengress.slimgress.BuildConfig;
 import net.opengress.slimgress.Constants;
 import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
+import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Interface.Interface;
+import net.opengress.slimgress.api.Knobs.TeamKnobs;
 import net.opengress.slimgress.api.Player.Agent;
 
 import java.io.BufferedInputStream;
@@ -71,6 +78,7 @@ public class ActivitySplash extends Activity {
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private Bundle loginBundle;
+    private Dialog mFactionChoiceDialog;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -104,18 +112,23 @@ public class ActivitySplash extends Activity {
         }
         Handler handler = new Handler(msg -> {
             loginBundle = msg.getData();
-
-            // this will need further updates, like when user needs to select a faction
-            if (mGame.getHandshake().isValid() && mGame.getAgent().isAllowedNicknameEdit()) {
-                showValidateUsernameDialog(null);
-                return false;
-            } else {
-                procedWithLogin();
-            }
-
-            return true;
+            return setUpPlayerAndProceedWithLogin();
         });
         mGame.intHandshake(handler, params);
+    }
+
+    private boolean setUpPlayerAndProceedWithLogin() {
+        // this will need further updates, like when user needs to select a faction
+        if (mGame.getHandshake().isValid() && mGame.getAgent().isAllowedNicknameEdit()) {
+            showValidateUsernameDialog(null);
+            return false;
+        } else if (mGame.getHandshake().isValid() && mGame.getAgent().isAllowedFactionChoice()) {
+            showPickFactionDialog();
+            return false;
+        } else {
+            proceedWithLogin();
+        }
+        return true;
     }
 
     @Override
@@ -151,7 +164,7 @@ public class ActivitySplash extends Activity {
     }
 
     // might change this to be recursive
-    private void procedWithLogin() {
+    private void proceedWithLogin() {
         if (loginBundle.getBoolean("Successful")) {
             SlimgressApplication.postPlainCommsMessage("Agent ID Confirmed. Welcome " + mGame.getAgent().getNickname());
             // start main activity
@@ -290,6 +303,88 @@ public class ActivitySplash extends Activity {
         Log.i("Splash/DownloadProgress", String.valueOf(v));
     }
 
+    private void showPickFactionDialog() {
+        mApp.setLoggedIn(false);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
+
+        builder.setTitle("Choose your faction carefully");
+
+        // Create a container for the buttons (e.g., LinearLayout)
+        ScrollView scrollView = new ScrollView(this); // Add scrolling support for many factions
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(16, 16, 16, 16);
+        scrollView.addView(container);
+
+        // Create buttons for each faction dynamically
+        for (var faction : mGame.getKnobs().getTeamKnobs().getTeams().values()) {
+            if (!faction.isPlayable()) {
+                continue;
+            }
+            Button factionButton = new Button(this);
+            factionButton.setText(faction.getName());
+            factionButton.setBackgroundColor(0xff000000 + faction.getColour());
+            factionButton.setTextColor(Color.WHITE);
+            factionButton.setPadding(16, 16, 16, 16);
+            factionButton.setTextSize(18);
+            factionButton.setOnClickListener(v -> {
+                showFactionConfirmationDialog(faction);
+                mFactionChoiceDialog.dismiss();
+            });
+
+            // Add a margin between buttons
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            params.setMargins(0, 0, 0, 16);
+            factionButton.setLayoutParams(params);
+
+            // Add the button to the container
+            container.addView(factionButton);
+        }
+
+        builder.setView(scrollView);
+
+        mFactionChoiceDialog = builder.create();
+        mFactionChoiceDialog.show();
+    }
+
+    void showFactionConfirmationDialog(TeamKnobs.TeamType chosenFaction) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Confirm Your Choice");
+        builder.setMessage("Are you sure you want to choose " + chosenFaction.getName() + "?\n" +
+                "Once confirmed, this decision is final.");
+        builder.setCancelable(false);
+
+        builder.setPositiveButton("Yes", (dialog, which) -> {
+            var team = new Team(chosenFaction);
+            mGame.intChooseFaction(team, new Handler(msg -> {
+
+                if (msg.getData().keySet().contains("Error")) {
+                    Toast.makeText(getApplicationContext(), msg.getData().getString("Error"), Toast.LENGTH_LONG).show();
+                    showPickFactionDialog();
+                    return false;
+                }
+
+                dialog.dismiss();
+                mGame.getAgent().setAllowedFactionChoice(false);
+                mGame.getAgent().setTeam(team);
+                setUpPlayerAndProceedWithLogin();
+                return true;
+            }));
+        });
+
+        builder.setNegativeButton("No", (dialog, which) -> {
+            dialog.dismiss();
+            showPickFactionDialog();
+        });
+
+        builder.create().show();
+    }
+
     private void showValidateUsernameDialog(String error) {
         mApp.setLoggedIn(false);
 
@@ -369,7 +464,8 @@ public class ActivitySplash extends Activity {
                 dialog.dismiss();
                 // i think we just assume that this is good
                 mGame.getAgent().setNickname(name);
-                procedWithLogin();
+                mGame.getAgent().setAllowedNicknameEdit(false);
+                setUpPlayerAndProceedWithLogin();
                 return true;
             }));
         });

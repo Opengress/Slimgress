@@ -10,16 +10,22 @@ import java.util.Map;
 public class TeamKnobs extends Knobs{
 
     public static class TeamType {
+        private final String mID;
         private final String mName;
         private final int mColour;
 //        private final String mIcon;
         private final boolean mPlayable;
 
         public TeamType(JSONObject json) throws JSONException {
+            mID = json.getString("id");
             mName = json.getString("name");
             mColour = json.getInt("colour");
 //            mIcon = json.getString("icon");
             mPlayable = json.getBoolean("playable_human");
+        }
+
+        public String getId() {
+            return mID;
         }
 
         public String getName() {

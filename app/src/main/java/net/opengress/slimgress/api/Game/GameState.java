@@ -592,7 +592,7 @@ public class GameState {
 
             JSONObject params = new JSONObject();
             JSONArray factions = new JSONArray();
-            factions.put(team.toString());
+            factions.put(team.getID());
             params.put("params", factions);
 
             mInterface.request(mHandshake, "playerUndecorated/chooseFaction", null, params, new RequestResult(handler));
