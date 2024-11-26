@@ -36,6 +36,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.provider.Settings;
 import android.text.Html;
 import android.text.InputFilter;
 import android.text.method.LinkMovementMethod;
@@ -45,6 +47,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -77,13 +80,40 @@ import okhttp3.ResponseBody;
 public class ActivitySplash extends Activity {
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
-    private Bundle loginBundle;
+    private Bundle mLoginBundle;
     private Dialog mFactionChoiceDialog;
+    private ProgressBar mProgressBar;
+    private Handler mHandler;
+    private Runnable mRotationTask;
+    private float mCurrentRotation = 0f;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+
+        mProgressBar = findViewById(R.id.progressBar1);
+
+        // Initialize the handler and rotation task
+        mHandler = new Handler(Looper.getMainLooper());
+        mRotationTask = new Runnable() {
+            @Override
+            public void run() {
+                mCurrentRotation += 10; // Rotate by 10 degrees each step
+                if (mCurrentRotation >= 360) {
+                    mCurrentRotation -= 360;
+                }
+                mProgressBar.setRotation(mCurrentRotation);
+
+                // Schedule the next frame
+                mHandler.postDelayed(this, 16); // Approx. 60 FPS
+            }
+        };
+
+        if (Settings.Global.getFloat(
+                getContentResolver(), Settings.Global.ANIMATOR_DURATION_SCALE, 1.0f) == 0) {
+            mHandler.post(mRotationTask);
+        }
 
         ((TextView) findViewById(R.id.splashVersion)).setText(String.format("%s version %s", getText(R.string.slimgress_version_unknown), BuildConfig.VERSION_NAME));
 
@@ -100,6 +130,12 @@ public class ActivitySplash extends Activity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mHandler.removeCallbacks(mRotationTask);
+    }
+
     protected void performHandshake() {
         performHandshake(false, false);
     }
@@ -111,7 +147,7 @@ public class ActivitySplash extends Activity {
             params.put("wantsPromos", wantsPromos ? "true" : "false");
         }
         Handler handler = new Handler(msg -> {
-            loginBundle = msg.getData();
+            mLoginBundle = msg.getData();
             return setUpPlayerAndProceedWithLogin();
         });
         mGame.intHandshake(handler, params);
@@ -165,7 +201,7 @@ public class ActivitySplash extends Activity {
 
     // might change this to be recursive
     private void proceedWithLogin() {
-        if (loginBundle.getBoolean("Successful")) {
+        if (mLoginBundle.getBoolean("Successful")) {
             SlimgressApplication.postPlainCommsMessage("Agent ID Confirmed. Welcome " + mGame.getAgent().getNickname());
             // start main activity
             ActivitySplash.this.finish();
@@ -194,7 +230,7 @@ public class ActivitySplash extends Activity {
                 builder.setView(dialogView);
 
                 CheckBox emailOptIn = dialogView.findViewById(R.id.emailOptIn);
-                emailOptIn.setChecked(loginBundle.getBoolean("MaySendPromoEmail"));
+                emailOptIn.setChecked(mLoginBundle.getBoolean("MaySendPromoEmail"));
                 builder.setMessage(Html.fromHtml("Please review and accept our updated <a href='https://opengress.net/terms-of-service'>Terms of Service</a> to continue."));
                 builder.setPositiveButton("Accept", (dialog, which) -> {
                     // around we go!
@@ -203,7 +239,7 @@ public class ActivitySplash extends Activity {
                 builder.setNegativeButton("Decline", (dialog, which) -> {
                     finish();
                 });
-            } else if (Objects.equals(loginBundle.getString("Error"), "Expired user session")) {
+            } else if (Objects.equals(mLoginBundle.getString("Error"), "Expired user session")) {
                 builder.setMessage(R.string.session_expired_log_in_again);
                 builder.setNegativeButton("OK", (dialog, which) -> {
                     mApp.setLoggedIn(false);
@@ -216,7 +252,7 @@ public class ActivitySplash extends Activity {
                     startActivityForResult(myIntent, 0);
                 });
             } else {
-                builder.setMessage(loginBundle.getString("Error"));
+                builder.setMessage(mLoginBundle.getString("Error"));
                 builder.setNegativeButton("OK", (dialog, which) -> finish());
             }
             Dialog dialog = builder.create();
@@ -372,6 +408,7 @@ public class ActivitySplash extends Activity {
                 dialog.dismiss();
                 mGame.getAgent().setAllowedFactionChoice(false);
                 mGame.getAgent().setTeam(team);
+                // why is the return value ignored?
                 setUpPlayerAndProceedWithLogin();
                 return true;
             }));
@@ -392,7 +429,7 @@ public class ActivitySplash extends Activity {
         builder.setCancelable(false);
 
         builder.setTitle("Codename required");
-        builder.setMessage(Objects.requireNonNullElse(error, "Create an agent name. This is the name other agents will know you by.")+"\n\nType a new agent name.");
+        builder.setMessage(Objects.requireNonNullElse(error, "Create an agent name. This is the name other agents will know you by.") + "\n\nType a new agent name.");
 
         // Set an EditText view to get user input
         final EditText input = getEditTextInput();
@@ -421,13 +458,13 @@ public class ActivitySplash extends Activity {
     private @NonNull EditText getEditTextInput() {
         final EditText input = new EditText(this);
         // this filter probably misses some edge cases
-        input.setFilters(new InputFilter[] {(source, start, end, dest, dstart, dend) -> {
+        input.setFilters(new InputFilter[]{(source, start, end, dest, dstart, dend) -> {
 
             int maxLength = 16;
 
-            if (source.length() > maxLength-1) {
-                return source.subSequence(0,maxLength);
-            } else if (input.length() > maxLength-1) {
+            if (source.length() > maxLength - 1) {
+                return source.subSequence(0, maxLength);
+            } else if (input.length() > maxLength - 1) {
                 return "";
             } else {
                 for (int i = start; i < end; i++) {
@@ -449,7 +486,7 @@ public class ActivitySplash extends Activity {
         builder.setCancelable(false);
 
         builder.setTitle("Success");
-        builder.setMessage("Codename valid. Please confirm:\n\n"+name);
+        builder.setMessage("Codename valid. Please confirm:\n\n" + name);
 
 
         builder.setPositiveButton("Confirm", (dialog, whichButton) -> {
@@ -465,6 +502,7 @@ public class ActivitySplash extends Activity {
                 // i think we just assume that this is good
                 mGame.getAgent().setNickname(name);
                 mGame.getAgent().setAllowedNicknameEdit(false);
+                // again, why is the return value ignored?
                 setUpPlayerAndProceedWithLogin();
                 return true;
             }));
