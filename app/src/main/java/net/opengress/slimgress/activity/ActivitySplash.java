@@ -24,6 +24,7 @@ package net.opengress.slimgress.activity;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.ClientMustUpgrade;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.UserMustAcceptTOS;
+import static net.opengress.slimgress.net.NetworkMonitor.hasInternetConnectionCold;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -117,17 +118,39 @@ public class ActivitySplash extends Activity {
 
         ((TextView) findViewById(R.id.splashVersion)).setText(String.format("%s version %s", getText(R.string.slimgress_version_unknown), BuildConfig.VERSION_NAME));
 
-        // authenticate if necessary
-        if (!mApp.isLoggedIn()) {
-            Intent myIntent = new Intent(getApplicationContext(), ActivityAuth.class);
-            startActivityForResult(myIntent, 0);
+        checkConnectionAndProceed();
+    }
+
+    private void checkConnectionAndProceed() {
+        if (hasInternetConnectionCold(this)) {
+            // authenticate if necessary
+            if (!mApp.isLoggedIn()) {
+                Intent myIntent = new Intent(getApplicationContext(), ActivityAuth.class);
+                startActivityForResult(myIntent, 0);
+            } else {
+                // start main activity
+                Agent agent = mGame.getAgent();
+                mGame.putAgentName(agent.getEntityGuid(), agent.getNickname());
+                finish();
+                startActivity(new Intent(getApplicationContext(), ActivityMain.class));
+            }
         } else {
-            // start main activity
-            Agent agent = mGame.getAgent();
-            mGame.putAgentName(agent.getEntityGuid(), agent.getNickname());
-            finish();
-            startActivity(new Intent(getApplicationContext(), ActivityMain.class));
+            showNoInternetDialog();
         }
+    }
+
+    private void showNoInternetDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Internet Required")
+                .setMessage("This app requires an internet connection to function. Please check your connection and try again.")
+                .setCancelable(false)
+                .setPositiveButton("Retry", (dialog, which) -> {
+                    checkConnectionAndProceed();
+                })
+                .setNegativeButton("Quit", (dialog, which) -> {
+                    finish(); // Exit the app
+                })
+                .show();
     }
 
     @Override

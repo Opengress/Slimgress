@@ -29,12 +29,16 @@ import android.util.Log;
 
 import net.opengress.slimgress.BuildConfig;
 import net.opengress.slimgress.api.Common.Location;
+import net.opengress.slimgress.net.DefaultRequestInterceptor;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
 import java.net.URLEncoder;
+import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
@@ -236,6 +240,13 @@ public class Interface
                         } else {
                             content = Objects.requireNonNull(response.body()).string();
                         }
+                    } catch (UnknownHostException | NoRouteToHostException ignored) {
+                        result.handleError("Can't reach host. You are probably offline.");
+                        result.finished();
+                    } catch (SocketTimeoutException ignored) {
+                        // TODO find out if this is a sensible way of handling things
+                        result.handleError("Request timed out! You may be offline.");
+                        result.finished();
                     }
                 }
 
