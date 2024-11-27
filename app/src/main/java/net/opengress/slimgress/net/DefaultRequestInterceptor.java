@@ -1,4 +1,4 @@
-package net.opengress.slimgress.api.Interface;
+package net.opengress.slimgress.net;
 
 import androidx.annotation.NonNull;
 
@@ -19,6 +19,7 @@ public class DefaultRequestInterceptor implements Interceptor {
     @NonNull
     public Response intercept(Interceptor.Chain chain)
             throws IOException {
+        IOException lastException = null;
 
         Request originalRequest = chain.request();
         Request requestWithUserAgent = originalRequest
@@ -26,6 +27,17 @@ public class DefaultRequestInterceptor implements Interceptor {
                 .header("Content-Type", contentType)
                 .build();
 
-        return chain.proceed(requestWithUserAgent);
+        int MAX_RETRIES = 3;
+        for (int i = 0; i < MAX_RETRIES; i++) {
+            try {
+                return chain.proceed(requestWithUserAgent);
+            } catch (IOException e) {
+                lastException = e;
+                if (i == MAX_RETRIES - 1) {
+                    throw e;
+                }
+            }
+        }
+        throw lastException;
     }
 }

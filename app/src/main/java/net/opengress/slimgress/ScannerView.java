@@ -33,6 +33,7 @@ import static net.opengress.slimgress.ViewHelpers.getTintedImage;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
 import static net.opengress.slimgress.api.Item.ItemBase.ItemType.PortalKey;
+import static net.opengress.slimgress.net.NetworkMonitor.hasInternetConnectionCold;
 import static org.maplibre.android.style.layers.PropertyFactory.circleColor;
 import static org.maplibre.android.style.layers.PropertyFactory.circleRadius;
 
@@ -91,6 +92,7 @@ import net.opengress.slimgress.api.Item.ItemPortalKey;
 import net.opengress.slimgress.api.Knobs.ScannerKnobs;
 import net.opengress.slimgress.api.Knobs.TeamKnobs;
 import net.opengress.slimgress.dialog.DialogHackResult;
+import net.opengress.slimgress.net.NetworkMonitor;
 import net.opengress.slimgress.positioning.AndroidBearingProvider;
 import net.opengress.slimgress.positioning.AndroidLocationProvider;
 import net.opengress.slimgress.positioning.LocationCallback;
@@ -238,11 +240,13 @@ public class ScannerView extends Fragment {
     GeoJsonSource mPortalGeoJsonSource;
     private long mCircleId = 1;
     private MapLibreMap.OnCameraIdleListener mOnCameraIdleListener;
+    private boolean mIsMapEnabled = false;
 
     // ===========================================================
     // Misc
     // ===========================================================
     private final Set<String> mSlurpableParticles = new HashSet<>();
+    private final NetworkMonitor mNetworkMonitor = new NetworkMonitor();
 
     private void updateBearing(int bearing) {
         if (mMapLibreMap == null) {
@@ -482,6 +486,10 @@ public class ScannerView extends Fragment {
             }
         });
         setLocationInaccurate(true);
+        mNetworkMonitor.registerNetworkMonitor(requireContext(),
+                this::onLostCOnnection,
+                this::onRegainedConnection
+        );
 
         mPortalActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::onPortalActivityResult);
 
@@ -644,6 +652,9 @@ public class ScannerView extends Fragment {
             mMapLibreMap.getUiSettings().setLogoEnabled(false);
 
             mMapLibreMap.addOnMapLongClickListener(point -> {
+                if (!mIsMapEnabled) {
+                    return true;
+                }
                 if (mIsRotating || mIsZooming || mIsClickingCompass) {
                     mIsClickingCompass = false;
                     return false;
@@ -659,6 +670,9 @@ public class ScannerView extends Fragment {
 
             @Override
             public boolean onScroll(MotionEvent e1, @NonNull MotionEvent e2, float distanceX, float distanceY) {
+                if (!mIsMapEnabled) {
+                    return true;
+                }
                 if (mMapLibreMap != null) {
                     if (!mIsZooming) {
                         mIsRotating = true;
@@ -699,6 +713,9 @@ public class ScannerView extends Fragment {
 
             @Override
             public boolean onDoubleTap(@NonNull MotionEvent e) {
+                if (!mIsMapEnabled) {
+                    return true;
+                }
                 mIsZooming = true;
                 return true;
             }
@@ -706,6 +723,9 @@ public class ScannerView extends Fragment {
 
 // Set a touch listener on the overlay to intercept gestures
         rootView.findViewById(R.id.gestureOverlay).setOnTouchListener((v, event) -> {
+            if (!mIsMapEnabled) {
+                return true;
+            }
             // need to capture mouse up and mouse down here to check that we can start rotation
             boolean isGestureHandled = event.getPointerCount() == 1 && mGestureDetector.onTouchEvent(event);
 
@@ -943,6 +963,7 @@ public class ScannerView extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         mMapView.onDestroy();
+        mNetworkMonitor.unregisterNetworkMonitor(requireContext());
     }
 
     @Override
@@ -1020,6 +1041,7 @@ public class ScannerView extends Fragment {
 
     @SuppressLint("ClickableViewAccessibility")
     private void setMapEnabled(boolean bool) {
+        mIsMapEnabled = bool;
         // there's probably a better way
         if (bool) {
             mMapView.setOnTouchListener(null);
@@ -1029,22 +1051,17 @@ public class ScannerView extends Fragment {
     }
 
     private void setLocationInaccurate(boolean isInaccurate) {
-        // unresearched workaround for crash on exit
-        if (getActivity() == null || getActivity().findViewById(R.id.quickMessage) == null) {
+        if (mGame.isLocationAccurate() != isInaccurate) {
+            return;
+        }
+
+        if (getActivity() == null || requireActivity().findViewById(R.id.quickMessage) == null) {
             return;
         }
 
         mGame.setLocationAccurate(!isInaccurate);
+        updateShowScannerDisabledOverlay();
 
-        // FIXME this is fine, but really the game state needs to know about it.
-        //  for example, if i'm about to hack a portal and i switch my GPS off, that shouldn't work!
-
-        // FIXME this MIGHT all be able to fire before view exists, need to maybe wrap it up
-        getActivity().findViewById(R.id.buttonComm).setEnabled(!isInaccurate);
-        getActivity().findViewById(R.id.buttonOps).setEnabled(!isInaccurate);
-        setMapEnabled(!isInaccurate);
-        // FIXME this also needs to consider XM levels
-        getActivity().findViewById(R.id.scannerDisabledOverlay).setVisibility(isInaccurate ? View.VISIBLE : View.GONE);
         if (isInaccurate) {
             displayQuickMessage(getStringSafely(R.string.location_inaccurate));
 //            mMapView.getOverlayManager().remove(mActionRadius);
@@ -1053,6 +1070,24 @@ public class ScannerView extends Fragment {
                 hideQuickMessage();
             }
         }
+    }
+
+    void updateShowScannerDisabledOverlay() {
+        if (getActivity() == null || requireActivity().findViewById(R.id.scannerDisabledOverlay) == null) {
+            return;
+        }
+        boolean shouldShow = mGame.isLocationAccurate();
+        // FIXME listen for this somehow ... later...
+//        shouldShow = shouldShow && mGame.getAgent().getEnergyState() == PlayerEntity.EnergyState.OK;
+        shouldShow = shouldShow && hasInternetConnectionCold(requireContext());
+        int visibility = shouldShow ? View.GONE : View.VISIBLE;
+        boolean finalShouldShow = shouldShow;
+        requireActivity().runOnUiThread(() -> {
+            requireActivity().findViewById(R.id.scannerDisabledOverlay).setVisibility(visibility);
+            requireActivity().findViewById(R.id.buttonComm).setEnabled(finalShouldShow);
+            requireActivity().findViewById(R.id.buttonOps).setEnabled(finalShouldShow);
+        });
+        setMapEnabled(shouldShow);
     }
 
     private void loadAssets() {
@@ -1674,9 +1709,11 @@ public class ScannerView extends Fragment {
         if (activity == null) {
             return;
         }
-        TextView quickMessageView = activity.findViewById(R.id.quickMessage);
-        quickMessageView.setText(message);
-        quickMessageView.setVisibility(View.VISIBLE);
+        activity.runOnUiThread(() -> {
+            TextView quickMessageView = activity.findViewById(R.id.quickMessage);
+            quickMessageView.setText(message);
+            quickMessageView.setVisibility(View.VISIBLE);
+        });
     }
 
     public void hideQuickMessage() {
@@ -1684,7 +1721,7 @@ public class ScannerView extends Fragment {
         if (activity == null) {
             return;
         }
-        activity.findViewById(R.id.quickMessage).setVisibility(View.GONE);
+        activity.runOnUiThread(() -> activity.findViewById(R.id.quickMessage).setVisibility(View.GONE));
     }
 
     public void setQuickMessageTimeout() {
@@ -1874,6 +1911,9 @@ public class ScannerView extends Fragment {
     }
 
     private boolean onMapClick(LatLng point) {
+        if (!mIsMapEnabled) {
+            return true;
+        }
         if (mIsZooming) {
             return false;
         }
@@ -1965,5 +2005,21 @@ public class ScannerView extends Fragment {
         setUpTileSource();
         onReceiveDeletedEntityGuids(guids);
         mGame.clear();
+    }
+
+    private void onLostCOnnection() {
+        if (getActivity() == null || requireActivity().findViewById(R.id.quickMessage) == null) {
+            return;
+        }
+        displayQuickMessage("Scanner disabled - network connection lost");
+        updateShowScannerDisabledOverlay();
+    }
+
+    private void onRegainedConnection() {
+        if (getActivity() == null || requireActivity().findViewById(R.id.quickMessage) == null) {
+            return;
+        }
+        updateShowScannerDisabledOverlay();
+        hideQuickMessage();
     }
 }
