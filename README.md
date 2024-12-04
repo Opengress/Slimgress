@@ -151,7 +151,7 @@ Another thing we don't want is to ever make a client which:
 - Equivalent of [REDACTED] parity
 - Gameplay to remind players of 2016, maybe
 
-# Contraversial issue
+# Controversial issue
 Platform support: Ideally we go all the way back to API 1.
 We are limited mostly by our dependencies - ACRA needs 26, I think. Material might need 21?
 Probably if we start a V2 client we will try to keep this one running in the basic sense for a while
