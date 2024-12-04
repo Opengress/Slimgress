@@ -26,12 +26,14 @@ import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.Clie
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.UserMustAcceptTOS;
 import static net.opengress.slimgress.net.NetworkMonitor.hasInternetConnectionCold;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -54,6 +56,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import net.opengress.slimgress.BuildConfig;
@@ -65,6 +68,8 @@ import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Interface.Interface;
 import net.opengress.slimgress.api.Knobs.TeamKnobs;
 import net.opengress.slimgress.api.Player.Agent;
+import net.opengress.slimgress.positioning.AndroidLocationProvider;
+import net.opengress.slimgress.positioning.LocationCallback;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -87,11 +92,29 @@ public class ActivitySplash extends Activity {
     private Handler mHandler;
     private Runnable mRotationTask;
     private float mCurrentRotation = 0f;
+    private AndroidLocationProvider mLocationProvider;
+    private LocationCallback mLocationCallback = new LocationCallback() {
+        @Override
+        public void onLocationUpdated(android.location.Location location) {
+            mGame.updateLocation(new net.opengress.slimgress.api.Common.Location(location));
+        }
+
+        @Override
+        public void onUpdatesStarted() {
+        }
+
+        @Override
+        public void onUpdatesStopped() {
+        }
+    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+
+        mLocationProvider = AndroidLocationProvider.getInstance(SlimgressApplication.getInstance());
+        mLocationProvider.addLocationCallback(mLocationCallback);
 
         mProgressBar = findViewById(R.id.progressBar1);
 
@@ -157,6 +180,7 @@ public class ActivitySplash extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         mHandler.removeCallbacks(mRotationTask);
+        mLocationProvider.removeLocationCallback(mLocationCallback);
     }
 
     protected void performHandshake() {
@@ -176,8 +200,26 @@ public class ActivitySplash extends Activity {
         mGame.intHandshake(handler, params);
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        for (int i = 0; i < grantResults.length; i++) {
+            if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                    mLocationProvider.startLocationUpdates();
+                }
+            }
+        }
+        setUpPlayerAndProceedWithLogin();
+    }
+
     private boolean setUpPlayerAndProceedWithLogin() {
-        // this will need further updates, like when user needs to select a faction
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            mLocationProvider.checkPermissionsAndRequestUpdates(this, null);
+            return false;
+        } else {
+            mLocationProvider.startLocationUpdates();
+        }
         if (mGame.getHandshake().isValid() && mGame.getAgent().isAllowedNicknameEdit()) {
             showValidateUsernameDialog(null);
             return false;
@@ -187,6 +229,7 @@ public class ActivitySplash extends Activity {
         } else {
             proceedWithLogin();
         }
+
         return true;
     }
 
@@ -431,6 +474,7 @@ public class ActivitySplash extends Activity {
                 dialog.dismiss();
                 mGame.getAgent().setAllowedFactionChoice(false);
                 mGame.getAgent().setTeam(team);
+                mGame.intSendMessage("has joined the " + team + " team.", true, null);
                 // why is the return value ignored?
                 setUpPlayerAndProceedWithLogin();
                 return true;

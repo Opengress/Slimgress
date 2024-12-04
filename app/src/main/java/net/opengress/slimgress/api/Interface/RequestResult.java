@@ -91,7 +91,9 @@ public class RequestResult
     public void finished()
     {
         mMessage.setData(mBundle);
-        mResultHandler.sendMessage(mMessage);
+        if (mResultHandler != null) {
+            mResultHandler.sendMessage(mMessage);
+        }
     }
 
     public static void handleRequest(JSONObject json, RequestResult result)

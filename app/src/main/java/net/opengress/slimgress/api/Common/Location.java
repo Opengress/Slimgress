@@ -39,6 +39,11 @@ public class Location implements Serializable
     private final long latE6;
     private final long lngE6;
 
+    public Location(android.location.Location pos) {
+        latE6 = Math.round(pos.getLatitude() * 1e6);
+        lngE6 = Math.round(pos.getLongitude() * 1e6);
+    }
+
     private double hexToDecimal(String hex) {
         BigInteger bigInt = new BigInteger(hex, 16);
         // Handle negative values for latitude
