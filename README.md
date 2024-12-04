@@ -31,46 +31,42 @@ third-party documentation published online, other third-party client code, scree
 
 # Implemented in client
 - Log in
-- View map with portals and resonators (tested), links and fields (not tested)
+- Agree to terms of service, pick name, pick faction
+- View map with portals and resonators, links and fields
 - View BASIC portal details (picture, title, level)
 - Hack portal (no minigame or powerups right now)
 - View inventory (mostly works but needs overhaul)
-- View and slurp energy globs on map (seems very buggy)
+- View and slurp energy globs on map
 - Auto update detection
 - Deploy and upgrade resonators on portals
 - Drop and recycle including bulk recycle
 - Untargeted radial weapons
-- Mostly sensible main map (actual scanner) rotation/zoom etc. Still has bugs.
+- Flipcards
+- Mods
+- Drop and pickup
+- Sending plexts (chat messages)
+- Mostly sensible main map (actual scanner) rotation/zoom etc. Still has bugs
 
 # To do soon (almost all of it needing further serverside work)
-- Update XM and AP in the client (eg on recycling, hacking etc)
-- Flipcards
+
+- Update XM and AP in the client more often
 - Link portals
 - Log out (Workaround: clear data)
-- Toggle switches for things like loading portal images and maybe even map tiles (save data)
-- Deploy mods to portals
-- View and pick up items from map
-- Send/view comms stuff if/as appropriate (sending now works)
+- COMM range, more types of plexts, further improvements
 - Create a variety of game item types (many types obtainable but some not activatable)
 
 # To do (but it's technical etc)
-
 - Better portal and deploy screens
-- Custom player cursor overlay which sizes like a GroundOverlay but rotates to match orientation
-- Full set of log in and account setup stuff (name changes, training, stale cookie...)
-- Invite system support??
+- Tutorial, factionhint/invites/verification, general onboarding
 - More types of logins support?
 
 # To do eventually (again, needs serverside stuff)
-
 - View players'/own stats/profiles (stats are starting to be recorded now)
 - View scoring information/checkpoints/whatever
 - Catch-up iOS/cross-platform client etc
 - Notifications (not in Telegram).... Harder because we are saying NO to fcm/gcm and friends
-- 3D map (likely maplibre)
 
 # Out of scope
-
 - A perfect, 1:1 reimplementation of gameplay logic, UI, UX or protocol of other software
 - Animations or any particularly beautiful art etc
 - Anything illegal
@@ -78,12 +74,12 @@ third-party documentation published online, other third-party client code, scree
 # Goals
 It's hoped that once there's a stable server implementation Slimgress can eventually be retired
 in favour of a V2 client written with something performant and cross-platform.
-Perhaps Qt, Godot or libGDX.
+Perhaps Qt, Godot or libGDX (with RoboVM of course).
 The Slimgress client at this point is imagined as really mostly a client for testing, 
 research and development.
 I'd hope that eventually there will be a client codebase which can be deployed on Android, iOS,
 maybe even Sailfish and future versions of Ubuntu Phone.
-To reach all these platforms, we probably have to eventually let go of Java.
+To reach all these platforms, we probably (well, MAYBE) have to eventually let go of Java.
 But that's moot right now, when Android development is easy to pick up and has a head start and a
 big audience of possible testers.
 
@@ -101,7 +97,7 @@ Another thing we don't want is to ever make a client which:
 - eats all your data (if you don't want it to)
 - drains your battery rapidly (if you don't want it to)
 - makes your phone hot enough to fry eggs (if you don't want it to)
-- lags between actions/activities/whatever or has long loading screens
+- lags between actions/activities/whatever or has long loading screens (this is hard to get right!)
 - takes a loooooong time to start/open/resume
 - kills your other applications (memory hog etc)
 
@@ -116,19 +112,21 @@ Another thing we don't want is to ever make a client which:
 
 ## v0.3 - by which time players should be able to leave marks on the world and play by game rules
 - Deploy on to portals to power them up (done)
-- Flipcards
+- Flipcards (done)
 - Weapons (firing of) (done)
-- Data/battery saver toggles
+- Data/battery saver toggles (some exist now)
 
 ## v0.4 - by which time it should be possible to have an enemy team or enemy bot
-- Portal mods
-- Complete handling login/auth situations (need accept TOS, need name change, stale cookie etc)
+
+- Portal mods (done)
+- Complete handling login/auth situations (TOS, name change, stale cookie etc) (done)
 
 ## v0.5 - by which time strategic gameplay should become a possibility
 - Link portals together
 
 ## v0.6 - by which time nasty surprises should begin to be known
-- Pick up items from map/floor
+
+- Pick up items from map/floor (done)
 
 ## v0.7 - Quality of life stuff
 - Capsules
@@ -150,12 +148,10 @@ Another thing we don't want is to ever make a client which:
 - Profile pages / badges / whatever
 
 ## v1.0 - A stable client emerges, ready for porting, rewrites, overhauls, new content etc
-
 - Equivalent of [REDACTED] parity
 - Gameplay to remind players of 2016, maybe
 
 # Contraversial issue
-
 Platform support: Ideally we go all the way back to API 1.
 We are limited mostly by our dependencies - ACRA needs 26, I think. Material might need 21?
 Probably if we start a V2 client we will try to keep this one running in the basic sense for a while
