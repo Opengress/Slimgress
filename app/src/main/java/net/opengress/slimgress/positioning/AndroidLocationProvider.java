@@ -1,69 +1,107 @@
 package net.opengress.slimgress.positioning;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AndroidLocationProvider implements LocationProvider, LocationListener {
-    private final LocationManager locationManager;
-    private LocationCallback callback;
-    List<String> providers = new ArrayList<>();
+    List<String> mProviders = new ArrayList<>();
+    private Location mCurrentLocation;
+    private long mGpsTimestamp = System.currentTimeMillis();
+    private boolean mIsRunning = false;
+    private final ArrayList<LocationCallback> mCallbacks = new ArrayList<>();
+    private final LocationManager mLocationManager;
+    private static AndroidLocationProvider mInstance;
 
-    public AndroidLocationProvider(Context context) {
-        locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+    private AndroidLocationProvider(@NonNull Context context) {
+        mLocationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+    }
+
+    public static synchronized AndroidLocationProvider getInstance(Context context) {
+        if (mInstance == null) {
+            mInstance = new AndroidLocationProvider(context.getApplicationContext());
+        }
+        return mInstance;
     }
 
     @SuppressLint("MissingPermission")
     @Override
     public boolean startLocationUpdates() {
-        boolean initSuccess = false;
+        if (mIsRunning) {
+            Log.d("LocationProvider", "Skipping redundant location update request");
+            return true;
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            providers.add(LocationManager.FUSED_PROVIDER);
+            mProviders.add(LocationManager.FUSED_PROVIDER);
         }
-        providers.add(LocationManager.GPS_PROVIDER);
+        mProviders.add(LocationManager.GPS_PROVIDER);
 //        providers.add(LocationManager.NETWORK_PROVIDER);
 
-        for (String provider : providers) {
+        for (String provider : mProviders) {
 
             // Request location updates
-            if (locationManager.isProviderEnabled(provider)) {
-                initSuccess = true;
+            if (mLocationManager.isProviderEnabled(provider)) {
+                mIsRunning = true;
             }
-            locationManager.requestLocationUpdates(provider, 1, 0f, this);
+            mLocationManager.requestLocationUpdates(provider, 1, 0f, this);
             Log.d("LocationProvider", "Requested location updates from " + provider);
         }
 
-        return initSuccess;
+        return mIsRunning;
     }
 
     @Override
     public void stopLocationUpdates() {
-        if (locationManager != null) {
-            locationManager.removeUpdates(this);
+        if (mLocationManager != null) {
+            mLocationManager.removeUpdates(this);
             Log.d("LocationProvider", "Stopped location updates.");
         }
+        mIsRunning = false;
     }
 
     @Override
-    public void setLocationCallback(LocationCallback callback) {
-        this.callback = callback;
+    public void addLocationCallback(LocationCallback callback) {
+        this.mCallbacks.add(callback);
+    }
+
+    @Override
+    public void removeLocationCallback(LocationCallback callback) {
+        this.mCallbacks.remove(callback);
     }
 
     @Override
     public void onLocationChanged(@NonNull Location location) {
-        if (callback != null) {
-            callback.onLocationUpdated(location);
+        boolean gotGPS = false;
+        long time = System.currentTimeMillis();
+        if (LocationManager.GPS_PROVIDER.equals(location.getProvider())) {
+            mGpsTimestamp = time;
+            gotGPS = true;
+        }
+        if (gotGPS || time - 10000 > mGpsTimestamp) {
+            for (LocationCallback callback : mCallbacks) {
+                callback.onLocationUpdated(location);
+            }
+            mCurrentLocation = location;
         }
     }
 
@@ -74,16 +112,70 @@ public class AndroidLocationProvider implements LocationProvider, LocationListen
 
     @Override
     public void onProviderEnabled(@NonNull String provider) {
-        if (providers.contains(provider)) {
-            callback.onUpdatesStarted();
+        for (LocationCallback callback : mCallbacks) {
+            if (mProviders.contains(provider)) {
+                callback.onUpdatesStarted();
+            }
         }
     }
 
     @Override
     public void onProviderDisabled(@NonNull String provider) {
-        if (providers.contains(provider)) {
-            callback.onUpdatesStopped();
+        for (LocationCallback callback : mCallbacks) {
+            if (mProviders.contains(provider)) {
+                callback.onUpdatesStopped();
+            }
         }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Location getCurrentLocation() {
+        return mCurrentLocation;
+    }
+
+    public void checkPermissionsAndRequestUpdates(Activity activity, Runnable onSuccessCallback) {
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (activity.shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    doActualPermissionsRequest(activity);
+                } else {
+                    // User selected 'Don't Ask Again'
+                    sendUserToSystemSettings(activity);
+                }
+            } else {
+                doActualPermissionsRequest(activity);
+            }
+        } else {
+            if (onSuccessCallback != null) {
+                onSuccessCallback.run();
+            }
+        }
+    }
+
+    private static void sendUserToSystemSettings(Activity activity) {
+        new AlertDialog.Builder(activity)
+                .setTitle("Permission Required")
+                .setMessage("Permission to access the device location is required for this app to function correctly. Please enable it in the app settings.")
+                .setPositiveButton("Open Settings", (dialog, which) -> {
+                    // Open app settings
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    Uri uri = Uri.fromParts("package", activity.getPackageName(), null);
+                    intent.setData(uri);
+                    activity.startActivity(intent);
+                })
+                .create()
+                .show();
+    }
+
+    private static void doActualPermissionsRequest(Activity activity) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setMessage("Permission to access the device location is required for this app to function correctly.").setTitle("Permission required");
+
+        builder.setPositiveButton("OK", (dialog, id) -> ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101));
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 }
 

@@ -37,14 +37,12 @@ import static net.opengress.slimgress.net.NetworkMonitor.hasInternetConnectionCo
 import static org.maplibre.android.style.layers.PropertyFactory.circleColor;
 import static org.maplibre.android.style.layers.PropertyFactory.circleRadius;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -69,8 +67,6 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.common.geometry.S2LatLng;
@@ -95,6 +91,7 @@ import net.opengress.slimgress.dialog.DialogHackResult;
 import net.opengress.slimgress.net.NetworkMonitor;
 import net.opengress.slimgress.positioning.AndroidBearingProvider;
 import net.opengress.slimgress.positioning.AndroidLocationProvider;
+import net.opengress.slimgress.positioning.LatLngPool;
 import net.opengress.slimgress.positioning.LocationCallback;
 
 import org.json.JSONException;
@@ -200,7 +197,6 @@ public class ScannerView extends Fragment {
     private SharedPreferences mPrefs;
 
     private net.opengress.slimgress.api.Common.Location mCurrentLocation = null;
-    private static final int RECORD_REQUEST_CODE = 101;
     private long mLastScan = 0;
     // FIXME this should be used to set "location inaccurate" if updates mysteriously stop
     private Date mLastLocationAcquired = null;
@@ -457,9 +453,9 @@ public class ScannerView extends Fragment {
         }
 
         mBearingProvider = new AndroidBearingProvider(requireContext());
-        mLocationProvider = new AndroidLocationProvider(requireContext());
+        mLocationProvider = AndroidLocationProvider.getInstance(SlimgressApplication.getInstance());
         mBearingProvider.setBearingCallback(bearing -> updateBearing((int) bearing));
-        mLocationProvider.setLocationCallback(new LocationCallback() {
+        mLocationProvider.addLocationCallback(new LocationCallback() {
             @Override
             public void onLocationUpdated(android.location.Location location) {
                 slurp();
@@ -487,7 +483,7 @@ public class ScannerView extends Fragment {
         });
         setLocationInaccurate(true);
         mNetworkMonitor.registerNetworkMonitor(requireContext(),
-                this::onLostCOnnection,
+                this::onLostConnection,
                 this::onRegainedConnection
         );
 
@@ -857,10 +853,6 @@ public class ScannerView extends Fragment {
         return false;
     }
 
-    protected void makePermissionsRequest() {
-        ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, RECORD_REQUEST_CODE);
-    }
-
     private void addExpandingCircle(Location centerPoint, int durationMs, float radiusM, Bitmap bm) {
         if (mMapLibreMap == null || mMapLibreMap.getStyle() == null) {
             return;
@@ -1001,22 +993,21 @@ public class ScannerView extends Fragment {
         // Other (location)
         // ===========================================================
 
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-            builder.setMessage("Permission to access the device location is required for this app to function correctly.").setTitle("Permission required");
-
-            builder.setPositiveButton("OK", (dialog, id) -> makePermissionsRequest());
-
-            AlertDialog dialog = builder.create();
-            dialog.show();
-        } else {
-            requestLocationUpdates();
-        }
-
+        mLocationProvider.checkPermissionsAndRequestUpdates(requireActivity(), this::requestLocationUpdates);
 
         if (getActivity() != null) {
             ((ActivityMain) getActivity()).updateAgent();
         }
+    }
+
+    public void requestLocationUpdates() {
+        if (mGame.isLocationAccurate()) {
+            return;
+        }
+        if (!mLocationProvider.startLocationUpdates()) {
+            setLocationInaccurate(true);
+        }
+        mBearingProvider.startBearingUpdates();
     }
 
     private void setUpTileSource() {
@@ -1029,15 +1020,6 @@ public class ScannerView extends Fragment {
         });
     }
 
-    public void requestLocationUpdates() {
-        if (mGame.isLocationAccurate()) {
-            return;
-        }
-        if (!mLocationProvider.startLocationUpdates()) {
-            setLocationInaccurate(true);
-        }
-        mBearingProvider.startBearingUpdates();
-    }
 
     @SuppressLint("ClickableViewAccessibility")
     private void setMapEnabled(boolean bool) {
@@ -2007,7 +1989,7 @@ public class ScannerView extends Fragment {
         mGame.clear();
     }
 
-    private void onLostCOnnection() {
+    private void onLostConnection() {
         if (getActivity() == null || requireActivity().findViewById(R.id.quickMessage) == null) {
             return;
         }
