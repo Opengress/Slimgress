@@ -481,6 +481,8 @@ public class ScannerView extends Fragment {
                 setLocationInaccurate(true);
             }
         });
+        // NB setting it to accurate means the scanner notices the change and sets the message
+        mGame.setLocationAccurate(true);
         setLocationInaccurate(true);
         mNetworkMonitor.registerNetworkMonitor(requireContext(),
                 this::onLostConnection,
@@ -1712,7 +1714,7 @@ public class ScannerView extends Fragment {
         if (activity == null) {
             return;
         }
-        mApp.schedule_(() -> mApp.getMainActivity().runOnUiThread(() -> mApp.getMainActivity().findViewById(R.id.quickMessage).setVisibility(View.GONE)), 3000, TimeUnit.MILLISECONDS);
+        mApp.schedule_(this::hideQuickMessage, 3000, TimeUnit.MILLISECONDS);
     }
 
     public MapView getMap() {

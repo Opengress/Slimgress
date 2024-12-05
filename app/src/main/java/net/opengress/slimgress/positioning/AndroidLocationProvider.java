@@ -97,7 +97,7 @@ public class AndroidLocationProvider implements LocationProvider, LocationListen
             mGpsTimestamp = time;
             gotGPS = true;
         }
-        if (gotGPS || time - 10000 > mGpsTimestamp) {
+        if (gotGPS || time - 4000 > mGpsTimestamp) {
             for (LocationCallback callback : mCallbacks) {
                 callback.onLocationUpdated(location);
             }
