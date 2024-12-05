@@ -116,6 +116,11 @@ public class ActivityInventoryItem extends AppCompatActivity {
 
                 findViewById(R.id.activity_inventory_item_recharge).setVisibility(View.VISIBLE);
                 findViewById(R.id.activity_inventory_item_recharge).setEnabled(false);
+                findViewById(R.id.activity_inventory_item_image).setOnClickListener(c -> {
+                    Intent myIntent = new Intent(this, ActivityPortal.class);
+                    mGame.setCurrentPortal(portal);
+                    startActivity(myIntent);
+                });
             }
             case Resonator -> {
                 itemTitle.setText("Resonator");
@@ -469,13 +474,13 @@ public class ActivityInventoryItem extends AppCompatActivity {
         // if guard value
         if (level == -999) {
             level = switch (mItem.getRarity()) {
-                default -> -999; // crash
                 case VeryCommon -> 1;
                 case Common -> 2;
                 case LessCommon -> 3;
                 case Rare -> 4;
                 case VeryRare -> 5;
                 case ExtraRare -> 6;
+                default -> -999; // crash
             };
         }
         String name = mInventory.getItems(mItem.getType()).get(0).getName();
@@ -517,7 +522,6 @@ public class ActivityInventoryItem extends AppCompatActivity {
             } else {
                 SlimgressApplication.postPlainCommsMessage("Recycle successful");
                 var res = data.getString("result");
-                DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
                 String message;
                 if (finalQuantity > 1) {
                     message = "Gained %s XM from recycling %d %ss";
