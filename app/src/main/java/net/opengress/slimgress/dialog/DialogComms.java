@@ -31,7 +31,7 @@ import com.google.android.material.tabs.TabLayout;
 import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.Plext.PlextBase;
-import net.opengress.slimgress.api.ViewModels.CommsViewModel;
+import net.opengress.slimgress.viewmodel.CommsViewModel;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

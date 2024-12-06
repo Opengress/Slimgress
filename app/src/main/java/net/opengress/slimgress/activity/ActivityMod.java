@@ -50,6 +50,7 @@ public class ActivityMod extends AppCompatActivity {
             R.id.modScreenMod2,
             R.id.modScreenMod3
     };
+    private GameEntityPortal mPortal;
 
 
     private final Handler deployResultHandler = new Handler(msg -> {
@@ -62,7 +63,7 @@ public class ActivityMod extends AppCompatActivity {
             ItemMod mod = (ItemMod) msg.getData().getSerializable("mod");
             // FIXME this does not work correctly in the case where we are removing a mod and shields have funny add cost
             String name = (mod == null) ? "RES_SHIELD" : mod.getName();
-            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalModByLevel(name).get(mGame.getCurrentPortal().getPortalLevel() - 1));
+            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalModByLevel(name).get(mPortal.getPortalLevel() - 1));
         }
 
         setUpView();
@@ -74,6 +75,19 @@ public class ActivityMod extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mod);
+        String portalGuid = getIntent().getStringExtra("guid");
+        if (portalGuid != null) {
+            mPortal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(portalGuid);
+            if (mPortal != null) {
+                setUpView();
+            } else {
+                Log.e("ActivityPortal", "Portal not found for GUID: " + portalGuid);
+                finish();
+            }
+        } else {
+            Log.e("ActivityPortal", "No portal GUID provided");
+            finish();
+        }
         setUpView();
         mApp.getLocationViewModel().getLocationData().observe(this, this::onReceiveLocation);
 
@@ -81,8 +95,7 @@ public class ActivityMod extends AppCompatActivity {
 
     @SuppressLint({"DefaultLocale", "ObsoleteSdkInt", "SetTextI18n"})
     public void setUpView() {
-        GameEntityPortal portal = mGame.getCurrentPortal();
-        boolean teamOK = portal.getPortalTeam().toString().equals(mGame.getAgent().getTeam().toString());
+        boolean teamOK = mPortal.getPortalTeam().toString().equals(mGame.getAgent().getTeam().toString());
 
         // iterate over the mods (maybe unrolled) and set up their info and any relevant callbacks
         for (int id : mModViewIds) {
@@ -92,7 +105,7 @@ public class ActivityMod extends AppCompatActivity {
 //            ((TextView) findViewById(id).findViewById(R.id.modDescriptionText)).setText(R.string.l0);
         }
 
-        List<LinkedMod> mods = portal.getPortalMods();
+        List<LinkedMod> mods = mPortal.getPortalMods();
         // iterate to find out if portal is fully deployed
         int modCount = 0;
         int yourMods = 0;
@@ -132,7 +145,7 @@ public class ActivityMod extends AppCompatActivity {
             int rarityColour = getRarityColour(mod.rarity);
             ((TextView) widget.findViewById(R.id.modDescriptionText)).setTextColor(getColourFromResources(getResources(), rarityColour));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setText(mGame.getAgentName(mod.installingUser));
-            ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());
+            ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setTextColor(0xff000000 + mPortal.getPortalTeam().getColour());
             if (teamOK && mPlayerCanRemoveMods) {
                 widget.findViewById(R.id.widgetActionButton).setVisibility(View.VISIBLE);
                 widget.findViewById(R.id.widgetActionButton).setEnabled(true);
@@ -144,8 +157,8 @@ public class ActivityMod extends AppCompatActivity {
             }
         }
 
-        int dist = (int) mGame.getLocation().distanceTo(mGame.getCurrentPortal().getPortalLocation());
-        updateInfoText(dist, mGame.getCurrentPortal(), findViewById(R.id.modScreenPortalInfo));
+        int dist = (int) mGame.getLocation().distanceTo(mPortal.getPortalLocation());
+        updateInfoText(dist, mPortal, findViewById(R.id.modScreenPortalInfo));
         setButtonsEnabled(dist <= mActionRadiusM);
     }
 
@@ -178,7 +191,7 @@ public class ActivityMod extends AppCompatActivity {
             if (modToInstall != null) {
                 mGame.getInventory().removeItem(modToInstall);
                 // Proceed to install the mod
-                mGame.intAddMod(modToInstall, mGame.getCurrentPortal(), slot, deployResultHandler);
+                mGame.intAddMod(modToInstall, mPortal, slot, deployResultHandler);
             } else {
                 // Handle the case where the mod is no longer available
                 Toast.makeText(this, "Mod not available", Toast.LENGTH_SHORT).show();
@@ -195,7 +208,7 @@ public class ActivityMod extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Confirm Removal");
         builder.setMessage("You are about to remove a mod. It will be erased from existence. Are you sure?")
-                .setPositiveButton("Yes", (dialogInterface, which) -> mGame.intRemoveMod(mGame.getCurrentPortal(), slot, deployResultHandler))
+                .setPositiveButton("Yes", (dialogInterface, which) -> mGame.intRemoveMod(mPortal, slot, deployResultHandler))
                 .setNegativeButton("No", (dialogInterface, which) -> dialogInterface.dismiss());
         builder.show();
     }
@@ -226,12 +239,12 @@ public class ActivityMod extends AppCompatActivity {
 
     private void onReceiveLocation(Location location) {
         if (location != null) {
-            int dist = (int) location.distanceTo(mGame.getCurrentPortal().getPortalLocation());
+            int dist = (int) location.distanceTo(mPortal.getPortalLocation());
             setButtonsEnabled(dist <= mActionRadiusM);
-            updateInfoText(dist, mGame.getCurrentPortal(), findViewById(R.id.modScreenPortalInfo));
+            updateInfoText(dist, mPortal, findViewById(R.id.modScreenPortalInfo));
         } else {
             setButtonsEnabled(false);
-            updateInfoText(999999000, mGame.getCurrentPortal(), findViewById(R.id.modScreenPortalInfo));
+            updateInfoText(999999000, mPortal, findViewById(R.id.modScreenPortalInfo));
         }
     }
 

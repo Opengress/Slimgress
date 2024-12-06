@@ -51,6 +51,7 @@ public class ActivityDeploy extends AppCompatActivity {
             R.id.deployScreenResonatorS,
             R.id.deployScreenResonatorSE,
     };
+    private GameEntityPortal mPortal;
 
     private final Handler deployResultHandler = new Handler(msg -> {
         var data = msg.getData();
@@ -89,15 +90,26 @@ public class ActivityDeploy extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_deploy);
-        setUpView();
+        String portalGuid = getIntent().getStringExtra("guid");
+        if (portalGuid != null) {
+            mPortal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(portalGuid);
+            if (mPortal != null) {
+                setUpView();
+            } else {
+                Log.e("ActivityPortal", "Portal not found for GUID: " + portalGuid);
+                finish();
+            }
+        } else {
+            Log.e("ActivityPortal", "No portal GUID provided");
+            finish();
+        }
         mApp.getLocationViewModel().getLocationData().observe(this, this::onReceiveLocation);
 
     }
 
     @SuppressLint({"DefaultLocale", "ObsoleteSdkInt"})
     public void setUpView() {
-        GameEntityPortal portal = mGame.getCurrentPortal();
-        boolean teamOK = portal.getPortalTeam().toString().equalsIgnoreCase("neutral") || portal.getPortalTeam().toString().equals(mGame.getAgent().getTeam().toString());
+        boolean teamOK = mPortal.getPortalTeam().toString().equalsIgnoreCase("neutral") || mPortal.getPortalTeam().toString().equals(mGame.getAgent().getTeam().toString());
 
 
         findViewById(R.id.btnRechargeAll).setVisibility(View.INVISIBLE);
@@ -117,7 +129,7 @@ public class ActivityDeploy extends AppCompatActivity {
 //            ((TextView) findViewById(id).findViewById(R.id.resoLevelText)).setText(R.string.l0);
         }
 
-        List<LinkedResonator> resos = portal.getPortalResonators();
+        List<LinkedResonator> resos = mPortal.getPortalResonators();
         // iterate to find out if portal is fully deployed
         int resoCount = 0;
         for (LinkedResonator reso : resos) {
@@ -138,7 +150,7 @@ public class ActivityDeploy extends AppCompatActivity {
             ((TextView) widget.findViewById(R.id.resoLevelText)).setTextColor(getColourFromResources(getResources(), levelColour));
             ((TextView) widget.findViewById(R.id.positionText)).setText(String.format("%dm %s", reso.distanceToPortal, resoSlotToOctantText(reso.slot)));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setText(mGame.getAgentName(reso.ownerGuid));
-            ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());
+            ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setTextColor(0xff000000 + mPortal.getPortalTeam().getColour());
 
             List<ItemResonator> resosForUpgrade = new ArrayList<>();
             if (teamOK && canUpgradeOrDeploy(resoCountForLevel, reso.level)) {
@@ -163,14 +175,14 @@ public class ActivityDeploy extends AppCompatActivity {
             ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).setMax(reso.getMaxEnergy());
             ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).setProgress(reso.energyTotal);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).getProgressDrawable().setTint(0xff000000 + portal.getPortalTeam().getColour());
+                ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).getProgressDrawable().setTint(0xff000000 + mPortal.getPortalTeam().getColour());
             } else {
-                ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).getProgressDrawable().setColorFilter(0xff000000 + portal.getPortalTeam().getColour(), PorterDuff.Mode.SRC_IN);
+                ((ProgressBar) widget.findViewById(R.id.resoHealthBar)).getProgressDrawable().setColorFilter(0xff000000 + mPortal.getPortalTeam().getColour(), PorterDuff.Mode.SRC_IN);
             }
         }
 
-        int dist = (int) mGame.getLocation().distanceTo(mGame.getCurrentPortal().getPortalLocation());
-        updateInfoText(dist, mGame.getCurrentPortal(), findViewById(R.id.deployScreenPortalInfo));
+        int dist = (int) mGame.getLocation().distanceTo(mPortal.getPortalLocation());
+        updateInfoText(dist, mPortal, findViewById(R.id.deployScreenPortalInfo));
         setButtonsEnabled(dist <= mActionRadiusM);
     }
 
@@ -209,9 +221,9 @@ public class ActivityDeploy extends AppCompatActivity {
     @SuppressWarnings("ConstantConditions")
     private void onUpgradeButtonPressed(View view) {
         int slot = layoutIdToResoSlot((Integer) view.getTag());
-        var reso = mGame.getCurrentPortal().getPortalResonator(slot);
+        var reso = mPortal.getPortalResonator(slot);
         var resosForUpgrade = inventory.getResosForUpgrade(reso.level);
-        var resoCountForLevel = getResoCountsForLevels(mGame.getCurrentPortal().getPortalResonators());
+        var resoCountForLevel = getResoCountsForLevels(mPortal.getPortalResonators());
         HashMap<Integer, String> levels = getAvailableDeployLevels(resosForUpgrade, resoCountForLevel);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Select Resonator");
@@ -223,7 +235,7 @@ public class ActivityDeploy extends AppCompatActivity {
                 if (r.getItemAccessLevel() == which) {
                     mGame.getInventory().removeItem(r);
                     // FIXME crash on error which will show its head when agents race to upgrade
-                    mGame.intUpgradeResonator(r, mGame.getCurrentPortal(), slot, upgradeResultHandler);
+                    mGame.intUpgradeResonator(r, mPortal, slot, upgradeResultHandler);
                     break;
                 }
             }
@@ -256,7 +268,7 @@ public class ActivityDeploy extends AppCompatActivity {
     private void onDeployButtonPressed(View view) {
         int slot = layoutIdToResoSlot((Integer) view.getTag());
         var resosForUpgrade = inventory.getResosForUpgrade(0);
-        var resoCountForLevel = getResoCountsForLevels(mGame.getCurrentPortal().getPortalResonators());
+        var resoCountForLevel = getResoCountsForLevels(mPortal.getPortalResonators());
         HashMap<Integer, String> levels = getAvailableDeployLevels(resosForUpgrade, resoCountForLevel);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Select Resonator");
@@ -267,19 +279,19 @@ public class ActivityDeploy extends AppCompatActivity {
             ItemResonator r = mGame.getInventory().getResoForDeployment(which);
             mGame.getInventory().removeItem(r);
             // FIXME probable crash on error which will show its head when agents race to deploy
-            mGame.intDeployResonator(r, mGame.getCurrentPortal(), slot, deployResultHandler);
+            mGame.intDeployResonator(r, mPortal, slot, deployResultHandler);
         });
         builder.show();
     }
 
     private void onReceiveLocation(Location location) {
         if (location != null) {
-            int dist = (int) location.distanceTo(mGame.getCurrentPortal().getPortalLocation());
+            int dist = (int) location.distanceTo(mPortal.getPortalLocation());
             setButtonsEnabled(dist <= mActionRadiusM);
-            updateInfoText(dist, mGame.getCurrentPortal(), findViewById(R.id.deployScreenPortalInfo));
+            updateInfoText(dist, mPortal, findViewById(R.id.deployScreenPortalInfo));
         } else {
             setButtonsEnabled(false);
-            updateInfoText(999999000, mGame.getCurrentPortal(), findViewById(R.id.deployScreenPortalInfo));
+            updateInfoText(999999000, mPortal, findViewById(R.id.deployScreenPortalInfo));
         }
     }
 

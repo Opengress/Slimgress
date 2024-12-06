@@ -389,10 +389,6 @@ public class ScannerView extends WidgetMap {
             Bundle hackResult = mGame.pollHackResult();
             showHackResultDialog(hackResult);
         }
-
-        if (getActivity() != null) {
-            ((ActivityMain) getActivity()).updateAgent();
-        }
     }
 
     private void showHackResultDialog(Bundle hackResultBundle) {
@@ -556,9 +552,6 @@ public class ScannerView extends WidgetMap {
 
             displayQuickMessage(getStringSafely(R.string.scan_complete));
             setQuickMessageTimeout();
-            if (getActivity() != null) {
-                ((ActivityMain) getActivity()).updateAgent();
-            }
 
             mLastScan = System.currentTimeMillis() + mMinUpdateIntervalMS;
 
@@ -623,8 +616,8 @@ public class ScannerView extends WidgetMap {
         mGame.addSlurpableXMParticles(mSlurpableParticles);
         mGame.getAgent().addEnergy(newXM);
 
-        if (getActivity() != null && newXM > 0) {
-            ((ActivityMain) getActivity()).updateAgent();
+        if (newXM > 0) {
+            mApp.getPlayerDataViewModel().postAgent(mGame.getAgent());
         }
     }
 
@@ -712,9 +705,6 @@ public class ScannerView extends WidgetMap {
 
     public void fireBurster(int radius) {
         addExpandingCircle(mCurrentLocation, radius * 10, radius, mIcons.get("bursterRing"));
-        if (getActivity() != null) {
-            ((ActivityMain) getActivity()).updateAgent();
-        }
     }
 
     @SuppressLint("DefaultLocale")
@@ -787,10 +777,6 @@ public class ScannerView extends WidgetMap {
                 ;
 
         mApp.schedule_(() -> mSymbolManager.delete(mSymbolManager.create(symbolOptions)), 2000, TimeUnit.MILLISECONDS);
-
-        if (getActivity() != null) {
-            ((ActivityMain) getActivity()).updateAgent();
-        }
     }
 
     private Bitmap createDrawableFromView(Context context, View view) {
@@ -866,7 +852,7 @@ public class ScannerView extends WidgetMap {
                 return;
             }
             Intent myIntent = new Intent(getContext(), ActivityPortal.class);
-            mGame.setCurrentPortal((GameEntityPortal) entity);
+            myIntent.putExtra("guid", entity.getEntityGuid());
             startActivity(myIntent);
             return;
         }
