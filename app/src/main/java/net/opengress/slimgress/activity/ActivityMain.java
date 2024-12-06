@@ -53,6 +53,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -121,6 +122,8 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     private Button mCancelButton;
     private ActivityResultLauncher<Intent> mOpsActivityResultLauncher;
     private ScannerView mScannerView;
+    private boolean isFireCarouselVisible = false;
+    private boolean isPortalPickerVisible = false;
 
     @Override
     protected void onDestroy() {
@@ -136,7 +139,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         setContentView(R.layout.activity_main);
 
         // update agent data
-        updateAgent();
         mApp.getPlayerDataViewModel().getAgent().observe(this, this::updateAgent);
 
         mRecyclerView = findViewById(R.id.fire_carousel_recycler_view);
@@ -187,6 +189,21 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         });
 
         mCancelButton.setOnClickListener(v -> resetSelection());
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (isFireCarouselVisible) {
+                    hideFireCarousel(null);
+                } else if (isPortalPickerVisible) {
+                    resetSelection();
+                } else {
+                    // Allow default system behavior (finish the activity)
+                    setEnabled(false); // Disable this callback to let the system handle it
+                    getOnBackPressedDispatcher().onBackPressed(); // Call the dispatcher manually
+                }
+            }
+        });
     }
 
     private void onOpsResult(ActivityResult activityResult) {
@@ -312,7 +329,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
     @SuppressLint("ObsoleteSdkInt")
     private void updateAgent(Agent agent) {
-//        Log.d("Main/updateAgent", "Updating agent in display!");
         // TODO move some of this style info into onCreate
         runOnUiThread(() -> {
             int textColor;
@@ -370,17 +386,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 //            ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);
 //            ((TextView)findViewById(R.id.agentinfo)).setTextColor(0x99999999);
         });
-    }
-
-    public void updateAgent() {
-        // i REALLY want this to be connected to a viewmodel or something
-        // get agent data
-        Agent agent = mGame.getAgent();
-
-        if (agent != null) {
-            updateAgent(agent);
-        }
-
     }
 
 
@@ -650,6 +655,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
         // Show the carousel layout
         findViewById(R.id.fire_carousel_layout).setVisibility(View.VISIBLE);
+        isFireCarouselVisible = true;
 
         // Fire button click logic
         findViewById(R.id.fire_carousel_button_fire).setOnClickListener(v -> {
@@ -684,10 +690,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         });
 
         // Done button logic
-        findViewById(R.id.fire_carousel_button_done).setOnClickListener(v -> {
-            findViewById(R.id.fire_carousel_layout).setVisibility(View.GONE);
-            findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
-        });
+        findViewById(R.id.fire_carousel_button_done).setOnClickListener(this::hideFireCarousel);
 
         return true;
     }
@@ -798,7 +801,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                     message = String.format(message, res, item.getUsefulName());
                     SlimgressApplication.postPlainCommsMessage(message);
                     Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
-                    updateAgent();
                     for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
                         mGame.getInventory().removeItem(id);
                     }
@@ -810,8 +812,8 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             mSelectTargetText.setVisibility(View.VISIBLE);
             mConfirmButton.setVisibility(View.VISIBLE);
             mCancelButton.setVisibility(View.VISIBLE);
-            findViewById(R.id.fire_carousel_layout).setVisibility(View.GONE);
-            findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
+            hideFireCarousel(null);
+            isPortalPickerVisible = true;
             return false;
         } else {
             throw new RuntimeException("Unhandled weapon type fired from carousel");
@@ -836,6 +838,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         mSelectedPortalGuid = null;
         mSelectedFlipCardGuid = null;
         mScannerView.removeInfoCard();
+        isPortalPickerVisible = false;
     }
 
     private void flipPortal(String portalGuid, String mSelectedFlipCardGuid) {
@@ -890,5 +893,11 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
     public void forceSync() {
         mScannerView.forceSync();
+    }
+
+    private void hideFireCarousel(View v) {
+        findViewById(R.id.fire_carousel_layout).setVisibility(View.GONE);
+        findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
+        isFireCarouselVisible = false;
     }
 }
