@@ -48,14 +48,10 @@ import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.contract.ActivityResultContracts;
-
 import net.opengress.slimgress.activity.ActivityMain;
 import net.opengress.slimgress.activity.ActivityPortal;
 import net.opengress.slimgress.activity.ActivitySplash;
 import net.opengress.slimgress.api.Common.Location;
-import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Game.XMParticle;
 import net.opengress.slimgress.api.GameEntity.GameEntityBase;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
@@ -297,8 +293,6 @@ public class ScannerView extends WidgetMap {
                 this::onRegainedConnection
         );
 
-        mPortalActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::onPortalActivityResult);
-
         mScannerKnobs = mGame.getKnobs().getScannerKnobs();
         mActionRadiusM = mScannerKnobs.getActionRadiusM();
         mUpdateIntervalMS = mScannerKnobs.getUpdateIntervalMS();
@@ -389,12 +383,86 @@ public class ScannerView extends WidgetMap {
             displayMyCurrentLocationOverlay(mCurrentLocation);
         }
 
-        // ===========================================================
-        // Other (location)
-        // ===========================================================
-
         mLocationProvider.checkPermissionsAndRequestUpdates(requireActivity(), this::requestLocationUpdates);
 
+        if (mGame.hasHackResults()) {
+            Bundle hackResult = mGame.pollHackResult();
+            showHackResultDialog(hackResult);
+        }
+
+        if (getActivity() != null) {
+            ((ActivityMain) getActivity()).updateAgent();
+        }
+    }
+
+    private void showHackResultDialog(Bundle hackResultBundle) {
+
+        if (mGame.getLocation() != null) {
+            final Handler uiHandler = new Handler();
+            uiHandler.post(() -> {
+                // guard against scanning too fast if request fails
+                mLastScan = System.currentTimeMillis() + mMinUpdateIntervalMS;
+                updateWorld();
+            });
+
+        }
+
+        String error = hackResultBundle.getString("error");
+        @SuppressWarnings("unchecked")
+        HashMap<String, Integer> items = (HashMap<String, Integer>) hackResultBundle.getSerializable("items");
+        @SuppressWarnings("unchecked")
+        HashMap<String, Integer> bonusItems = (HashMap<String, Integer>) hackResultBundle.getSerializable("bonusItems");
+
+        if (error != null) {
+            DialogHackResult newDialog = new DialogHackResult(getContext());
+            newDialog.setMessage(error);
+            newDialog.show();
+            if (mGame.hasHackResults()) {
+                newDialog.setOnDismissListener(d -> {
+                    Bundle hackResult = mGame.pollHackResult();
+                    showHackResultDialog(hackResult);
+                });
+            }
+        } else if (items != null) {
+            DialogHackResult newDialog = new DialogHackResult(getContext());
+            newDialog.setTitle("Acquired items");
+            newDialog.setItems(items);
+            newDialog.show();
+
+            if (bonusItems == null) {
+                if (mGame.hasHackResults()) {
+                    newDialog.setOnDismissListener(d -> {
+                        Bundle hackResult = mGame.pollHackResult();
+                        showHackResultDialog(hackResult);
+                    });
+                }
+            } else {
+                newDialog.setOnDismissListener(dialog -> {
+                    DialogHackResult newDialog1 = new DialogHackResult(getContext());
+                    newDialog1.setTitle("Bonus items");
+                    newDialog1.setItems(bonusItems);
+                    newDialog1.show();
+                    if (mGame.hasHackResults()) {
+                        newDialog1.setOnDismissListener(d -> {
+                            Bundle hackResult = mGame.pollHackResult();
+                            showHackResultDialog(hackResult);
+                        });
+                    }
+                });
+            }
+
+        } else if (bonusItems != null) {
+            DialogHackResult newDialog = new DialogHackResult(getContext());
+            newDialog.setTitle("Bonus items");
+            newDialog.setItems(bonusItems);
+            newDialog.show();
+            if (mGame.hasHackResults()) {
+                newDialog.setOnDismissListener(d -> {
+                    Bundle hackResult = mGame.pollHackResult();
+                    showHackResultDialog(hackResult);
+                });
+            }
+        }
     }
 
     public void requestLocationUpdates() {
@@ -649,81 +717,6 @@ public class ScannerView extends WidgetMap {
         }
     }
 
-    private void onPortalActivityResult(ActivityResult result) {
-
-        if (result.getResultCode() == Activity.RESULT_OK) {
-            var data = result.getData();
-            if (mGame.getLocation() != null) {
-                final Handler uiHandler = new Handler();
-                uiHandler.post(() -> {
-                    // guard against scanning too fast if request fails
-                    mLastScan = System.currentTimeMillis() + mMinUpdateIntervalMS;
-                    updateWorld();
-                });
-
-            }
-
-            if (data == null) {
-                return;
-            }
-
-            Bundle hackResultBundle = data.getBundleExtra("result");
-            assert hackResultBundle != null;
-            @SuppressWarnings("unchecked") HashMap<String, Integer> items = (HashMap<String, Integer>) hackResultBundle.getSerializable("items");
-            @SuppressWarnings("unchecked") HashMap<String, Integer> bonusItems = (HashMap<String, Integer>) hackResultBundle.getSerializable("bonusItems");
-            String error = hackResultBundle.getString("error");
-
-            if (error != null) {
-
-                DialogHackResult newDialog = new DialogHackResult(getContext());
-//                newDialog.setTitle("");
-                newDialog.setMessage(error);
-                newDialog.show();
-            } else {
-                int portalLevel = mGame.getCurrentPortal().getPortalLevel();
-                Team portalTeam = mGame.getCurrentPortal().getPortalTeam();
-                if (portalTeam.toString().equalsIgnoreCase(mGame.getAgent().getTeam().toString())) {
-                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackFriendlyCostByLevel().get(portalLevel - 1));
-                } else if (portalTeam.toString().equalsIgnoreCase("neutral")) {
-                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackNeutralCostByLevel().get(portalLevel - 1));
-                } else {
-                    mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackEnemyCostByLevel().get(portalLevel - 1));
-                }
-
-                var main = ((ActivityMain) getActivity());
-                if (main != null) {
-                    main.updateAgent();
-                }
-
-                if (items != null) {
-                    DialogHackResult newDialog = new DialogHackResult(getContext());
-                    newDialog.setTitle("Acquired items");
-                    newDialog.setItems(items);
-                    newDialog.show();
-
-                    if (bonusItems != null) {
-                        newDialog.setOnDismissListener(dialog -> {
-                            DialogHackResult newDialog1 = new DialogHackResult(getContext());
-                            newDialog1.setTitle("Bonus items");
-                            newDialog1.setItems(bonusItems);
-                            newDialog1.show();
-                        });
-                    }
-
-                } else if (bonusItems != null) {
-                    DialogHackResult newDialog = new DialogHackResult(getContext());
-                    newDialog.setTitle("Bonus items");
-                    newDialog.setItems(bonusItems);
-                    newDialog.show();
-                }
-
-            }
-        }
-        if (getActivity() != null) {
-            ((ActivityMain) getActivity()).updateAgent();
-        }
-    }
-
     @SuppressLint("DefaultLocale")
     public void displayDamage(int damageAmount, String targetGuid, int targetSlot, boolean criticalHit) {
         var actualPortal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(targetGuid);
@@ -874,7 +867,7 @@ public class ScannerView extends WidgetMap {
             }
             Intent myIntent = new Intent(getContext(), ActivityPortal.class);
             mGame.setCurrentPortal((GameEntityPortal) entity);
-            mPortalActivityResultLauncher.launch(myIntent);
+            startActivity(myIntent);
             return;
         }
         if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {
