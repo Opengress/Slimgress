@@ -27,6 +27,8 @@ import android.net.TrafficStats;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import net.opengress.slimgress.BuildConfig;
 import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.net.DefaultRequestInterceptor;
@@ -142,8 +144,9 @@ public class Interface
                         String content = Objects.requireNonNull(response.body()).string();
 
                         // check for content type json
-                        if (!Objects.requireNonNull(response.header("Content-Type")).contains("application/json"))
-                            throw new RuntimeException("content type is not json");
+                        if (!Objects.requireNonNull(response.header("Content-Type")).contains("application/json")) {
+                            throw new RuntimeException("Handshake content type is not json");
+                        }
 
                         // leaving this here in case it's ever implemented serverside for some reason
                         content = content.replace("while(1);", "");
@@ -153,7 +156,7 @@ public class Interface
 
                         Log.d("Interface", "handshake finished");
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        callback.handle(new Handshake(new JSONObject("{\"error\" : \"" + e.getClass().getName() + ": " + e.getLocalizedMessage() + "\"}")));
                     }
                 }
             }
@@ -169,7 +172,7 @@ public class Interface
         });
     }
 
-    public void request(final Handshake handshake, final String requestString, final Location playerLocation,
+    public void request(@NonNull final Handshake handshake, final String requestString, final Location playerLocation,
                         final JSONObject requestParams, final RequestResult result) {
         if (!handshake.isValid())
             throw new RuntimeException("handshake is not valid");

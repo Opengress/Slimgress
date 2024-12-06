@@ -200,6 +200,8 @@ public class GameState {
                     bundle.putBoolean("MaySendPromoEmail", mHandshake.getAgent().getNotificationSettings().maySendPromoEmail());
                 } else if (Objects.equals(mHandshake.getErrorFromServer(), "NOT_LOGGED_IN")) {
                     errString = "Expired user session";
+                } else if (mHandshake.getErrorFromServer() != null) {
+                    errString = mHandshake.getErrorFromServer(); // a bit wonky for now
                 } else if (Objects.equals(mHandshake.getServerVersion(), "")) {
                     errString = "Server returned incorrect handshake response";
                 } else if (mHandshake.getAgent() == null) {

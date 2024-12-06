@@ -30,8 +30,10 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -50,14 +52,15 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 
 import net.opengress.slimgress.BuildConfig;
 import net.opengress.slimgress.Constants;
@@ -65,35 +68,27 @@ import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Game.GameState;
-import net.opengress.slimgress.api.Interface.Interface;
 import net.opengress.slimgress.api.Knobs.TeamKnobs;
 import net.opengress.slimgress.api.Player.Agent;
 import net.opengress.slimgress.positioning.AndroidLocationProvider;
 import net.opengress.slimgress.positioning.LocationCallback;
+import net.opengress.slimgress.service.DownloadService;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Objects;
-
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 
 public class ActivitySplash extends Activity {
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private Bundle mLoginBundle;
     private Dialog mFactionChoiceDialog;
-    private ProgressBar mProgressBar;
+    private CircularProgressIndicator mProgressBar;
     private Handler mHandler;
     private Runnable mRotationTask;
     private float mCurrentRotation = 0f;
     private AndroidLocationProvider mLocationProvider;
-    private LocationCallback mLocationCallback = new LocationCallback() {
+    private boolean installed = false;
+    private final LocationCallback mLocationCallback = new LocationCallback() {
         @Override
         public void onLocationUpdated(android.location.Location location) {
             mGame.updateLocation(new net.opengress.slimgress.api.Common.Location(location));
@@ -107,6 +102,17 @@ public class ActivitySplash extends Activity {
         public void onUpdatesStopped() {
         }
     };
+    private final BroadcastReceiver mProgressReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("AUTH", "Progress: " + intent.getIntExtra("progress", 0));
+            int progress = intent.getIntExtra("progress", 0);
+            if (progress == -1) {
+                installed = true;
+            }
+            runOnUiThread(() -> mProgressBar.setProgress(progress));
+        }
+    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -115,6 +121,7 @@ public class ActivitySplash extends Activity {
 
         mLocationProvider = AndroidLocationProvider.getInstance(SlimgressApplication.getInstance());
         mLocationProvider.addLocationCallback(mLocationCallback);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mProgressReceiver, new IntentFilter("DownloadProgress"));
 
         mProgressBar = findViewById(R.id.progressBar1);
 
@@ -123,7 +130,7 @@ public class ActivitySplash extends Activity {
         mRotationTask = new Runnable() {
             @Override
             public void run() {
-                mCurrentRotation += 10; // Rotate by 10 degrees each step
+                mCurrentRotation += 5; // Rotate by 10 degrees each step
                 if (mCurrentRotation >= 360) {
                     mCurrentRotation -= 360;
                 }
@@ -181,6 +188,7 @@ public class ActivitySplash extends Activity {
         super.onDestroy();
         mHandler.removeCallbacks(mRotationTask);
         mLocationProvider.removeLocationCallback(mLocationCallback);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mProgressReceiver);
     }
 
     protected void performHandshake() {
@@ -214,6 +222,7 @@ public class ActivitySplash extends Activity {
     }
 
     private boolean setUpPlayerAndProceedWithLogin() {
+        // can i do this earlier?
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             mLocationProvider.checkPermissionsAndRequestUpdates(this, null);
             return false;
@@ -282,10 +291,7 @@ public class ActivitySplash extends Activity {
             PregameStatus status = mGame.getHandshake().getPregameStatus();
             if (status == ClientMustUpgrade) {
                 builder.setMessage("Your client software is out of date. You must update the app to play.");
-                builder.setPositiveButton("Update in-app", (dialog, which) -> {
-                    downloadAndInstallClientUpdate();
-//                                finish();
-                });
+                builder.setPositiveButton("Update in-app", (dialog, which) -> downloadAndInstallClientUpdate());
                 builder.setNegativeButton("Download update in browser", (dialog, which) -> {
                     Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://opengress.net/downloads/"));
                     startActivity(browserIntent);
@@ -330,79 +336,34 @@ public class ActivitySplash extends Activity {
         }
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    private void downloadAndInstallClientUpdate() {
-        File downloads = getApplicationContext().getExternalCacheDir();
-
-        Thread gfgThread = new Thread(() -> {
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .followRedirects(false)
-                    .build();
-            try {
-                Request request = new Request.Builder().url("https://opengress.net/downloads/slimgress.apk")
-                        .header("User-Agent", Interface.mUserAgent)
-                        .header("Accept", "application/vnd.android.package-archive")
-                        .build();
-                Response response;
-                response = client.newCall(request).execute();
-                ResponseBody responseBody = response.body();
-                double length = Double.parseDouble(Objects.requireNonNull(response.header("Content-Length", "1")));
-                File apkFile = new File(downloads + "/slimgress.apk");
-                apkFile.delete();
-                OutputStream outputStream = new FileOutputStream(apkFile);
-                try (BufferedInputStream input = new BufferedInputStream(responseBody.byteStream())) {
-                    byte[] dataBuffer = new byte[1024];
-                    int readBytes;
-                    long totalBytes = 0;
-                    while ((readBytes = input.read(dataBuffer)) != -1) {
-                        totalBytes += readBytes;
-                        outputStream.write(dataBuffer, 0, readBytes);
-                        onDownloadUpdateProgress(totalBytes / length * 100.0);
-                    }
-                } catch (Exception e) {
-                    // download failed. do something.
-                    e.printStackTrace();
-                }
-
-                try {
-
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                    if (Build.VERSION.SDK_INT >= 24) {
-                        intent.setDataAndType(FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", apkFile), "application/vnd.android.package-archive");
-                    } else {
-                        intent.setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive");
-                    }
-                    try {
-                        startActivityForResult(intent, 500);
-                    } catch (Exception e) {
-                        Log.e("Splash/Installer", Objects.requireNonNull(e.getMessage()));
-                        e.printStackTrace();
-                    }
-
-                } catch (Exception e) {
-                    Log.e("Splash/Installer", Objects.requireNonNull(e.getMessage()));
-                    e.printStackTrace();
-                }
-
-                response.close();
-
-            } catch (Exception e) {
-                // download failed. do something
-                e.printStackTrace();
-            }
-        });
-
-        synchronized (this) {
-            gfgThread.start();
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (installed) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Update Failed");
+            builder.setMessage("The update was not installed. Please try again.");
+            builder.setCancelable(false);
+            builder.setPositiveButton("Retry", (dialog, which) -> proceedWithLogin());
+            builder.setNegativeButton("Quit", (dialog, which) -> finish());
+            builder.show();
         }
-
     }
 
-    private void onDownloadUpdateProgress(double v) {
-        // TODO find some way to report progress - notification?
-        Log.i("Splash/DownloadProgress", String.valueOf(v));
+    private void downloadAndInstallClientUpdate() {
+        mHandler.removeCallbacks(mRotationTask);
+        mProgressBar.setRotation(0);
+        mProgressBar.setProgress(0);
+        mProgressBar.setIndeterminate(false);
+
+
+        // Start a foreground service for the download
+        Intent serviceIntent = new Intent(this, DownloadService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
     }
 
     private void showPickFactionDialog() {
@@ -422,36 +383,38 @@ public class ActivitySplash extends Activity {
 
         // Create buttons for each faction dynamically
         for (var faction : mGame.getKnobs().getTeamKnobs().getTeams().values()) {
-            if (!faction.isPlayable()) {
-                continue;
+            if (faction.isPlayable()) {
+                container.addView(getFactionButton(faction));
             }
-            Button factionButton = new Button(this);
-            factionButton.setText(faction.getName());
-            factionButton.setBackgroundColor(0xff000000 + faction.getColour());
-            factionButton.setTextColor(Color.WHITE);
-            factionButton.setPadding(16, 16, 16, 16);
-            factionButton.setTextSize(18);
-            factionButton.setOnClickListener(v -> {
-                showFactionConfirmationDialog(faction);
-                mFactionChoiceDialog.dismiss();
-            });
-
-            // Add a margin between buttons
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            );
-            params.setMargins(0, 0, 0, 16);
-            factionButton.setLayoutParams(params);
-
-            // Add the button to the container
-            container.addView(factionButton);
         }
 
         builder.setView(scrollView);
 
         mFactionChoiceDialog = builder.create();
         mFactionChoiceDialog.show();
+    }
+
+    @NonNull
+    private Button getFactionButton(TeamKnobs.TeamType faction) {
+        Button factionButton = new Button(this);
+        factionButton.setText(faction.getName());
+        factionButton.setBackgroundColor(0xff000000 + faction.getColour());
+        factionButton.setTextColor(Color.WHITE);
+        factionButton.setPadding(16, 16, 16, 16);
+        factionButton.setTextSize(18);
+        factionButton.setOnClickListener(v -> {
+            showFactionConfirmationDialog(faction);
+            mFactionChoiceDialog.dismiss();
+        });
+
+        // Add a margin between buttons
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0, 0, 0, 16);
+        factionButton.setLayoutParams(params);
+        return factionButton;
     }
 
     void showFactionConfirmationDialog(TeamKnobs.TeamType chosenFaction) {
