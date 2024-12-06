@@ -771,6 +771,9 @@ public class WidgetMap extends Fragment {
 
     @SuppressLint("ClickableViewAccessibility")
     void setMapEnabled(boolean bool) {
+        if (mMapView == null) {
+            return;
+        }
         mIsMapEnabled = bool;
         // there's probably a better way
         if (bool) {

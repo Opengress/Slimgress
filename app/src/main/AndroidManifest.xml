@@ -4,7 +4,7 @@
 
     <uses-feature
         android:glEsVersion="0x00020000"
-        android:required="true"/>
+        android:required="true" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -12,18 +12,20 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- For attack notifications in Android 33+ -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Downloads updates while app is in the background -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <!-- If I'm right, clear traffic will work from N on but silently fail from M down -->
     <application
-        android:allowBackup="true"
         android:name="net.opengress.slimgress.SlimgressApplication"
+        android:allowBackup="true"
+        android:hardwareAccelerated="true"
         android:icon="@drawable/ic_launcher"
-        android:theme="@style/GradientTheme"
         android:label="@string/appname"
         android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="false"
-        android:hardwareAccelerated="true"
+        android:theme="@style/GradientTheme"
         tools:targetApi="n">
 
         <!-- to be allowed to "install software" - self-updates -->
@@ -38,10 +40,16 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
+        <!-- Downloads updates even if user leaves the application-->
+        <service
+            android:name=".service.DownloadService"
+            android:exported="false"
+            android:foregroundServiceType="shortService" />
+
         <!-- start with splash activity to authenticate and get handshake data -->
         <activity
-            android:exported="true"
-            android:name="net.opengress.slimgress.activity.ActivitySplash">
+            android:name="net.opengress.slimgress.activity.ActivitySplash"
+            android:exported="true">
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
                 <action android:name="android.intent.action.MAIN" />
@@ -49,37 +57,30 @@
         </activity>
 
         <!-- if necessary continue with authentication -->
-        <activity android:name="net.opengress.slimgress.activity.ActivityAuth">
-        </activity>
+        <activity android:name="net.opengress.slimgress.activity.ActivityAuth" />
 
         <!-- start main activity and display map -->
         <activity
             android:name="net.opengress.slimgress.activity.ActivityMain"
-            android:configChanges="orientation|screenSize">
-        </activity>
+            android:configChanges="orientation|screenSize" />
 
         <!-- ops activity with additional information -->
-        <activity android:name="net.opengress.slimgress.activity.ActivityOps">
-        </activity>
+        <activity android:name="net.opengress.slimgress.activity.ActivityOps" />
 
         <!-- portal view activity with additional information -->
-        <activity android:name="net.opengress.slimgress.activity.ActivityPortal">
-        </activity>
+        <activity android:name="net.opengress.slimgress.activity.ActivityPortal" />
 
         <!-- resonator deployment activity with additional information -->
-        <activity android:name="net.opengress.slimgress.activity.ActivityDeploy">
-        </activity>
+        <activity android:name="net.opengress.slimgress.activity.ActivityDeploy" />
 
         <!-- mod deployment activity with additional information -->
-        <activity android:name="net.opengress.slimgress.activity.ActivityMod"></activity>
+        <activity android:name="net.opengress.slimgress.activity.ActivityMod" />
 
         <!-- which libraries are used, who created what etc-->
-        <activity android:name="net.opengress.slimgress.activity.ActivityCredits">
-        </activity>
+        <activity android:name="net.opengress.slimgress.activity.ActivityCredits" />
 
         <!-- viewing an inventory item -->
-        <activity android:name="net.opengress.slimgress.activity.ActivityInventoryItem">
-        </activity>
+        <activity android:name="net.opengress.slimgress.activity.ActivityInventoryItem" />
     </application>
 
 </manifest>

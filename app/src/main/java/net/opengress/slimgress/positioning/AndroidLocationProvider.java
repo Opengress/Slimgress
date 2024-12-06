@@ -12,7 +12,6 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -103,11 +102,6 @@ public class AndroidLocationProvider implements LocationProvider, LocationListen
             }
             mCurrentLocation = location;
         }
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-        Log.e("LocationProvider", provider + " has status: " + status);
     }
 
     @Override
