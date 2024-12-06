@@ -18,7 +18,7 @@ public class NetworkMonitor {
     private BroadcastReceiver networkReceiver;
     private static Boolean hasConnection;
 
-    public void registerNetworkMonitor(Context context, Runnable onLostConnection, Runnable onRegainedConnection) {
+    public void registerNetworkMonitor(@NonNull Context context, Runnable onLostConnection, Runnable onRegainedConnection) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -76,12 +76,12 @@ public class NetworkMonitor {
         };
     }
 
-    private static void connectionLost(Runnable onLostConnection) {
+    private static void connectionLost(@NonNull Runnable onLostConnection) {
         hasConnection = false;
         onLostConnection.run();
     }
 
-    private static void connectionRestored(Runnable onRegainedConnection) {
+    private static void connectionRestored(@NonNull Runnable onRegainedConnection) {
         hasConnection = true;
         onRegainedConnection.run();
     }

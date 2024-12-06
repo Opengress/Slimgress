@@ -66,9 +66,11 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
 
 public class GameState {
@@ -89,6 +91,7 @@ public class GameState {
     private GameEntityPortal mPortal;
     private final HashMap<String, String> mAgentNames = new HashMap<>();
     private boolean mLocationIsAccurate = false;
+    private final Queue<Bundle> mHackResultsQueue = new LinkedList<>();
 
     public GameState() {
         mInterface = new Interface();
@@ -1600,5 +1603,17 @@ public class GameState {
 
     public boolean isLocationAccurate() {
         return mLocationIsAccurate;
+    }
+
+    public synchronized void addHackResult(Bundle result) {
+        mHackResultsQueue.add(result);
+    }
+
+    public synchronized boolean hasHackResults() {
+        return !mHackResultsQueue.isEmpty();
+    }
+
+    public synchronized Bundle pollHackResult() {
+        return mHackResultsQueue.poll();
     }
 }

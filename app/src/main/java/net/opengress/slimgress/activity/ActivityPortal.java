@@ -29,6 +29,7 @@ import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Common.Location;
+import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.Item.ItemBase;
@@ -137,9 +138,7 @@ public class ActivityPortal extends AppCompatActivity {
 
         Handler hackResultHandler = new Handler(msg -> {
             Bundle hackresultBundle = generateHackResultBundle(msg.getData());
-            Intent myIntent = getIntent();
-            setResult(RESULT_OK, myIntent);
-            myIntent.putExtra("result", hackresultBundle);
+            mGame.addHackResult(hackresultBundle);
             finish();
             return false;
         });
@@ -210,6 +209,17 @@ public class ActivityPortal extends AppCompatActivity {
             bundle.putString("error", exception);
             return bundle;
         }
+
+        int portalLevel = mGame.getCurrentPortal().getPortalLevel();
+        Team portalTeam = mGame.getCurrentPortal().getPortalTeam();
+        if (portalTeam.toString().equalsIgnoreCase(mGame.getAgent().getTeam().toString())) {
+            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackFriendlyCostByLevel().get(portalLevel - 1));
+        } else if (portalTeam.toString().equalsIgnoreCase("neutral")) {
+            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackNeutralCostByLevel().get(portalLevel - 1));
+        } else {
+            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackEnemyCostByLevel().get(portalLevel - 1));
+        }
+
         if ((guids == null || guids.isEmpty()) && (bonusGuids == null || bonusGuids.isEmpty())) {
             bundle.putString("error", "Hack acquired no items");
             return bundle;
