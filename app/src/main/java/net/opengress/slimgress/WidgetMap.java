@@ -908,10 +908,6 @@ public class WidgetMap extends Fragment {
             mCurrentTileSource = newTileSource;
             setUpTileSource();
         }
-
-        if (getActivity() != null) {
-            ((ActivityMain) getActivity()).updateAgent();
-        }
     }
 
     @Override

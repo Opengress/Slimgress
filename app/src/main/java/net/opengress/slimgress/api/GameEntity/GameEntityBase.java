@@ -30,6 +30,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public abstract class GameEntityBase extends EntityBase {
+
     public enum GameEntityType {
         ControlField,
         Link,
@@ -109,5 +110,15 @@ public abstract class GameEntityBase extends EntityBase {
 
     public String getOwnerTimestamp() {
         return mOwnerTimestamp;
+    }
+
+    public void updateFrom(GameEntityBase other) {
+        if (other == null) {
+            return;
+        }
+        mGameEntityType = other.mGameEntityType;
+        mOwnerType = other.mOwnerType;
+        mOwnerGuid = other.mOwnerGuid;
+        mOwnerTimestamp = other.mOwnerTimestamp;
     }
 }

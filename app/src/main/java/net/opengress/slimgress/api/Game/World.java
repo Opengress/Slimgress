@@ -23,12 +23,14 @@ package net.opengress.slimgress.api.Game;
 
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.GameEntity.GameEntityBase;
+import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.Interface.GameBasket;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class World {
     private final Map<String, GameEntityBase> mGameEntities;
@@ -59,6 +61,10 @@ public class World {
         // only add non-existing game entities ... should this be a map?
         List<GameEntityBase> entities = basket.getGameEntities();
         for (GameEntityBase entity : entities) {
+            if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal && mGameEntities.containsKey(entity.getEntityGuid())) {
+                Objects.requireNonNull((GameEntityPortal) mGameEntities.get(entity.getEntityGuid())).updateFrom(entity);
+                continue;
+            }
             mGameEntities.remove(entity.getEntityGuid());
             mGameEntities.put(entity.getEntityGuid(), entity);
         }

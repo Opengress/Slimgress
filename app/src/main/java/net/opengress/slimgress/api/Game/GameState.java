@@ -40,7 +40,6 @@ import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Common.Utils;
-import net.opengress.slimgress.api.GameEntity.GameEntityBase;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.Interface.Damage;
 import net.opengress.slimgress.api.Interface.GameBasket;
@@ -867,18 +866,6 @@ public class GameState {
                     getData().putSerializable("resonator", resonator);
                 }
 
-                @Override
-                public void finished() {
-                    Map<String, GameEntityBase> entities = getWorld().getGameEntities();
-                    for (GameEntityBase entity : entities.values()) {
-                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal &&
-                                Objects.equals(entity.getEntityGuid(), portal.getEntityGuid())) {
-                            setCurrentPortal((GameEntityPortal) entity);
-                            break;
-                        }
-                    }
-                    super.finished();
-                }
             });
         } catch (JSONException e) {
             e.printStackTrace();
@@ -933,18 +920,6 @@ public class GameState {
                     getData().putSerializable("resonator", resonator);
                 }
 
-                public void finished() {
-                    Map<String, GameEntityBase> entities = getWorld().getGameEntities();
-                    for (GameEntityBase entity : entities.values()) {
-                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal &&
-                                Objects.equals(entity.getEntityGuid(), portal.getEntityGuid())) {
-                            setCurrentPortal((GameEntityPortal) entity);
-                            break;
-                        }
-                    }
-                    super.finished();
-                }
-
             });
         } catch (JSONException e) {
             e.printStackTrace();
@@ -997,19 +972,6 @@ public class GameState {
                     super.handleGameBasket(gameBasket);
                     getData().putSerializable("mod", mod);
                 }
-
-                @Override
-                public void finished() {
-                    Map<String, GameEntityBase> entities = getWorld().getGameEntities();
-                    for (GameEntityBase entity : entities.values()) {
-                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal &&
-                                Objects.equals(entity.getEntityGuid(), portal.getEntityGuid())) {
-                            setCurrentPortal((GameEntityPortal) entity);
-                            break;
-                        }
-                    }
-                    super.finished();
-                }
             });
         } catch (JSONException e) {
             e.printStackTrace();
@@ -1059,18 +1021,6 @@ public class GameState {
                     super.handleGameBasket(gameBasket);
                 }
 
-                @Override
-                public void finished() {
-                    Map<String, GameEntityBase> entities = getWorld().getGameEntities();
-                    for (GameEntityBase entity : entities.values()) {
-                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal &&
-                                Objects.equals(entity.getEntityGuid(), portal.getEntityGuid())) {
-                            setCurrentPortal((GameEntityPortal) entity);
-                            break;
-                        }
-                    }
-                    super.finished();
-                }
             });
         } catch (JSONException e) {
             e.printStackTrace();
@@ -1554,14 +1504,6 @@ public class GameState {
     public synchronized Agent getAgent() {
         checkInterface();
         return mAgent;
-    }
-
-    public void setCurrentPortal(GameEntityPortal portal) {
-        mPortal = portal;
-    }
-
-    public GameEntityPortal getCurrentPortal() {
-        return mPortal;
     }
 
     public void addSlurpableXMParticles(Set<String> slurpableParticles) {

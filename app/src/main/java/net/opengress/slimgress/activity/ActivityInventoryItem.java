@@ -118,7 +118,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 findViewById(R.id.activity_inventory_item_recharge).setEnabled(false);
                 findViewById(R.id.activity_inventory_item_image).setOnClickListener(c -> {
                     Intent myIntent = new Intent(this, ActivityPortal.class);
-                    mGame.setCurrentPortal(portal);
+                    myIntent.putExtra("guid", portal.getEntityGuid());
                     startActivity(myIntent);
                 });
             }

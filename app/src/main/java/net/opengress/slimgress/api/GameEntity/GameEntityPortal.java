@@ -44,21 +44,22 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.maplibre.android.geometry.LatLng;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
-public class GameEntityPortal extends GameEntityBase
-{
-    public class LinkedEdge
+public class GameEntityPortal extends GameEntityBase implements Serializable {
+    public static class LinkedEdge
     {
         public String edgeGuid;
         public String otherPortalGuid;
         public boolean isOrigin;
     }
 
-    public class LinkedMod
+    public static class LinkedMod
     {
         // TODO: UNDONE: link with ItemMod?
 
@@ -161,12 +162,12 @@ public class GameEntityPortal extends GameEntityBase
         }
     }
 
-    private final Location mPortalLocation;
-    private final Team mPortalTeam;
-    private final String mPortalTitle;
-    private final String mPortalAddress;
-    private final String mPortalAttribution;
-    private final String mPortalAttributionLink;
+    private Location mPortalLocation;
+    private Team mPortalTeam;
+    private String mPortalTitle;
+    private String mPortalAddress;
+    private String mPortalAttribution;
+    private String mPortalAttributionLink;
     private String mPortalImageUrl;
     private final List<LinkedEdge> mPortalEdges;
     private final List<LinkedMod> mPortalMods;
@@ -520,5 +521,173 @@ public class GameEntityPortal extends GameEntityBase
 
     private int getDirectValue(String key, int index) {
         return SlimgressApplication.getInstance().getGame().getKnobs().getPortalModSharedKnobs().getDirectValues(key).get(index);
+    }
+
+    @Override
+    public void updateFrom(GameEntityBase other) {
+        super.updateFrom(other);
+        if (other == null) {
+            return;
+        }
+        GameEntityPortal otherPortal = (GameEntityPortal) other;
+
+        // Update top-level fields (now that they're not final, we can reassign them)
+        this.mPortalImageUrl = otherPortal.mPortalImageUrl;
+        this.mPortalLocation = otherPortal.mPortalLocation;
+        this.mPortalTeam = otherPortal.mPortalTeam;
+        this.mPortalTitle = otherPortal.mPortalTitle;
+        this.mPortalAddress = otherPortal.mPortalAddress;
+        this.mPortalAttribution = otherPortal.mPortalAttribution;
+        this.mPortalAttributionLink = otherPortal.mPortalAttributionLink;
+
+        // --- Update Edges ---
+        // We will match edges by their edgeGuid.
+        // 1. Build a map of existing edges by edgeGuid for easy lookup.
+        Map<String, LinkedEdge> currentEdgesMap = new HashMap<>();
+        for (LinkedEdge edge : this.mPortalEdges) {
+            currentEdgesMap.put(edge.edgeGuid, edge);
+        }
+
+        // 2. Process the new edges. Update existing ones or add new ones.
+        //    Keep track of which edges from 'other' are processed.
+        Map<String, LinkedEdge> newEdgesMap = new HashMap<>();
+        for (LinkedEdge otherEdge : otherPortal.mPortalEdges) {
+            LinkedEdge currentEdge = currentEdgesMap.get(otherEdge.edgeGuid);
+            if (currentEdge == null) {
+                // This is a new edge; add it
+                LinkedEdge newEdge = new LinkedEdge();
+                newEdge.edgeGuid = otherEdge.edgeGuid;
+                newEdge.otherPortalGuid = otherEdge.otherPortalGuid;
+                newEdge.isOrigin = otherEdge.isOrigin;
+                newEdgesMap.put(newEdge.edgeGuid, newEdge);
+            } else {
+                // Update existing edge
+                currentEdge.otherPortalGuid = otherEdge.otherPortalGuid;
+                currentEdge.isOrigin = otherEdge.isOrigin;
+                newEdgesMap.put(currentEdge.edgeGuid, currentEdge);
+            }
+        }
+
+        // 3. Replace mPortalEdges with the updated collection from newEdgesMap
+        this.mPortalEdges.clear();
+        this.mPortalEdges.addAll(newEdgesMap.values());
+
+        // --- Update Mods ---
+        // We assume the number and order of mods match (e.g., always 4 slots).
+        // For each slot:
+        // - If 'other' has a null mod at this slot and we currently have one, remove it (set to null).
+        // - If 'other' has a mod and we currently have one, update fields in place.
+        // - If 'other' has a mod but we have null, create a new mod.
+        for (int i = 0; i < otherPortal.mPortalMods.size(); i++) {
+            LinkedMod otherMod = otherPortal.mPortalMods.get(i);
+            LinkedMod currentMod = this.mPortalMods.get(i);
+
+            if (otherMod == null) {
+                // If other has no mod here, remove it if we have one
+                if (currentMod != null) {
+                    this.mPortalMods.set(i, null);
+                }
+            } else {
+                // otherMod is present
+                if (currentMod == null) {
+                    // Create a new mod
+                    LinkedMod newMod = new LinkedMod();
+                    newMod.installingUser = otherMod.installingUser;
+                    newMod.rarity = otherMod.rarity;
+                    newMod.displayName = otherMod.displayName;
+                    newMod.type = otherMod.type;
+                    newMod.stats = new HashMap<>(otherMod.stats);
+                    this.mPortalMods.set(i, newMod);
+                } else {
+                    // Update existing mod
+                    currentMod.installingUser = otherMod.installingUser;
+                    currentMod.rarity = otherMod.rarity;
+                    currentMod.displayName = otherMod.displayName;
+                    currentMod.type = otherMod.type;
+                    // Replace current stats with new stats
+                    currentMod.stats.clear();
+                    currentMod.stats.putAll(otherMod.stats);
+                }
+            }
+        }
+
+        // If other has fewer mods than we currently do (unlikely if indexing is fixed),
+        // we would remove the extras. Usually these arrays are fixed length, but if not:
+        if (otherPortal.mPortalMods.size() < this.mPortalMods.size()) {
+            // remove trailing mods not present in 'other'
+            this.mPortalMods.subList(otherPortal.mPortalMods.size(), this.mPortalMods.size()).clear();
+        }
+        // If other has more mods than we do, add them (if that scenario is possible)
+        while (otherPortal.mPortalMods.size() > this.mPortalMods.size()) {
+            // Add any new mods
+            LinkedMod otherMod = otherPortal.mPortalMods.get(this.mPortalMods.size());
+            if (otherMod == null) {
+                this.mPortalMods.add(null);
+            } else {
+                LinkedMod newMod = new LinkedMod();
+                newMod.installingUser = otherMod.installingUser;
+                newMod.rarity = otherMod.rarity;
+                newMod.displayName = otherMod.displayName;
+                newMod.type = otherMod.type;
+                newMod.stats = new HashMap<>(otherMod.stats);
+                this.mPortalMods.add(newMod);
+            }
+        }
+
+        // --- Update Resonators ---
+        // We assume resonators are also slot-based (commonly 8 slots).
+        // Similar approach to mods:
+        for (int i = 0; i < otherPortal.mPortalResonators.size(); i++) {
+            LinkedResonator otherReso = otherPortal.mPortalResonators.get(i);
+            LinkedResonator currentReso = this.mPortalResonators.get(i);
+
+            if (otherReso == null) {
+                // Remove if we have one
+                if (currentReso != null) {
+                    this.mPortalResonators.set(i, null);
+                }
+            } else {
+                if (currentReso == null) {
+                    // Create a new resonator
+                    LinkedResonator newReso = new LinkedResonator();
+                    newReso.distanceToPortal = otherReso.distanceToPortal;
+                    newReso.energyTotal = otherReso.energyTotal;
+                    newReso.slot = otherReso.slot;
+                    newReso.id = otherReso.id;
+                    newReso.ownerGuid = otherReso.ownerGuid;
+                    newReso.level = otherReso.level;
+                    this.mPortalResonators.set(i, newReso);
+                } else {
+                    // Update existing resonator
+                    currentReso.distanceToPortal = otherReso.distanceToPortal;
+                    currentReso.energyTotal = otherReso.energyTotal;
+                    currentReso.slot = otherReso.slot;
+                    currentReso.id = otherReso.id;
+                    currentReso.ownerGuid = otherReso.ownerGuid;
+                    currentReso.level = otherReso.level;
+                }
+            }
+        }
+
+        // If other has fewer resonators than we currently do (again, unlikely if indexing is fixed):
+        if (otherPortal.mPortalResonators.size() < this.mPortalResonators.size()) {
+            this.mPortalResonators.subList(otherPortal.mPortalResonators.size(), this.mPortalResonators.size()).clear();
+        }
+        // If other has more resonators:
+        while (otherPortal.mPortalResonators.size() > this.mPortalResonators.size()) {
+            LinkedResonator otherReso = otherPortal.mPortalResonators.get(this.mPortalResonators.size());
+            if (otherReso == null) {
+                this.mPortalResonators.add(null);
+            } else {
+                LinkedResonator newReso = new LinkedResonator();
+                newReso.distanceToPortal = otherReso.distanceToPortal;
+                newReso.energyTotal = otherReso.energyTotal;
+                newReso.slot = otherReso.slot;
+                newReso.id = otherReso.id;
+                newReso.ownerGuid = otherReso.ownerGuid;
+                newReso.level = otherReso.level;
+                this.mPortalResonators.add(newReso);
+            }
+        }
     }
 }
