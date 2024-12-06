@@ -139,6 +139,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         setContentView(R.layout.activity_main);
 
         // update agent data
+        updateAgent(mGame.getAgent());
         mApp.getPlayerDataViewModel().getAgent().observe(this, this::updateAgent);
 
         mRecyclerView = findViewById(R.id.fire_carousel_recycler_view);

@@ -507,6 +507,10 @@ public class ScannerView extends WidgetMap {
 
     @SuppressLint("DefaultLocale")
     public synchronized void updateWorld() {
+        if (mGame.hasHackResults()) {
+            Bundle hackResult = mGame.pollHackResult();
+            showHackResultDialog(hackResult);
+        }
         if (!notBouncing("updateWorld", mMinUpdateIntervalMS)) {
             return;
         }
