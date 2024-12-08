@@ -26,6 +26,8 @@ import static net.opengress.slimgress.ViewHelpers.getBearingFromSlot;
 import static net.opengress.slimgress.api.Item.ItemBase.ItemType;
 import static net.opengress.slimgress.api.Item.ItemBase.Rarity;
 
+import androidx.annotation.NonNull;
+
 import com.google.common.geometry.S2LatLng;
 
 import net.opengress.slimgress.SlimgressApplication;
@@ -690,4 +692,55 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
             }
         }
     }
+
+    @NonNull
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Portal Title: ").append(mPortalTitle).append("\n")
+                .append("Location: ").append(mPortalLocation).append("\n")
+                .append("Owner: ").append(getOwnerGuid()).append("\n")
+                .append("Team: ").append(mPortalTeam).append("\n")
+                .append("Level: ").append(getPortalLevel()).append("\n")
+                .append("Energy: ").append(getPortalEnergy()).append("/")
+                .append(getPortalMaxEnergy()).append("\n")
+                .append("Address: ").append(mPortalAddress).append("\n")
+                .append("Image URL: ").append(mPortalImageUrl).append("\n")
+                .append("Resonators:\n");
+
+        for (int i = 0; i < mPortalResonators.size(); i++) {
+            LinkedResonator reso = mPortalResonators.get(i);
+            if (reso != null) {
+                builder.append("  - Slot ").append(reso.slot)
+                        .append(": Level ").append(reso.level)
+                        .append(", Energy ").append(reso.energyTotal).append("/")
+                        .append(reso.getMaxEnergy())
+                        .append(", Owner: ").append(reso.ownerGuid).append("\n");
+            } else {
+                builder.append("  - Slot ").append(i).append(": Empty\n");
+            }
+        }
+
+        builder.append("Mods:\n");
+        for (int i = 0; i < mPortalMods.size(); i++) {
+            LinkedMod mod = mPortalMods.get(i);
+            if (mod != null) {
+                builder.append("  - ").append(mod.displayName)
+                        .append(" (").append(mod.rarity).append("): ")
+                        .append(mod.stats).append("\n");
+            } else {
+                builder.append("  - Slot ").append(i).append(": Empty\n");
+            }
+        }
+
+        builder.append("Links:\n");
+        for (LinkedEdge edge : mPortalEdges) {
+            builder.append("  - Edge GUID: ").append(edge.edgeGuid)
+                    .append(", Other Portal GUID: ").append(edge.otherPortalGuid)
+                    .append(", Is Origin: ").append(edge.isOrigin).append("\n");
+        }
+
+        return builder.toString();
+    }
+
 }
