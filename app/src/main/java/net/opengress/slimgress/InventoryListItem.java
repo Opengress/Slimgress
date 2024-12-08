@@ -7,8 +7,6 @@ import net.opengress.slimgress.api.Item.ItemBase.ItemType;
 import net.opengress.slimgress.api.Item.ItemBase.Rarity;
 import net.opengress.slimgress.api.Item.ItemFlipCard.FlipCardType;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -164,11 +162,5 @@ public class InventoryListItem implements Serializable {
 
     public int getLevel() {
         return mLevel;
-    }
-
-    @Serial
-    private void writeObject(ObjectOutputStream oos) throws IOException {
-        // Default serialization
-        oos.defaultWriteObject();
     }
 }

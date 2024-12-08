@@ -34,7 +34,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -317,6 +319,17 @@ public class ViewHelpers {
         drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         drawable.draw(canvas);
         return bitmap;
+    }
+
+    public static String formatNumberToKLocalized(long number) {
+        NumberFormat formatter = NumberFormat.getInstance(Locale.getDefault());
+        if (number >= 1_000_000) {
+            return String.format(Locale.getDefault(), "%.1fM", number / 1_000_000.0);
+        } else if (number >= 1_000) {
+            return String.format(Locale.getDefault(), "%.1fK", number / 1_000.0);
+        } else {
+            return formatter.format(number);
+        }
     }
 
     public static void updateInfoText(int dist, GameEntityPortal portal, TextView container) {

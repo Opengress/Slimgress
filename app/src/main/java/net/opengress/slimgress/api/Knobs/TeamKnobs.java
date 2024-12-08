@@ -53,12 +53,12 @@ public class TeamKnobs extends Knobs{
         while (it.hasNext()) {
             String key = (String)it.next();
             TeamType t = new TeamType(json.getJSONObject(key));
-            mTeamsMap.put(key, t);
+            mTeamsMap.put(key.toLowerCase(), t);
         }
     }
 
     public TeamType fromString(String name) {
-        return mTeamsMap.get(name);
+        return mTeamsMap.get(name.toLowerCase());
     }
 
     public Map<String, TeamType> getTeams() {
