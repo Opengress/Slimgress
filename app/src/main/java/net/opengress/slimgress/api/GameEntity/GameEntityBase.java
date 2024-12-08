@@ -87,7 +87,7 @@ public abstract class GameEntityBase extends EntityBase {
             mOwnerType = OwnerType.Creator;
         } else if (item.has("captured")) {
             JSONObject creator = item.getJSONObject("captured");
-            mOwnerGuid = creator.getString("capturingPlayerId");
+            mOwnerGuid = creator.isNull("capturingPlayerId") ? null : creator.getString("capturingPlayerId");
 //            mOwnerTimestamp = creator.getString("capturedTime");
             mOwnerType = OwnerType.Conqueror;
         } else {
