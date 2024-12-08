@@ -81,8 +81,6 @@ public class ActivityInventoryItem extends AppCompatActivity {
         ItemBase actual = mInventory.getItems().get(mItem.getFirstID());
         assert actual != null;
 
-        ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
-
         // handle items with levels etc differently? need to check old stuff...
         switch (type) {
             case PortalKey -> {
@@ -253,6 +251,31 @@ public class ActivityInventoryItem extends AppCompatActivity {
 
     }
 
+    @SuppressLint("SetTextI18n")
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Retrieve the current list of IDs from the InventoryListItem
+        ArrayList<String> itemIDs = new ArrayList<>(mItem.getAllIDs());
+
+        // Check each ID against the Inventory to ensure it still exists
+        for (String id : itemIDs) {
+            if (mInventory.findItem(id) == null) {
+                // If no longer in the inventory, remove it from mItem
+                mItem.remove(id);
+            }
+        }
+
+        // Now mItem.getQuantity() reflects the current actual quantity
+        ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
+
+        // If the quantity is zero, you might consider closing this activity
+        if (mItem.getQuantity() == 0) {
+            finish();
+        }
+    }
+
     private void updateDistance() {
         int dist = 999999000;
         Location loc = mGame.getLocation();
@@ -275,12 +298,12 @@ public class ActivityInventoryItem extends AppCompatActivity {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private void onDropItemClicked(View ignoredV) {
 
         mGame.intDropItem(Objects.requireNonNull(mInventory.getItems().get(mItem.getFirstID())), new Handler(msg -> {
             var data = msg.getData();
             String error = getErrorStringFromAPI(data);
-            // FIXME why is my error text funny?
             if (error != null && !error.isEmpty()) {
                 DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
                 dialog.setMessage(error).setDismissDelay(1500).show();
@@ -310,6 +333,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
         finish();
     }
 
+    @SuppressLint("SetTextI18n")
     private void onUseItemClicked(View ignoredV) {
         if (mItem.getType() == ItemBase.ItemType.PowerCube) {
             ItemPowerCube cube = (ItemPowerCube) Objects.requireNonNull(mInventory.getItems().get(mItem.getFirstID()));
@@ -488,6 +512,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
     }
 
 
+    @SuppressLint("SetTextI18n")
     private void recycleItems(int quantity) {
 
         // Get all the IDs for the items of this type
@@ -514,7 +539,6 @@ public class ActivityInventoryItem extends AppCompatActivity {
         mGame.intRecycleItems(itemsToRecycle, new Handler(msg -> {
             var data = msg.getData();
             String error = getErrorStringFromAPI(data);
-            // FIXME why is my error text funny?
             if (error != null && !error.isEmpty()) {
                 DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
                 dialog.setMessage(error).setDismissDelay(1500).show();

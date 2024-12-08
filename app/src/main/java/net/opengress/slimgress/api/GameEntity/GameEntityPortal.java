@@ -40,6 +40,7 @@ import net.opengress.slimgress.api.Item.ItemModMultihack;
 import net.opengress.slimgress.api.Item.ItemModShield;
 import net.opengress.slimgress.api.Item.ItemModTurret;
 import net.opengress.slimgress.api.Knobs.PortalKnobs;
+import net.opengress.slimgress.api.Plext.MarkupPlayer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -171,6 +172,7 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
     private String mPortalAttribution;
     private String mPortalAttributionLink;
     private String mPortalImageUrl;
+    private MarkupPlayer mDiscoverer;
     private final List<LinkedEdge> mPortalEdges;
     private final List<LinkedMod> mPortalMods;
     private final List<LinkedResonator> mPortalResonators;
@@ -186,8 +188,9 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
         mPortalLocation = new Location(item.getJSONObject("locationE6"));
 
         JSONObject imageUrl = item.optJSONObject("imageByUrl");
-        if (imageUrl != null)
+        if (imageUrl != null) {
             mPortalImageUrl = imageUrl.getString("imageUrl");
+        }
 
         JSONObject portalV2 = item.getJSONObject("portalV2");
 
@@ -249,6 +252,12 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
                 // mod == null means the slot is unused
                 mPortalMods.add(null);
             }
+        }
+
+        // get discoverer - this will need expanded once PhotoStreams come in
+        JSONObject discoverer = item.optJSONObject("discoverer");
+        if (discoverer != null) {
+            mDiscoverer = new MarkupPlayer(discoverer.getJSONObject("playerMarkupArgSet"));
         }
 
         // get description
@@ -517,6 +526,10 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
         return null;
     }
 
+    public MarkupPlayer getDiscoverer() {
+        return mDiscoverer;
+    }
+
     private int getDiminishingValue(String key, int index) {
         return SlimgressApplication.getInstance().getGame().getKnobs().getPortalModSharedKnobs().getDiminishingValues(key).get(index);
     }
@@ -541,6 +554,7 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
         this.mPortalAddress = otherPortal.mPortalAddress;
         this.mPortalAttribution = otherPortal.mPortalAttribution;
         this.mPortalAttributionLink = otherPortal.mPortalAttributionLink;
+        this.mDiscoverer = otherPortal.mDiscoverer;
 
         // --- Update Edges ---
         // We will match edges by their edgeGuid.
@@ -699,6 +713,7 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
         StringBuilder builder = new StringBuilder();
         builder.append("Portal Title: ").append(mPortalTitle).append("\n")
                 .append("Location: ").append(mPortalLocation).append("\n")
+                .append("Discoverer: ").append(mDiscoverer).append("\n")
                 .append("Owner: ").append(getOwnerGuid()).append("\n")
                 .append("Team: ").append(mPortalTeam).append("\n")
                 .append("Level: ").append(getPortalLevel()).append("\n")

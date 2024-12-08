@@ -156,7 +156,9 @@ public class Interface
 
                         Log.d("Interface", "handshake finished");
                     } catch (Exception e) {
-                        callback.handle(new Handshake(new JSONObject("{\"error\" : \"" + e.getClass().getName() + ": " + e.getLocalizedMessage() + "\"}")));
+                        JSONObject errorObj = new JSONObject();
+                        errorObj.put("error", e.getClass().getName() + ": " + e.getLocalizedMessage());
+                        callback.handle(new Handshake(errorObj));
                     }
                 }
             }

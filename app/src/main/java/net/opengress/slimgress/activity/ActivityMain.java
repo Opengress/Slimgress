@@ -438,7 +438,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("image/png");
         shareIntent.putExtra(Intent.EXTRA_STREAM, screenshotUri);
-        shareIntent.putExtra(Intent.EXTRA_TEXT, String.format("I've reached level %d in #opengress!", mGame.getAgent().getVerifiedLevel()));
+        shareIntent.putExtra(Intent.EXTRA_TEXT, String.format("I've reached level %d in #Opengress!", mGame.getAgent().getVerifiedLevel()));
         startActivity(Intent.createChooser(shareIntent, "Share via"));
     }
 

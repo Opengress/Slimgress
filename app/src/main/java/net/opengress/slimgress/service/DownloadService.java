@@ -89,7 +89,6 @@ public class DownloadService extends Service {
             Response response = client.newCall(request).execute();
             ResponseBody responseBody = response.body();
             double length = Double.parseDouble(Objects.requireNonNull(response.header("Content-Length", "1")));
-            Log.d("SERVICE", "Got file length: " + length);
             File apkFile = new File(getExternalCacheDir() + "/slimgress.apk");
             apkFile.delete();
             try (OutputStream outputStream = new FileOutputStream(apkFile); BufferedInputStream input = new BufferedInputStream(responseBody.byteStream())) {

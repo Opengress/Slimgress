@@ -21,12 +21,19 @@
 
 package net.opengress.slimgress.api.Game;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.Interface.GameBasket;
 import net.opengress.slimgress.api.Item.ItemBase;
 import net.opengress.slimgress.api.Item.ItemFlipCard;
 import net.opengress.slimgress.api.Item.ItemMod;
+import net.opengress.slimgress.api.Item.ItemPortalKey;
 import net.opengress.slimgress.api.Item.ItemResonator;
 import net.opengress.slimgress.api.Item.ModKey;
+
+import org.jetbrains.annotations.Contract;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,7 +53,7 @@ public class Inventory {
         mItems.clear();
     }
 
-    public void processGameBasket(GameBasket basket) {
+    public void processGameBasket(@NonNull GameBasket basket) {
 
         // remove deleted entities
         List<String> deletedEntityGuids = basket.getDeletedEntityGuids();
@@ -63,6 +70,8 @@ public class Inventory {
         }
     }
 
+    @NonNull
+    @Contract(" -> new")
     public final List<ItemBase> getItemsList() {
         return new ArrayList<>(mItems.values());
     }
@@ -71,6 +80,7 @@ public class Inventory {
         return mItems;
     }
 
+    @NonNull
     public final List<ItemBase> getItems(ItemBase.ItemType type) {
         List<ItemBase> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> item : mItems.entrySet()) {
@@ -82,6 +92,7 @@ public class Inventory {
         return items;
     }
 
+    @NonNull
     public final List<ItemBase> getFlipCards(ItemFlipCard.FlipCardType type) {
         List<ItemBase> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
@@ -95,6 +106,7 @@ public class Inventory {
         return items;
     }
 
+    @NonNull
     public final List<ItemBase> getItems(ItemBase.ItemType type, ItemBase.Rarity rarity) {
         List<ItemBase> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
@@ -109,6 +121,7 @@ public class Inventory {
     }
 
 
+    @NonNull
     public final List<ItemBase> getItems(ItemBase.ItemType type, String displayName) {
         // currently seems like a reasonable way to fetch DoubleAP objects from DB
         List<ItemBase> items = new LinkedList<>();
@@ -123,6 +136,7 @@ public class Inventory {
         return items;
     }
 
+    @NonNull
     public final List<ItemBase> getItems(ItemBase.ItemType type, int accessLevel) {
         List<ItemBase> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
@@ -137,6 +151,7 @@ public class Inventory {
     }
 
     // probably not applicable at this point
+    @NonNull
     public final List<ItemBase> getItems(ItemBase.ItemType type, ItemBase.Rarity rarity, int accessLevel) {
         List<ItemBase> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
@@ -151,6 +166,7 @@ public class Inventory {
         return items;
     }
 
+    @Nullable
     public final ItemBase findItem(String guid) {
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
             if (pair.getKey().equals(guid)) {
@@ -162,6 +178,7 @@ public class Inventory {
     }
 
     // FIXME don't return resos above your level (also server) or above limits
+    @Nullable
     public final ItemResonator getResoForDeployment(int accessLevel) {
 
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
@@ -176,6 +193,7 @@ public class Inventory {
     }
 
     // FIXME don't return resos above your level (also server) or above limits
+    @NonNull
     public final List<ItemResonator> getResosForUpgrade(int accessLevel) {
         List<ItemResonator> items = new LinkedList<>();
 
@@ -194,7 +212,7 @@ public class Inventory {
         mItems.remove(guid);
     }
 
-    public final void removeItem(ItemBase item) {
+    public final void removeItem(@NonNull ItemBase item) {
         removeItem(item.getEntityGuid());
     }
 
@@ -210,6 +228,7 @@ public class Inventory {
         return items;
     }
 
+    @NonNull
     public final List<ItemMod> getMods(ItemBase.Rarity rarity) {
         List<ItemMod> items = new LinkedList<>();
         for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
@@ -223,6 +242,7 @@ public class Inventory {
         return items;
     }
 
+    @Nullable
     public final ItemMod getModForDeployment(ModKey key) {
         for (ItemBase item : mItems.values()) {
             if (item instanceof ItemMod mod) {
@@ -232,5 +252,24 @@ public class Inventory {
             }
         }
         return null;
+    }
+
+    @NonNull
+    public final List<ItemPortalKey> getKeysForPortal(@NonNull GameEntityPortal portal) {
+        return getKeysForPortal(portal.getEntityGuid());
+    }
+
+    @NonNull
+    public final List<ItemPortalKey> getKeysForPortal(String portal) {
+        List<ItemPortalKey> items = new ArrayList<>();
+        for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
+            ItemBase item = pair.getValue();
+            if (item.getItemType() == ItemBase.ItemType.PortalKey &&
+                    Objects.equals(((ItemPortalKey) item).getPortalGuid(), portal)) {
+                items.add((ItemPortalKey) item);
+            }
+        }
+
+        return items;
     }
 }

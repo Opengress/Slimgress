@@ -21,7 +21,7 @@
     <string name="ops_inventory">Inventory</string>
     <string name="ops_user">User</string>
     <string name="ops_device">Device</string>
-    <string name="portal_energy">Energy: %1$d</string>
+    <string name="portal_energy">Energy: %s</string>
 
     <!-- other -->
     <string name="dummy">Dummy</string>
@@ -137,4 +137,5 @@
     <string name="data">Data</string>
     <string name="force_sync">Force Sync</string>
     <string name="mod_text_remove_mod">REMV</string>
+    <string name="uncaptured">uncaptured</string>
 </resources>

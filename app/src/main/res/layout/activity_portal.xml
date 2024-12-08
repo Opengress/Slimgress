@@ -1,128 +1,490 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:ignore="HardcodedText">
 
 
-    <ImageView
-        android:id="@+id/portalImage"
-        android:layout_width="210dp"
-        android:layout_height="180dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="48dp"
-        android:visibility="visible"
-        android:src="@drawable/no_image"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:visibility="visible"
-        tools:ignore="ContentDescription" />
-
-    <TextView
-        android:id="@+id/portalTitle"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/activityPortalTitleBar"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="16dp"
-        android:text="Portal Title"
-        android:textSize="20sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_marginLeft="2dp"
+        android:layout_marginVertical="16dp"
+        android:layout_marginRight="4dp"
+        android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/portalLevel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:text="L0"
-        android:textSize="20sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        <TextView
+            android:id="@+id/portalLevel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:text="L0"
+            android:textSize="20sp" />
 
-    <TextView
-        android:id="@+id/portalEnergy"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="34dp"
-        android:layout_marginTop="36dp"
-        android:text="Energy: 0"
-        app:layout_constraintStart_toEndOf="@+id/portalImage"
-        app:layout_constraintTop_toTopOf="parent" />
+        <TextView
+            android:id="@+id/portalTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_weight="1"
+            android:singleLine="true"
+            android:text="Portal Title"
+            android:textSize="20sp"
+            android:ellipsize="middle" />
 
-    <TextView
-        android:id="@+id/portalOwnerLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="34dp"
+        <ImageButton
+            android:id="@+id/activityPortalShareButton"
+            style="@style/BorderlessImageButton"
+            android:layout_width="20sp"
+            android:layout_height="match_parent"
+            android:layout_gravity="right"
+            android:contentDescription="Share"
+            app:srcCompat="@drawable/share_icon" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/activityPortalMainView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_marginTop="5dp"
-        android:text="Owner:"
-        app:layout_constraintStart_toEndOf="@+id/portalImage"
-        app:layout_constraintTop_toBottomOf="@+id/portalEnergy" />
+        android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/portalOwner"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="34dp"
-        android:layout_marginTop="5dp"
-        android:text="[Agent]"
-        app:layout_constraintStart_toEndOf="@+id/portalImage"
-        app:layout_constraintTop_toBottomOf="@+id/portalOwnerLabel" />
+        <LinearLayout
+            android:id="@+id/activityPortalLeftPane"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
 
-    <Button
-        android:id="@+id/hackButton"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="80dp"
-        android:layout_marginBottom="10dp"
-        android:enabled="false"
-        android:text="HACK\nportal"
-        app:layout_constraintBottom_toTopOf="@+id/deployButton"
-        app:layout_constraintEnd_toEndOf="parent" />
+            android:layout_marginHorizontal="@dimen/activity_margin_half"
+            android:orientation="vertical">
 
-    <Button
-        android:id="@+id/deployButton"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="80dp"
-        android:layout_marginBottom="10dp"
-        android:enabled="false"
-        android:text="DEPLOY\nstatus"
-        app:layout_constraintBottom_toTopOf="@+id/rechargeButton"
-        app:layout_constraintEnd_toEndOf="parent" />
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-    <Button
-        android:id="@+id/rechargeButton"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="80dp"
-        android:layout_marginBottom="10dp"
-        android:enabled="false"
-        android:text="RECHARGE\nresonators"
-        app:layout_constraintBottom_toTopOf="@+id/modButton"
-        app:layout_constraintEnd_toEndOf="parent" />
+                <ImageButton
+                    android:id="@+id/portalImage"
+                    android:layout_width="210dp"
+                    android:layout_height="180dp"
+                    android:padding="@dimen/activity_margin_half"
+                    android:src="@drawable/no_image"
+                    android:visibility="visible"
+                    tools:ignore="ContentDescription" />
 
-    <Button
-        android:id="@+id/modButton"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="80dp"
-        android:layout_marginBottom="10dp"
-        android:enabled="false"
-        android:text="MOD\nstatus"
-        app:layout_constraintBottom_toTopOf="@+id/navigateButton"
-        app:layout_constraintEnd_toEndOf="parent" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom">
 
-    <Button
-        android:id="@+id/navigateButton"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="80dp"
-        android:layout_marginBottom="70dp"
-        android:text="NAVIGATE\nto portal"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+                    <TextView
+                        android:id="@+id/activityPortalCurrentAttributionText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="8sp"
+                        android:layout_margin="@dimen/activity_margin"
+                        tools:ignore="SmallSp" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <LinearLayout
+                android:id="@+id/activityPortalResoInfoArea"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="@dimen/activity_margin"
+                android:orientation="vertical">
+
+                <!--                3, 2, 1, 0-->
+                <!--                4, 5, 6, 7-->
+
+                <LinearLayout
+                    android:id="@+id/activityPortalTopRowResonators"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <ProgressBar
+                            android:id="@+id/activityPortalResoProgressBar4"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:max="100"
+                            android:progress="0"
+                            android:rotation="270" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="18dp"
+                            android:background="#000">
+
+                            <TextView
+                                android:id="@+id/activityPortalResoLabel4"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="L0"
+                                android:visibility="invisible" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <ProgressBar
+                            android:id="@+id/activityPortalResoProgressBar3"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:max="100"
+                            android:progress="0"
+                            android:rotation="270" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="18dp"
+                            android:background="#000">
+
+                            <TextView
+                                android:id="@+id/activityPortalResoLabel3"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="L0"
+                                android:visibility="invisible" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <ProgressBar
+                            android:id="@+id/activityPortalResoProgressBar2"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:max="100"
+                            android:progress="0"
+                            android:rotation="270" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="18dp"
+                            android:background="#000">
+
+                            <TextView
+                                android:id="@+id/activityPortalResoLabel2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="L0"
+                                android:visibility="invisible" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <ProgressBar
+                            android:id="@+id/activityPortalResoProgressBar1"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:max="100"
+                            android:progress="0"
+                            android:rotation="270" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="18dp"
+                            android:background="#000">
+
+                            <TextView
+                                android:id="@+id/activityPortalResoLabel1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="L0"
+                                android:visibility="invisible" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <FrameLayout
+                    android:id="@+id/activityPortalLinkButtonArea"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        android:id="@+id/activityPortalDecorativeGraphic"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:importantForAccessibility="no"
+                        app:srcCompat="@drawable/button_background_black_enabled" />
+
+                    <Button
+                        android:id="@+id/activityPortalLinkButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_margin="@dimen/button_height"
+                        android:text="LINK" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:id="@+id/activityPortalBottomRowResonators"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="18dp"
+                            android:background="#000">
+
+                            <TextView
+                                android:id="@+id/activityPortalResoLabel5"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="L0"
+                                android:visibility="invisible" />
+                        </LinearLayout>
+
+                        <ProgressBar
+                            android:id="@+id/activityPortalResoProgressBar5"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:max="100"
+                            android:progress="0"
+                            android:rotation="270" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="18dp"
+                            android:background="#000">
+
+                            <TextView
+                                android:id="@+id/activityPortalResoLabel6"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="L0"
+                                android:visibility="invisible" />
+                        </LinearLayout>
+
+                        <ProgressBar
+                            android:id="@+id/activityPortalResoProgressBar6"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:max="100"
+                            android:progress="0"
+                            android:rotation="270" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="18dp"
+                            android:background="#000">
+
+                            <TextView
+                                android:id="@+id/activityPortalResoLabel7"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="L0"
+                                android:visibility="invisible" />
+                        </LinearLayout>
+
+                        <ProgressBar
+                            android:id="@+id/activityPortalResoProgressBar7"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:max="100"
+                            android:progress="0"
+                            android:rotation="270" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="18dp"
+                            android:background="#000">
+
+                            <TextView
+                                android:id="@+id/activityPortalResoLabel8"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="L0"
+                                android:visibility="invisible" />
+                        </LinearLayout>
+
+                        <ProgressBar
+                            android:id="@+id/activityPortalResoProgressBar8"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:max="100"
+                            android:progress="0"
+                            android:rotation="270" />
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/activityPortalKeyButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/activity_margin_half"
+                    android:layout_weight="1"
+                    android:contentDescription="Portal Key"
+                    app:srcCompat="@drawable/buttonkey" />
+
+                <TextView
+                    android:id="@+id/portalEnergy"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/activity_margin_half"
+                    android:layout_weight="1"
+                    android:text="Energy: 0" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/activityPortalRightPane"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="@dimen/activity_margin_half"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/portalOwnerLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Owner:" />
+
+            <TextView
+                android:id="@+id/portalOwner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:text="[Agent]" />
+
+            <LinearLayout
+                android:id="@+id/activityPortalExcitingButtonArea"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginVertical="@dimen/activity_margin_half"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <Button
+                    android:id="@+id/hackButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:enabled="false"
+                    android:maxWidth="120dp"
+                    android:text="HACK\nportal" />
+
+                <Button
+                    android:id="@+id/deployButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:enabled="false"
+                    android:maxWidth="120dp"
+                    android:text="DEPLOY\nstatus" />
+
+                <Button
+                    android:id="@+id/rechargeButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:enabled="false"
+                    android:maxWidth="120dp"
+                    android:text="RECHARGE\nresonators" />
+
+                <Button
+                    android:id="@+id/modButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:enabled="false"
+                    android:maxWidth="120dp"
+                    android:text="MOD\nstatus" />
+
+                <Button
+                    android:id="@+id/navigateButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="70dp"
+                    android:maxWidth="120dp"
+                    android:text="NAVIGATE\nto portal" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/activityPortalOkButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/activity_margin"
+                android:maxWidth="120dp"
+                android:padding="12dp"
+                android:text="OK" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>
