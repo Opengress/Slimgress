@@ -1310,6 +1310,11 @@ public class GameState {
                 @Override
                 public void handleResult(JSONObject result) {
                     // TODO: don't know the result yet
+                    /*
+                    		dispatch_async(dispatch_get_main_queue(), ^{
+			handler(responseObj[@"result"][portalKey.guid]);
+
+                     */
                 }
             });
         } catch (JSONException e) {
@@ -1532,7 +1537,7 @@ public class GameState {
     public List<String> checkAgentNames(HashSet<String> guids) {
         List<String> rejects = new ArrayList<>();
         for (String guid : guids) {
-            if (!mAgentNames.containsKey(guid)) {
+            if (guid != null && !mAgentNames.containsKey(guid)) {
                 rejects.add(guid);
             }
         }
