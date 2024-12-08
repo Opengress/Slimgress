@@ -130,7 +130,9 @@ public class AndroidLocationProvider implements LocationProvider, LocationListen
 
     public void checkPermissionsAndRequestUpdates(Activity activity, Runnable onSuccessCallback) {
         if (ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Stupid Google made shouldShowPermissionRationale useless as it returns false on first run
+            // TODO: maybe come back and do the job that the google morons pretended to do
+            if (false && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (activity.shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
                     doActualPermissionsRequest(activity);
                 } else {
