@@ -107,6 +107,7 @@ public class WidgetMap extends Fragment {
     protected final HashMap<String, Fill> mPolygons = new HashMap<>();
     protected final int MAP_ROTATION_ARBITRARY = 1;
     protected final int MAP_ROTATION_FLOATING = 2;
+
     // ===========================================================
     // Map basics
     // ===========================================================
@@ -119,6 +120,7 @@ public class WidgetMap extends Fragment {
     protected FillManager mFillManager;
     protected String mCurrentTileSource = UNTRANSLATABLE_MAP_TILE_SOURCE_BLANK;
     protected ActivityResultLauncher<Intent> mPortalActivityResultLauncher;
+
     // ===========================================================
     // Fields and permissions
     // ===========================================================
@@ -573,7 +575,7 @@ public class WidgetMap extends Fragment {
             LineOptions lineOptions = new LineOptions()
                     .withLatLngs(Arrays.asList(origin.getLatLng(), dest.getLatLng()))
                     .withLineColor(getRgbaStringFromColour(colour))
-                    .withLineWidth(0.2f);
+                    .withLineWidth(2.3f);
 
             mLines.put(link.getEntityGuid(), mLineManager.create(lineOptions));
         });

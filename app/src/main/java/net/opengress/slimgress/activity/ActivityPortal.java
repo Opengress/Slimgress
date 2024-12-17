@@ -41,6 +41,7 @@ import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Common.Team;
+import net.opengress.slimgress.api.Common.Utils;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.Item.ItemBase;
@@ -88,6 +89,9 @@ public class ActivityPortal extends AppCompatActivity {
 
     @SuppressLint({"DefaultLocale", "ObsoleteSdkInt", "SetTextI18n"})
     private void setUpView() {
+        if (isDestroyed()) {
+            return;
+        }
         int TEAM_COLOR = 0xFF000000 + mPortal.getPortalTeam().getColour();
 
         ((TextView) findViewById(R.id.portalTitle)).setText(mPortal.getPortalTitle());
@@ -203,10 +207,11 @@ public class ActivityPortal extends AppCompatActivity {
         checkKeys();
     }
 
-    @SuppressLint("DefaultLocale")
+    @SuppressLint({"DefaultLocale", "SetTextI18n"})
     public void checkKeys() {
         List<ItemPortalKey> keys = mGame.getInventory().getKeysForPortal(mPortal);
         findViewById(R.id.activityPortalKeyButton).setEnabled(!keys.isEmpty());
+        ((TextView) findViewById(R.id.activityPortalKeyCount)).setText("x" + keys.size());
         findViewById(R.id.activityPortalKeyButton).setOnClickListener(v -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Portal Key");
@@ -313,7 +318,59 @@ public class ActivityPortal extends AppCompatActivity {
         });
 
         findViewById(R.id.activityPortalLinkButton).setOnClickListener(v -> {
-            Log.d("PORTAL", "link button pressed!");
+            // TODO re-request any that return TIMEOUT
+            mGame.intQueryLinkablilityForPortal(mPortal, mGame.getInventory().getItemsOfType(ItemPortalKey.class), new Handler(msg -> {
+                String error = Utils.getErrorStringFromAPI(msg.getData());
+                if (error != null && !error.isEmpty()) {
+                    DialogInfo dialog = new DialogInfo(ActivityPortal.this);
+                    dialog.setMessage(error).setDismissDelay(1500).show();
+                    SlimgressApplication.postPlainCommsMessage("Link check failed: " + error);
+                    return false;
+                }
+                @SuppressWarnings("unchecked")
+                List<ItemPortalKey> keys = (List<ItemPortalKey>) msg.getData().getSerializable("result");
+                assert keys != null;
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Select Target Portal (I will fix this in 2029)");
+//        builder.setIcon(R.drawable.ic_format_list_bulleted_black_24dp);
+
+                HashMap<String, String> portals = new HashMap<>();
+                for (ItemPortalKey key : keys) {
+                    portals.put(key.getPortalTitle(), key.getPortalGuid());
+                }
+
+                // FIXME will break for portals with duplicate names, not enough feedback
+                // FIXME the problems with this are ENDLESS but hey let's test!
+                builder.setItems(portals.keySet().toArray(new String[0]), (dialogInterface, i) -> {
+                    var which = portals.values().toArray(new String[0])[i];
+                    for (var key : keys) {
+                        if (Objects.equals(key.getPortalGuid(), which)) {
+//                            mGame.getInventory().removeItem(key);
+                            mGame.intLinkPortal(mPortal, key, new Handler(m2 -> {
+                                String e2 = Utils.getErrorStringFromAPI(m2.getData());
+                                if (e2 != null && !e2.isEmpty()) {
+                                    DialogInfo dialog = new DialogInfo(ActivityPortal.this);
+                                    dialog.setMessage(e2).setDismissDelay(1500).show();
+                                    SlimgressApplication.postPlainCommsMessage("Link failed: " + e2);
+                                    return false;
+                                }
+                                return false;
+                            }));
+                            Log.d("PORTAL", "LINKING TO PORTAL! It is " + key.getPortalTitle());
+                            break;
+                        }
+                    }
+
+                });
+                builder.show();
+                return false;
+            }));
+        });
+
+        findViewById(R.id.portalImage).setOnClickListener(v -> {
+            Intent myIntent = new Intent(getApplicationContext(), ActivityPhotoRate.class);
+            myIntent.putExtra("guid", mPortal.getEntityGuid());
+            startActivity(myIntent);
         });
 
         findViewById(R.id.activityPortalShareButton).setOnClickListener(v -> sharePortal());
@@ -346,17 +403,21 @@ public class ActivityPortal extends AppCompatActivity {
     }
 
     private void onReceiveLocation(Location location) {
-        if (location != null) {
-            setButtonsEnabled(location.getLatLng().distanceTo(mPortal.getPortalLocation().getLatLng()) <= mActionRadiusM);
-        } else {
+        if (location == null) {
             setButtonsEnabled(false);
+        } else {
+            setButtonsEnabled(location.getLatLng().distanceTo(mPortal.getPortalLocation().getLatLng()) <= mActionRadiusM);
         }
     }
 
     private void setButtonsEnabled(boolean shouldEnableButton) {
         findViewById(R.id.hackButton).setEnabled(!mIsHacking && shouldEnableButton);
-        boolean isTesting = mGame.getAgent().getNickname().startsWith("MT") || mGame.getAgent().getNickname().startsWith("I_");
-        findViewById(R.id.activityPortalLinkButton).setEnabled(shouldEnableButton && isTesting);
+        boolean isTesting = mGame.getAgent().getNickname().startsWith("MT") || mGame.getAgent().getNickname().startsWith("I_") || mGame.getAgent().getNickname().startsWith("ca");
+        boolean canLink = mPortal.getPortalTeam().equals(mGame.getAgent().getTeam())
+                && (mPortal.getPortalResonatorCount() >= 8)
+                && mPortal.getLinkCapacity() > mPortal.getPortalEdges().size()
+                && mGame.getAgent().getEnergy() >= mGame.getKnobs().getXMCostKnobs().getLinkCreationCost();
+        findViewById(R.id.activityPortalLinkButton).setEnabled(shouldEnableButton && isTesting && canLink);
     }
 
     @SuppressWarnings("unchecked")
@@ -421,4 +482,19 @@ public class ActivityPortal extends AppCompatActivity {
         return bundle;
     }
 
+    private class LinkHandler extends Handler {
+        public LinkHandler() {
+            super(msg -> {
+                String error = Utils.getErrorStringFromAPI(msg.getData());
+                if (error != null && !error.isEmpty()) {
+                    DialogInfo dialog = new DialogInfo(ActivityPortal.this);
+                    dialog.setMessage(error).setDismissDelay(1500).show();
+                    SlimgressApplication.postPlainCommsMessage("Recycle failed: " + error);
+                    return false;
+                }
+                List<ItemPortalKey> keys = (List<ItemPortalKey>) msg.getData().getSerializable("result");
+                return false;
+            });
+        }
+    }
 }
