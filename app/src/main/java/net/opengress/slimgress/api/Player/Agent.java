@@ -22,6 +22,7 @@
 package net.opengress.slimgress.api.Player;
 
 import net.opengress.slimgress.SlimgressApplication;
+import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Knobs.TeamKnobs;
 
 import org.json.JSONArray;
@@ -51,6 +52,7 @@ public class Agent extends PlayerEntity
     public void setNickname(String nickname)
     {
         mNickname = nickname;
+        postUpdates();
     }
 
     public int getLevel()
@@ -78,13 +80,32 @@ public class Agent extends PlayerEntity
 
     public void addAP(int AP) {
         setAP(getAp() + AP);
+        postUpdates();
     }
 
     public void addEnergy(int energyAmount) {
         setEnergy(Math.min(getEnergy() + energyAmount, getEnergyMax()));
+        postUpdates();
     }
 
     public void subtractEnergy(int energyAmount) {
         setEnergy(Math.max(getEnergy() - energyAmount, 0));
+        postUpdates();
+    }
+
+    public void postUpdates() {
+        SlimgressApplication.getInstance().getPlayerDataViewModel().postAgent(SlimgressApplication.getInstance().getGame().getAgent());
+    }
+
+    @Override
+    public void update(PlayerEntity entity) {
+        super.update(entity);
+        postUpdates();
+    }
+
+    @Override
+    public void setTeam(Team team) {
+        super.setTeam(team);
+        postUpdates();
     }
 }

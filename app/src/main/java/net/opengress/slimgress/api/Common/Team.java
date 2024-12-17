@@ -22,6 +22,7 @@
 package net.opengress.slimgress.api.Common;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.Knobs.TeamKnobs;
@@ -34,7 +35,7 @@ public class Team
 
     private final TeamKnobs.TeamType mTeam;
 
-    public Team(JSONObject json, TeamKnobs teamKnobs) throws JSONException
+    public Team(@NonNull JSONObject json, TeamKnobs teamKnobs) throws JSONException
     {
         if (!json.has("team"))
             throw new RuntimeException("invalid json object");
@@ -42,12 +43,29 @@ public class Team
         mTeam = teamKnobs.fromString(json.getString("team"));
     }
 
-    public Team(String teamString, TeamKnobs teamKnobs)
+    public Team(String teamString, @NonNull TeamKnobs teamKnobs)
     {
         mTeam = teamKnobs.fromString(teamString);
     }
 
-    public Team(JSONObject json) throws JSONException
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        Team team = (Team) obj;
+        return mTeam.equals(team.mTeam);
+    }
+
+    @Override
+    public int hashCode() {
+        return mTeam.hashCode();
+    }
+
+    public Team(@NonNull JSONObject json) throws JSONException
     {
         if (!json.has("team"))
             throw new RuntimeException("invalid json object");

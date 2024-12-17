@@ -168,6 +168,7 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
     private Location mPortalLocation;
     private Team mPortalTeam;
     private String mPortalTitle;
+    private String mPortalDescription;
     private String mPortalAddress;
     private String mPortalAttribution;
     private String mPortalAttributionLink;
@@ -264,6 +265,8 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
 //        JSONObject descriptiveText = portalV2.getJSONObject("descriptiveText");
         JSONObject descriptiveText = item.getJSONObject("descriptiveText").getJSONObject("map");
         mPortalTitle = descriptiveText.getString("TITLE");
+        // frustratingly, this is probably present IFF the portal HAS a description
+        mPortalDescription = descriptiveText.optString("DESCRIPTION");
         mPortalAddress = descriptiveText.optString("ADDRESS");
         mPortalAttribution = descriptiveText.optString("ATTRIBUTION");
         mPortalAttributionLink = descriptiveText.optString("ATTRIBUTION_LINK");
@@ -435,6 +438,11 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
         return linkRangeMultiplier;
     }
 
+    public int getLinkCapacity() {
+        // FIXME hardcoded
+        return 8 + getOutgoingLinksBonus();
+    }
+
     public int getOutgoingLinksBonus() {
         // TODO don't recalculate every time
         int outgoingLinksBonus = 0;
@@ -470,6 +478,10 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
     public String getPortalTitle()
     {
         return mPortalTitle;
+    }
+
+    public String getPortalDescription() {
+        return mPortalDescription;
     }
 
     public String getPortalAddress()
@@ -551,6 +563,7 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
         this.mPortalLocation = otherPortal.mPortalLocation;
         this.mPortalTeam = otherPortal.mPortalTeam;
         this.mPortalTitle = otherPortal.mPortalTitle;
+        this.mPortalDescription = otherPortal.mPortalDescription;
         this.mPortalAddress = otherPortal.mPortalAddress;
         this.mPortalAttribution = otherPortal.mPortalAttribution;
         this.mPortalAttributionLink = otherPortal.mPortalAttributionLink;
@@ -712,6 +725,7 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("Portal Title: ").append(mPortalTitle).append("\n")
+                .append("Description: ").append(mPortalDescription).append("\n")
                 .append("Location: ").append(mPortalLocation).append("\n")
                 .append("Discoverer: ").append(mDiscoverer).append("\n")
                 .append("Owner: ").append(getOwnerGuid()).append("\n")

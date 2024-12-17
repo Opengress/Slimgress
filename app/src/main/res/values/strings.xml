@@ -97,7 +97,7 @@
     <string name="nothing_to_display">Nothing to display…</string>
     <string name="share">Share</string>
     <string name="new_access">NEW ACCESS</string>
-    <string name="hacking_in_progress"><![CDATA[Hacking
+    <string name="hacking_in_progress"><![CDATA[Hacking\n
     Portal…]]></string>
     <string name="comms_tab_all">ALL</string>
     <string name="comms_tab_faction">FACTION</string>
@@ -138,4 +138,6 @@
     <string name="force_sync">Force Sync</string>
     <string name="mod_text_remove_mod">REMV</string>
     <string name="uncaptured">uncaptured</string>
+    <string name="btn_edit">EDIT</string>
+    <string name="placeholder_agent_name">[Agent]</string>
 </resources>

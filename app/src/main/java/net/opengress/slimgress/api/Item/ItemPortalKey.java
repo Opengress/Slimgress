@@ -21,11 +21,16 @@
 
 package net.opengress.slimgress.api.Item;
 
+import androidx.annotation.NonNull;
+
+import org.jetbrains.annotations.Contract;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class ItemPortalKey extends ItemBase
+import java.io.Serializable;
+
+public class ItemPortalKey extends ItemBase implements Serializable
 {
     private final String mPortalGuid;
     private final String mPortalLocation;
@@ -47,6 +52,8 @@ public class ItemPortalKey extends ItemBase
         mPortalAddress = portalCoupler.getString("portalAddress");
     }
 
+    @NonNull
+    @Contract(pure = true)
     public static String getNameStatic()
     {
         return "PORTAL_LINK_KEY";

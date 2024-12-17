@@ -36,44 +36,46 @@ public class XMCostKnobs extends Knobs
     // these are annoying: passing in the level you're interested in gives an off-by-one error.
     // maybe i should fix that in more sophisticated getters.
 
-    @Deprecated
-    private final List<Integer> mHeatsinkDeployCostByLevel;
+    //    @Deprecated
+//    private final List<Integer> mHeatsinkDeployCostByLevel;
     private final List<Integer> mFlipCardCostByLevel;
-    @Deprecated
-    private final List<Integer> mTurretDeployCostByLevel;
+    //    @Deprecated
+//    private final List<Integer> mTurretDeployCostByLevel;
     private final List<Integer> mPortalHackNeutralCostByLevel;
-    @Deprecated
-    private final List<Integer> mShieldDeployCostByLevel;
+    //    @Deprecated
+//    private final List<Integer> mShieldDeployCostByLevel;
     private final List<Integer> mXmpFiringCostByLevel;
     private final List<Integer> mResonatorUpgradeCostByLevel;
     private final List<Integer> mPortalHackFriendlyCostByLevel;
-    @Deprecated
-    private final List<Integer> mMultihackDeployCostByLevel;
+    //    @Deprecated
+//    private final List<Integer> mMultihackDeployCostByLevel;
     private final List<Integer> mPortalHackEnemyCostByLevel;
     private final List<Integer> mResonatorDeployCostByLevel;
-    @Deprecated
-    private final List<Integer> mForceAmplifierDeployCostByLevel;
-    @Deprecated
-    private final List<Integer> mLinkAmplifierDeployCostByLevel;
+    //    @Deprecated
+//    private final List<Integer> mForceAmplifierDeployCostByLevel;
+//    @Deprecated
+//    private final List<Integer> mLinkAmplifierDeployCostByLevel;
     private final Map<String, List<Integer>> mPortalModByLevel;
+    private final int mCreateLinkCost;
 
     public XMCostKnobs(JSONObject json) throws JSONException
     {
         super(json);
 
         mFlipCardCostByLevel = getIntArray(json, "flipCardCostByLevel");
-        mForceAmplifierDeployCostByLevel = getIntArray(json, "forceAmplifierDeployCostByLevel");
-        mHeatsinkDeployCostByLevel = getIntArray(json, "heatsinkDeployCostByLevel");
-        mLinkAmplifierDeployCostByLevel = getIntArray(json, "linkAmplifierDeployCostByLevel");
-        mMultihackDeployCostByLevel = getIntArray(json, "multihackDeployCostByLevel");
+//        mForceAmplifierDeployCostByLevel = getIntArray(json, "forceAmplifierDeployCostByLevel");
+//        mHeatsinkDeployCostByLevel = getIntArray(json, "heatsinkDeployCostByLevel");
+//        mLinkAmplifierDeployCostByLevel = getIntArray(json, "linkAmplifierDeployCostByLevel");
+//        mMultihackDeployCostByLevel = getIntArray(json, "multihackDeployCostByLevel");
         mPortalHackEnemyCostByLevel = getIntArray(json, "portalHackEnemyCostByLevel");
         mPortalHackFriendlyCostByLevel = getIntArray(json, "portalHackFriendlyCostByLevel");
         mPortalHackNeutralCostByLevel = getIntArray(json, "portalHackNeutralCostByLevel");
         mResonatorDeployCostByLevel = getIntArray(json, "resonatorDeployCostByLevel");
         mResonatorUpgradeCostByLevel = getIntArray(json, "resonatorUpgradeCostByLevel");
-        mShieldDeployCostByLevel = getIntArray(json, "shieldDeployCostByLevel");
-        mTurretDeployCostByLevel = getIntArray(json, "turretDeployCostByLevel");
+//        mShieldDeployCostByLevel = getIntArray(json, "shieldDeployCostByLevel");
+//        mTurretDeployCostByLevel = getIntArray(json, "turretDeployCostByLevel");
         mXmpFiringCostByLevel = getIntArray(json, "xmpFiringCostByLevel");
+        mCreateLinkCost = json.getInt("createLinkCost");
 
         mPortalModByLevel = new HashMap<>();
         JSONObject portalModByLevel = json.getJSONObject("portalModByLevel");
@@ -86,7 +88,7 @@ public class XMCostKnobs extends Knobs
 
     public List<Integer> getHeatsinkDeployCostByLevel()
     {
-        return mHeatsinkDeployCostByLevel;
+        return mPortalModByLevel.get("HEATSINK");
     }
 
     public List<Integer> getFlipCardCostByLevel()
@@ -96,7 +98,7 @@ public class XMCostKnobs extends Knobs
 
     public List<Integer> getTurretDeployCostByLevel()
     {
-        return mTurretDeployCostByLevel;
+        return mPortalModByLevel.get("TURRET");
     }
 
     public List<Integer> getPortalHackNeutralCostByLevel()
@@ -106,7 +108,7 @@ public class XMCostKnobs extends Knobs
 
     public List<Integer> getShieldDeployCostByLevel()
     {
-        return mShieldDeployCostByLevel;
+        return mPortalModByLevel.get("RES_SHIELD");
     }
 
     public List<Integer> getXmpFiringCostByLevel()
@@ -126,7 +128,7 @@ public class XMCostKnobs extends Knobs
 
     public List<Integer> getMultihackDeployCostByLevel()
     {
-        return mMultihackDeployCostByLevel;
+        return mPortalModByLevel.get("MULTIHACK");
     }
 
     public List<Integer> getPortalHackEnemyCostByLevel()
@@ -141,12 +143,12 @@ public class XMCostKnobs extends Knobs
 
     public List<Integer> getForceAmplifierDeployCostByLevel()
     {
-        return mForceAmplifierDeployCostByLevel;
+        return mPortalModByLevel.get("FORCE_AMP");
     }
 
     public List<Integer> getLinkAmplifierDeployCostByLevel()
     {
-        return mLinkAmplifierDeployCostByLevel;
+        return mPortalModByLevel.get("LINK_AMPLIFIER");
     }
 
     public List<Integer> getPortalModByLevel(String key)
@@ -155,5 +157,9 @@ public class XMCostKnobs extends Knobs
             Log.e("XMCostKnobs", "key not found in hash map: " + key);
 
         return mPortalModByLevel.get(key);
+    }
+
+    public int getLinkCreationCost() {
+        return mCreateLinkCost;
     }
 }

@@ -31,6 +31,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.google.common.geometry.S2LatLng;
 import com.google.common.geometry.S2LatLngRect;
 
@@ -62,6 +64,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -160,7 +164,6 @@ public class GameState {
             PlayerEntity playerEntity = gameBasket.getPlayerEntity();
             if (playerEntity != null && mAgent != null) {
                 mAgent.update(playerEntity);
-                app.getPlayerDataViewModel().postAgent(mAgent);
             }
         }
     }
@@ -610,7 +613,7 @@ public class GameState {
         intGetNicknamesFromUserGUIDs(guids, handler);
     }
 
-    public void intGetNicknamesFromUserGUIDs(final String[] guids, final Handler handler) {
+    public void intGetNicknamesFromUserGUIDs(@NonNull final String[] guids, final Handler handler) {
         try {
             checkInterface();
 
@@ -652,7 +655,7 @@ public class GameState {
         intFireWeapon(weapon, 0, handler);
     }
 
-    public void intFireWeapon(ItemWeapon weapon, int encodedBoost, final Handler handler) {
+    public void intFireWeapon(@NonNull ItemWeapon weapon, int encodedBoost, final Handler handler) {
         // FIXME: this is inappropriate because we are not encoding the boost param
         try {
             checkInterface();
@@ -717,7 +720,7 @@ public class GameState {
         }
     }
 
-    public void intHackPortal(GameEntityPortal portal, final Handler handler) {
+    public void intHackPortal(@NonNull GameEntityPortal portal, final Handler handler) {
         try {
             checkInterface();
 
@@ -815,7 +818,7 @@ public class GameState {
     }
 
     // FIXME instead of one resonator this should ultimately accept multiple and then send a set of Guids
-    public void intDeployResonator(ItemResonator resonator, GameEntityPortal portal, int slot, final Handler handler) {
+    public void intDeployResonator(@NonNull ItemResonator resonator, @NonNull GameEntityPortal portal, int slot, final Handler handler) {
         try {
             checkInterface();
 
@@ -872,7 +875,7 @@ public class GameState {
         }
     }
 
-    public void intUpgradeResonator(ItemResonator resonator, GameEntityPortal portal, int slot, final Handler handler) {
+    public void intUpgradeResonator(@NonNull ItemResonator resonator, @NonNull GameEntityPortal portal, int slot, final Handler handler) {
         try {
             checkInterface();
 
@@ -926,7 +929,7 @@ public class GameState {
         }
     }
 
-    public void intAddMod(ItemMod mod, GameEntityPortal portal, int slot, final Handler handler) {
+    public void intAddMod(@NonNull ItemMod mod, @NonNull GameEntityPortal portal, int slot, final Handler handler) {
         try {
             checkInterface();
 
@@ -978,7 +981,7 @@ public class GameState {
         }
     }
 
-    public void intRemoveMod(GameEntityPortal portal, int slot, final Handler handler) {
+    public void intRemoveMod(@NonNull GameEntityPortal portal, int slot, final Handler handler) {
         try {
             checkInterface();
 
@@ -1027,7 +1030,7 @@ public class GameState {
         }
     }
 
-    public void intDropItem(ItemBase item, final Handler handler) {
+    public void intDropItem(@NonNull ItemBase item, final Handler handler) {
         try {
             checkInterface();
 
@@ -1105,7 +1108,7 @@ public class GameState {
         }
     }
 
-    public void intRecycleItem(ItemBase item, final Handler handler) {
+    public void intRecycleItem(@NonNull ItemBase item, final Handler handler) {
         // now unused, but probably still connected in backend
         try {
             checkInterface();
@@ -1150,7 +1153,7 @@ public class GameState {
         }
     }
 
-    public void intRecycleItems(List<ItemBase> items, final Handler handler) {
+    public void intRecycleItems(@NonNull List<ItemBase> items, final Handler handler) {
         try {
             checkInterface();
 
@@ -1198,7 +1201,7 @@ public class GameState {
         }
     }
 
-    public void intUsePowerCube(ItemPowerCube powerCube, final Handler handler) {
+    public void intUsePowerCube(@NonNull ItemPowerCube powerCube, final Handler handler) {
         try {
             checkInterface();
 
@@ -1246,7 +1249,7 @@ public class GameState {
         }
     }
 
-    public void intRechargePortal(GameEntityPortal portal, int[] slots, final Handler handler) {
+    public void intRechargePortal(@NonNull GameEntityPortal portal, @NonNull int[] slots, final Handler handler) {
         try {
             checkInterface();
 
@@ -1270,7 +1273,7 @@ public class GameState {
         }
     }
 
-    public void intRemoteRechargePortal(GameEntityPortal portal, ItemPortalKey key, final Handler handler) {
+    public void intRemoteRechargePortal(@NonNull GameEntityPortal portal, @NonNull ItemPortalKey key, final Handler handler) {
         try {
             checkInterface();
 
@@ -1296,25 +1299,56 @@ public class GameState {
     }
 
     public void intQueryLinkablilityForPortal(GameEntityPortal portal, ItemPortalKey key, final Handler handler) {
+        // I do not know why you would just check ONE key, but every unofficial client did ¯\_(ツ)_/¯
+        intQueryLinkablilityForPortal(portal, new AbstractList<>() {
+            @Override
+            public ItemPortalKey get(int index) {
+                return key;
+            }
+
+            @Override
+            public int size() {
+                return 1;
+            }
+        }, handler);
+    }
+
+    public void intQueryLinkablilityForPortal(@NonNull GameEntityPortal portal, @NonNull List<ItemPortalKey> keys, final Handler handler) {
         try {
             checkInterface();
 
             JSONObject params = new JSONObject();
             params.put("originPortalGuid", portal.getEntityGuid());
-
-            JSONArray queryForPortals = new JSONArray();
-            queryForPortals.put(key.getEntityGuid());
-            params.put("portalLinkKeyGuidSet", queryForPortals);
+            JSONArray keyGuids = new JSONArray();
+            // maybe filter out wrong portals at this stage to save server some stress?
+            for (ItemPortalKey key : keys) {
+                keyGuids.put(key.getEntityGuid());
+            }
+            params.put("portalLinkKeyGuidSet", keyGuids);
 
             mInterface.request(mHandshake, "gameplay/getLinkabilityImpediment", mLocation, params, new RequestResult(handler) {
                 @Override
                 public void handleResult(JSONObject result) {
-                    // TODO: don't know the result yet
-                    /*
-                    		dispatch_async(dispatch_get_main_queue(), ^{
-			handler(responseObj[@"result"][portalKey.guid]);
+                    Set<ItemPortalKey> toRemove = new HashSet<>();
+                    for (ItemPortalKey key : keys) {
+                        if (result.has(key.getEntityGuid())) {
+                            toRemove.add(key);
+                        }
+                    }
+                    keys.removeAll(toRemove);
 
-                     */
+                    getData().putSerializable("result", (Serializable) keys);
+                    super.handleResult(result);
+                }
+
+                @Override
+                public void handleError(String error) {
+                    switch (error) {
+                        case "PLAYER_DEPLETED", "NEED_MORE_ENERGY" ->
+                                super.handleError(getString(R.string.you_don_t_have_enough_xm));
+                        case "SERVER_ERROR" -> super.handleError(getString(R.string.server_error));
+                        default -> super.handleError("Unknown error: " + error);
+                    }
                 }
             });
         } catch (JSONException e) {
@@ -1322,7 +1356,7 @@ public class GameState {
         }
     }
 
-    public void intLinkPortal(GameEntityPortal portal, ItemPortalKey toKey, final Handler handler) {
+    public void intLinkPortal(@NonNull GameEntityPortal portal, @NonNull ItemPortalKey toKey, final Handler handler) {
         try {
             checkInterface();
 
@@ -1335,6 +1369,16 @@ public class GameState {
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
+                }
+
+                @Override
+                public void handleError(String error) {
+                    switch (error) {
+                        case "PLAYER_DEPLETED", "NEED_MORE_ENERGY" ->
+                                super.handleError(getString(R.string.you_don_t_have_enough_xm));
+                        case "SERVER_ERROR" -> super.handleError(getString(R.string.server_error));
+                        default -> super.handleError("Unknown error: " + error);
+                    }
                 }
             });
         } catch (JSONException e) {
@@ -1351,7 +1395,7 @@ public class GameState {
         intGetModifiedEntitiesByGuid(guids, handler);
     }
 
-    public void intGetModifiedEntitiesByGuid(String[] guids, final Handler handler) {
+    public void intGetModifiedEntitiesByGuid(@NonNull String[] guids, final Handler handler) {
         try {
             checkInterface();
 
@@ -1375,7 +1419,7 @@ public class GameState {
         }
     }
 
-    public void intFlipPortal(GameEntityPortal portal, ItemFlipCard flipCard, final Handler handler) {
+    public void intFlipPortal(@NonNull GameEntityPortal portal, @NonNull ItemFlipCard flipCard, final Handler handler) {
         /*
         DOES_NOT_EXIST, OUT_OF_RANGE, WRONG_OWNER_FOR_ITEM, NOT_A_RESOURCE, SERVER_ERROR,
         NEED_MORE_ENERGY, PLAYER_DEPLETED, NO_PLAYER_SPECIFIED, WRONG_LEVEL, PLAYER_DOES_NOT_EXIST,
@@ -1534,7 +1578,7 @@ public class GameState {
         return mAgentNames;
     }
 
-    public List<String> checkAgentNames(HashSet<String> guids) {
+    public List<String> checkAgentNames(@NonNull HashSet<String> guids) {
         List<String> rejects = new ArrayList<>();
         for (String guid : guids) {
             if (guid != null && !mAgentNames.containsKey(guid)) {

@@ -195,7 +195,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             @Override
             public void handleOnBackPressed() {
                 if (isFireCarouselVisible) {
-                    hideFireCarousel(null);
+                    hideFireCarousel();
                 } else if (isPortalPickerVisible) {
                     resetSelection();
                 } else {
@@ -691,7 +691,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         });
 
         // Done button logic
-        findViewById(R.id.fire_carousel_button_done).setOnClickListener(this::hideFireCarousel);
+        findViewById(R.id.fire_carousel_button_done).setOnClickListener(v -> hideFireCarousel());
 
         return true;
     }
@@ -740,7 +740,8 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         // todo: rate limiting etc per knobs
         if (itemType == ItemBase.ItemType.WeaponXMP || itemType == ItemBase.ItemType.WeaponUltraStrike) {
 
-            if (mGame.getKnobs().getXMCostKnobs().getXmpFiringCostByLevel().get(item.getItemLevel() - 1) > mGame.getAgent().getEnergy()) {
+            int cost = mGame.getKnobs().getXMCostKnobs().getXmpFiringCostByLevel().get(item.getItemLevel() - 1);
+            if (cost > mGame.getAgent().getEnergy()) {
                 DialogInfo dialog = new DialogInfo(this);
                 dialog.setMessage(getString(R.string.you_don_t_have_enough_xm)).setDismissDelay(1500).show();
                 return false;
@@ -777,7 +778,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 }
 
                 // when i put the drawing code (currently below) in here, it doesn't draw.
-
+                mGame.getAgent().subtractEnergy(cost);
                 return true;
             }));
 
@@ -813,7 +814,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             mSelectTargetText.setVisibility(View.VISIBLE);
             mConfirmButton.setVisibility(View.VISIBLE);
             mCancelButton.setVisibility(View.VISIBLE);
-            hideFireCarousel(null);
+            hideFireCarousel();
             isPortalPickerVisible = true;
             return false;
         } else {
@@ -896,7 +897,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         mScannerView.forceSync();
     }
 
-    private void hideFireCarousel(View v) {
+    private void hideFireCarousel() {
         findViewById(R.id.fire_carousel_layout).setVisibility(View.GONE);
         findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
         isFireCarouselVisible = false;

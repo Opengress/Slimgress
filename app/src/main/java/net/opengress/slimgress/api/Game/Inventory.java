@@ -92,6 +92,18 @@ public class Inventory {
         return items;
     }
 
+    @SuppressWarnings("unchecked")
+    @NonNull
+    public <T extends ItemBase> List<T> getItemsOfType(Class<T> clazz) {
+        List<T> items = new LinkedList<>();
+        for (Map.Entry<String, ItemBase> item : mItems.entrySet()) {
+            if (clazz.isInstance(item.getValue())) {
+                items.add((T) item.getValue());
+            }
+        }
+        return items;
+    }
+
     @NonNull
     public final List<ItemBase> getFlipCards(ItemFlipCard.FlipCardType type) {
         List<ItemBase> items = new LinkedList<>();

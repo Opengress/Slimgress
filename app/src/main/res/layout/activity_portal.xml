@@ -384,23 +384,48 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-                <ImageButton
-                    android:id="@+id/activityPortalKeyButton"
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_margin="@dimen/activity_margin_half"
                     android:layout_weight="1"
-                    android:contentDescription="Portal Key"
-                    app:srcCompat="@drawable/buttonkey" />
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/activityPortalKeyCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="4dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="4dp"
+                        android:layout_marginRight="1dp"
+                        android:text="x0" />
+
+                    <ImageButton
+                        android:id="@+id/activityPortalKeyButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="4dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="4dp"
+                        android:layout_marginLeft="1dp"
+                        android:contentDescription="Portal Key"
+                        app:srcCompat="@drawable/buttonkey" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/portalEnergy"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_margin="@dimen/activity_margin_half"
+                    android:layout_margin="4dp"
                     android:layout_weight="1"
                     android:text="Energy: 0" />
             </LinearLayout>
+
         </LinearLayout>
 
         <LinearLayout

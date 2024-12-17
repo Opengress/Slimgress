@@ -1,5 +1,7 @@
 package net.opengress.slimgress.api.Knobs;
 
+import androidx.annotation.NonNull;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -16,7 +18,7 @@ public class TeamKnobs extends Knobs{
 //        private final String mIcon;
         private final boolean mPlayable;
 
-        public TeamType(JSONObject json) throws JSONException {
+        public TeamType(@NonNull JSONObject json) throws JSONException {
             mID = json.getString("id");
             mName = json.getString("name");
             mColour = json.getInt("colour");
@@ -40,6 +42,30 @@ public class TeamKnobs extends Knobs{
             return mPlayable;
         }
 
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            TeamType teamType = (TeamType) obj;
+            return mColour == teamType.mColour &&
+                    mPlayable == teamType.mPlayable &&
+                    mID.equals(teamType.mID) &&
+                    mName.equals(teamType.mName);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = mID.hashCode();
+            result = 31 * result + mName.hashCode();
+            result = 31 * result + Integer.hashCode(mColour);
+            result = 31 * result + Boolean.hashCode(mPlayable);
+            return result;
+        }
+
     }
 
     private final Map<String, TeamType> mTeamsMap;
@@ -57,11 +83,12 @@ public class TeamKnobs extends Knobs{
         }
     }
 
-    public TeamType fromString(String name) {
+    public TeamType fromString(@NonNull String name) {
         return mTeamsMap.get(name.toLowerCase());
     }
 
     public Map<String, TeamType> getTeams() {
         return mTeamsMap;
     }
+
 }
