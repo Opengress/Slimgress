@@ -42,6 +42,8 @@ import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Common.Utils;
+import net.opengress.slimgress.api.GameEntity.GameEntityBase;
+import net.opengress.slimgress.api.GameEntity.GameEntityControlField;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.Interface.Damage;
 import net.opengress.slimgress.api.Interface.GameBasket;
@@ -1346,6 +1348,39 @@ public class GameState {
                     switch (error) {
                         case "PLAYER_DEPLETED", "NEED_MORE_ENERGY" ->
                                 super.handleError(getString(R.string.you_don_t_have_enough_xm));
+                        case "ITEM_DOES_NOT_EXIST" ->
+                                super.handleError("The portal key wasn't found in your inventory.");
+                        case "CLIENT_UNABLE_TO_USE_ITEM" ->
+                                super.handleError("Can't use that item to create a link.");
+                        case "REQUIRES_LINK_KEY" ->
+                                super.handleError("Linking requires a key to the destination portal.");
+                        case "ORIGIN_IS_DESTINATION" ->
+                                super.handleError("Can't link a portal to itself.");
+                        case "DESTINATION_MUST_BE_FULL" ->
+                                super.handleError("Destination portal isn't fully deployed.");
+                        case "DESTINATION_UNOWNED" ->
+                                super.handleError("Destination portal is neutral.");
+                        case "DESTINATION_WRONG_TEAM" ->
+                                super.handleError("Destination portal isn't aligned with your team.");
+                        case "BEYOND_ORIGIN_RANGE" ->
+                                super.handleError("Destination portal is too far from origin portal.");
+                        case "EDGE_ALREADY_EXISTS" ->
+                                super.handleError("That link already exists.");
+                        case "CROSSES_EXISTING_LINK" ->
+                                super.handleError("That link would cross an existing link.");
+                        case "ORIGIN_NOT_FOUND" -> super.handleError("Origin portal not found.");
+                        case "ORIGIN_UNOWNED" -> super.handleError("Origin portal is neutral.");
+                        case "ORIGIN_WRONG_TEAM" ->
+                                super.handleError("Origin portal is aligned with the wrong faction.");
+                        case "ORIGIN_MUST_BE_FULL" ->
+                                super.handleError("Origin portal must be completely deployed.");
+                        case "ORIGIN_LINK_CAPACITY_REACHED" ->
+                                super.handleError("Too many outgoing links.");
+                        case "ORIGIN_PORTAL_NOT_IN_RANGE_OF_PLAYER" ->
+                                super.handleError("Get closer.");
+                        case "SPEED_LOCKED" -> super.handleError("You are moving too fast!");
+                        case "CONTAINED_WITHIN_CAPTURED_REGION" ->
+                                super.handleError("Can't link from within a field.");
                         case "SERVER_ERROR" -> super.handleError(getString(R.string.server_error));
                         default -> super.handleError("Unknown error: " + error);
                     }
@@ -1368,6 +1403,19 @@ public class GameState {
             mInterface.request(mHandshake, "gameplay/createLink", mLocation, params, new RequestResult(handler) {
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
+                    List<GameEntityBase> entities = gameBasket.getGameEntities();
+                    int numFields = 0;
+                    int mu = 0;
+                    for (GameEntityBase entity : entities) {
+                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
+                            if (Objects.equals(entity.getOwnerGuid(), mAgent.getEntityGuid())) {
+                                ++numFields;
+                                mu += ((GameEntityControlField) entity).getFieldScore();
+                            }
+                        }
+                    }
+                    getData().putInt("numFields", numFields);
+                    getData().putInt("mu", mu);
                     processGameBasket(gameBasket);
                 }
 
@@ -1376,6 +1424,39 @@ public class GameState {
                     switch (error) {
                         case "PLAYER_DEPLETED", "NEED_MORE_ENERGY" ->
                                 super.handleError(getString(R.string.you_don_t_have_enough_xm));
+                        case "ITEM_DOES_NOT_EXIST" ->
+                                super.handleError("The portal key wasn't found in your inventory.");
+                        case "CLIENT_UNABLE_TO_USE_ITEM" ->
+                                super.handleError("Can't use that item to create a link.");
+                        case "REQUIRES_LINK_KEY" ->
+                                super.handleError("Linking requires a key to the destination portal.");
+                        case "ORIGIN_IS_DESTINATION" ->
+                                super.handleError("Can't link a portal to itself.");
+                        case "DESTINATION_MUST_BE_FULL" ->
+                                super.handleError("Destination portal isn't fully deployed.");
+                        case "DESTINATION_UNOWNED" ->
+                                super.handleError("Destination portal is neutral.");
+                        case "DESTINATION_WRONG_TEAM" ->
+                                super.handleError("Destination portal isn't aligned with your team.");
+                        case "BEYOND_ORIGIN_RANGE" ->
+                                super.handleError("Destination portal is too far from origin portal.");
+                        case "EDGE_ALREADY_EXISTS" ->
+                                super.handleError("That link already exists.");
+                        case "CROSSES_EXISTING_LINK" ->
+                                super.handleError("That link would cross an existing link.");
+                        case "ORIGIN_NOT_FOUND" -> super.handleError("Origin portal not found.");
+                        case "ORIGIN_UNOWNED" -> super.handleError("Origin portal is neutral.");
+                        case "ORIGIN_WRONG_TEAM" ->
+                                super.handleError("Origin portal is aligned with the wrong faction.");
+                        case "ORIGIN_MUST_BE_FULL" ->
+                                super.handleError("Origin portal must be completely deployed.");
+                        case "ORIGIN_LINK_CAPACITY_REACHED" ->
+                                super.handleError("Too many outgoing links.");
+                        case "ORIGIN_PORTAL_NOT_IN_RANGE_OF_PLAYER" ->
+                                super.handleError("Get closer.");
+                        case "SPEED_LOCKED" -> super.handleError("You are moving too fast!");
+                        case "CONTAINED_WITHIN_CAPTURED_REGION" ->
+                                super.handleError("Can't link from within a field.");
                         case "SERVER_ERROR" -> super.handleError(getString(R.string.server_error));
                         default -> super.handleError("Unknown error: " + error);
                     }
