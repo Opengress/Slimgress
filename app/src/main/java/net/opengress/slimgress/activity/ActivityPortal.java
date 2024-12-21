@@ -6,6 +6,7 @@ import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_
 import static net.opengress.slimgress.ViewHelpers.formatNumberToKLocalized;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColour;
+import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
 import static net.opengress.slimgress.ViewHelpers.getPrettyItemName;
 import static net.opengress.slimgress.ViewHelpers.putItemInMap;
 import static net.opengress.slimgress.ViewHelpers.saveScreenshot;
@@ -50,11 +51,14 @@ import net.opengress.slimgress.dialog.DialogInfo;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
+// TODO: See if you can squeeze a local linkabaility check or two in here
 public class ActivityPortal extends AppCompatActivity {
 
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
@@ -330,38 +334,66 @@ public class ActivityPortal extends AppCompatActivity {
                 @SuppressWarnings("unchecked")
                 List<ItemPortalKey> keys = (List<ItemPortalKey>) msg.getData().getSerializable("result");
                 assert keys != null;
+
+                if (keys.isEmpty()) {
+                    DialogInfo dialog = new DialogInfo(ActivityPortal.this);
+                    dialog.setMessage("No linkable portals!").setDismissDelay(1500).show();
+                    return false;
+                }
+
+                Set<String> uniquePortals = new HashSet<>();
+                List<ItemPortalKey> uniqueKeys = new ArrayList<>();
+
+                for (ItemPortalKey key : keys) {
+                    if (uniquePortals.add(key.getPortalGuid())) {
+                        uniqueKeys.add(key);
+                    }
+                }
+
+                Collections.sort(uniqueKeys, (k1, k2) -> {
+                    double d1 = mPortal.getPortalLocation().distanceTo(new Location(k1.getPortalLocation()));
+                    double d2 = mPortal.getPortalLocation().distanceTo(new Location(k2.getPortalLocation()));
+                    return Double.compare(d1, d2);
+                });
+
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Select Target Portal (I will fix this in 2029)");
 //        builder.setIcon(R.drawable.ic_format_list_bulleted_black_24dp);
 
-                HashMap<String, String> portals = new HashMap<>();
-                for (ItemPortalKey key : keys) {
-                    portals.put(key.getPortalTitle(), key.getPortalGuid());
+                List<String> portalNames = new ArrayList<>();
+                for (int i = 0; i < uniqueKeys.size(); i++) {
+                    ItemPortalKey key = uniqueKeys.get(i);
+                    double distance = mPortal.getPortalLocation().distanceTo(new Location(key.getPortalLocation()));
+                    // You can show the distance in meters/kilometers:
+                    portalNames.add(key.getPortalTitle() + " (" + getPrettyDistanceString(distance) + ")");
                 }
 
-                // FIXME will break for portals with duplicate names, not enough feedback
-                // FIXME the problems with this are ENDLESS but hey let's test!
-                builder.setItems(portals.keySet().toArray(new String[0]), (dialogInterface, i) -> {
-                    var which = portals.values().toArray(new String[0])[i];
-                    for (var key : keys) {
-                        if (Objects.equals(key.getPortalGuid(), which)) {
-//                            mGame.getInventory().removeItem(key);
-                            mGame.intLinkPortal(mPortal, key, new Handler(m2 -> {
-                                String e2 = Utils.getErrorStringFromAPI(m2.getData());
-                                if (e2 != null && !e2.isEmpty()) {
-                                    DialogInfo dialog = new DialogInfo(ActivityPortal.this);
-                                    dialog.setMessage(e2).setDismissDelay(1500).show();
-                                    SlimgressApplication.postPlainCommsMessage("Link failed: " + e2);
-                                    return false;
-                                }
-                                return false;
-                            }));
-                            Log.d("PORTAL", "LINKING TO PORTAL! It is " + key.getPortalTitle());
-                            break;
+                builder.setItems(portalNames.toArray(new String[0]), (dialogInterface, i) -> {
+                    ItemPortalKey selectedKey = uniqueKeys.get(i);
+                    // Proceed to link
+                    mGame.intLinkPortal(mPortal, selectedKey, new Handler(m2 -> {
+                        String e2 = Utils.getErrorStringFromAPI(m2.getData());
+                        if (e2 != null && !e2.isEmpty()) {
+                            DialogInfo dialog = new DialogInfo(ActivityPortal.this);
+                            dialog.setMessage(e2).setDismissDelay(1500).show();
+                            SlimgressApplication.postPlainCommsMessage("Link failed: " + e2);
+                            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getLinkCreationCost());
+                            return false;
                         }
-                    }
-
+                        int fields = m2.getData().getInt("numFields");
+                        int mu = m2.getData().getInt("mu");
+                        if (fields == 1) {
+                            Toast.makeText(this, String.format("Field created: +%d MU", mu), Toast.LENGTH_SHORT).show();
+                        } else if (fields == 2) {
+                            Toast.makeText(this, String.format("Fields created: +%d MU", mu), Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(this, "Link established!", Toast.LENGTH_SHORT).show();
+                        }
+                        return false;
+                    }));
+                    Log.d("PORTAL", "LINKING TO PORTAL! It is " + selectedKey.getPortalTitle());
                 });
+
                 builder.show();
                 return false;
             }));
@@ -412,12 +444,12 @@ public class ActivityPortal extends AppCompatActivity {
 
     private void setButtonsEnabled(boolean shouldEnableButton) {
         findViewById(R.id.hackButton).setEnabled(!mIsHacking && shouldEnableButton);
-        boolean isTesting = mGame.getAgent().getNickname().startsWith("MT") || mGame.getAgent().getNickname().startsWith("I_") || mGame.getAgent().getNickname().startsWith("ca");
+//        boolean isTesting = mGame.getAgent().getNickname().startsWith("MT") || mGame.getAgent().getNickname().startsWith("I_") || mGame.getAgent().getNickname().startsWith("ca");
         boolean canLink = mPortal.getPortalTeam().equals(mGame.getAgent().getTeam())
                 && (mPortal.getPortalResonatorCount() >= 8)
                 && mPortal.getLinkCapacity() > mPortal.getPortalEdges().size()
                 && mGame.getAgent().getEnergy() >= mGame.getKnobs().getXMCostKnobs().getLinkCreationCost();
-        findViewById(R.id.activityPortalLinkButton).setEnabled(shouldEnableButton && isTesting && canLink);
+        findViewById(R.id.activityPortalLinkButton).setEnabled(shouldEnableButton && canLink);
     }
 
     @SuppressWarnings("unchecked")

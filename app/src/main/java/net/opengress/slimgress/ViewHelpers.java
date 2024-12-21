@@ -218,12 +218,12 @@ public class ViewHelpers {
     }
 
     @NonNull
-    public static String getPrettyDistanceString(int dist) {
+    public static String getPrettyDistanceString(double dist) {
         // TODO: imperial units?
-        double distKM = (dist < 1000000) ? (Math.ceil((double) dist / 100) / 10) : (Math.ceil((double) dist / 1000));
+        double distKM = (dist < 1000000) ? (Math.ceil(dist / 100) / 10) : (Math.ceil(dist / 1000));
         DecimalFormat df = new DecimalFormat("#.#");
         String distKMPretty = df.format(distKM);
-        return (dist < 1000 ? dist + "m" : distKMPretty + "km");
+        return (dist < 1000 ? Math.round(dist) + "m" : distKMPretty + "km");
     }
 
     public static String getAPGainTriggerReason(APGain.Trigger trigger) {
@@ -380,8 +380,9 @@ public class ViewHelpers {
 
         StringBuilder portalInfoText = new StringBuilder();
         portalInfoText.append("LVL: L").append(portal.getPortalLevel())
-                .append("\nRNG: ").append(portal.getPortalLinkRange()).append("m")
-                .append("\nENR: ").append(portal.getPortalEnergy()).append(" / ").append(portal.getPortalMaxEnergy())
+                .append("\nRNG: ").append(getPrettyDistanceString(portal.getPortalLinkRange()))
+                .append("\nENR: ").append(formatNumberToKLocalized(portal.getPortalEnergy()))
+                .append(" / ").append(formatNumberToKLocalized(portal.getPortalMaxEnergy()))
                 .append(modText)
                 .append(modEffectsText)
 //                + "LNK: 0 in, 0 out (unimplemented)"
