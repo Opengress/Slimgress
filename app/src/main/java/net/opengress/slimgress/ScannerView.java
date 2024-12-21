@@ -814,7 +814,9 @@ public class ScannerView extends WidgetMap {
                 String guid = thing.getStringProperty("guid");
                 GameEntityBase item = mGame.getWorld().getGameEntities().get(guid);
                 if (item != null) {
-                    hitList.add(item);
+                    if (!((ActivityMain) requireActivity()).isSelectingTargetPortal() || item.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
+                        hitList.add(item);
+                    }
                 }
             }
         }
@@ -873,7 +875,7 @@ public class ScannerView extends WidgetMap {
             }));
             return;
         }
-        Toast.makeText(requireContext(), "Interacting with: " + getEntityDescription(entity), Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), "Unhandled interaction with: " + getEntityDescription(entity), Toast.LENGTH_SHORT).show();
     }
 
     public void forceSync() {
