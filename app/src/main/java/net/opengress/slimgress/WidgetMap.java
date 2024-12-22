@@ -604,7 +604,7 @@ public class WidgetMap extends Fragment {
             int colour = 0x32000000 + team.getColour(); // adding alpha
 
             // Create a list with the vertices of the polygon
-            List<LatLng> polygonLatLngs = Arrays.asList(vA.getLatLng(), vB.getLatLng(), vC.getLatLng());
+            List<LatLng> polygonLatLngs = Arrays.asList(vA.getLatLng(), vB.getLatLng(), vC.getLatLng(), vA.getLatLng());
 
             FillOptions polygonOptions = new FillOptions()
                     .withLatLngs(Collections.singletonList(polygonLatLngs))
