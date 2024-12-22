@@ -388,6 +388,7 @@ public class ActivityPortal extends AppCompatActivity {
                             Toast.makeText(this, String.format("Fields created: +%d MU", mu), Toast.LENGTH_SHORT).show();
                         } else {
                             Toast.makeText(this, "Link established!", Toast.LENGTH_SHORT).show();
+                            SlimgressApplication.postPlainCommsMessage("Link established!");
                         }
                         return false;
                     }));

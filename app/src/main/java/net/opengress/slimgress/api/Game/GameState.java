@@ -1405,17 +1405,19 @@ public class GameState {
                 public void handleGameBasket(GameBasket gameBasket) {
                     List<GameEntityBase> entities = gameBasket.getGameEntities();
                     int numFields = 0;
-                    int mu = 0;
+                    int totalMu = 0;
                     for (GameEntityBase entity : entities) {
                         if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
                             if (Objects.equals(entity.getOwnerGuid(), mAgent.getEntityGuid())) {
                                 ++numFields;
-                                mu += ((GameEntityControlField) entity).getFieldScore();
+                                int thisMu = ((GameEntityControlField) entity).getFieldScore();
+                                totalMu += thisMu;
+                                SlimgressApplication.postPlainCommsMessage(String.format("Field established! +%d mind units", thisMu));
                             }
                         }
                     }
                     getData().putInt("numFields", numFields);
-                    getData().putInt("mu", mu);
+                    getData().putInt("mu", totalMu);
                     processGameBasket(gameBasket);
                 }
 
