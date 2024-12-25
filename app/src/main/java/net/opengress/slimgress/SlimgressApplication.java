@@ -33,12 +33,10 @@ import androidx.lifecycle.ViewModelProvider;
 import net.opengress.slimgress.activity.ActivityMain;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Plext.PlextBase;
-import net.opengress.slimgress.viewmodel.APGainsViewModel;
 import net.opengress.slimgress.viewmodel.CommsViewModel;
 import net.opengress.slimgress.viewmodel.InventoryViewModel;
 import net.opengress.slimgress.viewmodel.LevelUpViewModel;
 import net.opengress.slimgress.viewmodel.LocationViewModel;
-import net.opengress.slimgress.viewmodel.PlayerDamagesViewModel;
 import net.opengress.slimgress.viewmodel.PlayerDataViewModel;
 
 import org.acra.ACRA;
@@ -60,8 +58,6 @@ public class SlimgressApplication extends Application {
     protected GameState mGame;
     private LocationViewModel mLocationViewModel;
     private InventoryViewModel mInventoryViewModel;
-    private APGainsViewModel mAPGainsViewModel;
-    private PlayerDamagesViewModel mPlayerDamagesViewModel;
     private PlayerDataViewModel mPlayerDataViewModel;
     private CommsViewModel mAllCommsViewModel;
     private CommsViewModel mFactionCommsViewModel;
@@ -75,8 +71,6 @@ public class SlimgressApplication extends Application {
         super.onCreate();
         mLocationViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(LocationViewModel.class);
         mInventoryViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(InventoryViewModel.class);
-        mAPGainsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(APGainsViewModel.class);
-        mPlayerDamagesViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDamagesViewModel.class);
         mPlayerDataViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDataViewModel.class);
         mAllCommsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(CommsViewModel.class);
         mFactionCommsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(CommsViewModel.class);
@@ -230,14 +224,6 @@ public class SlimgressApplication extends Application {
 
     public InventoryViewModel getInventoryViewModel() {
         return mInventoryViewModel;
-    }
-
-    public APGainsViewModel getAPGainsModel() {
-        return mAPGainsViewModel;
-    }
-
-    public PlayerDamagesViewModel getPlayerDamagesModel() {
-        return mPlayerDamagesViewModel;
     }
 
     public PlayerDataViewModel getPlayerDataViewModel() {
