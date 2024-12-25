@@ -145,16 +145,12 @@ public class GameState {
             mInventory.processGameBasket(gameBasket);
             mWorld.processGameBasket(gameBasket);
             if (!gameBasket.getAPGains().isEmpty()) {
-                // FIXME i ... don't need to add this to player data manually, do i??? yes
-                app.getAPGainsModel().postAPGains(gameBasket.getAPGains());
                 for (var gain : gameBasket.getAPGains()) {
                     app.getAllCommsViewModel().addMessage(PlextBase.createByAPGain(gain));
                     mAgent.addAP(gain.getAmount());
                 }
             }
             if (!gameBasket.getPlayerDamages().isEmpty()) {
-                // FIXME i ... don't need to add this to player data manually, do i??? yes
-                app.getPlayerDamagesModel().postPlayerDamages(gameBasket.getPlayerDamages());
                 for (var dam : gameBasket.getPlayerDamages()) {
                     app.getAllCommsViewModel().addMessage(PlextBase.createByPlayerDamage(dam));
                     app.getMainActivity().damagePlayer(dam.getAmount(), dam.getAttackerGuid());
