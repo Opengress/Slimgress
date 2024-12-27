@@ -249,7 +249,7 @@ public class GameState {
             checkInterface();
 
             // get cell ids for surrounding area
-            String[] cellIds = Utils.getCellIdsFromLocationArea(location, 500 * 500 * Math.PI, 16, 16);
+            String[] cellIds = Utils.getCellIdsFromLocationArea(location, 1000 * 1000 * Math.PI, 16, 16);
 
             // create cells
             JSONArray cellsAsHex = new JSONArray();
