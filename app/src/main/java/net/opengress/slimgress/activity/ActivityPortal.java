@@ -448,7 +448,7 @@ public class ActivityPortal extends AppCompatActivity {
 //        boolean isTesting = mGame.getAgent().getNickname().startsWith("MT") || mGame.getAgent().getNickname().startsWith("I_") || mGame.getAgent().getNickname().startsWith("ca");
         boolean canLink = mPortal.getPortalTeam().equals(mGame.getAgent().getTeam())
                 && (mPortal.getPortalResonatorCount() >= 8)
-                && mPortal.getLinkCapacity() > mPortal.getPortalEdges().size()
+                && mPortal.getLinkCapacity() > mPortal.getOriginEdges().size()
                 && mGame.getAgent().getEnergy() >= mGame.getKnobs().getXMCostKnobs().getLinkCreationCost();
         findViewById(R.id.activityPortalLinkButton).setEnabled(shouldEnableButton && canLink);
     }

@@ -226,6 +226,13 @@ public class ViewHelpers {
         return (dist < 1000 ? Math.round(dist) + "m" : distKMPretty + "km");
     }
 
+    @NonNull
+    public static String getPrettyDistanceStringFloored(double dist) {
+        // TODO: imperial units? round or floor??
+        double distKM = (dist < 1000000) ? (Math.ceil(dist / 100) / 10) : (Math.ceil(dist / 1000));
+        return (dist < 1000 ? Math.floor(dist) + "m" : Math.floor(distKM) + "km");
+    }
+
     public static String getAPGainTriggerReason(APGain.Trigger trigger) {
         String what;
         switch (trigger) {
@@ -380,7 +387,7 @@ public class ViewHelpers {
 
         StringBuilder portalInfoText = new StringBuilder();
         portalInfoText.append("LVL: L").append(portal.getPortalLevel())
-                .append("\nRNG: ").append(getPrettyDistanceString(portal.getPortalLinkRange()))
+                .append("\nRNG: ").append(getPrettyDistanceStringFloored(portal.getPortalLinkRange()))
                 .append("\nENR: ").append(formatNumberToKLocalized(portal.getPortalEnergy()))
                 .append(" / ").append(formatNumberToKLocalized(portal.getPortalMaxEnergy()))
                 .append(modText)
