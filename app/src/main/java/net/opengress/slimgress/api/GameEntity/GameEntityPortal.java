@@ -48,6 +48,7 @@ import org.json.JSONObject;
 import org.maplibre.android.geometry.LatLng;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -333,13 +334,27 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
         return level == 0 ? 1 : level;
     }
 
+    public float getRawPortalLevel() {
+        // TODO: don't recalculate every time...
+        float level = 0;
+        for (LinkedResonator resonator : mPortalResonators) {
+            if (resonator != null) {
+                level += resonator.level;
+            }
+        }
+
+        level /= 8;
+
+        return level == 0 ? 1 : level;
+    }
+
     public int getPortalLinkRange() {
         // TODO: consider mods like link amps
         // this number could change one day?
         if (mPortalResonators.size() < 8) {
             return 0;
         }
-        return (int) Math.pow(getPortalLevel(), 4) * 160 * getLinkRangeMultiplier();
+        return (int) (Math.pow(getRawPortalLevel(), 4f) * 160f * (float) getLinkRangeMultiplier());
     }
 
     public int getPortalMitigation() {
@@ -507,6 +522,16 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
     public List<LinkedEdge> getPortalEdges()
     {
         return mPortalEdges;
+    }
+
+    public List<LinkedEdge> getOriginEdges() {
+        List<LinkedEdge> originEdges = new ArrayList<>();
+        for (LinkedEdge edge : mPortalEdges) {
+            if (edge.isOrigin) {
+                originEdges.add(edge);
+            }
+        }
+        return originEdges;
     }
 
     public List<LinkedMod> getPortalMods()
