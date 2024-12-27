@@ -33,9 +33,6 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.google.common.geometry.S2LatLng;
-import com.google.common.geometry.S2LatLngRect;
-
 import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.BulkPlayerStorage;
@@ -305,13 +302,7 @@ public class GameState {
         try {
             checkInterface();
 
-            final double earthKM = 2 * Math.PI * 6371;    // circumference
-
-            S2LatLng size = S2LatLng.fromRadians((Math.PI / earthKM) * radiusKM, (2 * Math.PI / earthKM) * radiusKM);
-            S2LatLngRect region = S2LatLngRect.fromCenterSize(mLocation.getS2LatLng(), size);
-
-            // get cell ids for area
-            String[] cellIds = Utils.getCellIdsFromRegion(region, 8, 12);
+            String[] cellIds = Utils.getCellIdsFromLocationArea(mLocation, radiusKM * radiusKM * Math.PI, 8, 12);
 
             // create cells
             JSONArray cellsAsHex = new JSONArray();

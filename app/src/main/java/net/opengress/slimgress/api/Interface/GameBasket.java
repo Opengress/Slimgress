@@ -21,6 +21,8 @@
 
 package net.opengress.slimgress.api.Interface;
 
+import androidx.annotation.NonNull;
+
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.Game.XMParticle;
 import net.opengress.slimgress.api.GameEntity.GameEntityBase;
@@ -44,7 +46,7 @@ public class GameBasket
     private final List<PlayerDamage> mPlayerDamages;
     private final List<APGain> mAPGains;
 
-    public GameBasket(JSONObject json) throws JSONException
+    public GameBasket(@NonNull JSONObject json) throws JSONException
     {
         mPlayerEntity = null;
         mGameEntities = new LinkedList<>();
@@ -81,7 +83,7 @@ public class GameBasket
         }
     }
 
-    private void processGameEntities(JSONArray gameEntities) throws JSONException
+    private void processGameEntities(@NonNull JSONArray gameEntities) throws JSONException
     {
         // iterate over game entities
         for (int i = 0; i < gameEntities.length(); i++) {
@@ -117,7 +119,7 @@ public class GameBasket
         }
     }
 
-    private void processInventory(JSONArray inventory) throws JSONException
+    private void processInventory(@NonNull JSONArray inventory) throws JSONException
     {
         // iterate over inventory items
         for (int i = 0; i < inventory.length(); i++) {

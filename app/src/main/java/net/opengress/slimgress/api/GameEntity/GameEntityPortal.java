@@ -102,7 +102,7 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
         }
 
         // Helper method to calculate the destination point using S2LatLng directly
-        public LatLng destinationPoint(LatLng start, double distance, double bearing) {
+        public LatLng destinationPoint(@NonNull LatLng start, double distance, double bearing) {
             double distanceRadians = distance / EARTH_RADIUS_METERS;  // Convert distance from meters to radians
             double bearingRadians = Math.toRadians(bearing);  // Convert bearing to radians
 
@@ -123,7 +123,7 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
         }
 
         // Helper method to calculate the destination point using S2LatLng directly
-        public Location destinationPoint(Location start, double distance, double bearing) {
+        public Location destinationPoint(@NonNull Location start, double distance, double bearing) {
             double distanceRadians = distance / EARTH_RADIUS_METERS;  // Convert distance from meters to radians
             double bearingRadians = Math.toRadians(bearing);  // Convert bearing to radians
 
@@ -144,7 +144,7 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
         }
 
         // Helper method to calculate the destination point using S2LatLng directly
-        public S2LatLng destinationPoint(S2LatLng start, double distance, double bearing) {
+        public S2LatLng destinationPoint(@NonNull S2LatLng start, double distance, double bearing) {
             double distanceRadians = distance / EARTH_RADIUS_METERS;  // Convert distance from meters to radians
             double bearingRadians = Math.toRadians(bearing);  // Convert bearing to radians
 

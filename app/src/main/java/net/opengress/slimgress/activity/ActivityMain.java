@@ -293,7 +293,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         return items;
     }
 
-    private void getCommsMessages(List<PlextBase> plexts) {
+    private void getCommsMessages(@NonNull List<PlextBase> plexts) {
         if (plexts.isEmpty()) {
             // can't do anything with this
             return;
@@ -410,7 +410,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     @SuppressLint("DefaultLocale")
-    private void screenshotDialog(Dialog dialog) {
+    private void screenshotDialog(@NonNull Dialog dialog) {
         // Capture the main activity's view
         View mainView = getWindow().getDecorView().findViewById(android.R.id.content);
         mainView.setDrawingCacheEnabled(true);
@@ -696,7 +696,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         return true;
     }
 
-    private int findItemByDescription(List<InventoryListItem> arrayList, String description) {
+    private int findItemByDescription(@NonNull List<InventoryListItem> arrayList, String description) {
         for (int i = 0; i < arrayList.size(); i++) {
             if (Objects.equals(arrayList.get(i).getPrettyDescription(), description)) {
                 return i;
@@ -705,7 +705,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         return -1;
     }
 
-    private int findNextHigherLevelItem(List<InventoryListItem> arrayList, InventoryListItem currentItem) {
+    private int findNextHigherLevelItem(@NonNull List<InventoryListItem> arrayList, InventoryListItem currentItem) {
         for (int i = 0; i < arrayList.size(); i++) {
             InventoryListItem item = arrayList.get(i);
             if (item.getType() == currentItem.getType() && item.getLevel() > currentItem.getLevel()) {
