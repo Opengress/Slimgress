@@ -44,6 +44,7 @@ import android.widget.CheckBox;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import net.opengress.slimgress.activity.ActivityCredits;
@@ -61,7 +62,7 @@ public class FragmentDevice extends Fragment
     private View mRootView;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
 
         mRootView = inflater.inflate(R.layout.fragment_device,

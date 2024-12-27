@@ -48,6 +48,8 @@ import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
 import net.opengress.slimgress.activity.ActivityMain;
 import net.opengress.slimgress.activity.ActivityPortal;
 import net.opengress.slimgress.activity.ActivitySplash;
@@ -634,7 +636,7 @@ public class ScannerView extends WidgetMap {
     }
 
     @SuppressLint("InflateParams")
-    private void showInfoCard(GameEntityPortal portal) {
+    private void showInfoCard(@NonNull GameEntityPortal portal) {
         // TODO theoretically I can update this as the user moves, but for now I do not.
         removeInfoCard();
         View markerView = LayoutInflater.from(getContext()).inflate(R.layout.marker_info_card, null);
@@ -783,7 +785,8 @@ public class ScannerView extends WidgetMap {
         mApp.schedule_(() -> mSymbolManager.delete(mSymbolManager.create(symbolOptions)), 2000, TimeUnit.MILLISECONDS);
     }
 
-    private Bitmap createDrawableFromView(Context context, View view) {
+    @NonNull
+    private Bitmap createDrawableFromView(@NonNull Context context, @NonNull View view) {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getMetrics(displayMetrics);
         view.setLayoutParams(new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT));
@@ -833,7 +836,7 @@ public class ScannerView extends WidgetMap {
         return true;
     }
 
-    private void showGameEntityDialog(List<GameEntityBase> gameEntities) {
+    private void showGameEntityDialog(@NonNull List<GameEntityBase> gameEntities) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Select an Item");
 
@@ -849,7 +852,7 @@ public class ScannerView extends WidgetMap {
         dialog.show();
     }
 
-    private void interactWithEntity(GameEntityBase entity) {
+    private void interactWithEntity(@NonNull GameEntityBase entity) {
         if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
             ActivityMain activity = (ActivityMain) requireActivity();
             if (activity.isSelectingTargetPortal()) {

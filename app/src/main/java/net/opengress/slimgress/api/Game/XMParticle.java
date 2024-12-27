@@ -21,6 +21,8 @@
 
 package net.opengress.slimgress.api.Game;
 
+import androidx.annotation.NonNull;
+
 import net.opengress.slimgress.api.Common.Location;
 
 public class XMParticle
@@ -31,7 +33,7 @@ public class XMParticle
     private final int mAmount;
     private final Location mCellLocation;
 
-    public XMParticle(String guid, String timestamp)
+    public XMParticle(@NonNull String guid, String timestamp)
     {
         mGuid = guid;
         mEnergyTimestamp = timestamp;
