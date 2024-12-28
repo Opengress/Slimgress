@@ -24,6 +24,7 @@ package net.opengress.slimgress.activity;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.ClientMustUpgrade;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.UserMustAcceptTOS;
+import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.UserRequiresActivation;
 import static net.opengress.slimgress.net.NetworkMonitor.hasInternetConnectionCold;
 
 import android.Manifest;
@@ -208,6 +209,16 @@ public class ActivitySplash extends Activity {
         mGame.intHandshake(handler, params);
     }
 
+    void submitActivationCode(String activationCode) {
+        HashMap<String, String> params = new HashMap<>();
+        params.put("activationCode", activationCode);
+        Handler handler = new Handler(msg -> {
+            mLoginBundle = msg.getData();
+            return setUpPlayerAndProceedWithLogin();
+        });
+        mGame.intHandshake(handler, params);
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -229,7 +240,10 @@ public class ActivitySplash extends Activity {
         } else {
             mLocationProvider.startLocationUpdates();
         }
-        if (mGame.getHandshake().isValid() && mGame.getAgent().isAllowedNicknameEdit()) {
+        if (mGame.getHandshake().getPregameStatus() == UserRequiresActivation) {
+            showSubmitActivationCodeDialog();
+            return false;
+        } else if (mGame.getHandshake().isValid() && mGame.getAgent().isAllowedNicknameEdit()) {
             showValidateUsernameDialog(null);
             return false;
         } else if (mGame.getHandshake().isValid() && mGame.getAgent().isAllowedFactionChoice()) {
@@ -304,13 +318,8 @@ public class ActivitySplash extends Activity {
                 CheckBox emailOptIn = dialogView.findViewById(R.id.emailOptIn);
                 emailOptIn.setChecked(mLoginBundle.getBoolean("MaySendPromoEmail"));
                 builder.setMessage(Html.fromHtml("Please review and accept our updated <a href='https://opengress.net/terms-of-service'>Terms of Service</a> to continue."));
-                builder.setPositiveButton("Accept", (dialog, which) -> {
-                    // around we go!
-                    performHandshake(true, emailOptIn.isChecked());
-                });
-                builder.setNegativeButton("Decline", (dialog, which) -> {
-                    finish();
-                });
+                builder.setPositiveButton("Accept", (dialog, which) -> performHandshake(true, emailOptIn.isChecked()));
+                builder.setNegativeButton("Decline", (dialog, which) -> finish());
             } else if (Objects.equals(mLoginBundle.getString("Error"), "Expired user session")) {
                 builder.setMessage(R.string.session_expired_log_in_again);
                 builder.setNegativeButton("OK", (dialog, which) -> {
@@ -480,6 +489,25 @@ public class ActivitySplash extends Activity {
                 return false;
             }));
         });
+
+        Dialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void showSubmitActivationCodeDialog() {
+        mApp.setLoggedIn(false);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
+
+//        builder.setTitle("Activation required");
+        builder.setMessage("Opengress requires an invitation to play.\n\nActivation code:");
+
+        // Set an EditText view to get user input
+        final EditText input = getEditTextInput();
+        builder.setView(input);
+
+        builder.setPositiveButton("Activate", (dialog, whichButton) -> submitActivationCode(input.getText().toString().trim()));
 
         Dialog dialog = builder.create();
         dialog.show();
