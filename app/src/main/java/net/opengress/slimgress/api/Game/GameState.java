@@ -24,7 +24,9 @@ package net.opengress.slimgress.api.Game;
 import static net.opengress.slimgress.ViewHelpers.getString;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.ClientMustUpgrade;
+import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.ClientUpgradeRecommended;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.UserMustAcceptTOS;
+import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.UserRequiresActivation;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -195,6 +197,10 @@ public class GameState {
                 String errString;
                 if (status == ClientMustUpgrade) {
                     errString = "Client must upgrade";
+                } else if (status == ClientUpgradeRecommended) {
+                    errString = "Client software is out of date";
+                } else if (status == UserRequiresActivation) {
+                    errString = "Opengress requires an invitation to play";
                 } else if (status == UserMustAcceptTOS) {
                     errString = "User must accept Terms of Service";
                     bundle.putBoolean("MaySendPromoEmail", mHandshake.getAgent().getNotificationSettings().maySendPromoEmail());

@@ -38,6 +38,7 @@ public class Handshake
 
     public enum PregameStatus
     {
+        ClientUpgradeRecommended,
         ClientMustUpgrade,
         NoActionsRequired,
         UserRequiresActivation,
@@ -72,6 +73,8 @@ public class Handshake
             if (pregameStatus != null) {
                 String pregameStatusString = pregameStatus.optString("action");
                 switch (pregameStatusString) {
+                    case "CLIENT_UPGRADE_RECOMMENDED" ->
+                            mPregameStatus = PregameStatus.ClientUpgradeRecommended;
                     case "CLIENT_MUST_UPGRADE" -> mPregameStatus = PregameStatus.ClientMustUpgrade;
                     case "NO_ACTIONS_REQUIRED" -> mPregameStatus = PregameStatus.NoActionsRequired;
                     case "USER_REQUIRES_ACTIVATION" ->
