@@ -21,6 +21,12 @@
 
 package net.opengress.slimgress.api.Interface;
 
+import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.ClientMustUpgrade;
+import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.ClientUpgradeRecommended;
+import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.NoActionsRequired;
+import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.UserMustAcceptTOS;
+import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.UserRequiresActivation;
+
 import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Knobs.KnobsBundle;
 import net.opengress.slimgress.api.Player.Agent;
@@ -73,13 +79,11 @@ public class Handshake
             if (pregameStatus != null) {
                 String pregameStatusString = pregameStatus.optString("action");
                 switch (pregameStatusString) {
-                    case "CLIENT_UPGRADE_RECOMMENDED" ->
-                            mPregameStatus = PregameStatus.ClientUpgradeRecommended;
-                    case "CLIENT_MUST_UPGRADE" -> mPregameStatus = PregameStatus.ClientMustUpgrade;
-                    case "NO_ACTIONS_REQUIRED" -> mPregameStatus = PregameStatus.NoActionsRequired;
-                    case "USER_REQUIRES_ACTIVATION" ->
-                            mPregameStatus = PregameStatus.UserRequiresActivation;
-                    case "USER_MUST_ACCEPT_TOS" -> mPregameStatus = PregameStatus.UserMustAcceptTOS;
+                    case "CLIENT_UPGRADE_RECOMMENDED" -> mPregameStatus = ClientUpgradeRecommended;
+                    case "CLIENT_MUST_UPGRADE" -> mPregameStatus = ClientMustUpgrade;
+                    case "NO_ACTIONS_REQUIRED" -> mPregameStatus = NoActionsRequired;
+                    case "USER_REQUIRES_ACTIVATION" -> mPregameStatus = UserRequiresActivation;
+                    case "USER_MUST_ACCEPT_TOS" -> mPregameStatus = UserMustAcceptTOS;
                     default ->
                             throw new RuntimeException("unknown pregame status " + pregameStatus);
                 }
@@ -103,7 +107,7 @@ public class Handshake
             // storage
 
         } else {
-            mPregameStatus = PregameStatus.NoActionsRequired;
+            mPregameStatus = NoActionsRequired;
             mServerVersion = "";
             mNickname = "";
             mErrorFromServer = json.isNull("error") ? null : json.getString("error");
@@ -113,12 +117,15 @@ public class Handshake
     public boolean isValid()
     {
         // not sure if this logic is really correct. probably.
-        return mAgent != null &&
-                mPregameStatus == PregameStatus.NoActionsRequired;
+        return mAgent != null && mPregameStatus == NoActionsRequired;
     }
 
-    public PregameStatus getPregameStatus()
+    public void setPregameStatus(PregameStatus status)
     {
+        mPregameStatus = status;
+    }
+
+    public PregameStatus getPregameStatus() {
         return mPregameStatus;
     }
 

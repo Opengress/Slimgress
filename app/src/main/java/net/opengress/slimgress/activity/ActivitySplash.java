@@ -23,6 +23,8 @@ package net.opengress.slimgress.activity;
 
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.ClientMustUpgrade;
+import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.ClientUpgradeRecommended;
+import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.NoActionsRequired;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.UserMustAcceptTOS;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.UserRequiresActivation;
 import static net.opengress.slimgress.net.NetworkMonitor.hasInternetConnectionCold;
@@ -70,7 +72,6 @@ import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Knobs.TeamKnobs;
-import net.opengress.slimgress.api.Player.Agent;
 import net.opengress.slimgress.positioning.AndroidLocationProvider;
 import net.opengress.slimgress.positioning.LocationCallback;
 import net.opengress.slimgress.service.DownloadService;
@@ -88,7 +89,8 @@ public class ActivitySplash extends Activity {
     private Runnable mRotationTask;
     private float mCurrentRotation = 0f;
     private AndroidLocationProvider mLocationProvider;
-    private boolean installed = false;
+    private boolean mInstalled = false;
+    private boolean mIgnoringUpdate = false;
     private final LocationCallback mLocationCallback = new LocationCallback() {
         @Override
         public void onLocationUpdated(android.location.Location location) {
@@ -109,7 +111,7 @@ public class ActivitySplash extends Activity {
             Log.d("AUTH", "Progress: " + intent.getIntExtra("progress", 0));
             int progress = intent.getIntExtra("progress", 0);
             if (progress == -1) {
-                installed = true;
+                mInstalled = true;
             }
             runOnUiThread(() -> mProgressBar.setProgress(progress));
         }
@@ -156,18 +158,68 @@ public class ActivitySplash extends Activity {
         if (hasInternetConnectionCold(this)) {
             // authenticate if necessary
             if (!mApp.isLoggedIn()) {
-                Intent myIntent = new Intent(getApplicationContext(), ActivityAuth.class);
-                startActivityForResult(myIntent, 0);
+                SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, Context.MODE_PRIVATE);
+                if (prefs.getInt("currentVersion", -1) == -1) {
+                    showFirstRunDialog();
+                } else {
+                    doAuth();
+                }
             } else {
                 // start main activity
-                Agent agent = mGame.getAgent();
-                mGame.putAgentName(agent.getEntityGuid(), agent.getNickname());
-                finish();
-                startActivity(new Intent(getApplicationContext(), ActivityMain.class));
+                startGame();
             }
         } else {
             showNoInternetDialog();
         }
+    }
+
+    private void doAuth() {
+        SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, Context.MODE_PRIVATE);
+        int currentVersion = prefs.getInt("currentVersion", -1);
+        if (BuildConfig.VERSION_CODE > currentVersion) {
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putInt("currentVersion", BuildConfig.VERSION_CODE);
+            editor.putBoolean("ignoreUpdates", false);
+            editor.remove("updateSnoozeExpires");
+            editor.apply();
+        }
+        Intent myIntent = new Intent(getApplicationContext(), ActivityAuth.class);
+        startActivityForResult(myIntent, 0);
+    }
+
+    private void showFirstRunDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Incoming transmission")
+                .setMessage("""
+                        Do not be afraid.
+                        
+                        You may think that you have downloaded a game, but you have not. \
+                        It is a gateway—a veil drawn back to reveal the hidden war raging beneath the surface of your reality.
+                        
+                        An ancient force, neither natural nor human, stirs in the shadows. Alien and immeasurable, it is seeping into our world. \
+                        Its origins are unknowable, and its potential is limitless. \
+                        It whispers to those who will listen, tempting them to wield its power, to shape the future.
+                        
+                        But this power comes at a price. \
+                        The balance of our world teeters on a knife's edge, and the choices of a few will determine the fate of many. \
+                        This is not a simulation, no idle distraction. This is a battle for the very essence of humanity—its freedom, its survival, its soul.
+                        
+                        The time to choose is now. \
+                        Will you stand with those who seek to wield this power, to evolve and ascend beyond everything we've ever known? \
+                        Or will you join those who resist, protecting what it means to be human, fighting for our survival?
+                        
+                        The future of mankind lies in your hands. Choose your side, and prepare yourself for what is to come.
+                        
+                        This is not a game. This is the beginning.
+                        """)
+                .setCancelable(false)
+                .setPositiveButton("Continue", (dialog, which) -> {
+                    doAuth();
+                })
+                .setNegativeButton("Quit", (dialog, which) -> {
+                    finish(); // Exit the app
+                })
+                .show();
     }
 
     private void showNoInternetDialog() {
@@ -262,7 +314,6 @@ public class ActivitySplash extends Activity {
         if (requestCode == 0) {
             if (resultCode == RESULT_OK) {
                 mApp.setLoggedIn(true);
-
                 // perform handshake
                 performHandshake();
             } else if (resultCode == RESULT_FIRST_USER) {
@@ -291,12 +342,16 @@ public class ActivitySplash extends Activity {
     // might change this to be recursive
     private void proceedWithLogin() {
         if (mLoginBundle.getBoolean("Successful")) {
-            SlimgressApplication.postPlainCommsMessage("Agent ID Confirmed. Welcome " + mGame.getAgent().getNickname());
-            // start main activity
-            ActivitySplash.this.finish();
-            ActivitySplash.this.startActivity(new Intent(ActivitySplash.this, ActivityMain.class));
-            mApp.postGameScore();
+            startGame();
         } else {
+
+            boolean acceptingUpdates = true;
+            SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, Context.MODE_PRIVATE);
+            boolean isSnoozingUpdates = prefs.getLong("updateSnoozeExpires", -1) > System.currentTimeMillis();
+            if (prefs.getBoolean("ignoreUpdates", false) || isSnoozingUpdates) {
+                acceptingUpdates = false;
+            }
+
             mApp.setLoggedIn(false);
 
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -307,11 +362,26 @@ public class ActivitySplash extends Activity {
                 builder.setMessage("Your client software is out of date. You must update the app to play.");
                 builder.setPositiveButton("Update in-app", (dialog, which) -> downloadAndInstallClientUpdate());
                 builder.setNegativeButton("Download update in browser", (dialog, which) -> {
-                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://opengress.net/downloads/"));
-                    startActivity(browserIntent);
-                    finish();
+                    launchBrowserForUpdate();
                 });
+            } else if (status == ClientUpgradeRecommended) {
+                if (!acceptingUpdates) {
+                    mGame.getHandshake().setPregameStatus(NoActionsRequired);
+                    startGame();
+                } else {
+                    builder.setTitle("Update recommended");
+                    builder.setMessage("A newer version is available. What would you like to do?");
+                    builder.setPositiveButton("Ignore", (dialog, which) -> showIgnoreOptionsDialog());
+                    builder.setNegativeButton("Update", (dialog, which) -> showUpdateOptionsDialog());
+                    builder.setNeutralButton("Skip", (dialog, which) -> {
+                        // we have to override it or the interface will not accept our handshake
+                        mGame.getHandshake().setPregameStatus(NoActionsRequired);
+                        startGame();
+                    });
+                }
             } else if (status == UserMustAcceptTOS) {
+
+                builder.setTitle("Terms of Service");
                 View dialogView = getLayoutInflater().inflate(R.layout.dialog_terms, null);
                 builder.setView(dialogView);
 
@@ -324,13 +394,11 @@ public class ActivitySplash extends Activity {
                 builder.setMessage(R.string.session_expired_log_in_again);
                 builder.setNegativeButton("OK", (dialog, which) -> {
                     mApp.setLoggedIn(false);
-                    SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, Context.MODE_PRIVATE);
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.remove(Constants.PREFS_SERVER_SESSION_NAME);
                     editor.remove(Constants.PREFS_SERVER_SESSION_ID);
                     editor.apply();
-                    Intent myIntent = new Intent(getApplicationContext(), ActivityAuth.class);
-                    startActivityForResult(myIntent, 0);
+                    doAuth();
                 });
             } else {
                 builder.setMessage(mLoginBundle.getString("Error"));
@@ -345,10 +413,61 @@ public class ActivitySplash extends Activity {
         }
     }
 
+    private void startGame() {
+        SlimgressApplication.postPlainCommsMessage("Agent ID Confirmed. Welcome " + mGame.getAgent().getNickname());
+        ActivitySplash.this.finish();
+        ActivitySplash.this.startActivity(new Intent(ActivitySplash.this, ActivityMain.class));
+        mApp.postGameScore();
+    }
+
+    private void showIgnoreOptionsDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Ignore Options");
+        builder.setItems(new CharSequence[]{"Remind me later", "Ignore this update"}, (dialog, which) -> {
+            SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            switch (which) {
+                case 0:
+                    long time = System.currentTimeMillis() + (24 * 60 * 60 * 1000);
+                    editor.putLong("updateSnoozeExpires", time);
+                    break;
+                case 1:
+                    editor.putBoolean("ignoreUpdates", true);
+                    break;
+            }
+            editor.apply();
+        });
+        builder.show();
+    }
+
+    private void showUpdateOptionsDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Update Options");
+        builder.setItems(new CharSequence[]{"Update in-app", "Update in browser"}, (dialog, which) -> {
+            switch (which) {
+                case 0:
+                    downloadAndInstallClientUpdate();
+                    break;
+                case 1:
+                    launchBrowserForUpdate();
+                    break;
+            }
+        });
+        builder.show();
+    }
+
+    private void launchBrowserForUpdate() {
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                Uri.parse("https://opengress.net/downloads/"));
+        startActivity(browserIntent);
+        finish();
+    }
+
+
     @Override
     protected void onResume() {
         super.onResume();
-        if (installed) {
+        if (mInstalled) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Update Failed");
             builder.setMessage("The update was not installed. Please try again.");
