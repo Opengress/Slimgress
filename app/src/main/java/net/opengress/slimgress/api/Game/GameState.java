@@ -813,16 +813,19 @@ public class GameState {
     }
 
     // FIXME instead of one resonator this should ultimately accept multiple and then send a set of Guids
-    public void intDeployResonator(@NonNull ItemResonator resonator, @NonNull GameEntityPortal portal, int slot, final Handler handler) {
+    public void intDeployResonator(@NonNull List<ItemResonator> wantedResonators, @NonNull GameEntityPortal portal, int slot, final Handler handler) {
         try {
             checkInterface();
 
             JSONObject params = new JSONObject();
             params.put("portalGuid", portal.getEntityGuid());
             params.put("preferredSlot", slot);
+            int level = wantedResonators.get(0).getItemLevel();
 
             JSONArray resonators = new JSONArray();
-            resonators.put(resonator.getEntityGuid());
+            for (ItemResonator resonator : wantedResonators) {
+                resonators.put(resonator.getEntityGuid());
+            }
             params.put("itemGuids", resonators);
 
             mInterface.request(mHandshake, "gameplay/deployResonatorV2", mLocation, params, new RequestResult(handler) {
@@ -838,6 +841,8 @@ public class GameState {
                         case "PORTAL_AT_MAX_RESONATORS" ->
                             // Portal is already fully deployed
                                 "Portal already has all resonators";
+                        case "WRONG_LEVEL" ->
+                                "You can't deploy a resonator above your access level";
                         case "ITEM_DOES_NOT_EXIST", "RESONATOR_DOES_NOT_EXIST" ->
                                 "The resonator you tried to deploy is not in your inventory";
                         case "SERVER_ERROR" -> "Server error";
@@ -861,7 +866,7 @@ public class GameState {
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
                     super.handleGameBasket(gameBasket);
-                    getData().putSerializable("resonator", resonator);
+                    getAgent().subtractEnergy(getKnobs().getXMCostKnobs().getResonatorDeployCostByLevel().get(level - 1));
                 }
 
             });
@@ -873,6 +878,8 @@ public class GameState {
     public void intUpgradeResonator(@NonNull ItemResonator resonator, @NonNull GameEntityPortal portal, int slot, final Handler handler) {
         try {
             checkInterface();
+
+            int level = resonator.getItemLevel();
 
             JSONObject params = new JSONObject();
             params.put("emitterGuid", resonator.getEntityGuid());
@@ -891,6 +898,8 @@ public class GameState {
                         case "CAN_ONLY_UPGRADE_TO_HIGHER_LEVEL" ->
                             // Resonator is already upgraded
                                 "You can't upgrade that resonator as it's already upgraded";
+                        case "WRONG_LEVEL" ->
+                                "You can't deploy a resonator above your access level";
                         case "ITEM_DOES_NOT_EXIST" -> // new!
                                 "The resonator you tried to deploy is not in your inventory";
                         case "SERVER_ERROR" -> // new!
@@ -915,7 +924,7 @@ public class GameState {
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
                     super.handleGameBasket(gameBasket);
-                    getData().putSerializable("resonator", resonator);
+                    getAgent().subtractEnergy(getKnobs().getXMCostKnobs().getResonatorUpgradeCostByLevel().get(level - 1));
                 }
 
             });
