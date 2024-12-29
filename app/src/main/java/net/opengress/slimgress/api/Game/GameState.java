@@ -254,8 +254,8 @@ public class GameState {
         try {
             checkInterface();
 
-            // get cell ids for surrounding area
-            String[] cellIds = Utils.getCellIdsFromLocationRadiusKm(location, 1, 16, 16);
+            // get cell ids for surrounding area - i think the radius and such may end up as parameter(s)
+            String[] cellIds = Utils.getCellIdsFromLocationRadiusKm(location, 1.5, 16, 16);
 
             // create cells
             JSONArray cellsAsHex = new JSONArray();
@@ -361,7 +361,7 @@ public class GameState {
                                 }
                                 if (finalMaxTimeStampMs == -1 || finalMaxTimeStampMs < time) {
                                     if (!getOlderMessages) {
-                                        mMinCommTimestamps.put(categoryName, time);
+                                        mMinCommTimestamps.put(categoryName, time + 1);
                                     }
                                 }
                             }

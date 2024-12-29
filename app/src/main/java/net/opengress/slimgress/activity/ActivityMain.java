@@ -378,10 +378,19 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             } else {
                 ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setColorFilter(textColor, PorterDuff.Mode.SRC_IN);
             }
-            findViewById(R.id.activity_main_header).setOnClickListener(view -> {
-                String agentinfo = "AP: " + agent.getAp() + " / " + nextLevelAP + "\nXM: " + agent.getEnergy() + " / " + agent.getEnergyMax();
-                Toast.makeText(getApplicationContext(), agentinfo, Toast.LENGTH_LONG).show();
-            });
+            var listener = new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    String agentinfo = "AP: " + agent.getAp() + " / " + nextLevelAP + "\nXM: " + agent.getEnergy() + " / " + agent.getEnergyMax();
+                    Toast.makeText(ActivityMain.this.getApplicationContext(), agentinfo, Toast.LENGTH_LONG).show();
+                }
+            };
+            findViewById(R.id.agentap).setOnClickListener(listener);
+            findViewById(R.id.agentxm).setOnClickListener(listener);
+            findViewById(R.id.agentxm).setOnClickListener(listener);
+            findViewById(R.id.imageView).setOnClickListener(listener);
+            findViewById(R.id.agentLevel).setOnClickListener(listener);
+            findViewById(R.id.agentname).setOnClickListener(listener);
 
 //            String agentinfo = "AP: " + agent.getAp() + " / XM: " + (agent.getEnergy() * 100 / agent.getEnergyMax()) + " %";
 //            ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);
