@@ -472,7 +472,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         }
 
         // get xmp weapon items
-        for (int level = 1; level <= 8; level++) {
+        for (int level = 1; level <= mGame.getAgent().getLevel(); level++) {
             List<ItemBase> items = inv.getItems(ItemBase.ItemType.WeaponXMP, level);
 
             String descr = "L" + level + " XMP";
@@ -488,7 +488,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         }
 
         // get ultrastrike weapon items
-        for (int level = 1; level <= 8; level++) {
+        for (int level = 1; level <= mGame.getAgent().getLevel(); level++) {
             List<ItemBase> items = inv.getItems(ItemBase.ItemType.WeaponUltraStrike, level);
 
             String descr = "L" + level + " UltraStrike";
