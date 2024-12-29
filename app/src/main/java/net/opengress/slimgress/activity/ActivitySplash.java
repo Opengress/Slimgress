@@ -90,7 +90,6 @@ public class ActivitySplash extends Activity {
     private float mCurrentRotation = 0f;
     private AndroidLocationProvider mLocationProvider;
     private boolean mInstalled = false;
-    private boolean mIgnoringUpdate = false;
     private final LocationCallback mLocationCallback = new LocationCallback() {
         @Override
         public void onLocationUpdated(android.location.Location location) {
@@ -325,6 +324,7 @@ public class ActivitySplash extends Activity {
 
                 // show an information dialog
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setCancelable(false);
                 builder.setTitle(R.string.splash_failure_title);
                 builder.setMessage(R.string.splash_failure_msg);
 
@@ -422,8 +422,9 @@ public class ActivitySplash extends Activity {
 
     private void showIgnoreOptionsDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
         builder.setTitle("Ignore Options");
-        builder.setItems(new CharSequence[]{"Remind me later", "Ignore this update"}, (dialog, which) -> {
+        builder.setItems(new CharSequence[]{"Remind me tomorrow", "Ignore until forced"}, (dialog, which) -> {
             SharedPreferences prefs = getSharedPreferences(getApplicationInfo().packageName, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             switch (which) {
@@ -442,6 +443,7 @@ public class ActivitySplash extends Activity {
 
     private void showUpdateOptionsDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
         builder.setTitle("Update Options");
         builder.setItems(new CharSequence[]{"Update in-app", "Update in browser"}, (dialog, which) -> {
             switch (which) {
