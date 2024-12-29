@@ -670,6 +670,8 @@ public class GameState {
                                 super.handleError(getString(R.string.weapon_does_not_exist));
                         case "WRONG_WEAPON_TYPE" ->
                                 super.handleError("You can only fire an XMP or UltraStrike!");
+                        case "WRONG_LEVEL" ->
+                                super.handleError("You can't fire a weapon above your access level!");
                         case "SPEED_LOCKED" -> // new!
                                 super.handleError(getString(R.string.you_are_moving_too_fast));
                         case "PLAYER_DEPLETED", "NEED_MORE_ENERGY" ->

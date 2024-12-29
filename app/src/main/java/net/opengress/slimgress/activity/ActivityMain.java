@@ -456,7 +456,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         List<InventoryListItem> weaponList = new LinkedList<>();
 
         // get xmp power cube items
-        for (int level = 1; level <= 8; level++) {
+        for (int level = 1; level <= mGame.getAgent().getLevel(); level++) {
             List<ItemBase> items = inv.getItems(ItemBase.ItemType.PowerCube, level);
 
             String descr = "L" + level + " XMP";
