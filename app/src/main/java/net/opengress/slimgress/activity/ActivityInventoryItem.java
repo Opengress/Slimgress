@@ -46,6 +46,7 @@ import net.opengress.slimgress.dialog.DialogInfo;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -376,6 +377,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
             View dialogView = inflater.inflate(R.layout.dialog_recycle, null);
             builder.setView(dialogView);
 
+            TextView neededXmView = dialogView.findViewById(R.id.recycling_xm_to_fill_tank);
             TextView itemDescription = dialogView.findViewById(R.id.item_description);
             TextView quantityDisplay = dialogView.findViewById(R.id.quantity_display);
             TextView recoveryInfo = dialogView.findViewById(R.id.recovery_info);
@@ -383,6 +385,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
             Button buttonDecrement = dialogView.findViewById(R.id.button_decrement);
             quantityDisplay.setText(String.format("%d/%d", 1, mItem.getQuantity()));
             updateRecoveryInfo(1, recoveryInfo);
+            updateQuantityDesired(neededXmView);
 
             itemDescription.setText(MessageFormat.format("{0}{1}", getString(R.string.recycle_something), mItem.getDescription()));
 
@@ -394,6 +397,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     quantity++;
                     quantityDisplay.setText(String.format("%d/%d", quantity, mItem.getQuantity()));
                     updateRecoveryInfo(quantity, recoveryInfo);
+                    updateQuantityDesired(neededXmView);
                 }
             });
 
@@ -405,16 +409,17 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     quantity--;
                     quantityDisplay.setText(String.format("%d/%d", quantity, mItem.getQuantity()));
                     updateRecoveryInfo(quantity, recoveryInfo);
+                    updateQuantityDesired(neededXmView);
                 }
             });
 
             buttonIncrement.setOnLongClickListener(v1 -> {
-                incrementQuantity(buttonIncrement, quantityDisplay, recoveryInfo);
+                incrementQuantity(buttonIncrement, quantityDisplay, recoveryInfo, neededXmView);
                 return true;
             });
 
             buttonDecrement.setOnLongClickListener(v1 -> {
-                decrementQuantity(buttonDecrement, quantityDisplay, recoveryInfo);
+                decrementQuantity(buttonDecrement, quantityDisplay, recoveryInfo, neededXmView);
                 return true;
             });
 
@@ -435,6 +440,16 @@ public class ActivityInventoryItem extends AppCompatActivity {
         }
     }
 
+    private void updateQuantityDesired(TextView neededXmView) {
+        int xm = mGame.getAgent().getEnergy();
+        int max = mGame.getAgent().getEnergyMax();
+        if (xm < max) {
+            neededXmView.setText(String.format(Locale.getDefault(), "Need %d XM to fill tank", max - xm));
+        } else {
+            neededXmView.setText("XM tank is currently full");
+        }
+    }
+
     @SuppressLint("DefaultLocale")
     private void updateRecoveryInfo(int quantity, TextView recoveryInfo) {
         int recoveryAmount = calculateRecoveryAmount(quantity);
@@ -445,7 +460,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
      * @noinspection BusyWait
      */
     @SuppressLint("DefaultLocale")
-    private void incrementQuantity(Button buttonIncrement, TextView quantityDisplay, TextView recoveryInfo) {
+    private void incrementQuantity(Button buttonIncrement, TextView quantityDisplay, TextView recoveryInfo, TextView neededXmView) {
         runInThread(() -> {
             while (buttonIncrement.isPressed()) {
                 String quantityText = quantityDisplay.getText().toString();
@@ -457,6 +472,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     runOnUiThread(() -> {
                         quantityDisplay.setText(String.format("%d/%d", finalQuantity, mItem.getQuantity()));
                         updateRecoveryInfo(finalQuantity, recoveryInfo);
+                        updateQuantityDesired(neededXmView);
                     });
                 }
                 try {
@@ -472,7 +488,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
      * @noinspection BusyWait
      */
     @SuppressLint("DefaultLocale")
-    private void decrementQuantity(Button buttonDecrement, TextView quantityDisplay, TextView recoveryInfo) {
+    private void decrementQuantity(Button buttonDecrement, TextView quantityDisplay, TextView recoveryInfo, TextView neededXmView) {
         runInThread(() -> {
             while (buttonDecrement.isPressed()) {
                 String quantityText = quantityDisplay.getText().toString();
@@ -484,6 +500,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     runOnUiThread(() -> {
                         quantityDisplay.setText(String.format("%d/%d", finalQuantity, mItem.getQuantity()));
                         updateRecoveryInfo(finalQuantity, recoveryInfo);
+                        updateQuantityDesired(neededXmView);
                     });
                 }
                 try {
