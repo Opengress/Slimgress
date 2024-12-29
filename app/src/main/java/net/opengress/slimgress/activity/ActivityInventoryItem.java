@@ -130,7 +130,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 itemDescription.setText("Store of XM which can be used to recharge Scanner");
                 inflateResource(mItem, actual);
                 findViewById(R.id.activity_inventory_item_use).setVisibility(View.VISIBLE);
-                findViewById(R.id.activity_inventory_item_use).setEnabled(true);
+                findViewById(R.id.activity_inventory_item_use).setEnabled(mItem.getLevel() <= mGame.getAgent().getLevel());
                 findViewById(R.id.activity_inventory_item_use).setOnClickListener(this::onUseItemClicked);
             }
             case WeaponXMP -> {
@@ -138,7 +138,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 itemDescription.setText("Exotic Matter Pulse weapons which can destroy enemy resonators and Mods and neutralize enemy portals");
                 inflateResource(mItem, actual);
                 findViewById(R.id.activity_inventory_item_fire).setVisibility(View.VISIBLE);
-                findViewById(R.id.activity_inventory_item_fire).setEnabled(true);
+                findViewById(R.id.activity_inventory_item_fire).setEnabled(mItem.getLevel() <= mGame.getAgent().getLevel());
                 findViewById(R.id.activity_inventory_item_fire).setOnClickListener(this::onFireClicked);
             }
             case WeaponUltraStrike -> {
@@ -146,7 +146,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 itemDescription.setText("A variation of the Exotic Matter Pulse weapon with a more powerful blast that occurs within a smaller radius");
                 inflateResource(mItem, actual);
                 findViewById(R.id.activity_inventory_item_fire).setVisibility(View.VISIBLE);
-                findViewById(R.id.activity_inventory_item_fire).setEnabled(true);
+                findViewById(R.id.activity_inventory_item_fire).setEnabled(mItem.getLevel() <= mGame.getAgent().getLevel());
                 findViewById(R.id.activity_inventory_item_fire).setOnClickListener(this::onFireClicked);
             }
             case ModShield -> {
