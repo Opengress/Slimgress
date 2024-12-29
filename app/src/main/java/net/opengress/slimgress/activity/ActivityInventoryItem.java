@@ -130,7 +130,9 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 itemDescription.setText("Store of XM which can be used to recharge Scanner");
                 inflateResource(mItem, actual);
                 findViewById(R.id.activity_inventory_item_use).setVisibility(View.VISIBLE);
-                findViewById(R.id.activity_inventory_item_use).setEnabled(mItem.getLevel() <= mGame.getAgent().getLevel());
+                boolean canUse = mGame.getAgent().getEnergy() < mGame.getAgent().getEnergyMax();
+                canUse = canUse && mItem.getLevel() <= mGame.getAgent().getLevel();
+                findViewById(R.id.activity_inventory_item_use).setEnabled(canUse);
                 findViewById(R.id.activity_inventory_item_use).setOnClickListener(this::onUseItemClicked);
             }
             case WeaponXMP -> {
