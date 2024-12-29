@@ -1225,6 +1225,10 @@ public class GameState {
                         case "DOES_NOT_EXIST", "ITEM_DOES_NOT_EXIST", "RESOURCE_NOT_AVAILABLE",
                              "NOT_IN_PLAYER_INVENTORY" ->
                                 super.handleError("Item is not in your inventory.");
+                        case "WRONG_LEVEL" ->
+                                super.handleError("You can't discharge a power cube above your access level!");
+                        case "ENERGY_FULL" ->
+                                super.handleError("You can't discharge a power cube into an already full XM tank");
                         case "SPEED_LOCKED" -> // new!
                                 super.handleError("You are moving too fast");
                         case "SPEED_LOCKED_" -> {
