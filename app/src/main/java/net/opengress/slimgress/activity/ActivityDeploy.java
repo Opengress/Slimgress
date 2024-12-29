@@ -59,12 +59,7 @@ public class ActivityDeploy extends AppCompatActivity {
         if (error != null && !error.isEmpty()) {
             DialogInfo dialog = new DialogInfo(ActivityDeploy.this);
             dialog.setMessage(error).setDismissDelay(1500).show();
-        } else {
-            ItemResonator reso = (ItemResonator) msg.getData().getSerializable("resonator");
-            assert reso != null;
-            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getResonatorDeployCostByLevel().get(reso.getItemLevel() - 1));
         }
-
         setUpView();
         return false;
     });
@@ -75,12 +70,7 @@ public class ActivityDeploy extends AppCompatActivity {
         if (error != null && !error.isEmpty()) {
             DialogInfo dialog = new DialogInfo(ActivityDeploy.this);
             dialog.setMessage(error).setDismissDelay(1500).show();
-        } else {
-            ItemResonator reso = (ItemResonator) msg.getData().getSerializable("resonator");
-            assert reso != null;
-            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getResonatorUpgradeCostByLevel().get(reso.getItemLevel() - 1));
         }
-
         setUpView();
         return false;
     });
@@ -204,7 +194,7 @@ public class ActivityDeploy extends AppCompatActivity {
     }
 
     private boolean canUpgradeOrDeploy(HashMap<Integer, Integer> resoCountForLevel, int currentLevel) {
-        while (currentLevel < 8) {
+        while (currentLevel < mGame.getAgent().getLevel()) {
             if (canPutThisResonatorOn(resoCountForLevel, currentLevel + 1)) {
                 return true;
             }
@@ -214,7 +204,8 @@ public class ActivityDeploy extends AppCompatActivity {
     }
 
     private boolean canPutThisResonatorOn(HashMap<Integer, Integer> resoCountForLevel, int level) {
-        return mGame.getKnobs().getPortalKnobs().getBandForLevel(level).getRemaining() > resoCountForLevel.get(level);
+        boolean can = mGame.getKnobs().getPortalKnobs().getBandForLevel(level).getRemaining() > resoCountForLevel.get(level);
+        return can && level <= mGame.getAgent().getLevel();
     }
 
     @SuppressLint("DefaultLocale")
@@ -276,10 +267,9 @@ public class ActivityDeploy extends AppCompatActivity {
 
         builder.setItems(levels.values().toArray(new String[0]), (dialogInterface, i) -> {
             var which = levels.keySet().toArray(new Integer[0])[i];
-            ItemResonator r = mGame.getInventory().getResoForDeployment(which);
-            mGame.getInventory().removeItem(r);
+            List<ItemResonator> resos = mGame.getInventory().getResosForDeployment(which);
             // FIXME probable crash on error which will show its head when agents race to deploy
-            mGame.intDeployResonator(r, mPortal, slot, deployResultHandler);
+            mGame.intDeployResonator(resos, mPortal, slot, deployResultHandler);
         });
         builder.show();
     }
