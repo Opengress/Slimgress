@@ -88,25 +88,22 @@ public class InventoryList extends BaseExpandableListAdapter {
     public void limitRarities(String rarity) {
         /// "ALL", "Very Common", "Common", "Less Common", "Rare", "Very Rare", "Extra Rare"
         switch (rarity) {
-            default ->
-                // What is None?
-//                mRarityFilter = ItemBase.Rarity.None;
-                    mRarityFilter = null;
             case "Very Common" -> mRarityFilter = ItemBase.Rarity.VeryCommon;
             case "Common" -> mRarityFilter = ItemBase.Rarity.Common;
             case "Less Common" -> mRarityFilter = ItemBase.Rarity.LessCommon;
             case "Rare" -> mRarityFilter = ItemBase.Rarity.Rare;
             case "Very Rare" -> mRarityFilter = ItemBase.Rarity.VeryRare;
             case "Extra Rare" -> mRarityFilter = ItemBase.Rarity.ExtraRare;
+            default ->
+                // What is None?
+//                mRarityFilter = ItemBase.Rarity.None;
+                    mRarityFilter = null;
         }
         notifyDataSetChanged();
     }
 
     public void limitLevels(String level) {
         switch (level) {
-            default ->
-                // again, is this safe?
-                    mLevelFilter = -999;
             case "Level 0" ->
                 // should never happen because currently nothing is ever 0. portals, tho...
                     mLevelFilter = 0;
@@ -118,6 +115,9 @@ public class InventoryList extends BaseExpandableListAdapter {
             case "Level 6" -> mLevelFilter = 6;
             case "Level 7" -> mLevelFilter = 7;
             case "Level 8" -> mLevelFilter = 8;
+            default ->
+                // again, is this safe?
+                    mLevelFilter = -999;
         }
         notifyDataSetChanged();
     }
@@ -198,7 +198,8 @@ public class InventoryList extends BaseExpandableListAdapter {
 
 
                     // get distance to portal and show ownership in the colour
-                    ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_distance)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());
+                    int colour = Objects.equals(portal.getOwnerGuid(), mGame.getAgent().getEntityGuid()) ? 0xFCD452 : portal.getPortalTeam().getColour();
+                    ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_distance)).setTextColor(0xff000000 + colour);
                     int dist = 999999000;
                     Location loc = mGame.getLocation();
                     if (loc != null) {
