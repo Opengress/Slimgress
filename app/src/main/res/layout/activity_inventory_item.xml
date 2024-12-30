@@ -29,6 +29,11 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
+                <Button
+                    style="@style/BackButtonStyle"
+                    android:id="@+id/activity_inventory_item_back_button"
+                    android:text="@string/back_button_back" />
+
                 <TextView
                     android:id="@+id/activity_inventory_item_title"
                     android:layout_width="wrap_content"
@@ -108,30 +113,30 @@
 
                 <Button
                     android:id="@+id/activity_inventory_item_recharge"
-                    android:layout_weight="1"
                     style="@style/ButtonStyleYellow"
+                    android:layout_weight="0.5"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="@dimen/button_height"
                     android:layout_gravity="center_vertical|left"
                     android:text="@string/inventory_button_recharge"
                     android:visibility="gone" />
 
                 <Button
                     android:id="@+id/activity_inventory_item_use"
-                    android:layout_weight="1"
                     style="@style/ButtonStyleYellow"
+                    android:layout_weight="0.5"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="@dimen/button_height"
                     android:layout_gravity="center_vertical|left"
                     android:text="@string/inventory_button_use"
                     android:visibility="gone" />
 
                 <Button
                     android:id="@+id/activity_inventory_item_fire"
-                    android:layout_weight="1"
                     style="@style/ButtonStyleYellow"
+                    android:layout_weight="0.5"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="@dimen/button_height"
                     android:layout_gravity="center_vertical|left"
                     android:text="@string/inventory_button_fire"
                     android:visibility="gone" />
@@ -145,20 +150,20 @@
 
                 <Button
                     android:id="@+id/activity_inventory_item_drop"
-                    android:layout_weight="1"
                     style="@style/ButtonStyle"
+                    android:layout_weight="0.5"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="@dimen/button_height"
                     android:layout_gravity="center_vertical|right"
                     android:enabled="false"
                     android:text="@string/inventory_button_drop" />
 
                 <Button
                     android:id="@+id/activity_inventory_item_recycle"
-                    android:layout_weight="1"
                     style="@style/ButtonStyle"
+                    android:layout_weight="0.5"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="@dimen/button_height"
                     android:layout_gravity="center_vertical|right"
                     android:enabled="false"
                     android:text="@string/inventory_button_recycle" />

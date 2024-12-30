@@ -140,4 +140,5 @@
     <string name="uncaptured">uncaptured</string>
     <string name="btn_edit">EDIT</string>
     <string name="placeholder_agent_name">[Agent]</string>
+    <string name="back_button_back">く</string>
 </resources>

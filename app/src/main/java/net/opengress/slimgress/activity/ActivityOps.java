@@ -25,7 +25,6 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
@@ -48,10 +47,6 @@ public class ActivityOps extends AppCompatActivity implements TabLayout.OnTabSel
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ops);
-
-        // Set up the action bar.
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the app.
@@ -84,6 +79,8 @@ public class ActivityOps extends AppCompatActivity implements TabLayout.OnTabSel
                     }
                 }).attach();
         tabLayout.addOnTabSelectedListener(this);
+
+        findViewById(R.id.activity_ops_back_button).setOnClickListener(v -> finish());
     }
 
     @Override
