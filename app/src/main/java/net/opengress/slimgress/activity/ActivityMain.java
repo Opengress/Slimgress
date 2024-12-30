@@ -234,7 +234,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         Objects.requireNonNull(scanner).updateWorld();
     }
 
-    private synchronized void levelUp(Integer level) {
+    private synchronized void levelUp(int level) {
         if (isLevellingUp || !notBouncing("levelUp", 10000)) {
             Log.d("Main", "Not levelling up, because we are ALREADY DOING THAT");
             return;

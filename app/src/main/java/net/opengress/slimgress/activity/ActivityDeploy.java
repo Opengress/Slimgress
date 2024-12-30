@@ -211,7 +211,7 @@ public class ActivityDeploy extends AppCompatActivity {
     @SuppressLint("DefaultLocale")
     @SuppressWarnings("ConstantConditions")
     private void onUpgradeButtonPressed(View view) {
-        int slot = layoutIdToResoSlot((Integer) view.getTag());
+        int slot = layoutIdToResoSlot((int) view.getTag());
         var reso = mPortal.getPortalResonator(slot);
         var resosForUpgrade = inventory.getResosForUpgrade(reso.level);
         var resoCountForLevel = getResoCountsForLevels(mPortal.getPortalResonators());
@@ -257,7 +257,7 @@ public class ActivityDeploy extends AppCompatActivity {
     @SuppressLint("DefaultLocale")
     @SuppressWarnings("ConstantConditions")
     private void onDeployButtonPressed(View view) {
-        int slot = layoutIdToResoSlot((Integer) view.getTag());
+        int slot = layoutIdToResoSlot((int) view.getTag());
         var resosForUpgrade = inventory.getResosForUpgrade(0);
         var resoCountForLevel = getResoCountsForLevels(mPortal.getPortalResonators());
         HashMap<Integer, String> levels = getAvailableDeployLevels(resosForUpgrade, resoCountForLevel);

@@ -99,8 +99,7 @@ public class Team
         return mTeam.getName();
     }
 
-    @NonNull
-    public Integer getColour()
+    public int getColour()
     {
         return mTeam.getColour();
     }
