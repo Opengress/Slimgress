@@ -217,6 +217,8 @@ public class GameState {
                 }
 
                 bundle.putString("Error", errString);
+            } else {
+                putAgentName(mHandshake.getAgent().getEntityGuid(), mHandshake.getNickname());
             }
 
             msg.setData(bundle);
