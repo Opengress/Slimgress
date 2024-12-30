@@ -21,13 +21,16 @@
 
 package net.opengress.slimgress;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModelProvider;
 
 import net.opengress.slimgress.activity.ActivityMain;
@@ -54,6 +57,7 @@ import java.util.concurrent.TimeUnit;
 
 public class SlimgressApplication extends Application {
     private static SlimgressApplication mSingleton;
+    private static Activity mCurrentActivity;
     private boolean mLoggedIn = false;
     protected GameState mGame;
     private LocationViewModel mLocationViewModel;
@@ -78,6 +82,44 @@ public class SlimgressApplication extends Application {
 
         mSingleton = this;
         mGame = new GameState();
+
+        registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
+            @Override
+            public void onActivityCreated(@NonNull Activity activity, Bundle savedInstanceState) {
+            }
+
+            @Override
+            public void onActivityStarted(@NonNull Activity activity) {
+                mCurrentActivity = activity;
+            }
+
+            @Override
+            public void onActivityResumed(@NonNull Activity activity) {
+                mCurrentActivity = activity;
+            }
+
+            @Override
+            public void onActivityPaused(@NonNull Activity activity) {
+                if (mCurrentActivity == activity) {
+                    mCurrentActivity = null;
+                }
+            }
+
+            @Override
+            public void onActivityStopped(@NonNull Activity activity) {
+                if (mCurrentActivity == activity) {
+                    mCurrentActivity = null;
+                }
+            }
+
+            @Override
+            public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {
+            }
+
+            @Override
+            public void onActivityDestroyed(@NonNull Activity activity) {
+            }
+        });
     }
 
     @Override
@@ -256,5 +298,9 @@ public class SlimgressApplication extends Application {
 
     public static void postPlainCommsMessage(String msg) {
         getInstance().getAllCommsViewModel().addMessage(PlextBase.createByPlainText(PlextBase.PlextType.PlayerGenerated, msg));
+    }
+
+    public static Activity getCurrentActivity() {
+        return mCurrentActivity;
     }
 }
