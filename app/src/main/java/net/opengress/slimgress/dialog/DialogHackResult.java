@@ -49,6 +49,8 @@ import java.util.TimerTask;
 public class DialogHackResult extends Dialog
 {
 
+    private boolean mShouldDismiss = true;
+
     public DialogHackResult(Context context)
     {
         super(context);
@@ -64,6 +66,7 @@ public class DialogHackResult extends Dialog
         lp.dimAmount = 0.0f;
         lp.width = WindowManager.LayoutParams.MATCH_PARENT;
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        lp.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         getWindow().setAttributes(lp);
 
         findViewById(R.id.message).setVisibility(View.INVISIBLE);
@@ -101,18 +104,25 @@ public class DialogHackResult extends Dialog
 
     public void setDismissDelay(int delay)
     {
-        // automatically dismiss dialog after 3 seconds
-        setOnShowListener(dialog -> new Timer().schedule(new TimerTask() {
-            @Override
-            public void run()
-            {
-                dialog.dismiss();
-            }
-        }, delay));
+        if (delay > 0) {
+            mShouldDismiss = true;
+            setOnShowListener(dialog -> new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if (mShouldDismiss) {
+                        dialog.dismiss();
+                    }
+                }
+            }, delay));
+        } else {
+            mShouldDismiss = false;
+        }
+        setCancelable(!mShouldDismiss);
+        setCanceledOnTouchOutside(!mShouldDismiss);
     }
 
     // to be used when hack acquired items!
-    public void setItems(HashMap<String, Integer> data) {
+    public void setItems(@NonNull HashMap<String, Integer> data) {
 
         HashMap<String, Pair<String, Integer>> items = new HashMap<>();
         Set<String> strings = data.keySet();
@@ -136,7 +146,7 @@ public class DialogHackResult extends Dialog
 
         // data is passed into the constructor
         @SuppressWarnings("unchecked")
-        public HackItemViewAdapter(Context context, HashMap<String, Pair<String, Integer>> items) {
+        public HackItemViewAdapter(Context context, @NonNull HashMap<String, Pair<String, Integer>> items) {
             this.mInflater = LayoutInflater.from(context);
             this.mData = (Pair<String, Integer>[]) items.values().toArray(new Pair[0]);
         }
