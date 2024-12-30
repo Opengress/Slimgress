@@ -22,7 +22,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
@@ -355,7 +354,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     String message = "Gained %s XM from using a %s";
                     message = String.format(message, res, name);
                     SlimgressApplication.postPlainCommsMessage(message);
-                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+//                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
 
                     for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
                         mItem.remove(id);
@@ -576,7 +575,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     message = String.format(message, res, name);
                 }
                 SlimgressApplication.postPlainCommsMessage(message);
-                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+//                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
 
                 for (var id : Objects.requireNonNull(data.getStringArray("recycled"))) {
                     mItem.remove(id);

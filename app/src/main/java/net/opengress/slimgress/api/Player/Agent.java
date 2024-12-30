@@ -21,12 +21,16 @@
 
 package net.opengress.slimgress.api.Player;
 
+import static net.opengress.slimgress.ViewHelpers.showFloatingText;
+
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Knobs.TeamKnobs;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+
+import java.util.Locale;
 
 public class Agent extends PlayerEntity
 {
@@ -84,6 +88,10 @@ public class Agent extends PlayerEntity
     }
 
     public void addEnergy(int energyAmount) {
+        if (energyAmount == 0) {
+            throw new RuntimeException("Why the fuck is it 0");
+        }
+        showFloatingText(String.format(Locale.getDefault(), "+%dXM", energyAmount));
         setEnergy(Math.min(getEnergy() + energyAmount, getEnergyMax()));
         postUpdates();
     }

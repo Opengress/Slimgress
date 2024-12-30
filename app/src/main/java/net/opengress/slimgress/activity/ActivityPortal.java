@@ -246,10 +246,10 @@ public class ActivityPortal extends AppCompatActivity {
                     eDialog.setMessage(error).setDismissDelay(1500).show();
                     SlimgressApplication.postPlainCommsMessage("Recycle failed: " + error);
                 } else {
-                    var res = data.getString("result");
-                    String message = String.format("Gained %s XM from recycling a %s", res, name);
-                    SlimgressApplication.postPlainCommsMessage(message);
-                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+//                    var res = data.getString("result");
+//                    String message = String.format("Gained %s XM from recycling a %s", res, name);
+//                    SlimgressApplication.postPlainCommsMessage(message);
+//                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
                     keys.remove(0);
                 }
                 checkKeys();

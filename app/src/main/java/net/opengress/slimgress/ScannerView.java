@@ -619,11 +619,8 @@ public class ScannerView extends WidgetMap {
             }
         }
 
-        mGame.addSlurpableXMParticles(mSlurpableParticles);
-        mGame.getAgent().addEnergy(newXM);
-
         if (newXM > 0) {
-            mApp.getPlayerDataViewModel().postAgent(mGame.getAgent());
+            mGame.getAgent().addEnergy(newXM);
         }
     }
 
