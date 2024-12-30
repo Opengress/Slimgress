@@ -401,6 +401,8 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
     @SuppressLint("DefaultLocale")
     public void showLevelUpDialog(HashMap<String, Integer> items) {
+        hideFireCarousel();
+        resetSelection();
         DialogLevelUp dialog = new DialogLevelUp(this);
         int level = mGame.getAgent().getVerifiedLevel();
         dialog.setMessage(String.format("LEVEL %d", level), getColourFromResources(getResources(), getLevelColour(level)));
@@ -420,35 +422,45 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
     @SuppressLint("DefaultLocale")
     private void screenshotDialog(@NonNull Dialog dialog) {
-        // Capture the main activity's view
-        View mainView = getWindow().getDecorView().findViewById(android.R.id.content);
-        mainView.setDrawingCacheEnabled(true);
-        Bitmap mainBitmap = Bitmap.createBitmap(mainView.getDrawingCache());
-        mainView.setDrawingCacheEnabled(false);
+        MapView mapView = mScannerView.getMap();
+        mapView.getMapAsync(map -> {
+            map.snapshot(snapshotBitmap -> {
+                // Capture the main activity's view
+                View mainView = getWindow().getDecorView().findViewById(android.R.id.content);
+                mainView.setDrawingCacheEnabled(true);
+                Bitmap mainBitmap = Bitmap.createBitmap(mainView.getDrawingCache());
+                mainView.setDrawingCacheEnabled(false);
 
-        // Capture the dialog's view
-        View dialogView = Objects.requireNonNull(dialog.getWindow()).getDecorView();
-        dialogView.setDrawingCacheEnabled(true);
-        Bitmap dialogBitmap = Bitmap.createBitmap(dialogView.getDrawingCache());
-        dialogView.setDrawingCacheEnabled(false);
+                // Capture the dialog's view
+                View dialogView = Objects.requireNonNull(dialog.getWindow()).getDecorView();
+                dialogView.setDrawingCacheEnabled(true);
+                Bitmap dialogBitmap = Bitmap.createBitmap(dialogView.getDrawingCache());
+                dialogView.setDrawingCacheEnabled(false);
 
-        // Combine both bitmaps
-        Bitmap combinedBitmap = Bitmap.createBitmap(mainBitmap.getWidth(), mainBitmap.getHeight(), Objects.requireNonNull(mainBitmap.getConfig()));
-        Canvas canvas = new Canvas(combinedBitmap);
-        canvas.drawBitmap(mainBitmap, new Matrix(), null);
-        int[] dialogLocation = new int[2];
-        dialogView.getLocationOnScreen(dialogLocation);
-        canvas.drawBitmap(dialogBitmap, dialogLocation[0], dialogLocation[1], null);
+                // 2. Combine the map snapshot with the UI
+                Bitmap combinedBitmap = Bitmap.createBitmap(mainBitmap.getWidth(), mainBitmap.getHeight(), Objects.requireNonNull(mainBitmap.getConfig()));
+                Canvas canvas = new Canvas(combinedBitmap);
 
-        File screenshotFile = saveScreenshot(getExternalCacheDir(), combinedBitmap);
+                int[] mapViewScreenLoc = new int[2];
+                mapView.getLocationOnScreen(mapViewScreenLoc);
+                canvas.drawBitmap(snapshotBitmap, mapViewScreenLoc[0], mapViewScreenLoc[1], null);
 
-        // Share the screenshot
-        Uri screenshotUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", screenshotFile);
-        Intent shareIntent = new Intent(Intent.ACTION_SEND);
-        shareIntent.setType("image/png");
-        shareIntent.putExtra(Intent.EXTRA_STREAM, screenshotUri);
-        shareIntent.putExtra(Intent.EXTRA_TEXT, String.format("I've reached level %d in #Opengress!", mGame.getAgent().getVerifiedLevel()));
-        startActivity(Intent.createChooser(shareIntent, "Share via"));
+                canvas.drawBitmap(mainBitmap, new Matrix(), null);
+                int[] dialogLocation = new int[2];
+                dialogView.getLocationOnScreen(dialogLocation);
+                canvas.drawBitmap(dialogBitmap, dialogLocation[0], dialogLocation[1], null);
+
+                // 3. Save or share combinedBitmap
+                File screenshotFile = saveScreenshot(getExternalCacheDir(), combinedBitmap);
+                // Share the screenshot
+                Uri screenshotUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", screenshotFile);
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("image/png");
+                shareIntent.putExtra(Intent.EXTRA_STREAM, screenshotUri);
+                shareIntent.putExtra(Intent.EXTRA_TEXT, String.format("I've reached level %d in #Opengress!", mGame.getAgent().getVerifiedLevel()));
+                startActivity(Intent.createChooser(shareIntent, "Share via"));
+            });
+        });
     }
 
     @SuppressLint("DefaultLocale")
