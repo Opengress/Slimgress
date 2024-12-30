@@ -475,6 +475,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         DialogHackResult newDialog1 = new DialogHackResult(this);
         newDialog1.setTitle(String.format("Receiving Level %d field kit...", mGame.getAgent().getVerifiedLevel()));
         newDialog1.setItems(items);
+        newDialog1.setDismissDelay(0);
         newDialog1.show();
     }
 
