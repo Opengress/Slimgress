@@ -157,6 +157,17 @@
         <item name="android:textSize">@dimen/text_size_button</item>
     </style>
 
+    <!-- end borrowed from XGlyph2 -->
+
+    <style name="BackButtonStyle" parent="ButtonStyle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:layout_marginLeft">0dp</item>
+        <item name="android:layout_marginRight">@dimen/activity_margin</item>
+        <item name="android:width">@dimen/button_height</item>
+        <item name="android:layout_gravity">bottom</item>
+    </style>
+
     <!--
     not sniped from XGlyph2: ShowcaseView styles. Might be useful later.
     amlcurran/showcaseview puts a mask over the screen to place a widget of interest in a ""target""

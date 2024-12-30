@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="BackButtonStyle" parent="ButtonStyle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:layout_marginVertical">0dp</item>
+        <item name="android:layout_marginLeft">0dp</item>
+        <item name="android:layout_marginRight">@dimen/activity_margin</item>
+        <item name="android:width">@dimen/button_height</item>
+        <item name="android:layout_gravity">bottom</item>
+    </style>
+</resources>

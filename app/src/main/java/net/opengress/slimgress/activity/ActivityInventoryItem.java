@@ -252,6 +252,8 @@ public class ActivityInventoryItem extends AppCompatActivity {
             findViewById(R.id.activity_inventory_item_recycle).setVisibility(View.INVISIBLE);
         }
 
+        findViewById(R.id.activity_inventory_item_back_button).setOnClickListener(v -> finish());
+
     }
 
     @SuppressLint("SetTextI18n")
