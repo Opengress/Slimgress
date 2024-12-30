@@ -137,25 +137,9 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mApp.setMainActivity(this);
 
-        // update agent data
-        updateAgent(mGame.getAgent());
-        mApp.getPlayerDataViewModel().getAgent().observe(this, this::updateAgent);
-
-        mRecyclerView = findViewById(R.id.fire_carousel_recycler_view);
-        CarouselLayoutManager manager = new CarouselLayoutManager(new UncontainedCarouselStrategy());
-        manager.setCarouselAlignment(CarouselLayoutManager.ALIGNMENT_CENTER);
-        mRecyclerView.setLayoutManager(manager);
-        new LinearSnapHelper().attachToRecyclerView(mRecyclerView);
-        mRecyclerView.setHasFixedSize(true);
-        mRecyclerView.setNestedScrollingEnabled(false);
-
-        // Disable change animations
-        RecyclerView.ItemAnimator animator = mRecyclerView.getItemAnimator();
-        if (animator instanceof SimpleItemAnimator) {
-            ((SimpleItemAnimator) animator).setSupportsChangeAnimations(false);
-        }
-
+        setUpFireCarousel();
 
         // create ops button callback
         mOpsActivityResultLauncher = registerForActivityResult(
@@ -175,8 +159,39 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
         mApp.getAllCommsViewModel().getMessages().observe(this, this::getCommsMessages);
         mApp.getLevelUpViewModel().getLevelUpMsgId().observe(this, this::levelUp);
-        mApp.setMainActivity(this);
 
+        var listener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Agent agent = mGame.getAgent();
+                String nextLevel = String.valueOf(Math.min(agent.getLevel() + 1, 8));
+                int nextLevelAP = mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(nextLevel).getApRequired();
+                String agentinfo = "AP: " + agent.getAp() + " / " + nextLevelAP + "\nXM: " + agent.getEnergy() + " / " + agent.getEnergyMax();
+                Toast.makeText(ActivityMain.this.getApplicationContext(), agentinfo, Toast.LENGTH_LONG).show();
+            }
+        };
+        findViewById(R.id.agentap).setOnClickListener(listener);
+        findViewById(R.id.agentxm).setOnClickListener(listener);
+        findViewById(R.id.agentxm).setOnClickListener(listener);
+        findViewById(R.id.imageView).setOnClickListener(listener);
+        findViewById(R.id.agentLevel).setOnClickListener(listener);
+        findViewById(R.id.agentname).setOnClickListener(listener);
+
+        // update agent data last because maybe race condition?
+        updateAgent(mGame.getAgent());
+        mApp.getPlayerDataViewModel().getAgent().observe(this, this::updateAgent);
+
+    }
+
+    @SuppressLint("RestrictedApi")
+    private void setUpFireCarousel() {
+        mRecyclerView = findViewById(R.id.fire_carousel_recycler_view);
+        CarouselLayoutManager manager = new CarouselLayoutManager(new UncontainedCarouselStrategy());
+        manager.setCarouselAlignment(CarouselLayoutManager.ALIGNMENT_CENTER);
+        mRecyclerView.setLayoutManager(manager);
+        new LinearSnapHelper().attachToRecyclerView(mRecyclerView);
+        mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setNestedScrollingEnabled(false);
 
         mSelectTargetText = findViewById(R.id.select_target_text);
         mConfirmButton = findViewById(R.id.btn_flipcard_confirm);
@@ -190,6 +205,12 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         });
 
         mCancelButton.setOnClickListener(v -> resetSelection());
+
+        // Disable change animations
+        RecyclerView.ItemAnimator animator = mRecyclerView.getItemAnimator();
+        if (animator instanceof SimpleItemAnimator) {
+            ((SimpleItemAnimator) animator).setSupportsChangeAnimations(false);
+        }
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
@@ -330,7 +351,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
     @SuppressLint("ObsoleteSdkInt")
     private void updateAgent(Agent agent) {
-        // TODO move some of this style info into onCreate
         runOnUiThread(() -> {
             int textColor;
             Team team = agent.getTeam();
@@ -378,19 +398,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             } else {
                 ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setColorFilter(textColor, PorterDuff.Mode.SRC_IN);
             }
-            var listener = new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    String agentinfo = "AP: " + agent.getAp() + " / " + nextLevelAP + "\nXM: " + agent.getEnergy() + " / " + agent.getEnergyMax();
-                    Toast.makeText(ActivityMain.this.getApplicationContext(), agentinfo, Toast.LENGTH_LONG).show();
-                }
-            };
-            findViewById(R.id.agentap).setOnClickListener(listener);
-            findViewById(R.id.agentxm).setOnClickListener(listener);
-            findViewById(R.id.agentxm).setOnClickListener(listener);
-            findViewById(R.id.imageView).setOnClickListener(listener);
-            findViewById(R.id.agentLevel).setOnClickListener(listener);
-            findViewById(R.id.agentname).setOnClickListener(listener);
 
 //            String agentinfo = "AP: " + agent.getAp() + " / XM: " + (agent.getEnergy() * 100 / agent.getEnergyMax()) + " %";
 //            ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);
