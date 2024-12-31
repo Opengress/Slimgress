@@ -35,6 +35,7 @@ import com.google.android.material.tabs.TabLayoutMediator;
 
 import net.opengress.slimgress.FragmentDevice;
 import net.opengress.slimgress.FragmentInventory;
+import net.opengress.slimgress.FragmentScore;
 import net.opengress.slimgress.FragmentUser;
 import net.opengress.slimgress.R;
 
@@ -75,7 +76,8 @@ public class ActivityOps extends AppCompatActivity implements TabLayout.OnTabSel
                     switch (position) {
                         case 0 -> tab.setText(R.string.ops_inventory);
                         case 1 -> tab.setText(R.string.ops_user);
-                        case 2 -> tab.setText(R.string.ops_device);
+                        case 2 -> tab.setText("Score");
+                        case 3 -> tab.setText(R.string.ops_device);
                     }
                 }).attach();
         tabLayout.addOnTabSelectedListener(this);
@@ -116,7 +118,9 @@ public class ActivityOps extends AppCompatActivity implements TabLayout.OnTabSel
                 fragment = new FragmentInventory();
             else if (position == 1)
                 fragment = new FragmentUser();
-            else if (position == 2)
+            else if (position == 2) {
+                fragment = new FragmentScore();
+            } else if (position == 3)
                 fragment = new FragmentDevice();
 
             // can be used to give arguments to the fragment
@@ -131,7 +135,7 @@ public class ActivityOps extends AppCompatActivity implements TabLayout.OnTabSel
         @Override
         public int getItemCount()
         {
-            return 3;
+            return 4;
         }
 
     }
