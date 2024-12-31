@@ -21,10 +21,14 @@
 
 package net.opengress.slimgress.api.Game;
 
+import androidx.annotation.NonNull;
+
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.GameEntity.GameEntityBase;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.Interface.GameBasket;
+
+import org.jetbrains.annotations.Contract;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,17 +50,25 @@ public class World {
         mXMParticles.clear();
     }
 
-    public void processGameBasket(GameBasket basket) {
+    public void deleteEntityByGuid(String guid) {
+        if (guid.endsWith(".6")) {
+            mXMParticles.remove(Long.parseLong(guid.substring(0, 16), 16));
+        } else {
+            mGameEntities.remove(guid);
+        }
+    }
+
+    public void deleteEntitiesByGuid(List<String> deletedEntityGuids) {
+        for (String guid : deletedEntityGuids) {
+            deleteEntityByGuid(guid);
+        }
+    }
+
+    public void processGameBasket(@NonNull GameBasket basket) {
 
         // remove deleted entities
         List<String> deletedEntityGuids = basket.getDeletedEntityGuids();
-        for (String guid : deletedEntityGuids) {
-            if (guid.endsWith(".6")) {
-                mXMParticles.remove(Long.parseLong(guid.substring(0, 16), 16));
-                continue;
-            }
-            mGameEntities.remove(guid);
-        }
+        deleteEntitiesByGuid(deletedEntityGuids);
 
         // only add non-existing game entities ... should this be a map?
         List<GameEntityBase> entities = basket.getGameEntities();
@@ -85,6 +97,8 @@ public class World {
         return mGameEntities;
     }
 
+    @NonNull
+    @Contract(" -> new")
     public final List<GameEntityBase> getGameEntitiesList() {
         return new ArrayList<>(mGameEntities.values());
     }
@@ -93,6 +107,8 @@ public class World {
         return mXMParticles;
     }
 
+    @NonNull
+    @Contract(" -> new")
     public final List<XMParticle> getXMParticlesList() {
         return new ArrayList<>(mXMParticles.values());
     }

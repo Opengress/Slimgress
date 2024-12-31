@@ -1087,8 +1087,11 @@ public class GameState {
                 public void handleError(String error) {
                     // RESOURCE_NOT_AVAILABLE, OUT_OF_RANGE, INVENTORY_FULL
                     switch (error) {
-                        case "RESOURCE_NOT_AVAILABLE" ->
-                                super.handleError("Pickup failed: Item not available to pick up");
+                        case "RESOURCE_NOT_AVAILABLE" -> {
+                            super.handleError("Pickup failed: Item not available to pick up");
+                            mWorld.deleteEntityByGuid(guid);
+                            SlimgressApplication.getInstance().getMainActivity().processDeletedEntityGuids(List.of(new String[]{guid}));
+                        }
                         case "OUT_OF_RANGE" -> super.handleError("Pickup failed: Out of range");
                         case "INVENTORY_FULL" ->
                                 super.handleError("Too many items in Inventory. Your Inventory can have no more than 2000 items");
