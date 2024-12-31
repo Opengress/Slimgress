@@ -180,8 +180,8 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         // update agent data last because maybe race condition?
         updateAgent(mGame.getAgent());
         mApp.getPlayerDataViewModel().getAgent().observe(this, this::updateAgent);
-
     }
+
 
     @SuppressLint("RestrictedApi")
     private void setUpFireCarousel() {
@@ -284,6 +284,8 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             startActivity(intent);
             finish();
         }
+        // do it again! FIXME this is not a correct solution
+        updateAgent(mGame.getAgent());
     }
 
     @Override
@@ -383,7 +385,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             }
             ((ProgressBar) findViewById(R.id.agentap)).setMax(nextLevelAP);
             ((ProgressBar) findViewById(R.id.agentap)).setProgress(agent.getAp());
-//        Log.d("Main/updateAgent", "New AP: " + agent.getAp());
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 ((ProgressBar) findViewById(R.id.agentap)).getProgressDrawable().setTint(levelColor);
             } else {
