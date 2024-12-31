@@ -2,8 +2,6 @@ package net.opengress.slimgress;
 
 import static org.maplibre.android.utils.ColorUtils.colorToRgbaString;
 
-import android.animation.Animator;
-import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -17,6 +15,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.view.Choreographer;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,7 +41,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.ref.WeakReference;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.HashMap;
@@ -421,8 +419,6 @@ public class ViewHelpers {
             return;
         }
 
-        WeakReference<Activity> activityRef = new WeakReference<>(activity);
-
         activity.runOnUiThread(() -> {
 
             ViewGroup rootLayout = activity.findViewById(android.R.id.content);
@@ -461,34 +457,45 @@ public class ViewHelpers {
             floatingText.setLayoutParams(params);
             rootLayout.addView(floatingText);
 
-            ObjectAnimator animator = ObjectAnimator.ofFloat(floatingText, "translationY", 0, -200);
-            animator.setDuration(1000);
-            animator.addListener(new Animator.AnimatorListener() {
-                @Override
-                public void onAnimationStart(@NonNull Animator animation) {
+            final long startTime = System.currentTimeMillis();
+            final Choreographer choreographer = Choreographer.getInstance();
+            final long duration = 1000; // 1 second
+            final int initialY = floatingText.getTop();
+            final int endY = initialY - 200;
+
+            final Choreographer.FrameCallback frameCallback = new Choreographer.FrameCallback() {
+                private void cleanUp() {
+                    try {
+                        rootLayout.removeView(floatingText);
+                    } catch (Exception ignored) {
+                    }
+                    choreographer.removeFrameCallback(this);
                 }
 
                 @Override
-                public void onAnimationEnd(@NonNull Animator animation) {
-                    Activity act = activityRef.get();
-                    if (act != null && !act.isFinishing() && !act.isDestroyed()) {
-                        ViewGroup layout = act.findViewById(android.R.id.content);
-                        if (layout != null) {
-                            layout.removeView(floatingText);
-                        }
+                public void doFrame(long frameTimeNanos) {
+                    long elapsed = System.currentTimeMillis() - startTime;
+                    float progress = Math.min((float) elapsed / duration, 1f);
+
+                    try {
+                        int currentY = (int) (initialY + (endY - initialY) * progress);
+                        floatingText.setTranslationY(currentY);
+                    } catch (IllegalStateException e) {
+                        cleanUp();
+                        return;
+                    }
+
+                    // Continue animating or clean up
+                    if (progress < 1f) {
+                        choreographer.postFrameCallback(this);
+                    } else {
+                        cleanUp();
                     }
                 }
+            };
 
-                @Override
-                public void onAnimationCancel(@NonNull Animator animation) {
-                }
-
-                @Override
-                public void onAnimationRepeat(@NonNull Animator animation) {
-                }
-            });
-
-            animator.start();
+            // Start the animation
+            choreographer.postFrameCallback(frameCallback);
         });
     }
 
