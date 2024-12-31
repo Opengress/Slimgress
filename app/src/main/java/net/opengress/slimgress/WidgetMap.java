@@ -399,6 +399,10 @@ public class WidgetMap extends Fragment {
 
 
             activity.runOnUiThread(() -> {
+                if (!style.isFullyLoaded()) {
+                    // we can be stuck here during a force sync - if so, just bail :shrug:
+                    return;
+                }
                 // only draw if not already in list
                 if (style.getLayer(layerId) == null) {
                     LatLngQuad quad = getRotatedLatLngQuad(particle.getCellLocation(), 10, 10, 0);

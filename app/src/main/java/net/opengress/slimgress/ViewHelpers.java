@@ -13,6 +13,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.view.Choreographer;
@@ -428,7 +429,9 @@ public class ViewHelpers {
 
             TextView floatingText = new TextView(activity);
             floatingText.setText(text);
-            floatingText.setTextColor(text.charAt(0) == '+' ? 0xAAAAAAFF : 0xCCF8C03E);
+            floatingText.setTextColor(text.charAt(0) == '+' ? 0xFFEEEEEE : 0xCCF8C03E);
+            floatingText.setTypeface(floatingText.getTypeface(), Typeface.BOLD);
+            floatingText.setShadowLayer(4, 2, 2, text.charAt(0) == '+' ? 0xFF000000 : 0x00000000);
             floatingText.setPadding(20, 10, 20, 10);
             floatingText.setGravity(Gravity.CENTER);
             floatingText.setTextSize(14);
