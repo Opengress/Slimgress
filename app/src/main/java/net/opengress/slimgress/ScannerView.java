@@ -153,7 +153,7 @@ public class ScannerView extends WidgetMap {
     private void drawPlayerCursor() {
         // hardcoded and possibly incorrect, also not enough teams
 
-        if (mMapLibreMap == null || mPlayerCursorImageSource == null || mCurrentLocation == null || mMapLibreMap.getStyle() == null) {
+        if (mapIsNotReady()) {
             return;
         }
 
@@ -171,6 +171,10 @@ public class ScannerView extends WidgetMap {
         }
 
         updateActionRadiusLocation(mCurrentLocation);
+    }
+
+    private boolean mapIsNotReady() {
+        return mMapLibreMap == null || mPlayerCursorImageSource == null || mCurrentLocation == null || mMapLibreMap.getStyle() == null || !mMapLibreMap.getStyle().isFullyLoaded();
     }
 
     @Override
@@ -886,6 +890,13 @@ public class ScannerView extends WidgetMap {
         setUpTileSource();
         onReceiveDeletedEntityGuids(guids);
         mGame.clear();
+        Activity activity = getActivity();
+        if (activity != null) {
+            Intent intent = new Intent(activity, activity.getClass());
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            activity.startActivity(intent);
+            activity.finish();
+        }
     }
 
     private void onLostConnection() {
