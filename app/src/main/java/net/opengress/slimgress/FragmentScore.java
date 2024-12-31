@@ -38,8 +38,8 @@ public class FragmentScore extends Fragment {
                 teamScores.put("Enlightened", enl);
                 teamScores.put("Resistance", res);
                 Map<String, Integer> teamColors = new HashMap<>();
-                teamColors.put("Enlightened", 0xff000000 + game.getKnobs().getTeamKnobs().getTeams().get("human").getColour());
-                teamColors.put("Resistance", 0xff000000 + game.getKnobs().getTeamKnobs().getTeams().get("alien").getColour());
+                teamColors.put("Enlightened", 0xff000000 + game.getKnobs().getTeamKnobs().getTeams().get("alien").getColour());
+                teamColors.put("Resistance", 0xff000000 + game.getKnobs().getTeamKnobs().getTeams().get("human").getColour());
 
                 pieChartView.setData(teamScores, teamColors);
                 updateLegend(legendLayout, teamScores, teamColors);
