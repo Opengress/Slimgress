@@ -3,7 +3,7 @@ package net.opengress.slimgress.activity;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
 import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_NONE;
-import static net.opengress.slimgress.ViewHelpers.formatNumberToKLocalized;
+import static net.opengress.slimgress.ViewHelpers.formatNumberToKLocalised;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
@@ -105,7 +105,7 @@ public class ActivityPortal extends AppCompatActivity {
         int levelColour = getLevelColour(mPortal.getPortalLevel());
         ((TextView) findViewById(R.id.portalLevel)).setTextColor(getColourFromResources(getResources(), levelColour));
 
-        ((TextView) findViewById(R.id.portalEnergy)).setText(getString(R.string.portal_energy, formatNumberToKLocalized(mPortal.getPortalEnergy())));
+        ((TextView) findViewById(R.id.portalEnergy)).setText(getString(R.string.portal_energy, formatNumberToKLocalised(mPortal.getPortalEnergy())));
 
 
         // TODO: link to photostream with portal description, up/downvotes, whatever

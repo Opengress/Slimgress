@@ -341,7 +341,7 @@ public class ViewHelpers {
     }
 
     @NonNull
-    public static String formatNumberToKLocalized(long number) {
+    public static String formatNumberToKLocalised(long number) {
         NumberFormat formatter = NumberFormat.getInstance(Locale.getDefault());
         if (number >= 1_000_000) {
             return String.format(Locale.getDefault(), "%.1fM", number / 1_000_000.0);
@@ -401,8 +401,8 @@ public class ViewHelpers {
         StringBuilder portalInfoText = new StringBuilder();
         portalInfoText.append("LVL: L").append(portal.getPortalLevel())
                 .append("\nRNG: ").append(getPrettyDistanceStringFloored(portal.getPortalLinkRange()))
-                .append("\nENR: ").append(formatNumberToKLocalized(portal.getPortalEnergy()))
-                .append(" / ").append(formatNumberToKLocalized(portal.getPortalMaxEnergy()))
+                .append("\nENR: ").append(formatNumberToKLocalised(portal.getPortalEnergy()))
+                .append(" / ").append(formatNumberToKLocalised(portal.getPortalMaxEnergy()))
                 .append(modText)
                 .append(modEffectsText)
 //                + "LNK: 0 in, 0 out (unimplemented)"
