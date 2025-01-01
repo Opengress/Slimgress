@@ -405,7 +405,7 @@ public class WidgetMap extends Fragment {
                 }
                 // only draw if not already in list
                 if (style.getLayer(layerId) == null) {
-                    LatLngQuad quad = getRotatedLatLngQuad(particle.getCellLocation(), 10, 10, 0);
+                    LatLngQuad quad = getRotatedLatLngQuad(particle.getCellLocation(), 7, 7, 0);
                     ImageSource imageSource = new ImageSource(sourceId, quad, Objects.requireNonNull(mIcons.get("particle")));
                     style.addSource(imageSource);
                     RasterLayer rasterLayer = new RasterLayer(layerId, sourceId);
@@ -522,7 +522,7 @@ public class WidgetMap extends Fragment {
         ImageSource rasterSource = (ImageSource) style.getSource("reso-source-" + reso.id);
         if (rasterSource == null) {
             // Position the image using its coordinates (longitude, latitude)
-            LatLngQuad quad = getRotatedLatLngQuad(resoPos, 3, 3, reso.slot * 45);
+            LatLngQuad quad = getRotatedLatLngQuad(resoPos, 5, 5, reso.slot * 45);
             rasterSource = new ImageSource("reso-source-" + reso.id, quad, Objects.requireNonNull(mIcons.get("r" + reso.level)));
             style.addSource(rasterSource);
         } else {
@@ -543,7 +543,7 @@ public class WidgetMap extends Fragment {
         LineOptions lineOptions = new LineOptions()
                 .withLatLngs(Arrays.asList(portal.getPortalLocation().getLatLng(), resoPos.getLatLng()))
                 .withLineColor(getRgbaStringFromColour(rgb))
-                .withLineWidth(0.5f);
+                .withLineWidth(0.8f);
 
         threads.put(reso.id, mLineManager.create(lineOptions));
         mResonatorToPortalLookup.put(reso.id, portal.getEntityGuid());
@@ -694,7 +694,7 @@ public class WidgetMap extends Fragment {
                     case PlayerPowerup -> portalIcon = mIcons.get("dap");
                 }
 
-                LatLngQuad quad = getRotatedLatLngQuad(entity.getItem().getItemLocation(), 5, 5, hashGuidToMod360(entity.getEntityGuid()));
+                LatLngQuad quad = getRotatedLatLngQuad(entity.getItem().getItemLocation(), 7, 7, hashGuidToMod360(entity.getEntityGuid()));
                 assert portalIcon != null;
                 ImageSource imageSource = new ImageSource(sourceId, quad, portalIcon);
                 style.addSource(imageSource);
@@ -956,8 +956,8 @@ public class WidgetMap extends Fragment {
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(mapLibreMap -> {
             mMapLibreMap = mapLibreMap;
-            mMapLibreMap.setMinZoomPreference(16);
-            mMapLibreMap.setMaxZoomPreference(22);
+            mMapLibreMap.setMinZoomPreference(15);
+            mMapLibreMap.setMaxZoomPreference(18);
 
 //            mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> setUpStyleForMap(mapLibreMap, style));
             mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> setUpStyleForMap(mapLibreMap, style));

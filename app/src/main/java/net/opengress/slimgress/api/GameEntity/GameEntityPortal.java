@@ -263,14 +263,21 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
         }
 
         // get description
-//        JSONObject descriptiveText = portalV2.getJSONObject("descriptiveText");
-        JSONObject descriptiveText = item.getJSONObject("descriptiveText").getJSONObject("map");
-        mPortalTitle = descriptiveText.getString("TITLE");
-        // frustratingly, this is probably present IFF the portal HAS a description
-        mPortalDescription = descriptiveText.optString("DESCRIPTION");
-        mPortalAddress = descriptiveText.optString("ADDRESS");
-        mPortalAttribution = descriptiveText.optString("ATTRIBUTION");
-        mPortalAttributionLink = descriptiveText.optString("ATTRIBUTION_LINK");
+        try {
+            JSONObject descriptiveText;
+            if (portalV2.has("descriptiveText")) {
+                descriptiveText = portalV2.getJSONObject("descriptiveText");
+            } else {
+                descriptiveText = item.getJSONObject("descriptiveText").getJSONObject("map");
+            }
+            mPortalTitle = descriptiveText.optString("TITLE");
+            // frustratingly, this is probably present IFF the portal HAS a description
+            mPortalDescription = descriptiveText.optString("DESCRIPTION");
+            mPortalAddress = descriptiveText.optString("ADDRESS");
+            mPortalAttribution = descriptiveText.optString("ATTRIBUTION");
+            mPortalAttributionLink = descriptiveText.optString("ATTRIBUTION_LINK");
+        } catch (JSONException ignored) {
+        }
 
         // get resonators
         mPortalResonators = new LinkedList<>();

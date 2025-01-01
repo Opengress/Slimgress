@@ -8,9 +8,6 @@ public final class Constants {
     public static final String PREFS_INVENTORY_KEY_SORT_VISIBLE = "InventoryKeySortVisible";
     public static final String PREFS_INVENTORY_LEVEL_FILTER_VISIBLE = "InventoryLevelFilterVisible";
     public static final String PREFS_INVENTORY_RARITY_FILTER_VISIBLE = "InventoryRarityFilterVisible";
-    public static final String PREFS_OSM_LATITUDE_STRING = "latitudeString";
-    public static final String PREFS_OSM_LONGITUDE_STRING = "longitudeString";
-    public static final String PREFS_OSM_ZOOM_LEVEL_DOUBLE = "zoomLevelDouble";
     public static final String PREFS_DEVICE_TILE_SOURCE = "tileSource";
     public static final String PREFS_DEVICE_TILE_SOURCE_DEFAULT = "CartoDB Dark Matter (no labels)";
     public static final String UNTRANSLATABLE_IMAGE_RESOLUTION_NONE = "None";
