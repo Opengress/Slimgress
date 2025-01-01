@@ -35,14 +35,15 @@ public class XMParticle
 
     public XMParticle(@NonNull String guid, String timestamp)
     {
+        // note that guids should be 32 bytes long plus suffix
         mGuid = guid;
         mEnergyTimestamp = timestamp;
 
         mCellId = Long.parseLong(guid.substring(0, 16), 16);
         mCellLocation = new Location(mCellId);
 
-        // NOTE: API differs from ingress because our globs can be HUGE
-        String amountStr = guid.substring(16, guid.length() - 2);
+        // NOTE: API may differ from *rime because our globs can be HUGE
+        String amountStr = guid.substring(guid.length() - 16, guid.length() - 2);
         mAmount = Integer.parseInt(amountStr, 16);
 
     }
