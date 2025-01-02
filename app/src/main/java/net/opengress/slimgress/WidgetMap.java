@@ -378,40 +378,29 @@ public class WidgetMap extends Fragment {
     }
 
     protected void drawXMParticles() {
-        // draw xm particles (as groundoverlays)
         Map<Long, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
-
         Style style = mMapLibreMap.getStyle();
-        if (style == null) {
-            return;
-        }
-        Activity activity = getActivity();
-        if (activity == null) {
+        if (style == null || !style.isFullyLoaded()) {
             return;
         }
 
         for (Long key : xmParticles.keySet()) {
             XMParticle particle = xmParticles.get(key);
-            assert particle != null;
+            if (particle == null) {
+                continue;
+            }
 
             String sourceId = "particle-source-" + particle.getCellId();
             String layerId = "particle-layer-" + particle.getCellId();
 
+            if (style.getLayer(layerId) == null) {
+                LatLngQuad quad = getRotatedLatLngQuad(particle.getCellLocation(), 7, 7, 0);
+                ImageSource imageSource = new ImageSource(sourceId, quad, Objects.requireNonNull(mIcons.get("particle")));
+                style.addSource(imageSource);
 
-            activity.runOnUiThread(() -> {
-                if (!style.isFullyLoaded()) {
-                    // we can be stuck here during a force sync - if so, just bail :shrug:
-                    return;
-                }
-                // only draw if not already in list
-                if (style.getLayer(layerId) == null) {
-                    LatLngQuad quad = getRotatedLatLngQuad(particle.getCellLocation(), 7, 7, 0);
-                    ImageSource imageSource = new ImageSource(sourceId, quad, Objects.requireNonNull(mIcons.get("particle")));
-                    style.addSource(imageSource);
-                    RasterLayer rasterLayer = new RasterLayer(layerId, sourceId);
-                    style.addLayer(rasterLayer);
-                }
-            });
+                RasterLayer rasterLayer = new RasterLayer(layerId, sourceId);
+                style.addLayer(rasterLayer);
+            }
         }
     }
 
@@ -424,44 +413,38 @@ public class WidgetMap extends Fragment {
 
             final Location location = portal.getPortalLocation();
 
-            ActivityMain activity = (ActivityMain) getActivity();
-            if (activity == null) {
-                return;
-            }
-            activity.runOnUiThread(() -> {
-                // TODO: make portal marker display portal health/deployment info (opacity x white, use shield image etc)
-                // it's quite possible that resonators can live in a separate Hash of markers,
-                //   as long as the guids are stored with the portal info
-                Bitmap portalIcon = mIcons.get(team.toString());
-                assert portalIcon != null;
-                mMapLibreMap.getStyle(style -> {
+            // TODO: make portal marker display portal mods
+            // it's quite possible that resonators can live in a separate Hash of markers,
+            //   as long as the guids are stored with the portal info
+            Bitmap portalIcon = mIcons.get(team.toString());
+            assert portalIcon != null;
+            mMapLibreMap.getStyle(style -> {
 
-                    ImageSource imageSource = (ImageSource) style.getSource(sourceName);
-                    if (imageSource == null) {
-                        imageSource = new ImageSource(sourceName, getRotatedLatLngQuad(location, PORTAL_DIAMETER_METRES, PORTAL_DIAMETER_METRES, location.getLatitudeE6() % 360), portalIcon);
-                        style.addSource(imageSource);
-                    } else {
-                        imageSource.setImage(portalIcon);
-                    }
+                ImageSource imageSource = (ImageSource) style.getSource(sourceName);
+                if (imageSource == null) {
+                    imageSource = new ImageSource(sourceName, getRotatedLatLngQuad(location, PORTAL_DIAMETER_METRES, PORTAL_DIAMETER_METRES, location.getLatitudeE6() % 360), portalIcon);
+                    style.addSource(imageSource);
+                } else {
+                    imageSource.setImage(portalIcon);
+                }
 
-                    RasterLayer rasterLayer = (RasterLayer) style.getLayer(layerName);
-                    if (rasterLayer == null) {
-                        style.addLayer(new RasterLayer(layerName, sourceName).withProperties(
+                RasterLayer rasterLayer = (RasterLayer) style.getLayer(layerName);
+                if (rasterLayer == null) {
+                    style.addLayer(new RasterLayer(layerName, sourceName).withProperties(
 //                            PropertyFactory.rasterOpacity(getPortalOpacity(portal)),
-                                PropertyFactory.rasterSaturation(getPortalOpacity(portal) - 1)
+                            PropertyFactory.rasterSaturation(getPortalOpacity(portal) - 1)
 //                            PropertyFactory.rasterContrast(getPortalOpacity(portal))
-                        ));
-                    } else {
-                        rasterLayer.setProperties(PropertyFactory.rasterSaturation(getPortalOpacity(portal) - 1));
-                    }
-                });
-
-                for (var reso : portal.getPortalResonators()) {
-                    if (reso != null) {
-                        drawResonatorForPortal(portal, reso);
-                    }
+                    ));
+                } else {
+                    rasterLayer.setProperties(PropertyFactory.rasterSaturation(getPortalOpacity(portal) - 1));
                 }
             });
+
+            for (var reso : portal.getPortalResonators()) {
+                if (reso != null) {
+                    drawResonatorForPortal(portal, reso);
+                }
+            }
 
         }
     }
@@ -561,28 +544,19 @@ public class WidgetMap extends Fragment {
             return;
         }
 
-        Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-
         final Location origin = link.getLinkOriginLocation();
         final Location dest = link.getLinkDestinationLocation();
 
-        activity.runOnUiThread(() -> {
+        // TODO: decay link per portal health
+        Team team = link.getLinkControllingTeam();
+        int colour = 0xff000000 + team.getColour(); // adding opacity
 
-            // TODO: decay link per portal health
-            Team team = link.getLinkControllingTeam();
-            int colour = 0xff000000 + team.getColour(); // adding opacity
+        LineOptions lineOptions = new LineOptions()
+                .withLatLngs(Arrays.asList(origin.getLatLng(), dest.getLatLng()))
+                .withLineColor(getRgbaStringFromColour(colour))
+                .withLineWidth(2.3f);
 
-            LineOptions lineOptions = new LineOptions()
-                    .withLatLngs(Arrays.asList(origin.getLatLng(), dest.getLatLng()))
-                    .withLineColor(getRgbaStringFromColour(colour))
-                    .withLineWidth(2.3f);
-
-            mLines.put(link.getEntityGuid(), mLineManager.create(lineOptions));
-        });
+        mLines.put(link.getEntityGuid(), mLineManager.create(lineOptions));
     }
 
     protected void drawField(final GameEntityControlField field) {
@@ -594,28 +568,21 @@ public class WidgetMap extends Fragment {
             return;
         }
 
-        Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-
         final Location vA = field.getFieldVertexA().getPortalLocation();
         final Location vB = field.getFieldVertexB().getPortalLocation();
         final Location vC = field.getFieldVertexC().getPortalLocation();
-        activity.runOnUiThread(() -> {
-            Team team = field.getFieldControllingTeam();
-            int colour = 0x32000000 + team.getColour(); // adding alpha
 
-            // Create a list with the vertices of the polygon
-            List<LatLng> polygonLatLngs = Arrays.asList(vA.getLatLng(), vB.getLatLng(), vC.getLatLng(), vA.getLatLng());
+        Team team = field.getFieldControllingTeam();
+        int colour = 0x32000000 + team.getColour(); // adding alpha
 
-            FillOptions polygonOptions = new FillOptions()
-                    .withLatLngs(Collections.singletonList(polygonLatLngs))
-                    .withFillColor(getRgbaStringFromColour(colour));
+        // Create a list with the vertices of the polygon
+        List<LatLng> polygonLatLngs = Arrays.asList(vA.getLatLng(), vB.getLatLng(), vC.getLatLng(), vA.getLatLng());
 
-            mPolygons.put(field.getEntityGuid(), mFillManager.create(polygonOptions));
-        });
+        FillOptions polygonOptions = new FillOptions()
+                .withLatLngs(Collections.singletonList(polygonLatLngs))
+                .withFillColor(getRgbaStringFromColour(colour));
+
+        mPolygons.put(field.getEntityGuid(), mFillManager.create(polygonOptions));
 
     }
 
@@ -639,69 +606,59 @@ public class WidgetMap extends Fragment {
                 return;
             }
 
-            ActivityMain activity = (ActivityMain) getActivity();
-            if (activity == null) {
-                return;
-            }
-            activity.runOnUiThread(() -> {
-                Bitmap portalIcon = mIcons.get("actionradius");
-                switch (entity.getItem().getItemType()) {
-                    case ModForceAmp -> portalIcon = mIcons.get("force_amp");
-                    case ModHeatsink -> {
-                        switch (entity.getItem().getItemRarity()) {
-                            case Common -> portalIcon = mIcons.get("heatsink_common");
-                            case Rare -> portalIcon = mIcons.get("heatsink_rare");
-                            case VeryRare -> portalIcon = mIcons.get("heatsink_very_rare");
-                        }
+            Bitmap portalIcon = mIcons.get("actionradius");
+            switch (entity.getItem().getItemType()) {
+                case ModForceAmp -> portalIcon = mIcons.get("force_amp");
+                case ModHeatsink -> {
+                    switch (entity.getItem().getItemRarity()) {
+                        case Common -> portalIcon = mIcons.get("heatsink_common");
+                        case Rare -> portalIcon = mIcons.get("heatsink_rare");
+                        case VeryRare -> portalIcon = mIcons.get("heatsink_very_rare");
                     }
-                    case ModLinkAmp -> {
-                        switch (entity.getItem().getItemRarity()) {
-                            case Rare -> portalIcon = mIcons.get("linkamp_rare");
-                            case VeryRare -> portalIcon = mIcons.get("linkamp_very_rare");
-                        }
-                    }
-                    case ModMultihack -> {
-                        switch (entity.getItem().getItemRarity()) {
-                            case Common -> portalIcon = mIcons.get("multihack_common");
-                            case Rare -> portalIcon = mIcons.get("multihack_rare");
-                            case VeryRare -> portalIcon = mIcons.get("multihack_very_rare");
-                        }
-                    }
-                    case ModShield -> {
-                        switch (entity.getItem().getItemRarity()) {
-                            case Common -> portalIcon = mIcons.get("shield_common");
-                            case Rare -> portalIcon = mIcons.get("shield_rare");
-                            case VeryRare -> portalIcon = mIcons.get("shield_very_rare");
-                        }
-                    }
-                    case ModTurret -> portalIcon = mIcons.get("turret");
-                    case PortalKey -> portalIcon = mIcons.get("portalkey");
-                    case PowerCube ->
-                            portalIcon = mIcons.get("c" + entity.getItem().getItemLevel());
-                    case Resonator ->
-                            portalIcon = mIcons.get("r" + entity.getItem().getItemLevel());
-                    case FlipCard -> {
-                        switch (((ItemFlipCard) entity.getItem()).getFlipCardType()) {
-                            case Jarvis -> portalIcon = mIcons.get("jarvis");
-                            case Ada -> portalIcon = mIcons.get("ada");
-                        }
-                    }
-                    case WeaponXMP ->
-                            portalIcon = mIcons.get("x" + entity.getItem().getItemLevel());
-                    case WeaponUltraStrike ->
-                            portalIcon = mIcons.get("u" + entity.getItem().getItemLevel());
-                    case Capsule -> portalIcon = mIcons.get("capsule");
-                    case PlayerPowerup -> portalIcon = mIcons.get("dap");
                 }
+                case ModLinkAmp -> {
+                    switch (entity.getItem().getItemRarity()) {
+                        case Rare -> portalIcon = mIcons.get("linkamp_rare");
+                        case VeryRare -> portalIcon = mIcons.get("linkamp_very_rare");
+                    }
+                }
+                case ModMultihack -> {
+                    switch (entity.getItem().getItemRarity()) {
+                        case Common -> portalIcon = mIcons.get("multihack_common");
+                        case Rare -> portalIcon = mIcons.get("multihack_rare");
+                        case VeryRare -> portalIcon = mIcons.get("multihack_very_rare");
+                    }
+                }
+                case ModShield -> {
+                    switch (entity.getItem().getItemRarity()) {
+                        case Common -> portalIcon = mIcons.get("shield_common");
+                        case Rare -> portalIcon = mIcons.get("shield_rare");
+                        case VeryRare -> portalIcon = mIcons.get("shield_very_rare");
+                    }
+                }
+                case ModTurret -> portalIcon = mIcons.get("turret");
+                case PortalKey -> portalIcon = mIcons.get("portalkey");
+                case PowerCube -> portalIcon = mIcons.get("c" + entity.getItem().getItemLevel());
+                case Resonator -> portalIcon = mIcons.get("r" + entity.getItem().getItemLevel());
+                case FlipCard -> {
+                    switch (((ItemFlipCard) entity.getItem()).getFlipCardType()) {
+                        case Jarvis -> portalIcon = mIcons.get("jarvis");
+                        case Ada -> portalIcon = mIcons.get("ada");
+                    }
+                }
+                case WeaponXMP -> portalIcon = mIcons.get("x" + entity.getItem().getItemLevel());
+                case WeaponUltraStrike ->
+                        portalIcon = mIcons.get("u" + entity.getItem().getItemLevel());
+                case Capsule -> portalIcon = mIcons.get("capsule");
+                case PlayerPowerup -> portalIcon = mIcons.get("dap");
+            }
 
-                LatLngQuad quad = getRotatedLatLngQuad(entity.getItem().getItemLocation(), 7, 7, hashGuidToMod360(entity.getEntityGuid()));
-                assert portalIcon != null;
-                ImageSource imageSource = new ImageSource(sourceId, quad, portalIcon);
-                style.addSource(imageSource);
-                RasterLayer rasterLayer = new RasterLayer(layerId, sourceId);
-                style.addLayer(rasterLayer);
-            });
-
+            LatLngQuad quad = getRotatedLatLngQuad(entity.getItem().getItemLocation(), 7, 7, hashGuidToMod360(entity.getEntityGuid()));
+            assert portalIcon != null;
+            ImageSource imageSource = new ImageSource(sourceId, quad, portalIcon);
+            style.addSource(imageSource);
+            RasterLayer rasterLayer = new RasterLayer(layerId, sourceId);
+            style.addLayer(rasterLayer);
         }
     }
 
@@ -736,41 +693,46 @@ public class WidgetMap extends Fragment {
         List<Feature> features = new ArrayList<>();
 
         mApp.getExecutorService().submit(() -> {
-            // draw xm particles
-            drawXMParticles();
-
-            // draw game entities
-            Map<String, GameEntityBase> entities = mGame.getWorld().getGameEntities();
-            Set<String> keys = entities.keySet();
-            for (String key : keys) {
-                final GameEntityBase entity = entities.get(key);
-                assert entity != null;
-
-                uiHandler.post(() -> {
-                    if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
-                        GameEntityPortal portal = (GameEntityPortal) entity;
-                        drawPortal(portal);
-                        Feature feature = Feature.fromGeometry(portal.getPortalLocation().getPoint());
-                        feature.addStringProperty("guid", portal.getEntityGuid());
-                        features.add(feature);
-                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
-                        drawLink((GameEntityLink) entity);
-                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
-                        drawField((GameEntityControlField) entity);
-                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {
-                        GameEntityItem item = (GameEntityItem) entity;
-                        drawItem(item);
-                        Feature feature = Feature.fromGeometry(item.getItem().getItemLocation().getPoint());
-                        feature.addStringProperty("guid", item.getEntityGuid());
-                        features.add(feature);
-                    }
-                });
-
+            Activity activity = getActivity();
+            if (activity == null) {
+                return;
             }
+            
+            activity.runOnUiThread(() -> {
+                // draw xm particles
+                drawXMParticles();
 
-            uiHandler.post(() ->
-                    addTouchTargets(features));
+                // draw game entities
+                Map<String, GameEntityBase> entities = mGame.getWorld().getGameEntities();
+                Set<String> keys = entities.keySet();
+                for (String key : keys) {
+                    final GameEntityBase entity = entities.get(key);
+                    assert entity != null;
 
+                    uiHandler.post(() -> {
+                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
+                            GameEntityPortal portal = (GameEntityPortal) entity;
+                            drawPortal(portal);
+                            Feature feature = Feature.fromGeometry(portal.getPortalLocation().getPoint());
+                            feature.addStringProperty("guid", portal.getEntityGuid());
+                            features.add(feature);
+                        } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
+                            drawLink((GameEntityLink) entity);
+                        } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
+                            drawField((GameEntityControlField) entity);
+                        } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {
+                            GameEntityItem item = (GameEntityItem) entity;
+                            drawItem(item);
+                            Feature feature = Feature.fromGeometry(item.getItem().getItemLocation().getPoint());
+                            feature.addStringProperty("guid", item.getEntityGuid());
+                            features.add(feature);
+                        }
+                        addTouchTargets(features);
+                    });
+
+                }
+
+            });
         });
 
     }
