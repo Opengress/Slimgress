@@ -590,6 +590,17 @@ public class GameState {
         }
     }
 
+    // new
+    public void intGetLatestSlimgressVersion(final Handler handler) {
+        checkInterface();
+        mInterface.request(mHandshake, "playerUndecorated/getLatestSlimgressVersion", null, null, new RequestResult(handler) {
+            @Override
+            public void handleResult(String result) {
+                getData().putString("version", result);
+            }
+        });
+    }
+
     public void intChooseFaction(final Team team, final Handler handler) {
         try {
             checkInterface();
