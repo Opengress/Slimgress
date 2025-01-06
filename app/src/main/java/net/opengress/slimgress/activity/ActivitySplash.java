@@ -212,12 +212,8 @@ public class ActivitySplash extends Activity {
                         This is not a game. This is the beginning.
                         """)
                 .setCancelable(false)
-                .setPositiveButton("Continue", (dialog, which) -> {
-                    doAuth();
-                })
-                .setNegativeButton("Quit", (dialog, which) -> {
-                    finish(); // Exit the app
-                })
+                .setPositiveButton("Continue", (dialog, which) -> doAuth()) // play
+                .setNegativeButton("Quit", (dialog, which) -> finish()) // quit
                 .show();
     }
 
@@ -226,12 +222,8 @@ public class ActivitySplash extends Activity {
                 .setTitle("Internet Required")
                 .setMessage("This app requires an internet connection to function. Please check your connection and try again.")
                 .setCancelable(false)
-                .setPositiveButton("Retry", (dialog, which) -> {
-                    checkConnectionAndProceed();
-                })
-                .setNegativeButton("Quit", (dialog, which) -> {
-                    finish(); // Exit the app
-                })
+                .setPositiveButton("Retry", (dialog, which) -> checkConnectionAndProceed())
+                .setNegativeButton("Quit", (dialog, which) -> finish()) // quit
                 .show();
     }
 
@@ -361,9 +353,7 @@ public class ActivitySplash extends Activity {
             if (status == ClientMustUpgrade) {
                 builder.setMessage("Your client software is out of date. You must update the app to play.");
                 builder.setPositiveButton("Update in-app", (dialog, which) -> downloadAndInstallClientUpdate());
-                builder.setNegativeButton("Download update in browser", (dialog, which) -> {
-                    launchBrowserForUpdate();
-                });
+                builder.setNegativeButton("Download update in browser", (dialog, which) -> launchBrowserForUpdate());
             } else if (status == ClientUpgradeRecommended) {
                 if (!acceptingUpdates) {
                     mGame.getHandshake().setPregameStatus(NoActionsRequired);
@@ -485,7 +475,6 @@ public class ActivitySplash extends Activity {
         mProgressBar.setRotation(0);
         mProgressBar.setProgress(0);
         mProgressBar.setIndeterminate(false);
-
 
         // Start a foreground service for the download
         Intent serviceIntent = new Intent(this, DownloadService.class);

@@ -443,6 +443,24 @@
 
             </LinearLayout>
 
+            <LinearLayout style="@style/SectionBodyStyle">
+
+                <LinearLayout style="@style/SectionBodySplitStyle">
+
+
+                </LinearLayout>
+
+                <LinearLayout style="@style/SectionBodySplitStyle">
+
+                    <Button
+                        android:id="@+id/device_button_update"
+                        style="@style/ButtonStyle"
+                        android:text="@string/check_for_updates" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
         </LinearLayout>
 
     </LinearLayout>

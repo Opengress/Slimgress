@@ -31,11 +31,17 @@ import static net.opengress.slimgress.Constants.PREFS_INVENTORY_RARITY_FILTER_VI
 import static net.opengress.slimgress.Constants.PREFS_INVENTORY_SEARCH_BOX_VISIBLE;
 import static net.opengress.slimgress.Constants.UNTRANSLATABLE_MAP_TILE_SOURCE_BLANK;
 import static net.opengress.slimgress.ViewHelpers.setUpSpinner;
+import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,20 +56,20 @@ import androidx.fragment.app.Fragment;
 import net.opengress.slimgress.activity.ActivityCredits;
 import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Game.GameState;
+import net.opengress.slimgress.dialog.DialogInfo;
+import net.opengress.slimgress.service.DownloadService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class FragmentDevice extends Fragment
-{
+public class FragmentDevice extends Fragment {
     private final GameState mGame = SlimgressApplication.getInstance().getGame();
     private SharedPreferences mPrefs;
     private View mRootView;
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
-    {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         mRootView = inflater.inflate(R.layout.fragment_device,
                 container, false);
@@ -81,6 +87,23 @@ public class FragmentDevice extends Fragment
             SlimgressApplication.getInstance().getMainActivity().forceSync();
             requireActivity().finish();
         });
+
+        mRootView.findViewById(R.id.device_button_update).setEnabled(true);
+        mRootView.findViewById(R.id.device_button_update).setOnClickListener(v -> mGame.intGetLatestSlimgressVersion(new Handler(msg -> {
+            var data = msg.getData();
+            String error = getErrorStringFromAPI(data);
+            if (error != null && !error.isEmpty()) {
+                DialogInfo dialog = new DialogInfo(requireActivity());
+                dialog.setMessage(error).setDismissDelay(1500).show();
+            }
+            int latest = Integer.parseInt(msg.getData().getString("version"));
+            if (latest > BuildConfig.VERSION_CODE) {
+                showUpdateDialog();
+            } else {
+                new DialogInfo(getContext()).setDismissDelay().setMessage("There is no update to install.").show();
+            }
+            return false;
+        })));
 
         mRootView.findViewById(R.id.device_button_profile_link).setEnabled(false);
 
@@ -175,6 +198,30 @@ public class FragmentDevice extends Fragment
         ((TextView) mRootView.findViewById(R.id.device_build_number_text)).setText(String.format("%s %s %s", BuildConfig.VERSION_NAME, BuildConfig.BUILD_TIME, BuildConfig.BUILD_TYPE));
 
         return mRootView;
+    }
+
+    private void showUpdateDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setCancelable(false);
+        builder.setTitle("Update available");
+        builder.setMessage("An update is available. Install it now for the best experience.");
+        builder.setPositiveButton("Update in-app", (dialog, which) -> {
+            // Start a foreground service for the download
+            Intent serviceIntent = new Intent(getContext(), DownloadService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                requireActivity().startForegroundService(serviceIntent);
+            } else {
+                requireActivity().startService(serviceIntent);
+            }
+        });
+        builder.setNegativeButton("Download update in browser", (dialog, which) -> {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("https://opengress.net/downloads/"));
+            startActivity(browserIntent);
+        });
+        builder.setNeutralButton("Ignore", (dialog, which) -> dialog.dismiss());
+        Dialog dialog = builder.create();
+        dialog.show();
     }
 
     void setUpPrefsCheckBox(int resource, String preference, boolean defaultValue) {
