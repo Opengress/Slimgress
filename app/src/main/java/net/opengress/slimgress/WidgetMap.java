@@ -298,8 +298,8 @@ abstract public class WidgetMap extends Fragment {
 
             FillLayer xmParticlesLayer = new FillLayer("xm-particles-layer", "xm-particles-source")
                     .withProperties(
-                            PropertyFactory.fillColor("rgba(255, 255, 255, 0.75)"),
-                            PropertyFactory.fillOutlineColor("rgba(0, 0, 0, 0.75)")
+                            PropertyFactory.fillColor("rgba(255, 255, 255, 0.5)"),
+                            PropertyFactory.fillOutlineColor("rgba(0, 0, 0, 0.5)")
                     );
             style.addLayer(xmParticlesLayer);
         } else {
@@ -495,10 +495,10 @@ abstract public class WidgetMap extends Fragment {
                         continue;
                     }
                     Location loc = particle.getCellLocation();
-                    double radiusMeters = 1.5;
+                    double radiusMeters = 1.35;
 
                     // Build an approximate circle polygon with N steps
-                    final int steps = 12;
+                    final int steps = 6;
                     List<Point> circleCoords = new ArrayList<>(steps + 1);
 
                     for (int i = 0; i < steps; i++) {
