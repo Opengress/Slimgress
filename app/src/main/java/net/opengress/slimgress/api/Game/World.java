@@ -50,7 +50,7 @@ public class World {
         mXMParticles.clear();
     }
 
-    public void deleteEntityByGuid(String guid) {
+    public void deleteEntityByGuid(@NonNull String guid) {
         if (guid.endsWith(".6")) {
             mXMParticles.remove(Long.parseLong(guid.substring(0, 16), 16));
         } else {
@@ -58,7 +58,7 @@ public class World {
         }
     }
 
-    public void deleteEntitiesByGuid(List<String> deletedEntityGuids) {
+    public void deleteEntitiesByGuid(@NonNull List<String> deletedEntityGuids) {
         for (String guid : deletedEntityGuids) {
             deleteEntityByGuid(guid);
         }
@@ -77,7 +77,6 @@ public class World {
                 Objects.requireNonNull((GameEntityPortal) mGameEntities.get(entity.getEntityGuid())).updateFrom(entity);
                 continue;
             }
-            mGameEntities.remove(entity.getEntityGuid());
             mGameEntities.put(entity.getEntityGuid(), entity);
         }
 

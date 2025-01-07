@@ -64,19 +64,21 @@ import org.maplibre.android.maps.Style;
 import org.maplibre.android.maps.UiSettings;
 import org.maplibre.android.plugins.annotation.Fill;
 import org.maplibre.android.plugins.annotation.FillManager;
-import org.maplibre.android.plugins.annotation.FillOptions;
 import org.maplibre.android.plugins.annotation.Line;
 import org.maplibre.android.plugins.annotation.LineManager;
 import org.maplibre.android.plugins.annotation.LineOptions;
 import org.maplibre.android.plugins.annotation.SymbolManager;
+import org.maplibre.android.style.expressions.Expression;
 import org.maplibre.android.style.layers.CircleLayer;
 import org.maplibre.android.style.layers.FillLayer;
+import org.maplibre.android.style.layers.LineLayer;
 import org.maplibre.android.style.layers.PropertyFactory;
 import org.maplibre.android.style.layers.RasterLayer;
 import org.maplibre.android.style.sources.GeoJsonSource;
 import org.maplibre.android.style.sources.ImageSource;
 import org.maplibre.geojson.Feature;
 import org.maplibre.geojson.FeatureCollection;
+import org.maplibre.geojson.LineString;
 import org.maplibre.geojson.Point;
 import org.maplibre.geojson.Polygon;
 
@@ -116,7 +118,7 @@ public class WidgetMap extends Fragment {
     protected MapView mMapView = null;
     protected MapLibreMap mMapLibreMap;
     protected SymbolManager mSymbolManager;
-    protected LineManager mLineManager;
+    protected LineManager mPlayerDamageLineManager;
     protected FillManager mFillManager;
     protected String mCurrentTileSource = UNTRANSLATABLE_MAP_TILE_SOURCE_BLANK;
     protected ActivityResultLauncher<Intent> mPortalActivityResultLauncher;
@@ -143,6 +145,19 @@ public class WidgetMap extends Fragment {
     private float mStartY = 0;
     private final float ZOOM_SENSITIVITY = 0.1f;
     private boolean mIsClickingCompass = false;
+
+    // ===========================================================
+    // GameEntities Pt II
+    // ===========================================================
+    private final Map<String, Feature> mLinkFeatures = new HashMap<>();
+    private GeoJsonSource mLinksGeoJsonSource;
+    // Holds the current Features for each resonator line, keyed by the resonator GUID
+    private final Map<String, Feature> mResonatorLineFeatures = new HashMap<>();
+    private GeoJsonSource mResonatorLinesGeoJsonSource;
+    private final Map<String, Feature> mFieldFeatures = new HashMap<>();
+    private GeoJsonSource mFieldsGeoJsonSource;
+    
+
 
     // Function to calculate LatLngQuad for the given radius in meters
     protected LatLngQuad getRadialLatLngQuad(Location center, double radiusMeters) {
@@ -241,12 +256,78 @@ public class WidgetMap extends Fragment {
         }
     }
 
+    private void initResonatorLinesSource(@NonNull Style style) {
+        // If the source doesn't exist yet, create it
+        if (style.getSource("resonator-lines-source") == null) {
+            mResonatorLinesGeoJsonSource = new GeoJsonSource(
+                    "resonator-lines-source",
+                    FeatureCollection.fromFeatures(new ArrayList<>())
+            );
+            style.addSource(mResonatorLinesGeoJsonSource);
+
+            LineLayer resonatorLinesLayer = new LineLayer("resonator-lines-layer", "resonator-lines-source")
+                    .withProperties(
+                            PropertyFactory.lineColor(Expression.get("resoColour")),
+                            PropertyFactory.lineWidth(0.8f)
+                    );
+            style.addLayer(resonatorLinesLayer);
+        } else {
+            mResonatorLinesGeoJsonSource = style.getSourceAs("resonator-lines-source");
+        }
+    }
+
+    private void initLinksSource(@NonNull Style style) {
+        // If the source doesn't exist yet, create it
+        if (style.getSource("links-source") == null) {
+            mLinksGeoJsonSource = new GeoJsonSource(
+                    "links-source",
+                    FeatureCollection.fromFeatures(new ArrayList<>())
+            );
+            style.addSource(mLinksGeoJsonSource);
+
+            LineLayer linksLayer = new LineLayer("links-layer", "links-source")
+                    .withProperties(
+                            PropertyFactory.lineColor(Expression.get("colour")),
+                            PropertyFactory.lineWidth(2.3f)
+                    );
+            style.addLayer(linksLayer);
+
+        } else {
+            mLinksGeoJsonSource = style.getSourceAs("links-source");
+        }
+    }
+
+    private void initFieldsSource(@NonNull Style style) {
+        // If the source doesn't exist yet, create it
+        if (style.getSource("fields-source") == null) {
+            mFieldsGeoJsonSource = new GeoJsonSource(
+                    "fields-source",
+                    FeatureCollection.fromFeatures(new ArrayList<>())
+            );
+            style.addSource(mFieldsGeoJsonSource);
+
+            FillLayer fieldsLayer = new FillLayer("fields-layer", "fields-source")
+                    .withProperties(
+                            PropertyFactory.fillColor(Expression.get("colour"))
+                    );
+            style.addLayer(fieldsLayer);
+
+        } else {
+            mFieldsGeoJsonSource = style.getSourceAs("fields-source");
+        }
+    }
+
+
     protected void setUpStyleForMap(MapLibreMap mapLibreMap, @NonNull Style style) {
 
         if (style.getSource("portal-data-layer") == null) {
             mPortalGeoJsonSource = new GeoJsonSource("portal-data-layer");
             style.addSource(mPortalGeoJsonSource);
         }
+
+        initLinksSource(style);
+        initResonatorLinesSource(style);
+        initFieldsSource(style);
 
         String flashLayerId = "flash-overlay-layer";
         String flashSourceId = "flash-overlay-source";
@@ -286,7 +367,7 @@ public class WidgetMap extends Fragment {
         mSymbolManager.setIconIgnorePlacement(true);
         mSymbolManager.setTextIgnorePlacement(true);
 
-        mLineManager = new LineManager(mMapView, mapLibreMap, style);
+        mPlayerDamageLineManager = new LineManager(mMapView, mapLibreMap, style);
         mFillManager = new FillManager(mMapView, mapLibreMap, style);
 
     }
@@ -377,8 +458,7 @@ public class WidgetMap extends Fragment {
         mIcons.put("sonarRing", bitmap);
     }
 
-    protected void drawXMParticles() {
-        Map<Long, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
+    protected void drawXMParticles(Map<Long, XMParticle> xmParticles) {
         Style style = mMapLibreMap.getStyle();
         if (style == null || !style.isFullyLoaded()) {
             return;
@@ -465,10 +545,14 @@ public class WidgetMap extends Fragment {
             return;
         }
 
-        Location resoPos = reso.getResoLocation();
+        if (mMapLibreMap == null) {
+            return;
+        }
 
         Style style = mMapLibreMap.getStyle();
-        assert style != null;
+        if (style == null || !style.isFullyLoaded()) {
+            return;
+        }
 
         float saturation = -0.85f * (0.95f - (float) reso.energyTotal / (float) reso.getMaxEnergy());
         int rgb = getColourFromResources(getResources(), getLevelColour(reso.level));
@@ -477,29 +561,26 @@ public class WidgetMap extends Fragment {
 
         if (mResonatorToPortalLookup.containsKey(reso.id) && style.getLayer("reso-layer-" + reso.id) != null) {
             Objects.requireNonNull(style.getLayer("reso-layer-" + reso.id)).setProperties(PropertyFactory.rasterContrast(saturation));
-            Objects.requireNonNull(Objects.requireNonNull(mResonatorThreads.get(portal.getEntityGuid())).get(reso.id)).setLineColor(getRgbaStringFromColour(rgb));
+            Feature existingFeature = mResonatorLineFeatures.get(reso.id);
+            Objects.requireNonNull(existingFeature).addStringProperty("resoColour", getRgbaStringFromColour(rgb));
+            updateResonatorLinesSource();
             return;
         }
 
+        String colourStr = getRgbaStringFromColour(rgb);
 
-        // Remove existing marker if present
-        var m = mResonatorThreads.get(portal.getEntityGuid());
-        if (m != null && m.containsKey(reso.id)) {
-            Line resoLine = Objects.requireNonNull(m.get(reso.id));
-            mLineManager.delete(resoLine);
-            m.remove(reso.id);
-            mResonatorToPortalLookup.remove(reso.id);
-        }
+        Location portalLoc = portal.getPortalLocation();
+        Location resoPos = reso.getResoLocation();
+        LineString lineString = LineString.fromLngLats(Arrays.asList(
+                Point.fromLngLat(portalLoc.getLongitude(), portalLoc.getLatitude()),
+                Point.fromLngLat(resoPos.getLongitude(), resoPos.getLatitude())
+        ));
 
-        // Update threads map
-        HashMap<String, Line> threads;
-        if (mResonatorThreads.containsKey(portal.getEntityGuid())) {
-            threads = mResonatorThreads.get(portal.getEntityGuid());
-        } else {
-            threads = new HashMap<>();
-            mResonatorThreads.put(portal.getEntityGuid(), threads);
-        }
-        assert threads != null;
+        Feature resoLineFeature = Feature.fromGeometry(lineString);
+//        resoLineFeature.addStringProperty("guid", reso.id);
+        resoLineFeature.addStringProperty("resoColour", colourStr);
+        mResonatorLineFeatures.put(reso.id, resoLineFeature);
+        updateResonatorLinesSource();
 
         // Calculate positions
         ImageSource rasterSource = (ImageSource) style.getSource("reso-source-" + reso.id);
@@ -523,12 +604,6 @@ public class WidgetMap extends Fragment {
             resoImageLayer.setProperties(PropertyFactory.rasterContrast(saturation));
         }
 
-        LineOptions lineOptions = new LineOptions()
-                .withLatLngs(Arrays.asList(portal.getPortalLocation().getLatLng(), resoPos.getLatLng()))
-                .withLineColor(getRgbaStringFromColour(rgb))
-                .withLineWidth(0.8f);
-
-        threads.put(reso.id, mLineManager.create(lineOptions));
         mResonatorToPortalLookup.put(reso.id, portal.getEntityGuid());
     }
 
@@ -537,7 +612,9 @@ public class WidgetMap extends Fragment {
             return;
         }
         Style style = mMapLibreMap.getStyle();
-        assert style != null;
+        if (style == null || !style.isFullyLoaded()) {
+            return;
+        }
 
         if (mLines.containsKey(link.getEntityGuid())) {
             // maybe update ?
@@ -549,21 +626,65 @@ public class WidgetMap extends Fragment {
 
         // TODO: decay link per portal health
         Team team = link.getLinkControllingTeam();
-        int colour = 0xff000000 + team.getColour(); // adding opacity
+        int colour = 0xff000000 + team.getColour(); // add 100% alpha
+        String colourStr = getRgbaStringFromColour(colour);
 
+        LineString lineString = LineString.fromLngLats(Arrays.asList(origin.getPoint(), dest.getPoint()));
         LineOptions lineOptions = new LineOptions()
                 .withLatLngs(Arrays.asList(origin.getLatLng(), dest.getLatLng()))
                 .withLineColor(getRgbaStringFromColour(colour))
                 .withLineWidth(2.3f);
 
-        mLines.put(link.getEntityGuid(), mLineManager.create(lineOptions));
+        Feature linkFeature = Feature.fromGeometry(lineString);
+//        linkFeature.addStringProperty("guid", link.getEntityGuid());
+        linkFeature.addStringProperty("colour", colourStr);
+
+        // Add to our in-memory map
+        mLinkFeatures.put(link.getEntityGuid(), linkFeature);
+
+        // Push updated features to the source
+        updateLinksSource();
+    }
+
+    /**
+     * Utility method: updates the "links-source" GeoJsonSource with the current
+     * collection of Feature objects in mLinkFeatures.
+     */
+    private void updateLinksSource() {
+        if (mLinksGeoJsonSource == null) {
+            return;
+        }
+        FeatureCollection fc = FeatureCollection.fromFeatures(new ArrayList<>(mLinkFeatures.values()));
+        mLinksGeoJsonSource.setGeoJson(fc);
+    }
+
+    private void updateResonatorLinesSource() {
+        if (mResonatorLinesGeoJsonSource == null) {
+            return;
+        }
+        FeatureCollection fc = FeatureCollection.fromFeatures(new ArrayList<>(mResonatorLineFeatures.values()));
+        mResonatorLinesGeoJsonSource.setGeoJson(fc);
+    }
+
+    private void updateFieldsSource() {
+        if (mFieldsGeoJsonSource == null) {
+            return;
+        }
+        FeatureCollection fc = FeatureCollection.fromFeatures(new ArrayList<>(mFieldFeatures.values()));
+        mFieldsGeoJsonSource.setGeoJson(fc);
     }
 
     protected void drawField(final GameEntityControlField field) {
         if (mMapView == null) {
             return;
         }
-        if (mPolygons.containsKey(field.getEntityGuid())) {
+
+        Style style = mMapLibreMap.getStyle();
+        if (style == null || !style.isFullyLoaded()) {
+            return;
+        }
+
+        if (mFieldFeatures.containsKey(field.getEntityGuid())) {
             // maybe update ?
             return;
         }
@@ -576,14 +697,15 @@ public class WidgetMap extends Fragment {
         int colour = 0x32000000 + team.getColour(); // adding alpha
 
         // Create a list with the vertices of the polygon
-        List<LatLng> polygonLatLngs = Arrays.asList(vA.getLatLng(), vB.getLatLng(), vC.getLatLng(), vA.getLatLng());
+        List<Point> polygonLatLngs = Arrays.asList(vA.getPoint(), vB.getPoint(), vC.getPoint(), vA.getPoint());
+        Polygon polygon = Polygon.fromLngLats(Collections.singletonList(polygonLatLngs));
 
-        FillOptions polygonOptions = new FillOptions()
-                .withLatLngs(Collections.singletonList(polygonLatLngs))
-                .withFillColor(getRgbaStringFromColour(colour));
+        Feature fieldFeature = Feature.fromGeometry(polygon);
+//        fieldFeature.addStringProperty("guid", field.getEntityGuid());
+        fieldFeature.addStringProperty("colour", getRgbaStringFromColour(colour));
+        mFieldFeatures.put(field.getEntityGuid(), fieldFeature);
 
-        mPolygons.put(field.getEntityGuid(), mFillManager.create(polygonOptions));
-
+        updateFieldsSource();
     }
 
     public int hashGuidToMod360(@NonNull String guid) {
@@ -667,7 +789,7 @@ public class WidgetMap extends Fragment {
         assert styleJSON != null;
         mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> {
             setUpStyleForMap(mMapLibreMap, style);
-            updateScreen(new Handler(Looper.getMainLooper()));
+            setUpScreen(new Handler(Looper.getMainLooper()));
         });
     }
 
@@ -685,7 +807,13 @@ public class WidgetMap extends Fragment {
         return desc;
     }
 
-    public void updateScreen(Handler uiHandler) {
+    public void setUpScreen(Handler uiHandler) {
+        Map<Long, XMParticle> particles = mGame.getWorld().getXMParticles();
+        Map<String, GameEntityBase> entities = mGame.getWorld().getGameEntities();
+        updateScreen(uiHandler, particles, entities);
+    }
+
+    public void updateScreen(Handler uiHandler, Map<Long, XMParticle> particles, Map<String, GameEntityBase> entities) {
         if (mMapLibreMap == null || mMapLibreMap.getStyle() == null) {
             return;
         }
@@ -700,10 +828,9 @@ public class WidgetMap extends Fragment {
             
             activity.runOnUiThread(() -> {
                 // draw xm particles
-                drawXMParticles();
+                drawXMParticles(particles);
 
                 // draw game entities
-                Map<String, GameEntityBase> entities = mGame.getWorld().getGameEntities();
                 Set<String> keys = entities.keySet();
                 for (String key : keys) {
                     final GameEntityBase entity = entities.get(key);
@@ -799,11 +926,8 @@ public class WidgetMap extends Fragment {
                 shouldContinue.set(style.removeSource("portal-" + guid));
                 if (shouldContinue.get() && mResonatorThreads.containsKey(guid)) {
                     for (var k : Objects.requireNonNull(mResonatorThreads.get(guid)).keySet()) {
-                        var resoParts = Objects.requireNonNull(mResonatorThreads.get(guid)).get(k);
-
-                        if (resoParts != null) {
-                            mLineManager.delete(resoParts);
-                        }
+                        mResonatorLineFeatures.remove(k);
+                        updateResonatorLinesSource();
                         mResonatorToPortalLookup.remove(k);
                         Objects.requireNonNull(mResonatorThreads.get(guid)).remove(k);
                         style.removeLayer("reso-layer-" + k);
@@ -818,13 +942,9 @@ public class WidgetMap extends Fragment {
             // for resonators
             if (mResonatorToPortalLookup.containsKey(guid)) {
                 var portal = Objects.requireNonNull(mResonatorToPortalLookup.get(guid));
-                var resoParts = Objects.requireNonNull(mResonatorThreads.get(portal)).get(guid);
-
-                if (resoParts != null) {
-                    mLineManager.delete(resoParts);
-                }
+                mResonatorLineFeatures.remove(guid);
+                updateResonatorLinesSource();
                 mResonatorToPortalLookup.remove(guid);
-                Objects.requireNonNull(mResonatorThreads.get(portal)).remove(guid);
                 mMapLibreMap.getStyle(style -> {
                     style.removeLayer("reso-layer-" + guid);
                     style.removeSource("reso-source-" + guid);
@@ -833,16 +953,17 @@ public class WidgetMap extends Fragment {
             }
 
             // for links
-            if (mLines.containsKey(guid)) {
-                mLineManager.delete(mLines.get(guid));
-                mLines.remove(guid);
+            if (mLinkFeatures.containsKey(guid)) {
+                mLinkFeatures.remove(guid);
+                updateLinksSource();
+                // So the feature is no longer in the source's FeatureCollection
                 continue;
             }
 
             // for fields
-            if (mPolygons.containsKey(guid)) {
-                mFillManager.delete(mPolygons.get(guid));
-                mPolygons.remove(guid);
+            if (mFieldFeatures.containsKey(guid)) {
+                mFieldFeatures.remove(guid);
+                updateFieldsSource();
                 continue;
             }
 

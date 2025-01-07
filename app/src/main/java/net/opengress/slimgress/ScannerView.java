@@ -483,7 +483,7 @@ public class ScannerView extends WidgetMap {
         assert styleJSON != null;
         mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> {
             setUpStyleForMap(mMapLibreMap, style);
-            updateScreen(new Handler(Looper.getMainLooper()));
+            setUpScreen(new Handler(Looper.getMainLooper()));
             setupPlayerCursor(mCurrentLocation, mBearing);
         });
     }
@@ -761,10 +761,10 @@ public class ScannerView extends WidgetMap {
 //                .withLineWidth(0.2f)
                 ;
 
-        Line line = mLineManager.create(lineOptions);
+        Line line = mPlayerDamageLineManager.create(lineOptions);
 //        // let it delete itself
         mApp.schedule_(() -> mApp.getMainActivity().runOnUiThread(
-                () -> mLineManager.delete(line)
+                () -> mPlayerDamageLineManager.delete(line)
         ), 2000, TimeUnit.MILLISECONDS);
 
         // now write up the text, but only if the damage was significant

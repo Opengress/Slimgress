@@ -858,7 +858,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     public void refreshDisplay() {
-        mScannerView.updateScreen(new Handler(Looper.getMainLooper()));
+        mScannerView.setUpScreen(new Handler(Looper.getMainLooper()));
     }
 
     private void resetSelection() {
