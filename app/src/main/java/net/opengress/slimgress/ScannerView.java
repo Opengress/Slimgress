@@ -21,6 +21,8 @@
 
 package net.opengress.slimgress;
 
+import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE;
+import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE_DEFAULT;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.getRgbaStringFromColour;
@@ -371,6 +373,7 @@ public class ScannerView extends WidgetMap {
 
     @Override
     public void onDestroyView() {
+        mMapView.onDestroy();
         super.onDestroyView();
         mBearingProvider.stopBearingUpdates();
         mLocationProvider.stopLocationUpdates();
@@ -379,12 +382,20 @@ public class ScannerView extends WidgetMap {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        mMapView.onDestroy();
         mNetworkMonitor.unregisterNetworkMonitor(requireContext());
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        mMapView.onResume();
+
+        String newTileSource = mPrefs.getString(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT);
+        if (!Objects.equals(newTileSource, mCurrentTileSource)) {
+            mCurrentTileSource = newTileSource;
+            setUpTileSource();
+        }
 
         if (mLastLocationAcquired == null || mLastLocationAcquired.before(new Date(System.currentTimeMillis() - mUpdateIntervalMS))) {
             setLocationInaccurate(true);
@@ -481,7 +492,6 @@ public class ScannerView extends WidgetMap {
         mBearingProvider.startBearingUpdates();
     }
 
-    @Override
     protected void setUpTileSource() {
         String styleJSON = getMapTileProviderStyleJSON(mCurrentTileSource);
         assert styleJSON != null;
