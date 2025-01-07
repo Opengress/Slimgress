@@ -138,9 +138,6 @@ public class GameState {
             if (!gameBasket.getInventory().isEmpty() || !gameBasket.getDeletedEntityGuids().isEmpty()) {
                 app.getInventoryViewModel().postInventory(mInventory);
             }
-            if (!gameBasket.getDeletedEntityGuids().isEmpty()) {
-                app.getMainActivity().processDeletedEntityGuids(gameBasket.getDeletedEntityGuids());
-            }
             mInventory.processGameBasket(gameBasket);
             mWorld.processGameBasket(gameBasket);
             if (!gameBasket.getAPGains().isEmpty()) {
@@ -1101,7 +1098,7 @@ public class GameState {
                         case "RESOURCE_NOT_AVAILABLE" -> {
                             super.handleError("Pickup failed: Item not available to pick up");
                             mWorld.deleteEntityByGuid(guid);
-                            SlimgressApplication.getInstance().getMainActivity().processDeletedEntityGuids(List.of(new String[]{guid}));
+                            SlimgressApplication.getInstance().getDeletedEntityGuidsViewModel().addGuids(List.of(new String[]{guid}));
                         }
                         case "OUT_OF_RANGE" -> super.handleError("Pickup failed: Out of range");
                         case "INVENTORY_FULL" ->

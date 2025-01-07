@@ -15,7 +15,6 @@ import static org.maplibre.android.style.layers.PropertyFactory.circleRadius;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -23,7 +22,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -31,7 +29,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
@@ -62,11 +59,7 @@ import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapView;
 import org.maplibre.android.maps.Style;
 import org.maplibre.android.maps.UiSettings;
-import org.maplibre.android.plugins.annotation.Fill;
-import org.maplibre.android.plugins.annotation.FillManager;
-import org.maplibre.android.plugins.annotation.Line;
 import org.maplibre.android.plugins.annotation.LineManager;
-import org.maplibre.android.plugins.annotation.LineOptions;
 import org.maplibre.android.plugins.annotation.SymbolManager;
 import org.maplibre.android.style.expressions.Expression;
 import org.maplibre.android.style.layers.CircleLayer;
@@ -84,13 +77,13 @@ import org.maplibre.geojson.Polygon;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WidgetMap extends Fragment {
@@ -101,12 +94,8 @@ public class WidgetMap extends Fragment {
     protected final GameState mGame = mApp.getGame();
     protected final HashMap<String, Bitmap> mIcons = new HashMap<>();
 
-    // for getting rid of the resonators when we get rid of the portals
-    protected final HashMap<String, HashMap<String, Line>> mResonatorThreads = new HashMap<>();
     // for finding the portal marker when we delete it by Guid
     protected final HashMap<String, String> mResonatorToPortalLookup = new HashMap<>();
-    protected final HashMap<String, Line> mLines = new HashMap<>();
-    protected final HashMap<String, Fill> mPolygons = new HashMap<>();
     protected final int MAP_ROTATION_ARBITRARY = 1;
     protected final int MAP_ROTATION_FLOATING = 2;
 
@@ -119,9 +108,7 @@ public class WidgetMap extends Fragment {
     protected MapLibreMap mMapLibreMap;
     protected SymbolManager mSymbolManager;
     protected LineManager mPlayerDamageLineManager;
-    protected FillManager mFillManager;
     protected String mCurrentTileSource = UNTRANSLATABLE_MAP_TILE_SOURCE_BLANK;
-    protected ActivityResultLauncher<Intent> mPortalActivityResultLauncher;
 
     // ===========================================================
     // Fields and permissions
@@ -130,25 +117,25 @@ public class WidgetMap extends Fragment {
     protected Location mCurrentLocation = null;
     // FIXME this should be used to set "location inaccurate" if updates mysteriously stop
     protected Date mLastLocationAcquired = null;
-    protected int CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
-    protected boolean mIsMapEnabled = false;
-    GeoJsonSource mPortalGeoJsonSource;
-    private MapLibreMap.OnCameraIdleListener mOnCameraIdleListener;
 
     // ===========================================================
     // UX/UI Stuff - Events
     // ===========================================================
-    private boolean mIsRotating = false;
-    protected boolean mIsZooming = false;
     private GestureDetector mGestureDetector;
-    private double mPrevAngle = 0;
-    private float mStartY = 0;
-    private final float ZOOM_SENSITIVITY = 0.1f;
+    private MapLibreMap.OnCameraIdleListener mOnCameraIdleListener;
     private boolean mIsClickingCompass = false;
+    private boolean mIsRotating = false;
+    private double mPrevAngle = 0;
+    private final float ZOOM_SENSITIVITY = 0.1f;
+    private float mStartY = 0;
+    protected boolean mIsMapEnabled = false;
+    protected boolean mIsZooming = false;
+    protected int CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
 
     // ===========================================================
     // GameEntities Pt II
     // ===========================================================
+    private GeoJsonSource mPortalGeoJsonSource;
     private final Map<String, Feature> mLinkFeatures = new HashMap<>();
     private GeoJsonSource mLinksGeoJsonSource;
     // Holds the current Features for each resonator line, keyed by the resonator GUID
@@ -156,7 +143,6 @@ public class WidgetMap extends Fragment {
     private GeoJsonSource mResonatorLinesGeoJsonSource;
     private final Map<String, Feature> mFieldFeatures = new HashMap<>();
     private GeoJsonSource mFieldsGeoJsonSource;
-    
 
 
     // Function to calculate LatLngQuad for the given radius in meters
@@ -368,7 +354,6 @@ public class WidgetMap extends Fragment {
         mSymbolManager.setTextIgnorePlacement(true);
 
         mPlayerDamageLineManager = new LineManager(mMapView, mapLibreMap, style);
-        mFillManager = new FillManager(mMapView, mapLibreMap, style);
 
     }
 
@@ -458,30 +443,39 @@ public class WidgetMap extends Fragment {
         mIcons.put("sonarRing", bitmap);
     }
 
-    protected void drawXMParticles(Map<Long, XMParticle> xmParticles) {
-        Style style = mMapLibreMap.getStyle();
-        if (style == null || !style.isFullyLoaded()) {
-            return;
-        }
-
-        for (Long key : xmParticles.keySet()) {
-            XMParticle particle = xmParticles.get(key);
-            if (particle == null) {
-                continue;
+    protected void drawXMParticles(Collection<XMParticle> xmParticles) {
+        mApp.getExecutorService().submit(() -> {
+            Activity activity = getActivity();
+            if (activity == null) {
+                return;
             }
 
-            String sourceId = "particle-source-" + particle.getCellId();
-            String layerId = "particle-layer-" + particle.getCellId();
+            activity.runOnUiThread(() -> {
 
-            if (style.getLayer(layerId) == null) {
-                LatLngQuad quad = getRotatedLatLngQuad(particle.getCellLocation(), 7, 7, 0);
-                ImageSource imageSource = new ImageSource(sourceId, quad, Objects.requireNonNull(mIcons.get("particle")));
-                style.addSource(imageSource);
+                Style style = mMapLibreMap.getStyle();
+                if (style == null || !style.isFullyLoaded()) {
+                    return;
+                }
 
-                RasterLayer rasterLayer = new RasterLayer(layerId, sourceId);
-                style.addLayer(rasterLayer);
-            }
-        }
+                for (XMParticle particle : xmParticles) {
+                    if (particle == null) {
+                        continue;
+                    }
+
+                    String sourceId = "particle-source-" + particle.getCellId();
+                    String layerId = "particle-layer-" + particle.getCellId();
+
+                    if (style.getLayer(layerId) == null) {
+                        LatLngQuad quad = getRotatedLatLngQuad(particle.getCellLocation(), 7, 7, 0);
+                        ImageSource imageSource = new ImageSource(sourceId, quad, Objects.requireNonNull(mIcons.get("particle")));
+                        style.addSource(imageSource);
+
+                        RasterLayer rasterLayer = new RasterLayer(layerId, sourceId);
+                        style.addLayer(rasterLayer);
+                    }
+                }
+            });
+        });
     }
 
     protected void drawPortal(@NonNull final GameEntityPortal portal) {
@@ -616,11 +610,6 @@ public class WidgetMap extends Fragment {
             return;
         }
 
-        if (mLines.containsKey(link.getEntityGuid())) {
-            // maybe update ?
-            return;
-        }
-
         final Location origin = link.getLinkOriginLocation();
         final Location dest = link.getLinkDestinationLocation();
 
@@ -630,10 +619,6 @@ public class WidgetMap extends Fragment {
         String colourStr = getRgbaStringFromColour(colour);
 
         LineString lineString = LineString.fromLngLats(Arrays.asList(origin.getPoint(), dest.getPoint()));
-        LineOptions lineOptions = new LineOptions()
-                .withLatLngs(Arrays.asList(origin.getLatLng(), dest.getLatLng()))
-                .withLineColor(getRgbaStringFromColour(colour))
-                .withLineWidth(2.3f);
 
         Feature linkFeature = Feature.fromGeometry(lineString);
 //        linkFeature.addStringProperty("guid", link.getEntityGuid());
@@ -787,10 +772,7 @@ public class WidgetMap extends Fragment {
     protected void setUpTileSource() {
         String styleJSON = getMapTileProviderStyleJSON(mCurrentTileSource);
         assert styleJSON != null;
-        mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> {
-            setUpStyleForMap(mMapLibreMap, style);
-            setUpScreen(new Handler(Looper.getMainLooper()));
-        });
+        mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> setUpStyleForMap(mMapLibreMap, style));
     }
 
     public MapView getMap() {
@@ -807,13 +789,7 @@ public class WidgetMap extends Fragment {
         return desc;
     }
 
-    public void setUpScreen(Handler uiHandler) {
-        Map<Long, XMParticle> particles = mGame.getWorld().getXMParticles();
-        Map<String, GameEntityBase> entities = mGame.getWorld().getGameEntities();
-        updateScreen(uiHandler, particles, entities);
-    }
-
-    public void updateScreen(Handler uiHandler, Map<Long, XMParticle> particles, Map<String, GameEntityBase> entities) {
+    public void drawEntities(Handler uiHandler, Collection<GameEntityBase> entities) {
         if (mMapLibreMap == null || mMapLibreMap.getStyle() == null) {
             return;
         }
@@ -825,15 +801,9 @@ public class WidgetMap extends Fragment {
             if (activity == null) {
                 return;
             }
-            
-            activity.runOnUiThread(() -> {
-                // draw xm particles
-                drawXMParticles(particles);
 
-                // draw game entities
-                Set<String> keys = entities.keySet();
-                for (String key : keys) {
-                    final GameEntityBase entity = entities.get(key);
+            activity.runOnUiThread(() -> {
+                for (var entity : entities) {
                     assert entity != null;
 
                     uiHandler.post(() -> {
@@ -924,16 +894,6 @@ public class WidgetMap extends Fragment {
             mMapLibreMap.getStyle(style -> {
                 style.removeLayer("portal-" + guid + "-layer");
                 shouldContinue.set(style.removeSource("portal-" + guid));
-                if (shouldContinue.get() && mResonatorThreads.containsKey(guid)) {
-                    for (var k : Objects.requireNonNull(mResonatorThreads.get(guid)).keySet()) {
-                        mResonatorLineFeatures.remove(k);
-                        updateResonatorLinesSource();
-                        mResonatorToPortalLookup.remove(k);
-                        Objects.requireNonNull(mResonatorThreads.get(guid)).remove(k);
-                        style.removeLayer("reso-layer-" + k);
-                        style.removeSource("reso-source-" + k);
-                    }
-                }
             });
             if (shouldContinue.get()) {
                 continue;
@@ -941,7 +901,6 @@ public class WidgetMap extends Fragment {
 
             // for resonators
             if (mResonatorToPortalLookup.containsKey(guid)) {
-                var portal = Objects.requireNonNull(mResonatorToPortalLookup.get(guid));
                 mResonatorLineFeatures.remove(guid);
                 updateResonatorLinesSource();
                 mResonatorToPortalLookup.remove(guid);

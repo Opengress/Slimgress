@@ -21,6 +21,7 @@
 
 package net.opengress.slimgress;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
@@ -37,10 +38,12 @@ import net.opengress.slimgress.activity.ActivityMain;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Plext.PlextBase;
 import net.opengress.slimgress.viewmodel.CommsViewModel;
+import net.opengress.slimgress.viewmodel.DeletedEntityGuidsViewModel;
 import net.opengress.slimgress.viewmodel.InventoryViewModel;
 import net.opengress.slimgress.viewmodel.LevelUpViewModel;
 import net.opengress.slimgress.viewmodel.LocationViewModel;
 import net.opengress.slimgress.viewmodel.PlayerDataViewModel;
+import net.opengress.slimgress.viewmodel.UpdatedEntitiesViewModel;
 
 import org.acra.ACRA;
 import org.acra.config.CoreConfigurationBuilder;
@@ -56,16 +59,20 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class SlimgressApplication extends Application {
+    @SuppressLint("StaticFieldLeak")
     private static SlimgressApplication mSingleton;
+    @SuppressLint("StaticFieldLeak")
     private static Activity mCurrentActivity;
     private boolean mLoggedIn = false;
     protected GameState mGame;
-    private LocationViewModel mLocationViewModel;
-    private InventoryViewModel mInventoryViewModel;
-    private PlayerDataViewModel mPlayerDataViewModel;
     private CommsViewModel mAllCommsViewModel;
     private CommsViewModel mFactionCommsViewModel;
+    private DeletedEntityGuidsViewModel mDeletedEntityGuidsViewModel;
+    private InventoryViewModel mInventoryViewModel;
     private LevelUpViewModel mLevelUpViewModel;
+    private LocationViewModel mLocationViewModel;
+    private PlayerDataViewModel mPlayerDataViewModel;
+    private UpdatedEntitiesViewModel mUpdatedEntitiesViewModel;
     private ActivityMain mMainActivity;
     private final ExecutorService mExecutorService = Executors.newFixedThreadPool(4);
     private final ScheduledExecutorService mScheduledExecutorService = Executors.newScheduledThreadPool(1);
@@ -73,12 +80,14 @@ public class SlimgressApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        mLocationViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(LocationViewModel.class);
-        mInventoryViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(InventoryViewModel.class);
-        mPlayerDataViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDataViewModel.class);
         mAllCommsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(CommsViewModel.class);
+        mDeletedEntityGuidsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(DeletedEntityGuidsViewModel.class);
         mFactionCommsViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(CommsViewModel.class);
+        mInventoryViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(InventoryViewModel.class);
         mLevelUpViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(LevelUpViewModel.class);
+        mLocationViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(LocationViewModel.class);
+        mPlayerDataViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDataViewModel.class);
+        mUpdatedEntitiesViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(UpdatedEntitiesViewModel.class);
 
         mSingleton = this;
         mGame = new GameState();
@@ -260,6 +269,22 @@ public class SlimgressApplication extends Application {
         return mMainActivity;
     }
 
+    public CommsViewModel getAllCommsViewModel() {
+        return mAllCommsViewModel;
+    }
+
+    public CommsViewModel getFactionCommsViewModel() {
+        return mFactionCommsViewModel;
+    }
+
+    public DeletedEntityGuidsViewModel getDeletedEntityGuidsViewModel() {
+        return mDeletedEntityGuidsViewModel;
+    }
+
+    public LevelUpViewModel getLevelUpViewModel() {
+        return mLevelUpViewModel;
+    }
+
     public LocationViewModel getLocationViewModel() {
         return mLocationViewModel;
     }
@@ -272,16 +297,8 @@ public class SlimgressApplication extends Application {
         return mPlayerDataViewModel;
     }
 
-    public CommsViewModel getAllCommsViewModel() {
-        return mAllCommsViewModel;
-    }
-
-    public CommsViewModel getFactionCommsViewModel() {
-        return mFactionCommsViewModel;
-    }
-
-    public LevelUpViewModel getLevelUpViewModel() {
-        return mLevelUpViewModel;
+    public UpdatedEntitiesViewModel getUpdatedEntitiesViewModel() {
+        return mUpdatedEntitiesViewModel;
     }
 
     public ExecutorService getExecutorService() {

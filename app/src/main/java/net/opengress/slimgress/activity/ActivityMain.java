@@ -42,7 +42,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -857,10 +856,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         mScannerView.displayPlayerDamage(amount, attackerGuid);
     }
 
-    public void refreshDisplay() {
-        mScannerView.setUpScreen(new Handler(Looper.getMainLooper()));
-    }
-
     private void resetSelection() {
         mSelectTargetText.setVisibility(View.GONE);
         mSelectTargetText.setText(R.string.flipcard_select_target);
@@ -913,10 +908,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             InventoryListItem selectedItem = (InventoryListItem) data.getSerializableExtra("selected_weapon");
             showFireCarousel(selectedItem);
         }
-    }
-
-    public void processDeletedEntityGuids(List<String> deletedEntityGuids) {
-        runOnUiThread(() -> mScannerView.onReceiveDeletedEntityGuids(deletedEntityGuids));
     }
 
     public void setScanner(ScannerView scanner) {
