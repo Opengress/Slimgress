@@ -87,7 +87,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class WidgetMap extends Fragment {
+abstract public class WidgetMap extends Fragment {
     // ===========================================================
     // Hardcore internal stuff
     // ===========================================================
@@ -818,13 +818,7 @@ public class WidgetMap extends Fragment {
             style.addLayer(rasterLayer);
         }
     }
-
-    protected void setUpTileSource() {
-        String styleJSON = getMapTileProviderStyleJSON(mCurrentTileSource);
-        assert styleJSON != null;
-        mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> setUpStyleForMap(mMapLibreMap, style));
-    }
-
+    
     public MapView getMap() {
         return mMapView;
     }
@@ -896,12 +890,6 @@ public class WidgetMap extends Fragment {
         } else {
             mMapView.setOnTouchListener((v, event) -> true);
         }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mMapView.onDestroy();
     }
 
     @Override
@@ -982,29 +970,6 @@ public class WidgetMap extends Fragment {
                 style.removeSource("item-source-" + guid);
             });
 
-        }
-    }
-
-    @Override
-    public void onDestroyView() {
-        mMapView.onDestroy();
-        super.onDestroyView();
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        mMapView.onResume();
-
-        String newTileSource = mPrefs.getString(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT);
-        if (!Objects.equals(newTileSource, mCurrentTileSource)) {
-            mCurrentTileSource = newTileSource;
-            setUpTileSource();
         }
     }
 
