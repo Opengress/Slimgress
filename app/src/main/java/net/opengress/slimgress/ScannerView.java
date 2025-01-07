@@ -941,6 +941,9 @@ public class ScannerView extends WidgetMap {
         int visibility = shouldShow ? View.GONE : View.VISIBLE;
         boolean finalShouldShow = shouldShow;
         requireActivity().runOnUiThread(() -> {
+            if (getActivity() == null || requireActivity().findViewById(R.id.scannerDisabledOverlay) == null) {
+                return;
+            }
             requireActivity().findViewById(R.id.scannerDisabledOverlay).setVisibility(visibility);
             requireActivity().findViewById(R.id.buttonComm).setEnabled(finalShouldShow);
             requireActivity().findViewById(R.id.buttonOps).setEnabled(finalShouldShow);

@@ -51,9 +51,13 @@ public class FragmentScore extends Fragment {
     }
 
     private void updateLegend(LinearLayout legendLayout, Map<String, Integer> data, Map<String, Integer> colors) {
+        var ctx = getContext();
+        if (ctx == null) {
+            return;
+        }
         legendLayout.removeAllViews();
         for (Map.Entry<String, Integer> entry : data.entrySet()) {
-            TextView legendItem = new TextView(getContext());
+            TextView legendItem = new TextView(ctx);
             legendItem.setText(String.format(Locale.getDefault(), "%s: %d", entry.getKey(), entry.getValue()));
             legendItem.setTextColor(colors.containsKey(entry.getKey()) ? colors.get(entry.getKey()) : 0xFF888888);
             legendItem.setTextSize(16f);
