@@ -197,9 +197,13 @@ public class InventoryList extends BaseExpandableListAdapter {
                     ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_level)).setTextColor(getColourFromResources(convertView.getResources(), levelColour));
 
 
-                    // get distance to portal and show ownership in the colour
-                    int colour = Objects.equals(portal.getOwnerGuid(), mGame.getAgent().getEntityGuid()) ? 0xFCD452 : portal.getPortalTeam().getColour();
-                    ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_distance)).setTextColor(0xff000000 + colour);
+                    // get distance to portal and show ownership in the colours
+                    if (Objects.equals(portal.getOwnerGuid(), mGame.getAgent().getEntityGuid())) {
+                        text.setTextColor(0xFFFCD452);
+                    } else {
+                        text.setTextColor(0xFFFFFFFF);
+                    }
+                    ((TextView) convertView.findViewById(R.id.inventory_childRow_portalKey_distance)).setTextColor(0xff000000 + portal.getPortalTeam().getColour());
                     int dist = 999999000;
                     Location loc = mGame.getLocation();
                     if (loc != null) {
