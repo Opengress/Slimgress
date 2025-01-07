@@ -146,6 +146,7 @@ abstract public class WidgetMap extends Fragment {
     private GeoJsonSource mFieldsGeoJsonSource;
     private final Map<Long, Feature> mXmParticleFeatures = new HashMap<>();
     private GeoJsonSource mXmParticlesGeoJsonSource;
+    Map<String, Feature> mTouchTargetFeatures = new HashMap<>();
 
 
     // Function to calculate LatLngQuad for the given radius in meters
@@ -397,8 +398,8 @@ abstract public class WidgetMap extends Fragment {
         return mOnCameraIdleListener;
     }
 
-    protected void addTouchTargets(List<Feature> features) {
-        mPortalGeoJsonSource.setGeoJson(FeatureCollection.fromFeatures(features));
+    protected void updateTouchTargets() {
+        mPortalGeoJsonSource.setGeoJson(FeatureCollection.fromFeatures(mTouchTargetFeatures.values().toArray(new Feature[0])));
     }
 
     protected void loadAssets() {
@@ -818,7 +819,7 @@ abstract public class WidgetMap extends Fragment {
             style.addLayer(rasterLayer);
         }
     }
-    
+
     public MapView getMap() {
         return mMapView;
     }
@@ -838,8 +839,6 @@ abstract public class WidgetMap extends Fragment {
             return;
         }
 
-        List<Feature> features = new ArrayList<>();
-
         mApp.getExecutorService().submit(() -> {
             Activity activity = getActivity();
             if (activity == null) {
@@ -856,7 +855,7 @@ abstract public class WidgetMap extends Fragment {
                             drawPortal(portal);
                             Feature feature = Feature.fromGeometry(portal.getPortalLocation().getPoint());
                             feature.addStringProperty("guid", portal.getEntityGuid());
-                            features.add(feature);
+                            mTouchTargetFeatures.put(portal.getEntityGuid(), feature);
                         } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
                             drawLink((GameEntityLink) entity);
                         } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
@@ -866,9 +865,9 @@ abstract public class WidgetMap extends Fragment {
                             drawItem(item);
                             Feature feature = Feature.fromGeometry(item.getItem().getItemLocation().getPoint());
                             feature.addStringProperty("guid", item.getEntityGuid());
-                            features.add(feature);
+                            mTouchTargetFeatures.put(item.getEntityGuid(), feature);
                         }
-                        addTouchTargets(features);
+                        updateTouchTargets();
                     });
 
                 }
@@ -932,6 +931,7 @@ abstract public class WidgetMap extends Fragment {
             mMapLibreMap.getStyle(style -> {
                 style.removeLayer("portal-" + guid + "-layer");
                 shouldContinue.set(style.removeSource("portal-" + guid));
+                mTouchTargetFeatures.remove(guid);
             });
             if (shouldContinue.get()) {
                 continue;
@@ -968,9 +968,11 @@ abstract public class WidgetMap extends Fragment {
             mMapLibreMap.getStyle(style -> {
                 style.removeLayer("item-layer-" + guid);
                 style.removeSource("item-source-" + guid);
+                mTouchTargetFeatures.remove(guid);
             });
 
         }
+        updateTouchTargets();
     }
 
     @Override
