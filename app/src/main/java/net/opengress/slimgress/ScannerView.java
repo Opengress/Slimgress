@@ -299,6 +299,10 @@ public class ScannerView extends WidgetMap {
                 this::onRegainedConnection
         );
 
+        mApp.getUpdatedEntitiesViewModel().getEntities().observe(this, ents -> drawEntities(new Handler(Looper.getMainLooper()), ents));
+        mApp.getUpdatedEntitiesViewModel().getParticles().observe(this, this::drawXMParticles);
+        mApp.getDeletedEntityGuidsViewModel().getGuids().observe(this, this::onReceiveDeletedEntityGuids);
+
         mScannerKnobs = mGame.getKnobs().getScannerKnobs();
         mActionRadiusM = mScannerKnobs.getActionRadiusM();
         mUpdateIntervalMS = mScannerKnobs.getUpdateIntervalMS();
@@ -483,7 +487,6 @@ public class ScannerView extends WidgetMap {
         assert styleJSON != null;
         mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> {
             setUpStyleForMap(mMapLibreMap, style);
-            setUpScreen(new Handler(Looper.getMainLooper()));
             setupPlayerCursor(mCurrentLocation, mBearing);
         });
     }

@@ -59,6 +59,7 @@ public class World {
     }
 
     public void deleteEntitiesByGuid(@NonNull List<String> deletedEntityGuids) {
+        SlimgressApplication.getInstance().getDeletedEntityGuidsViewModel().addGuids(deletedEntityGuids);
         for (String guid : deletedEntityGuids) {
             deleteEntityByGuid(guid);
         }
@@ -72,13 +73,17 @@ public class World {
 
         // only add non-existing game entities ... should this be a map?
         List<GameEntityBase> entities = basket.getGameEntities();
+        ArrayList<GameEntityBase> out = new ArrayList<>();
         for (GameEntityBase entity : entities) {
             if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal && mGameEntities.containsKey(entity.getEntityGuid())) {
                 Objects.requireNonNull((GameEntityPortal) mGameEntities.get(entity.getEntityGuid())).updateFrom(entity);
+                out.add(mGameEntities.get(entity.getEntityGuid()));
                 continue;
             }
+            out.add(entity);
             mGameEntities.put(entity.getEntityGuid(), entity);
         }
+        SlimgressApplication.getInstance().getUpdatedEntitiesViewModel().addEntities(out);
 
         // only add non-existing xm particles
         List<XMParticle> xmParticles = basket.getEnergyGlobGuids();
@@ -87,9 +92,7 @@ public class World {
                 mXMParticles.put(particle.getCellId(), particle);
             }
         }
-
-        // This should probably go to a viewmodel so it can update deploy screen et al
-        SlimgressApplication.getInstance().getMainActivity().refreshDisplay();
+        SlimgressApplication.getInstance().getUpdatedEntitiesViewModel().addParticles(xmParticles);
     }
 
     public final Map<String, GameEntityBase> getGameEntities() {
