@@ -894,6 +894,7 @@ public class ScannerView extends WidgetMap {
         setUpTileSource();
         onReceiveDeletedEntityGuids(guids);
         mGame.clear();
+        // FIXME this might not be strictly necessary
         Activity activity = getActivity();
         if (activity != null) {
             Intent intent = new Intent(activity, activity.getClass());

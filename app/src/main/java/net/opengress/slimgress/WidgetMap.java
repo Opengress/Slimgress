@@ -22,6 +22,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -338,6 +339,10 @@ public class WidgetMap extends Fragment {
         initResonatorLinesSource(style);
         initFieldsSource(style);
         initXmParticlesSource(style);
+
+        drawEntities(new Handler(Looper.getMainLooper()),
+                mGame.getWorld().getGameEntitiesList());
+        drawXMParticles(mGame.getWorld().getXMParticles().values());
 
         String flashLayerId = "flash-overlay-layer";
         String flashSourceId = "flash-overlay-source";
@@ -716,11 +721,6 @@ public class WidgetMap extends Fragment {
 
         Style style = mMapLibreMap.getStyle();
         if (style == null || !style.isFullyLoaded()) {
-            return;
-        }
-
-        if (mFieldFeatures.containsKey(field.getEntityGuid())) {
-            // maybe update ?
             return;
         }
 
