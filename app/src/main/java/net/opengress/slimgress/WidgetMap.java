@@ -143,6 +143,8 @@ public class WidgetMap extends Fragment {
     private GeoJsonSource mResonatorLinesGeoJsonSource;
     private final Map<String, Feature> mFieldFeatures = new HashMap<>();
     private GeoJsonSource mFieldsGeoJsonSource;
+    private final Map<Long, Feature> mXmParticleFeatures = new HashMap<>();
+    private GeoJsonSource mXmParticlesGeoJsonSource;
 
 
     // Function to calculate LatLngQuad for the given radius in meters
@@ -283,6 +285,27 @@ public class WidgetMap extends Fragment {
         }
     }
 
+    private void initXmParticlesSource(@NonNull Style style) {
+        // If the source doesn't already exist, create it
+        if (style.getSource("xm-particles-source") == null) {
+            mXmParticlesGeoJsonSource = new GeoJsonSource(
+                    "xm-particles-source",
+                    FeatureCollection.fromFeatures(new ArrayList<>())
+            );
+            style.addSource(mXmParticlesGeoJsonSource);
+
+            FillLayer xmParticlesLayer = new FillLayer("xm-particles-layer", "xm-particles-source")
+                    .withProperties(
+                            PropertyFactory.fillColor("rgba(255, 255, 255, 0.75)"),
+                            PropertyFactory.fillOutlineColor("rgba(0, 0, 0, 0.75)")
+                    );
+            style.addLayer(xmParticlesLayer);
+        } else {
+            mXmParticlesGeoJsonSource = style.getSourceAs("xm-particles-source");
+        }
+    }
+
+
     private void initFieldsSource(@NonNull Style style) {
         // If the source doesn't exist yet, create it
         if (style.getSource("fields-source") == null) {
@@ -314,6 +337,7 @@ public class WidgetMap extends Fragment {
         initLinksSource(style);
         initResonatorLinesSource(style);
         initFieldsSource(style);
+        initXmParticlesSource(style);
 
         String flashLayerId = "flash-overlay-layer";
         String flashSourceId = "flash-overlay-source";
@@ -449,31 +473,57 @@ public class WidgetMap extends Fragment {
             if (activity == null) {
                 return;
             }
-
             activity.runOnUiThread(() -> {
+                if (mMapLibreMap == null) {
+                    return;
+                }
 
                 Style style = mMapLibreMap.getStyle();
                 if (style == null || !style.isFullyLoaded()) {
                     return;
                 }
 
+                // For each XM Particle, build a small polygon around its location
                 for (XMParticle particle : xmParticles) {
                     if (particle == null) {
                         continue;
                     }
+                    Location loc = particle.getCellLocation();
+                    double radiusMeters = 1.5;
 
-                    String sourceId = "particle-source-" + particle.getCellId();
-                    String layerId = "particle-layer-" + particle.getCellId();
+                    // Build an approximate circle polygon with N steps
+                    final int steps = 12;
+                    List<Point> circleCoords = new ArrayList<>(steps + 1);
 
-                    if (style.getLayer(layerId) == null) {
-                        LatLngQuad quad = getRotatedLatLngQuad(particle.getCellLocation(), 7, 7, 0);
-                        ImageSource imageSource = new ImageSource(sourceId, quad, Objects.requireNonNull(mIcons.get("particle")));
-                        style.addSource(imageSource);
+                    for (int i = 0; i < steps; i++) {
+                        double angle = 2.0 * Math.PI * i / steps;
+                        double offsetX = radiusMeters * Math.cos(angle);
+                        double offsetY = radiusMeters * Math.sin(angle);
 
-                        RasterLayer rasterLayer = new RasterLayer(layerId, sourceId);
-                        style.addLayer(rasterLayer);
+                        double latOffset = offsetY / S2LatLng.EARTH_RADIUS_METERS * (180 / Math.PI);
+                        double lngOffset = offsetX / (S2LatLng.EARTH_RADIUS_METERS *
+                                Math.cos(Math.toRadians(loc.getLatitude()))) * (180 / Math.PI);
+
+                        double lat = loc.getLatitude() + latOffset;
+                        double lon = loc.getLongitude() + lngOffset;
+                        circleCoords.add(Point.fromLngLat(lon, lat));
                     }
+                    // Close the polygon (repeat first point)
+                    circleCoords.add(circleCoords.get(0));
+
+                    // Create the polygon
+                    Polygon polygon = Polygon.fromLngLats(Collections.singletonList(circleCoords));
+
+                    // Convert to a Feature
+                    Feature particleFeature = Feature.fromGeometry(polygon);
+
+                    // Store in our "XM-particle Features" map so we can remove/update later
+                    mXmParticleFeatures.put(particle.getCellId(), particleFeature);
                 }
+
+                // Push all features into the XM GeoJsonSource
+                FeatureCollection fc = FeatureCollection.fromFeatures(mXmParticleFeatures.values().toArray(new Feature[0]));
+                mXmParticlesGeoJsonSource.setGeoJson(fc);
             });
         });
     }
