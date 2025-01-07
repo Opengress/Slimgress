@@ -602,7 +602,7 @@ public class ScannerView extends WidgetMap {
 
         while (iterator.hasNext()) {
             Map.Entry<Long, XMParticle> entry = iterator.next();
-            if (oldXM + newXM >= maxXM) {
+            if (oldXM + newXM > maxXM) {
                 // continue is more computationally expensive and USUALLY not needed
                 break;
             }
@@ -624,6 +624,7 @@ public class ScannerView extends WidgetMap {
         }
 
         if (newXM > 0) {
+            mGame.addSlurpableXMParticles(mSlurpableParticles);
             mGame.getAgent().addEnergy(newXM);
         }
     }
