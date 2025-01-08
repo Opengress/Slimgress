@@ -15,7 +15,6 @@ import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
@@ -28,6 +27,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.bumptech.glide.Glide;
 
@@ -62,6 +62,7 @@ public class FragmentInventoryItem extends Fragment {
     private InventoryListItem mItem;
     private View mRootView;
 
+    @NonNull
     public static FragmentInventoryItem newInstance(InventoryListItem item) {
         FragmentInventoryItem fragment = new FragmentInventoryItem();
         Bundle args = new Bundle();
@@ -127,9 +128,10 @@ public class FragmentInventoryItem extends Fragment {
                 mRootView.findViewById(R.id.activity_inventory_item_recharge).setVisibility(View.VISIBLE);
                 mRootView.findViewById(R.id.activity_inventory_item_recharge).setEnabled(false);
                 mRootView.findViewById(R.id.activity_inventory_item_image).setOnClickListener(c -> {
-                    Intent myIntent = new Intent(requireActivity(), ActivityPortal.class);
-                    myIntent.putExtra("guid", portal.getEntityGuid());
-                    startActivity(myIntent);
+                    FragmentTransaction transaction = getMainActivity().getSupportFragmentManager().beginTransaction();
+                    transaction.add(R.id.fragment_container, FragmentPortal.newInstance(portal.getEntityGuid()), "PORTAL");
+                    transaction.addToBackStack("PORTAL");
+                    transaction.commit();
                 });
             }
             case Resonator -> {

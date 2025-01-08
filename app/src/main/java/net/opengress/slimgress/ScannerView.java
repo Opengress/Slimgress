@@ -25,6 +25,7 @@ import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE;
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE_DEFAULT;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColour;
+import static net.opengress.slimgress.ViewHelpers.getMainActivity;
 import static net.opengress.slimgress.ViewHelpers.getRgbaStringFromColour;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
@@ -51,10 +52,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentTransaction;
 
 import net.opengress.slimgress.activity.ActivityMain;
-import net.opengress.slimgress.activity.ActivityPortal;
 import net.opengress.slimgress.activity.ActivitySplash;
+import net.opengress.slimgress.activity.FragmentPortal;
 import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Game.XMParticle;
 import net.opengress.slimgress.api.GameEntity.GameEntityBase;
@@ -888,9 +890,10 @@ public class ScannerView extends WidgetMap {
                 showInfoCard((GameEntityPortal) entity);
                 return;
             }
-            Intent myIntent = new Intent(getContext(), ActivityPortal.class);
-            myIntent.putExtra("guid", entity.getEntityGuid());
-            startActivity(myIntent);
+            FragmentTransaction transaction = getMainActivity().getSupportFragmentManager().beginTransaction();
+            transaction.add(R.id.fragment_container, FragmentPortal.newInstance(entity.getEntityGuid()), "PORTAL");
+            transaction.addToBackStack("PORTAL");
+            transaction.commit();
             return;
         }
         if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {

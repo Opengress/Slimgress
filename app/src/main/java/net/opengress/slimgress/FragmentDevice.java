@@ -72,8 +72,7 @@ public class FragmentDevice extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        mRootView = inflater.inflate(R.layout.fragment_device,
-                container, false);
+        mRootView = inflater.inflate(R.layout.fragment_device, container, false);
 
         mPrefs = SlimgressApplication.getInstance().getApplicationContext().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE);
 

@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:ignore="HardcodedText">
+    tools:ignore="HardcodedText"
+    style="@style/GradientWindow">
 
 
     <LinearLayout
@@ -43,7 +44,9 @@
             android:layout_height="match_parent"
             android:layout_gravity="right"
             android:contentDescription="Share"
-            app:srcCompat="@drawable/share_icon" />
+            android:adjustViewBounds="true"
+            android:scaleType="centerInside"
+            android:src="@drawable/share_icon" />
     </LinearLayout>
 
     <LinearLayout
@@ -58,7 +61,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
 
-            android:layout_marginHorizontal="@dimen/activity_margin_half"
+            android:layout_marginLeft="@dimen/activity_margin_half"
             android:orientation="vertical">
 
             <FrameLayout
@@ -67,11 +70,15 @@
 
                 <ImageButton
                     android:id="@+id/portalImage"
-                    android:layout_width="210dp"
+                    android:layout_width="195dp"
                     android:layout_height="180dp"
                     android:padding="@dimen/activity_margin_half"
+                    android:layout_margin="@dimen/activity_margin_half"
                     android:src="@drawable/no_image"
                     android:visibility="visible"
+                    android:adjustViewBounds="true"
+                    android:scaleType="centerInside"
+                    style="@style/ButtonStyle"
                     tools:ignore="ContentDescription" />
 
                 <LinearLayout
@@ -241,6 +248,7 @@
                         app:srcCompat="@drawable/button_background_black_enabled" />
 
                     <Button
+                        style="@style/ButtonStyle"
                         android:id="@+id/activityPortalLinkButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -414,7 +422,8 @@
                         android:layout_marginBottom="4dp"
                         android:layout_marginLeft="1dp"
                         android:contentDescription="Portal Key"
-                        app:srcCompat="@drawable/buttonkey" />
+                        style="@style/ButtonStyle"
+                        android:src="@drawable/buttonkey" />
                 </LinearLayout>
 
                 <TextView
@@ -432,7 +441,7 @@
             android:id="@+id/activityPortalRightPane"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginHorizontal="@dimen/activity_margin_half"
+            android:layout_marginRight="@dimen/activity_margin_half"
             android:orientation="vertical">
 
             <TextView
@@ -457,6 +466,7 @@
                 android:orientation="vertical">
 
                 <Button
+                    style="@style/ButtonStyle"
                     android:id="@+id/hackButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -466,6 +476,7 @@
                     android:text="HACK\nportal" />
 
                 <Button
+                    style="@style/ButtonStyle"
                     android:id="@+id/deployButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -475,6 +486,7 @@
                     android:text="DEPLOY\nstatus" />
 
                 <Button
+                    style="@style/ButtonStyle"
                     android:id="@+id/rechargeButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -484,6 +496,7 @@
                     android:text="RECHARGE\nresonators" />
 
                 <Button
+                    style="@style/ButtonStyle"
                     android:id="@+id/modButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -493,6 +506,7 @@
                     android:text="MOD\nstatus" />
 
                 <Button
+                    style="@style/ButtonStyle"
                     android:id="@+id/navigateButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -502,6 +516,7 @@
             </LinearLayout>
 
             <Button
+                style="@style/ButtonStyle"
                 android:id="@+id/activityPortalOkButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
