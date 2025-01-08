@@ -1,6 +1,7 @@
 package net.opengress.slimgress.activity;
 
 import android.os.Bundle;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +23,6 @@ import net.opengress.slimgress.R;
 
 public class FragmentOps extends Fragment implements TabLayout.OnTabSelectedListener {
     private ViewPager2 mViewPager;
-    // private final SparseArray<Fragment> mFragmentCache = new SparseArray<>();
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -84,6 +84,7 @@ public class FragmentOps extends Fragment implements TabLayout.OnTabSelectedList
     }
 
     public static class OpsPagerAdapter extends FragmentStateAdapter {
+        private final SparseArray<Fragment> mFragmentCache = new SparseArray<>();
         public OpsPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
             super(fragmentActivity);
         }
@@ -92,10 +93,21 @@ public class FragmentOps extends Fragment implements TabLayout.OnTabSelectedList
         @Override
         public Fragment createFragment(int position)
         {
-            // getItem is called to instantiate the fragment for the given page.
-            // Return a DummySectionFragment (defined as a static inner class
-            // below) with the page number as its lone argument.
+            Fragment fragment = mFragmentCache.get(position);
+            if (fragment == null) {
+                fragment = createNewFragment(position);
+                mFragmentCache.put(position, fragment);
+            }
+            return fragment;
+        }
 
+        @Override
+        public int getItemCount()
+        {
+            return 4;
+        }
+
+        private Fragment createNewFragment(int position) {
             return switch (position) {
                 case 0 -> new FragmentInventory();
                 case 1 -> new FragmentUser();
@@ -103,17 +115,6 @@ public class FragmentOps extends Fragment implements TabLayout.OnTabSelectedList
                 case 3 -> new FragmentDevice();
                 default -> throw new IllegalArgumentException("Invalid position: " + position);
             };
-
-            // can be used to give arguments to the fragment
-            /*Bundle args = new Bundle();
-            args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
-            fragment.setArguments(args);*/
-        }
-
-        @Override
-        public int getItemCount()
-        {
-            return 4;
         }
 
     }
