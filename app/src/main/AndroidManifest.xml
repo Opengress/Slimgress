@@ -78,9 +78,6 @@
 
         <!-- which libraries are used, who created what etc-->
         <activity android:name="net.opengress.slimgress.activity.ActivityCredits" />
-
-        <!-- viewing an inventory item -->
-        <activity android:name="net.opengress.slimgress.activity.ActivityInventoryItem" />
     </application>
 
 </manifest>

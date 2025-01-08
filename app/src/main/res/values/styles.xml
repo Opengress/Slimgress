@@ -28,8 +28,12 @@
     </style>
 
     <!-- Funny name, maybe! I'm bashing my head against the style system -->
-    <style name="GradientWindow" parent="AppTheme">
+    <style name="GradientWindow" parent="GradientTheme">
         <item name="android:background">@drawable/gradient</item>
+    </style>
+
+    <style name="BlackWindow" parent="AppTheme">
+        <item name="android:background">@android:color/black</item>
     </style>
 
     <style name="FadeAnimation">
