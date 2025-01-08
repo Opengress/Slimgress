@@ -405,7 +405,6 @@ abstract public class WidgetMap extends Fragment {
             mIcons.put(team, getTintedImage("portalTexture_NEUTRAL.webp", 0xff000000 + Objects.requireNonNull(teams.get(team)).getColour(), assetManager));
         }
 
-        mIcons.put("particle", getBitmapFromAsset("particle.webp", assetManager));
         mIcons.put("actionradius", getBitmapFromAsset("actionradius.png", assetManager));
         mIcons.put("playercursor", getTintedImage("playercursor.webp", 0xff000000 + Objects.requireNonNull(mGame.getAgent().getTeam()).getColour(), assetManager));
         mIcons.put("ada", getBitmapFromDrawable(getContext(), R.drawable.ada));
