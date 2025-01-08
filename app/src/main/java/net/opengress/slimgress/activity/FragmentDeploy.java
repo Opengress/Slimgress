@@ -12,13 +12,15 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 
 import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
@@ -30,12 +32,14 @@ import net.opengress.slimgress.api.GameEntity.GameEntityPortal.LinkedResonator;
 import net.opengress.slimgress.api.Item.ItemResonator;
 import net.opengress.slimgress.dialog.DialogInfo;
 
+import org.jetbrains.annotations.Contract;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-public class ActivityDeploy extends AppCompatActivity {
+public class FragmentDeploy extends Fragment {
 
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
@@ -52,12 +56,13 @@ public class ActivityDeploy extends AppCompatActivity {
             R.id.deployScreenResonatorSE,
     };
     private GameEntityPortal mPortal;
+    private View mRootView;
 
     private final Handler deployResultHandler = new Handler(msg -> {
         var data = msg.getData();
         String error = getErrorStringFromAPI(data);
         if (error != null && !error.isEmpty()) {
-            DialogInfo dialog = new DialogInfo(ActivityDeploy.this);
+            DialogInfo dialog = new DialogInfo(requireActivity());
             dialog.setMessage(error).setDismissDelay(1500).show();
         }
         setUpView();
@@ -68,33 +73,43 @@ public class ActivityDeploy extends AppCompatActivity {
         var data = msg.getData();
         String error = getErrorStringFromAPI(data);
         if (error != null && !error.isEmpty()) {
-            DialogInfo dialog = new DialogInfo(ActivityDeploy.this);
+            DialogInfo dialog = new DialogInfo(requireActivity());
             dialog.setMessage(error).setDismissDelay(1500).show();
         }
         setUpView();
         return false;
     });
 
+    @NonNull
+    public static FragmentDeploy newInstance(String guid) {
+        FragmentDeploy fragment = new FragmentDeploy();
+        Bundle args = new Bundle();
+        args.putSerializable("guid", guid);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @SuppressLint({"DefaultLocale", "SetTextI18n"})
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_deploy);
-        String portalGuid = getIntent().getStringExtra("guid");
+        mRootView = inflater.inflate(R.layout.activity_deploy, container, false);
+
+        String portalGuid = getArguments().getString("guid");
         if (portalGuid != null) {
             mPortal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(portalGuid);
             if (mPortal != null) {
                 setUpView();
             } else {
                 Log.e("FragmentPortal", "Portal not found for GUID: " + portalGuid);
-                finish();
+                requireActivity().getOnBackPressedDispatcher().onBackPressed();
             }
         } else {
             Log.e("FragmentPortal", "No portal GUID provided");
-            finish();
+            requireActivity().getOnBackPressedDispatcher().onBackPressed();
         }
-        mApp.getLocationViewModel().getLocationData().observe(this, this::onReceiveLocation);
-
+        mApp.getLocationViewModel().getLocationData().observe(requireActivity(), this::onReceiveLocation);
+        return mRootView;
     }
 
     @SuppressLint({"DefaultLocale", "ObsoleteSdkInt"})
@@ -102,19 +117,19 @@ public class ActivityDeploy extends AppCompatActivity {
         boolean teamOK = mPortal.getPortalTeam().toString().equalsIgnoreCase("neutral") || mPortal.getPortalTeam().toString().equals(mGame.getAgent().getTeam().toString());
 
 
-        findViewById(R.id.btnRechargeAll).setVisibility(View.INVISIBLE);
-        findViewById(R.id.btnRechargeAll).setEnabled(false);
+        mRootView.findViewById(R.id.btnRechargeAll).setVisibility(View.INVISIBLE);
+        mRootView.findViewById(R.id.btnRechargeAll).setEnabled(false);
 
         // iterate over the resos (maybe unrolled) and set up their info and any relevant callbacks
         for (int id : mResoViewIds) {
-            ((Button) findViewById(id).findViewById(R.id.widgetActionButton)).setText(R.string.dply);
+            mRootView.findViewById(id).<Button>findViewById(R.id.widgetActionButton).setText(R.string.dply);
             if (teamOK) {
-                findViewById(id).findViewById(R.id.widgetActionButton).setOnClickListener(this::onDeployButtonPressed);
+                mRootView.findViewById(id).findViewById(R.id.widgetActionButton).setOnClickListener(this::onDeployButtonPressed);
             } else {
-                findViewById(id).findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
-                findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(false);
+                mRootView.findViewById(id).findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
+                mRootView.findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(false);
             }
-            findViewById(id).findViewById(R.id.widgetActionButton).setTag(id);
+            mRootView.findViewById(id).findViewById(R.id.widgetActionButton).setTag(id);
             // we don't do this in the reso widget because it's also used for recharging
 //            ((TextView) findViewById(id).findViewById(R.id.resoLevelText)).setText(R.string.l0);
         }
@@ -134,7 +149,7 @@ public class ActivityDeploy extends AppCompatActivity {
             if (reso == null) {
                 continue;
             }
-            View widget = findViewById(resoSlotToLayoutId(reso.slot));
+            View widget = mRootView.findViewById(resoSlotToLayoutId(reso.slot));
             ((TextView) widget.findViewById(R.id.resoLevelText)).setText(String.format("L%d", reso.level));
             int levelColour = getLevelColour(reso.level);
             ((TextView) widget.findViewById(R.id.resoLevelText)).setTextColor(getColourFromResources(getResources(), levelColour));
@@ -172,10 +187,13 @@ public class ActivityDeploy extends AppCompatActivity {
         }
 
         int dist = (int) mGame.getLocation().distanceTo(mPortal.getPortalLocation());
-        updateInfoText(dist, mPortal, findViewById(R.id.deployScreenPortalInfo));
+        updateInfoText(dist, mPortal, mRootView.findViewById(R.id.deployScreenPortalInfo));
         setButtonsEnabled(dist <= mActionRadiusM);
+        mRootView.findViewById(R.id.deployScreen_back_button).setOnClickListener(v ->
+                requireActivity().getOnBackPressedDispatcher().onBackPressed());
     }
 
+    @NonNull
     private HashMap<Integer, Integer> getResoCountsForLevels(List<GameEntityPortal.LinkedResonator> resos) {
         HashMap<Integer, Integer> resoCountForLevel = new HashMap<>();
         for (int i = 1; i <= 8; i++) {
@@ -203,20 +221,20 @@ public class ActivityDeploy extends AppCompatActivity {
         return false;
     }
 
-    private boolean canPutThisResonatorOn(HashMap<Integer, Integer> resoCountForLevel, int level) {
+    private boolean canPutThisResonatorOn(@NonNull HashMap<Integer, Integer> resoCountForLevel, int level) {
         boolean can = mGame.getKnobs().getPortalKnobs().getBandForLevel(level).getRemaining() > resoCountForLevel.get(level);
         return can && level <= mGame.getAgent().getLevel();
     }
 
     @SuppressLint("DefaultLocale")
     @SuppressWarnings("ConstantConditions")
-    private void onUpgradeButtonPressed(View view) {
+    private void onUpgradeButtonPressed(@NonNull View view) {
         int slot = layoutIdToResoSlot((int) view.getTag());
         var reso = mPortal.getPortalResonator(slot);
         var resosForUpgrade = inventory.getResosForUpgrade(reso.level);
         var resoCountForLevel = getResoCountsForLevels(mPortal.getPortalResonators());
         HashMap<Integer, String> levels = getAvailableDeployLevels(resosForUpgrade, resoCountForLevel);
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle("Select Resonator");
 //        builder.setIcon(R.drawable.ic_format_list_bulleted_black_24dp);
 
@@ -235,7 +253,7 @@ public class ActivityDeploy extends AppCompatActivity {
     }
 
     @SuppressLint("DefaultLocale")
-    private @NonNull HashMap<Integer, String> getAvailableDeployLevels(List<ItemResonator> resosForUpgrade, HashMap<Integer, Integer> resoCountForLevel) {
+    private @NonNull HashMap<Integer, String> getAvailableDeployLevels(@NonNull List<ItemResonator> resosForUpgrade, HashMap<Integer, Integer> resoCountForLevel) {
         HashMap<Integer, String> levels = new HashMap<>();
         HashMap<Integer, Integer> counts = new HashMap<>();
         for (var r : resosForUpgrade) {
@@ -256,12 +274,12 @@ public class ActivityDeploy extends AppCompatActivity {
 
     @SuppressLint("DefaultLocale")
     @SuppressWarnings("ConstantConditions")
-    private void onDeployButtonPressed(View view) {
+    private void onDeployButtonPressed(@NonNull View view) {
         int slot = layoutIdToResoSlot((int) view.getTag());
         var resosForUpgrade = inventory.getResosForUpgrade(0);
         var resoCountForLevel = getResoCountsForLevels(mPortal.getPortalResonators());
         HashMap<Integer, String> levels = getAvailableDeployLevels(resosForUpgrade, resoCountForLevel);
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle("Select Resonator");
 //        builder.setIcon(R.drawable.ic_format_list_bulleted_black_24dp);
 
@@ -278,16 +296,16 @@ public class ActivityDeploy extends AppCompatActivity {
         if (location != null) {
             int dist = (int) location.distanceTo(mPortal.getPortalLocation());
             setButtonsEnabled(dist <= mActionRadiusM);
-            updateInfoText(dist, mPortal, findViewById(R.id.deployScreenPortalInfo));
+            updateInfoText(dist, mPortal, mRootView.findViewById(R.id.deployScreenPortalInfo));
         } else {
             setButtonsEnabled(false);
-            updateInfoText(999999000, mPortal, findViewById(R.id.deployScreenPortalInfo));
+            updateInfoText(999999000, mPortal, mRootView.findViewById(R.id.deployScreenPortalInfo));
         }
     }
 
     private void setButtonsEnabled(boolean shouldEnableButton) {
         for (int id : mResoViewIds) {
-            findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(shouldEnableButton);
+            mRootView.findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(shouldEnableButton);
         }
     }
 
@@ -304,7 +322,7 @@ public class ActivityDeploy extends AppCompatActivity {
             case 6 -> R.id.deployScreenResonatorS;
             case 7 -> R.id.deployScreenResonatorSE;
             default -> {
-                Log.e("ActivityDeploy", "Unknown resonator slot: " + slot);
+                Log.e("FragmentDeploy", "Unknown resonator slot: " + slot);
                 yield -99999;
                 // maybe this should be a throw
             }
@@ -324,13 +342,15 @@ public class ActivityDeploy extends AppCompatActivity {
             case R.id.deployScreenResonatorS -> 6;
             case R.id.deployScreenResonatorSE -> 7;
             default -> {
-                Log.e("ActivityDeploy", "Unknown resonator widget id: " + id);
+                Log.e("FragmentDeploy", "Unknown resonator widget id: " + id);
                 yield -99999;
                 // FIXME: maybe this should be a throw
             }
         };
     }
 
+    @NonNull
+    @Contract(pure = true)
     private String resoSlotToOctantText(int slot) {
         // not sure if correct - cf intel.js eastAnticlockwiseToNorthClockwise
         // also window.OCTANTS = ['E', 'NE', 'N', 'NW', 'W', 'SW', 'S', 'SE'];

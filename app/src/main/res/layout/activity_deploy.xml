@@ -4,6 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="@dimen/activity_margin"
+    style="@style/GradientWindow"
     tools:ignore="RtlHardcoded, HardcodedText">
 
     <Button
@@ -11,6 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        style="@style/ButtonStyle"
         android:text="CHARGE\nALL"
         app:layout_constraintBottom_toTopOf="@id/deployScreenResonatorS"
         app:layout_constraintLeft_toRightOf="@id/deployScreenResonatorW"
@@ -86,10 +89,15 @@
         android:id="@+id/deployScreenPortalInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
         android:text="LVL: L?\nRNG: ?km\nENR: ?????? / ??????\nMOD: ?\nMOD: ?\nMOD: ?\nMOD: ?\nLNK: ?? in, ?? out"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/deployScreen_back_button"
+        style="@style/BackButtonStyle"
+        android:text="@string/back_button_back"
+        app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

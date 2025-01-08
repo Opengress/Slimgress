@@ -35,6 +35,8 @@
             android:layout_width="90dp"
             android:layout_height="@dimen/button_height"
             android:text="⚡"
+            style="@style/ButtonStyle"
+            android:layout_marginLeft="0dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Small" />
 
     </LinearLayout>
