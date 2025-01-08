@@ -1,5 +1,6 @@
 package net.opengress.slimgress.activity;
 
+import static androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
 import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_NONE;
@@ -19,12 +20,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 
@@ -49,7 +52,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-public class ActivityInventoryItem extends AppCompatActivity {
+public class FragmentInventoryItem extends Fragment {
 
     private GameState mGame;
     private Inventory mInventory;
@@ -57,23 +60,32 @@ public class ActivityInventoryItem extends AppCompatActivity {
     private TextView mItemLevel;
     private int mLevelColour;
     private InventoryListItem mItem;
+    private View mRootView;
+
+    public static FragmentInventoryItem newInstance(InventoryListItem item) {
+        FragmentInventoryItem fragment = new FragmentInventoryItem();
+        Bundle args = new Bundle();
+        args.putSerializable("item", item);
+        fragment.setArguments(args);
+        return fragment;
+    }
 
     @SuppressLint({"DefaultLocale", "SetTextI18n"})
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_inventory_item);
+        mRootView = inflater.inflate(R.layout.activity_inventory_item, container, false);
         // Get the item from the intent
-        mItem = (InventoryListItem) getIntent().getSerializableExtra("item");
+        mItem = (InventoryListItem) getArguments().getSerializable("item");
 
         mGame = SlimgressApplication.getInstance().getGame();
         mInventory = mGame.getInventory();
 
-        TextView itemTitle = findViewById(R.id.activity_inventory_item_title);
-        mItemRarity = findViewById(R.id.activity_inventory_item_rarity);
-        TextView itemName = findViewById(R.id.activity_inventory_item_name);
-        TextView itemDescription = findViewById(R.id.activity_inventory_item_description);
-        mItemLevel = findViewById(R.id.activity_inventory_item_level);
+        TextView itemTitle = mRootView.findViewById(R.id.activity_inventory_item_title);
+        mItemRarity = mRootView.findViewById(R.id.activity_inventory_item_rarity);
+        TextView itemName = mRootView.findViewById(R.id.activity_inventory_item_name);
+        TextView itemDescription = mRootView.findViewById(R.id.activity_inventory_item_description);
+        mItemLevel = mRootView.findViewById(R.id.activity_inventory_item_level);
 
         // Set the item details
         assert mItem != null;
@@ -103,19 +115,19 @@ public class ActivityInventoryItem extends AppCompatActivity {
 
                 // 12.4km
                 updateDistance();
-                findViewById(R.id.activity_inventory_item_distance).setVisibility(View.VISIBLE);
-                SlimgressApplication.getInstance().getLocationViewModel().getLocationData().observe(this, unused -> updateDistance());
+                mRootView.findViewById(R.id.activity_inventory_item_distance).setVisibility(View.VISIBLE);
+                SlimgressApplication.getInstance().getLocationViewModel().getLocationData().observe(requireActivity(), unused -> updateDistance());
 
                 // Domain Terrace, Karoro
-                ((TextView) findViewById(R.id.activity_inventory_item_address)).setText(((ItemPortalKey) actual).getPortalAddress());
-                findViewById(R.id.activity_inventory_item_address).setVisibility(View.VISIBLE);
+                ((TextView) mRootView.findViewById(R.id.activity_inventory_item_address)).setText(((ItemPortalKey) actual).getPortalAddress());
+                mRootView.findViewById(R.id.activity_inventory_item_address).setVisibility(View.VISIBLE);
 
 //                itemDescription.setText("Use to create links and remote recharge this Portal");
 
-                findViewById(R.id.activity_inventory_item_recharge).setVisibility(View.VISIBLE);
-                findViewById(R.id.activity_inventory_item_recharge).setEnabled(false);
-                findViewById(R.id.activity_inventory_item_image).setOnClickListener(c -> {
-                    Intent myIntent = new Intent(this, ActivityPortal.class);
+                mRootView.findViewById(R.id.activity_inventory_item_recharge).setVisibility(View.VISIBLE);
+                mRootView.findViewById(R.id.activity_inventory_item_recharge).setEnabled(false);
+                mRootView.findViewById(R.id.activity_inventory_item_image).setOnClickListener(c -> {
+                    Intent myIntent = new Intent(requireActivity(), ActivityPortal.class);
                     myIntent.putExtra("guid", portal.getEntityGuid());
                     startActivity(myIntent);
                 });
@@ -129,27 +141,27 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 itemTitle.setText("Power Cube");
                 itemDescription.setText("Store of XM which can be used to recharge Scanner");
                 inflateResource(mItem, actual);
-                findViewById(R.id.activity_inventory_item_use).setVisibility(View.VISIBLE);
+                mRootView.findViewById(R.id.activity_inventory_item_use).setVisibility(View.VISIBLE);
                 boolean canUse = mGame.getAgent().getEnergy() < mGame.getAgent().getEnergyMax();
                 canUse = canUse && mItem.getLevel() <= mGame.getAgent().getLevel();
-                findViewById(R.id.activity_inventory_item_use).setEnabled(canUse);
-                findViewById(R.id.activity_inventory_item_use).setOnClickListener(this::onUseItemClicked);
+                mRootView.findViewById(R.id.activity_inventory_item_use).setEnabled(canUse);
+                mRootView.findViewById(R.id.activity_inventory_item_use).setOnClickListener(this::onUseItemClicked);
             }
             case WeaponXMP -> {
                 itemTitle.setText("XMP Burster");
                 itemDescription.setText("Exotic Matter Pulse weapons which can destroy enemy resonators and Mods and neutralize enemy portals");
                 inflateResource(mItem, actual);
-                findViewById(R.id.activity_inventory_item_fire).setVisibility(View.VISIBLE);
-                findViewById(R.id.activity_inventory_item_fire).setEnabled(mItem.getLevel() <= mGame.getAgent().getLevel());
-                findViewById(R.id.activity_inventory_item_fire).setOnClickListener(this::onFireClicked);
+                mRootView.findViewById(R.id.activity_inventory_item_fire).setVisibility(View.VISIBLE);
+                mRootView.findViewById(R.id.activity_inventory_item_fire).setEnabled(mItem.getLevel() <= mGame.getAgent().getLevel());
+                mRootView.findViewById(R.id.activity_inventory_item_fire).setOnClickListener(this::onFireClicked);
             }
             case WeaponUltraStrike -> {
                 itemTitle.setText("Ultra Strike");
                 itemDescription.setText("A variation of the Exotic Matter Pulse weapon with a more powerful blast that occurs within a smaller radius");
                 inflateResource(mItem, actual);
-                findViewById(R.id.activity_inventory_item_fire).setVisibility(View.VISIBLE);
-                findViewById(R.id.activity_inventory_item_fire).setEnabled(mItem.getLevel() <= mGame.getAgent().getLevel());
-                findViewById(R.id.activity_inventory_item_fire).setOnClickListener(this::onFireClicked);
+                mRootView.findViewById(R.id.activity_inventory_item_fire).setVisibility(View.VISIBLE);
+                mRootView.findViewById(R.id.activity_inventory_item_fire).setEnabled(mItem.getLevel() <= mGame.getAgent().getLevel());
+                mRootView.findViewById(R.id.activity_inventory_item_fire).setOnClickListener(this::onFireClicked);
             }
             case ModShield -> {
                 itemTitle.setText(actual.getDisplayName());
@@ -195,9 +207,9 @@ public class ActivityInventoryItem extends AppCompatActivity {
                             itemDescription.setText("The ADA Refactor can be used to reverse the alignment of an Enlightened Portal.");
                 }
                 inflateResource(mItem, actual);
-                findViewById(R.id.activity_inventory_item_use).setVisibility(View.VISIBLE);
-                findViewById(R.id.activity_inventory_item_use).setEnabled(true);
-                findViewById(R.id.activity_inventory_item_use).setOnClickListener(this::onFireClicked);
+                mRootView.findViewById(R.id.activity_inventory_item_use).setVisibility(View.VISIBLE);
+                mRootView.findViewById(R.id.activity_inventory_item_use).setEnabled(true);
+                mRootView.findViewById(R.id.activity_inventory_item_use).setOnClickListener(this::onFireClicked);
             }
             case PlayerPowerup -> {
                 // FIXME different types of playerpowerups
@@ -218,9 +230,9 @@ public class ActivityInventoryItem extends AppCompatActivity {
         String url = mItem.getImage();
         if (url == null) {
             if (mItem.getIcon() == null) {
-                ((ImageView) findViewById(R.id.activity_inventory_item_image)).setImageDrawable(AppCompatResources.getDrawable(getApplicationContext(), mItem.getIconID()));
+                ((ImageView) mRootView.findViewById(R.id.activity_inventory_item_image)).setImageDrawable(AppCompatResources.getDrawable(requireActivity().getApplicationContext(), mItem.getIconID()));
             } else {
-                ((ImageView) findViewById(R.id.activity_inventory_item_image)).setImageDrawable(mItem.getIcon());
+                ((ImageView) mRootView.findViewById(R.id.activity_inventory_item_image)).setImageDrawable(mItem.getIcon());
             }
         } else {
             BulkPlayerStorage storage = mGame.getBulkPlayerStorage();
@@ -228,36 +240,37 @@ public class ActivityInventoryItem extends AppCompatActivity {
             if (Objects.equals(desiredResolution, UNTRANSLATABLE_IMAGE_RESOLUTION_NONE)) {
                 Glide.with(this)
                         .load(R.drawable.no_image)
-                        .into((ImageView) findViewById(R.id.activity_inventory_item_image));
+                        .into((ImageView) mRootView.findViewById(R.id.activity_inventory_item_image));
             } else {
                 Glide.with(this)
                         .load(url)
                         .placeholder(R.drawable.no_image)
                         .error(R.drawable.no_image)
-                        .into((ImageView) findViewById(R.id.activity_inventory_item_image));
+                        .into((ImageView) mRootView.findViewById(R.id.activity_inventory_item_image));
             }
         }
 
         boolean isRecyclable = mGame.getKnobs().getRecycleKnobs().getRecycleValues(mInventory.getItems(mItem.getType()).get(0).getName()) != null;
         if (mGame.getKnobs().getClientFeatureKnobs().isEnableRecycle() && isRecyclable) {
-            findViewById(R.id.activity_inventory_item_recycle).setEnabled(true);
-            findViewById(R.id.activity_inventory_item_recycle).setOnClickListener(this::onRecycleItemClicked);
-            findViewById(R.id.activity_inventory_item_drop).setEnabled(true);
-            findViewById(R.id.activity_inventory_item_drop).setOnClickListener(this::onDropItemClicked);
+            mRootView.findViewById(R.id.activity_inventory_item_recycle).setEnabled(true);
+            mRootView.findViewById(R.id.activity_inventory_item_recycle).setOnClickListener(this::onRecycleItemClicked);
+            mRootView.findViewById(R.id.activity_inventory_item_drop).setEnabled(true);
+            mRootView.findViewById(R.id.activity_inventory_item_drop).setOnClickListener(this::onDropItemClicked);
         } else if (!isRecyclable) {
-            findViewById(R.id.activity_inventory_item_recycle).setEnabled(false);
-            findViewById(R.id.activity_inventory_item_drop).setEnabled(false);
+            mRootView.findViewById(R.id.activity_inventory_item_recycle).setEnabled(false);
+            mRootView.findViewById(R.id.activity_inventory_item_drop).setEnabled(false);
         } else {
-            findViewById(R.id.activity_inventory_item_recycle).setVisibility(View.INVISIBLE);
+            mRootView.findViewById(R.id.activity_inventory_item_recycle).setVisibility(View.INVISIBLE);
         }
 
-        findViewById(R.id.activity_inventory_item_back_button).setOnClickListener(v -> finish());
+        mRootView.findViewById(R.id.activity_inventory_item_back_button).setOnClickListener(v -> finish());
 
+        return mRootView;
     }
 
     @SuppressLint("SetTextI18n")
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
 
         // Retrieve the current list of IDs from the InventoryListItem
@@ -272,7 +285,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
         }
 
         // Now mItem.getQuantity() reflects the current actual quantity
-        ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
+        ((TextView) mRootView.findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
 
         // If the quantity is zero, you might consider closing this activity
         if (mItem.getQuantity() == 0) {
@@ -287,7 +300,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
             // crashes on next line if there aren't exclusions in proguard config
             dist = (int) (loc.distanceTo(mItem.getLocation()));
         }
-        ((TextView) findViewById(R.id.activity_inventory_item_distance)).setText(getPrettyDistanceString(dist));
+        ((TextView) mRootView.findViewById(R.id.activity_inventory_item_distance)).setText(getPrettyDistanceString(dist));
     }
 
     @SuppressLint("DefaultLocale")
@@ -309,7 +322,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
             var data = msg.getData();
             String error = getErrorStringFromAPI(data);
             if (error != null && !error.isEmpty()) {
-                DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
+                DialogInfo dialog = new DialogInfo(requireActivity());
                 dialog.setMessage(error).setDismissDelay(1500).show();
                 SlimgressApplication.postPlainCommsMessage("Drop failed: " + error);
             } else {
@@ -318,7 +331,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 for (var id : Objects.requireNonNull(data.getStringArray("dropped"))) {
                     mItem.remove(id);
                     mInventory.removeItem(id);
-                    ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
+                    ((TextView) mRootView.findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                 }
                 if (mItem.getQuantity() == 0) {
                     SlimgressApplication.schedule(this::finish, 100, TimeUnit.MILLISECONDS);
@@ -330,11 +343,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
 
     private void onFireClicked(View view) {
         getMainActivity().showFireCarousel(mItem);
-        Intent intent = new Intent(ActivityInventoryItem.this, ActivityMain.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        setResult(RESULT_OK, intent);
-        startActivity(intent);
-        finish();
+        requireActivity().getSupportFragmentManager().popBackStack(null, POP_BACK_STACK_INCLUSIVE);
     }
 
     @SuppressLint("SetTextI18n")
@@ -346,7 +355,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 var data = msg.getData();
                 String error = getErrorStringFromAPI(data);
                 if (error != null && !error.isEmpty()) {
-                    DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
+                    DialogInfo dialog = new DialogInfo(requireActivity());
                     dialog.setMessage(error).setDismissDelay(1500).show();
                     SlimgressApplication.postPlainCommsMessage("Unable to use power cube: " + error);
                 } else {
@@ -359,7 +368,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                     for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
                         mItem.remove(id);
                         mInventory.removeItem(id);
-                        ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
+                        ((TextView) mRootView.findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                     }
                     if (mItem.getQuantity() == 0) {
                         SlimgressApplication.schedule(this::finish, 100, TimeUnit.MILLISECONDS);
@@ -373,7 +382,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
     @SuppressLint("DefaultLocale")
     private void onRecycleItemClicked(View ignoredV) {
         if (mGame.getKnobs().getClientFeatureKnobs().isEnableRecycleConfirmationDialog()) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(ActivityInventoryItem.this);
+            AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
             LayoutInflater inflater = getLayoutInflater();
             View dialogView = inflater.inflate(R.layout.dialog_recycle, null);
             builder.setView(dialogView);
@@ -470,7 +479,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 if (quantity < mItem.getQuantity()) {
                     quantity++;
                     int finalQuantity = quantity;
-                    runOnUiThread(() -> {
+                    requireActivity().runOnUiThread(() -> {
                         quantityDisplay.setText(String.format("%d/%d", finalQuantity, mItem.getQuantity()));
                         updateRecoveryInfo(finalQuantity, recoveryInfo);
                         updateQuantityDesired(neededXmView);
@@ -498,7 +507,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 if (quantity > 1) {
                     quantity--;
                     int finalQuantity = quantity;
-                    runOnUiThread(() -> {
+                    requireActivity().runOnUiThread(() -> {
                         quantityDisplay.setText(String.format("%d/%d", finalQuantity, mItem.getQuantity()));
                         updateRecoveryInfo(finalQuantity, recoveryInfo);
                         updateQuantityDesired(neededXmView);
@@ -560,7 +569,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
             var data = msg.getData();
             String error = getErrorStringFromAPI(data);
             if (error != null && !error.isEmpty()) {
-                DialogInfo dialog = new DialogInfo(ActivityInventoryItem.this);
+                DialogInfo dialog = new DialogInfo(requireActivity());
                 dialog.setMessage(error).setDismissDelay(1500).show();
                 SlimgressApplication.postPlainCommsMessage("Recycle failed: " + error);
             } else {
@@ -580,7 +589,7 @@ public class ActivityInventoryItem extends AppCompatActivity {
                 for (var id : Objects.requireNonNull(data.getStringArray("recycled"))) {
                     mItem.remove(id);
                     mInventory.removeItem(id);
-                    ((TextView) findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
+                    ((TextView) requireActivity().findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                 }
                 if (mItem.getQuantity() == 0) {
                     SlimgressApplication.schedule(this::finish, 100, TimeUnit.MILLISECONDS);
@@ -588,5 +597,9 @@ public class ActivityInventoryItem extends AppCompatActivity {
             }
             return false;
         }));
+    }
+
+    private void finish() {
+        requireActivity().getOnBackPressedDispatcher().onBackPressed();
     }
 }

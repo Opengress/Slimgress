@@ -27,12 +27,12 @@ import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getImageForResoLevel;
 import static net.opengress.slimgress.ViewHelpers.getLevelColour;
+import static net.opengress.slimgress.ViewHelpers.getMainActivity;
 import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,9 +41,11 @@ import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.fragment.app.FragmentTransaction;
+
 import com.bumptech.glide.Glide;
 
-import net.opengress.slimgress.activity.ActivityInventoryItem;
+import net.opengress.slimgress.activity.FragmentInventoryItem;
 import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Game.GameState;
@@ -250,9 +252,11 @@ public class InventoryList extends BaseExpandableListAdapter {
             image.setImageDrawable(item.getIcon());
         }
         convertView.setOnClickListener(v -> {
-            Intent intent = new Intent(mContext, ActivityInventoryItem.class);
-            intent.putExtra("item", item);
-            mContext.startActivity(intent);
+            FragmentTransaction transaction = getMainActivity().getSupportFragmentManager().beginTransaction();
+            // I'm mildly surprised that worked. This should all go into the activity, really
+            transaction.add(R.id.fragment_container, FragmentInventoryItem.newInstance(item), "INVENTORY_ITEM");
+            transaction.addToBackStack("INVENTORY_ITEM");
+            transaction.commit();
         });
 
 
