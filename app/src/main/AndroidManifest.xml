@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <!-- For attack notifications in Android 33+ -->
+    <!-- For attack notifications in Android 33+ ... and self-updater -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Downloads updates while app is in the background -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -63,9 +63,6 @@
         <activity
             android:name="net.opengress.slimgress.activity.ActivityMain"
             android:configChanges="orientation|screenSize" />
-
-        <!-- mod deployment activity with additional information -->
-        <activity android:name="net.opengress.slimgress.activity.ActivityMod" />
     </application>
 
 </manifest>

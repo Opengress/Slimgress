@@ -10,12 +10,15 @@ import android.app.AlertDialog;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 
 import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
@@ -35,8 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-// FIXME user can't deploy on portal if portal belongs to wrong team!
-public class ActivityMod extends AppCompatActivity {
+public class FragmentMod extends Fragment {
 
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
@@ -51,13 +53,14 @@ public class ActivityMod extends AppCompatActivity {
             R.id.modScreenMod3
     };
     private GameEntityPortal mPortal;
+    private View mRootView;
 
 
     private final Handler deployResultHandler = new Handler(msg -> {
         var data = msg.getData();
         String error = getErrorStringFromAPI(data);
         if (error != null && !error.isEmpty()) {
-            DialogInfo dialog = new DialogInfo(ActivityMod.this);
+            DialogInfo dialog = new DialogInfo(requireActivity());
             dialog.setMessage(error).setDismissDelay(1500).show();
         } else {
             ItemMod mod = (ItemMod) msg.getData().getSerializable("mod");
@@ -70,27 +73,37 @@ public class ActivityMod extends AppCompatActivity {
         return false;
     });
 
+    @NonNull
+    public static FragmentMod newInstance(String guid) {
+        FragmentMod fragment = new FragmentMod();
+        Bundle args = new Bundle();
+        args.putSerializable("guid", guid);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @SuppressLint({"DefaultLocale", "SetTextI18n"})
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_mod);
-        String portalGuid = getIntent().getStringExtra("guid");
+        mRootView = inflater.inflate(R.layout.activity_mod, container, false);
+
+        String portalGuid = getArguments().getString("guid");
         if (portalGuid != null) {
             mPortal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(portalGuid);
             if (mPortal != null) {
                 setUpView();
             } else {
                 Log.e("FragmentPortal", "Portal not found for GUID: " + portalGuid);
-                finish();
+                requireActivity().getOnBackPressedDispatcher().onBackPressed();
             }
         } else {
             Log.e("FragmentPortal", "No portal GUID provided");
-            finish();
+            requireActivity().getOnBackPressedDispatcher().onBackPressed();
         }
         setUpView();
-        mApp.getLocationViewModel().getLocationData().observe(this, this::onReceiveLocation);
-
+        mApp.getLocationViewModel().getLocationData().observe(requireActivity(), this::onReceiveLocation);
+        return mRootView;
     }
 
     @SuppressLint({"DefaultLocale", "ObsoleteSdkInt", "SetTextI18n"})
@@ -99,9 +112,9 @@ public class ActivityMod extends AppCompatActivity {
 
         // iterate over the mods (maybe unrolled) and set up their info and any relevant callbacks
         for (int id : mModViewIds) {
-            findViewById(id).findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
-            findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(false);
-            findViewById(id).findViewById(R.id.widgetActionButton).setTag(id);
+            mRootView.findViewById(id).findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
+            mRootView.findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(false);
+            mRootView.findViewById(id).findViewById(R.id.widgetActionButton).setTag(id);
 //            ((TextView) findViewById(id).findViewById(R.id.modDescriptionText)).setText(R.string.l0);
         }
 
@@ -127,7 +140,7 @@ public class ActivityMod extends AppCompatActivity {
 
         // iterate again to set up resonator deployment user interface
         for (int slot = 0; slot < mods.size(); slot++) {
-            View widget = findViewById(modSlotToLayoutId(slot));
+            View widget = mRootView.findViewById(modSlotToLayoutId(slot));
             LinkedMod mod = mods.get(slot);
             if (mod == null) {
                 ((TextView) widget.findViewById(R.id.modDescriptionText)).setText(null);
@@ -158,13 +171,15 @@ public class ActivityMod extends AppCompatActivity {
         }
 
         int dist = (int) mGame.getLocation().distanceTo(mPortal.getPortalLocation());
-        updateInfoText(dist, mPortal, findViewById(R.id.modScreenPortalInfo));
+        updateInfoText(dist, mPortal, mRootView.findViewById(R.id.modScreenPortalInfo));
         setButtonsEnabled(dist <= mActionRadiusM);
+        mRootView.findViewById(R.id.modScreen_back_button).setOnClickListener(v ->
+                requireActivity().getOnBackPressedDispatcher().onBackPressed());
     }
 
     @SuppressLint("DefaultLocale")
     @SuppressWarnings("ConstantConditions")
-    private void onInstallModButtonPressed(View view) {
+    private void onInstallModButtonPressed(@NonNull View view) {
         int slot = layoutIdToModSlot((Integer) view.getTag());
         List<ItemMod> mods = mGame.getInventory().getMods();
         HashMap<ModKey, Integer> counts = getAvailableMods(mods);
@@ -182,7 +197,7 @@ public class ActivityMod extends AppCompatActivity {
             modKeys.add(key);
         }
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle("Select Mod");
         builder.setItems(displayStrings.toArray(new String[0]), (dialogInterface, i) -> {
             ModKey selectedKey = modKeys.get(i);
@@ -194,7 +209,7 @@ public class ActivityMod extends AppCompatActivity {
                 mGame.intAddMod(modToInstall, mPortal, slot, deployResultHandler);
             } else {
                 // Handle the case where the mod is no longer available
-                Toast.makeText(this, "Mod not available", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireActivity(), "Mod not available", Toast.LENGTH_SHORT).show();
             }
         });
         builder.show();
@@ -202,10 +217,10 @@ public class ActivityMod extends AppCompatActivity {
 
     @SuppressLint("DefaultLocale")
     @SuppressWarnings("ConstantConditions")
-    private void onRemoveModButtonPressed(View view) {
+    private void onRemoveModButtonPressed(@NonNull View view) {
         int slot = layoutIdToModSlot((Integer) view.getTag());
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle("Confirm Removal");
         builder.setMessage("You are about to remove a mod. It will be erased from existence. Are you sure?")
                 .setPositiveButton("Yes", (dialogInterface, which) -> mGame.intRemoveMod(mPortal, slot, deployResultHandler))
@@ -213,7 +228,8 @@ public class ActivityMod extends AppCompatActivity {
         builder.show();
     }
 
-    private List<Map.Entry<ModKey, Integer>> getSortedModCounts(HashMap<ModKey, Integer> counts) {
+    @NonNull
+    private List<Map.Entry<ModKey, Integer>> getSortedModCounts(@NonNull HashMap<ModKey, Integer> counts) {
         List<Map.Entry<ModKey, Integer>> modEntries = new ArrayList<>(counts.entrySet());
 
         // Sort the list based on ModKey's compareTo method
@@ -222,8 +238,9 @@ public class ActivityMod extends AppCompatActivity {
         return modEntries;
     }
 
+    @NonNull
     @SuppressLint("DefaultLocale")
-    private HashMap<ModKey, Integer> getAvailableMods(List<ItemMod> mods) {
+    private HashMap<ModKey, Integer> getAvailableMods(@NonNull List<ItemMod> mods) {
         HashMap<ModKey, Integer> counts = new HashMap<>();
         for (ItemMod mod : mods) {
             ModKey key = new ModKey(mod.getItemType(), mod.getItemRarity(), mod.getModDisplayName());
@@ -241,16 +258,16 @@ public class ActivityMod extends AppCompatActivity {
         if (location != null) {
             int dist = (int) location.distanceTo(mPortal.getPortalLocation());
             setButtonsEnabled(dist <= mActionRadiusM);
-            updateInfoText(dist, mPortal, findViewById(R.id.modScreenPortalInfo));
+            updateInfoText(dist, mPortal, mRootView.findViewById(R.id.modScreenPortalInfo));
         } else {
             setButtonsEnabled(false);
-            updateInfoText(999999000, mPortal, findViewById(R.id.modScreenPortalInfo));
+            updateInfoText(999999000, mPortal, mRootView.findViewById(R.id.modScreenPortalInfo));
         }
     }
 
     private void setButtonsEnabled(boolean shouldEnableButton) {
         for (int id : mModViewIds) {
-            findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(shouldEnableButton);
+            mRootView.findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(shouldEnableButton);
         }
     }
 
@@ -263,7 +280,7 @@ public class ActivityMod extends AppCompatActivity {
             case 2 -> R.id.modScreenMod2;
             case 3 -> R.id.modScreenMod3;
             default -> {
-                Log.e("ActivityMod", "Unknown mod slot: " + slot);
+                Log.e("FragmentMod", "Unknown mod slot: " + slot);
                 yield -99999;
                 // maybe this should be a throw
             }
@@ -279,7 +296,7 @@ public class ActivityMod extends AppCompatActivity {
             case R.id.modScreenMod2 -> 2;
             case R.id.modScreenMod3 -> 3;
             default -> {
-                Log.e("ActivityMod", "Unknown mod widget id: " + id);
+                Log.e("FragmentMod", "Unknown mod widget id: " + id);
                 yield -99999;
                 // FIXME: maybe this should be a throw
             }
