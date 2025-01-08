@@ -64,9 +64,6 @@
             android:name="net.opengress.slimgress.activity.ActivityMain"
             android:configChanges="orientation|screenSize" />
 
-        <!-- ops activity with additional information -->
-        <activity android:name="net.opengress.slimgress.activity.ActivityOps" />
-
         <!-- portal view activity with additional information -->
         <activity android:name="net.opengress.slimgress.activity.ActivityPortal" />
 

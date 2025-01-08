@@ -35,14 +35,14 @@
         android:layout_marginBottom="40dp" />
 
     <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/map"
-        android:name="net.opengress.slimgress.ScannerView"
+        android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:id="@+id/activity_main_widgets">
 
         <ProgressBar
             android:id="@+id/agentap"

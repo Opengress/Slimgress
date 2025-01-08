@@ -55,12 +55,13 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SimpleItemAnimator;
@@ -138,18 +139,31 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         setContentView(R.layout.activity_main);
         mApp.setMainActivity(this);
 
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment_container, new ScannerView(), "SCANNER")
+                    .commit();
+        }
+
         setUpFireCarousel();
 
         // create ops button callback
-        mOpsActivityResultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                this::onOpsResult
-        );
         final Button buttonOps = findViewById(R.id.buttonOps);
         buttonOps.setOnClickListener(v -> {
-            // Perform action on click
-            Intent myIntent = new Intent(getApplicationContext(), ActivityOps.class);
-            mOpsActivityResultLauncher.launch(myIntent);
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.add(R.id.fragment_container, new FragmentOps(), "OPS");
+            transaction.addToBackStack("OPS");
+            transaction.commit();
+        });
+
+        getSupportFragmentManager().addOnBackStackChangedListener(() -> {
+            Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+            if (currentFragment instanceof ScannerView) {
+                findViewById(R.id.activity_main_widgets).setVisibility(View.VISIBLE);
+            } else {
+                findViewById(R.id.activity_main_widgets).setVisibility(View.GONE);
+                resetSelection();
+            }
         });
 
         // create comm button callback
@@ -229,7 +243,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
     private void onOpsResult(ActivityResult activityResult) {
         // this is nice to have, but probably unneeded so i could turn it off to speed the game up
-        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
+        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.fragment_container);
         Objects.requireNonNull(scanner).updateWorld();
     }
 
@@ -764,7 +778,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         if (itemType == null) {
             return false;
         }
-        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.map);
+        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.fragment_container);
         assert scanner != null;
         // todo: rate limiting etc per knobs
         if (itemType == ItemBase.ItemType.WeaponXMP || itemType == ItemBase.ItemType.WeaponUltraStrike) {
@@ -857,6 +871,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     private void resetSelection() {
+        // FIXME this is silly - one day the flipcard buttons and fire carousel will be together
         mSelectTargetText.setVisibility(View.GONE);
         mSelectTargetText.setText(R.string.flipcard_select_target);
         mConfirmButton.setVisibility(View.GONE);
