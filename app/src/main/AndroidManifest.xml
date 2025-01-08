@@ -64,9 +64,6 @@
             android:name="net.opengress.slimgress.activity.ActivityMain"
             android:configChanges="orientation|screenSize" />
 
-        <!-- portal view activity with additional information -->
-        <activity android:name="net.opengress.slimgress.activity.ActivityPortal" />
-
         <!-- photo rating activity with additional information -->
         <activity android:name="net.opengress.slimgress.activity.ActivityPhotoRate" />
 

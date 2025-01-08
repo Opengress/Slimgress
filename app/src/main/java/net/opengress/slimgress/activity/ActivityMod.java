@@ -81,11 +81,11 @@ public class ActivityMod extends AppCompatActivity {
             if (mPortal != null) {
                 setUpView();
             } else {
-                Log.e("ActivityPortal", "Portal not found for GUID: " + portalGuid);
+                Log.e("FragmentPortal", "Portal not found for GUID: " + portalGuid);
                 finish();
             }
         } else {
-            Log.e("ActivityPortal", "No portal GUID provided");
+            Log.e("FragmentPortal", "No portal GUID provided");
             finish();
         }
         setUpView();

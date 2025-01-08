@@ -24,7 +24,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -32,8 +34,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
+import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 
@@ -59,13 +61,14 @@ import java.util.Objects;
 import java.util.Set;
 
 // TODO: See if you can squeeze a local linkabaility check or two in here
-public class ActivityPortal extends AppCompatActivity {
+public class FragmentPortal extends Fragment {
 
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private final int mActionRadiusM = mGame.getKnobs().getScannerKnobs().getActionRadiusM();
     private boolean mIsHacking = false;
     private GameEntityPortal mPortal;
+    private View mRootView;
     /*
     3, 2, 1, 0
     4, 5, 6, 7
@@ -93,19 +96,19 @@ public class ActivityPortal extends AppCompatActivity {
 
     @SuppressLint({"DefaultLocale", "ObsoleteSdkInt", "SetTextI18n"})
     private void setUpView() {
-        if (isDestroyed()) {
+        if (isDetached()) {
             return;
         }
         int TEAM_COLOR = 0xFF000000 + mPortal.getPortalTeam().getColour();
 
-        ((TextView) findViewById(R.id.portalTitle)).setText(mPortal.getPortalTitle());
+        ((TextView) mRootView.findViewById(R.id.portalTitle)).setText(mPortal.getPortalTitle());
 
         String portalLevel = "L" + Math.max(1, mPortal.getPortalLevel());
-        ((TextView) findViewById(R.id.portalLevel)).setText(portalLevel);
+        ((TextView) mRootView.findViewById(R.id.portalLevel)).setText(portalLevel);
         int levelColour = getLevelColour(mPortal.getPortalLevel());
-        ((TextView) findViewById(R.id.portalLevel)).setTextColor(getColourFromResources(getResources(), levelColour));
+        ((TextView) mRootView.findViewById(R.id.portalLevel)).setTextColor(getColourFromResources(getResources(), levelColour));
 
-        ((TextView) findViewById(R.id.portalEnergy)).setText(getString(R.string.portal_energy, formatNumberToKLocalised(mPortal.getPortalEnergy())));
+        ((TextView) mRootView.findViewById(R.id.portalEnergy)).setText(getString(R.string.portal_energy, formatNumberToKLocalised(mPortal.getPortalEnergy())));
 
 
         // TODO: link to photostream with portal description, up/downvotes, whatever
@@ -114,13 +117,13 @@ public class ActivityPortal extends AppCompatActivity {
         if (Objects.equals(desiredResolution, UNTRANSLATABLE_IMAGE_RESOLUTION_NONE)) {
             Glide.with(this)
                     .load(R.drawable.no_image)
-                    .into((ImageView) findViewById(R.id.portalImage));
+                    .into((ImageView) mRootView.findViewById(R.id.portalImage));
         } else {
             Glide.with(this)
                     .load(mPortal.getPortalImageUrl())
                     .placeholder(R.drawable.no_image)
                     .error(R.drawable.no_image)
-                    .into((ImageView) findViewById(R.id.portalImage));
+                    .into((ImageView) mRootView.findViewById(R.id.portalImage));
         }
 
         HashSet<String> guids = new HashSet<>();
@@ -135,7 +138,7 @@ public class ActivityPortal extends AppCompatActivity {
             }
         }
         if (mPortal.getOwnerGuid() == null) {
-            ((TextView) findViewById(R.id.portalOwner)).setText(R.string.uncaptured);
+            ((TextView) mRootView.findViewById(R.id.portalOwner)).setText(R.string.uncaptured);
         } else {
             guids.add(mPortal.getOwnerGuid());
         }
@@ -152,18 +155,18 @@ public class ActivityPortal extends AppCompatActivity {
             guids.add(mPortal.getDiscoverer().getGUID());
         }
 
-        ((TextView) findViewById(R.id.activityPortalCurrentAttributionText)).setText("by " + discoverer);
-        ((TextView) findViewById(R.id.activityPortalCurrentAttributionText)).setTextColor(discovererTeamColour);
+        ((TextView) mRootView.findViewById(R.id.activityPortalCurrentAttributionText)).setText("by " + discoverer);
+        ((TextView) mRootView.findViewById(R.id.activityPortalCurrentAttributionText)).setTextColor(discovererTeamColour);
 
         var unknownGuids = mGame.checkAgentNames(guids);
 
         if (unknownGuids.isEmpty()) {
             if (mPortal.getOwnerGuid() != null) {
-                ((TextView) findViewById(R.id.portalOwner)).setText(mGame.getAgentName(mPortal.getOwnerGuid()));
+                ((TextView) mRootView.findViewById(R.id.portalOwner)).setText(mGame.getAgentName(mPortal.getOwnerGuid()));
             }
         } else {
             Handler ownerResultHandler = new Handler(msg -> {
-                ((TextView) findViewById(R.id.portalOwner)).setText(msg.getData().getString(mPortal.getOwnerGuid()));
+                ((TextView) mRootView.findViewById(R.id.portalOwner)).setText(msg.getData().getString(mPortal.getOwnerGuid()));
                 HashMap<String, String> names = new HashMap<>();
                 for (var guid : guids) {
                     names.put(guid, msg.getData().getString(guid));
@@ -174,10 +177,10 @@ public class ActivityPortal extends AppCompatActivity {
             });
             mApp.runInThread_(() -> mGame.intGetNicknamesFromUserGUIDs(guids.toArray(new String[0]), ownerResultHandler));
         }
-        ((TextView) findViewById(R.id.portalOwner)).setTextColor(TEAM_COLOR);
+        ((TextView) mRootView.findViewById(R.id.portalOwner)).setTextColor(TEAM_COLOR);
 
         for (int i = 0; i < mPortal.getPortalResonators().size(); i++) {
-            ProgressBar meter = findViewById(mResoProgressBarViewIds[i]);
+            ProgressBar meter = mRootView.findViewById(mResoProgressBarViewIds[i]);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 meter.setProgressTintList(ColorStateList.valueOf(TEAM_COLOR));
             } else {
@@ -185,7 +188,7 @@ public class ActivityPortal extends AppCompatActivity {
                 progressDrawable.setColorFilter(TEAM_COLOR, PorterDuff.Mode.SRC_IN);
                 meter.setProgressDrawable(progressDrawable);
             }
-            TextView label = findViewById(mResoLabelIds[i]);
+            TextView label = mRootView.findViewById(mResoLabelIds[i]);
 
             GameEntityPortal.LinkedResonator reso = mPortal.getPortalResonator(i);
             if (reso == null) {
@@ -214,10 +217,11 @@ public class ActivityPortal extends AppCompatActivity {
     @SuppressLint({"DefaultLocale", "SetTextI18n"})
     public void checkKeys() {
         List<ItemPortalKey> keys = mGame.getInventory().getKeysForPortal(mPortal);
-        findViewById(R.id.activityPortalKeyButton).setEnabled(!keys.isEmpty());
-        ((TextView) findViewById(R.id.activityPortalKeyCount)).setText("x" + keys.size());
-        findViewById(R.id.activityPortalKeyButton).setOnClickListener(v -> {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        mRootView.findViewById(R.id.activityPortalKeyButton).setEnabled(!keys.isEmpty());
+        ((TextView) mRootView.findViewById(R.id.activityPortalKeyCount)).setText("x" + keys.size());
+        mRootView.findViewById(R.id.activityPortalKeyButton).setOnClickListener(v -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
+            ;
             builder.setTitle("Portal Key");
             builder.setMessage(String.format("You are holding %d keys. This dialog will not prompt for confirmation or ask for quantities.", keys.size()));
             builder.setCancelable(false);
@@ -225,13 +229,13 @@ public class ActivityPortal extends AppCompatActivity {
                 var data = msg.getData();
                 String error = getErrorStringFromAPI(data);
                 if (error != null && !error.isEmpty()) {
-                    DialogInfo eDialog = new DialogInfo(this);
+                    DialogInfo eDialog = new DialogInfo(requireActivity());
                     eDialog.setMessage(error).setDismissDelay(1500).show();
                     SlimgressApplication.postPlainCommsMessage("Drop failed: " + error);
                 } else {
                     // could say what we dropped
                     SlimgressApplication.postPlainCommsMessage("Drop successful");
-                    Toast.makeText(this, "Drop successful", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireActivity(), "Drop successful", Toast.LENGTH_SHORT).show();
                     keys.remove(0);
                 }
                 checkKeys();
@@ -242,7 +246,7 @@ public class ActivityPortal extends AppCompatActivity {
                 var data = msg.getData();
                 String error = getErrorStringFromAPI(data);
                 if (error != null && !error.isEmpty()) {
-                    DialogInfo eDialog = new DialogInfo(this);
+                    DialogInfo eDialog = new DialogInfo(requireActivity());
                     eDialog.setMessage(error).setDismissDelay(1500).show();
                     SlimgressApplication.postPlainCommsMessage("Recycle failed: " + error);
                 } else {
@@ -261,22 +265,31 @@ public class ActivityPortal extends AppCompatActivity {
         });
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_portal);
+    @NonNull
+    public static FragmentPortal newInstance(String guid) {
+        FragmentPortal fragment = new FragmentPortal();
+        Bundle args = new Bundle();
+        args.putSerializable("guid", guid);
+        fragment.setArguments(args);
+        return fragment;
+    }
 
-        String portalGuid = getIntent().getStringExtra("guid");
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mRootView = inflater.inflate(R.layout.activity_portal, container, false);
+
+        String portalGuid = getArguments().getString("guid");
         if (portalGuid != null) {
             mPortal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(portalGuid);
             if (mPortal != null) {
                 setUpView();
             } else {
-                Log.e("ActivityPortal", "Portal not found for GUID: " + portalGuid);
+                Log.e("FragmentPortal", "Portal not found for GUID: " + portalGuid);
                 finish();
             }
         } else {
-            Log.e("ActivityPortal", "No portal GUID provided");
+            Log.e("FragmentPortal", "No portal GUID provided");
             finish();
         }
 
@@ -287,46 +300,46 @@ public class ActivityPortal extends AppCompatActivity {
             return false;
         });
 
-        findViewById(R.id.hackButton).setOnClickListener(v -> {
-            findViewById(R.id.hackButton).setEnabled(false);
-            ((Button) findViewById(R.id.hackButton)).setText(R.string.hacking_in_progress);
+        mRootView.findViewById(R.id.hackButton).setOnClickListener(v -> {
+            mRootView.findViewById(R.id.hackButton).setEnabled(false);
+            ((Button) mRootView.findViewById(R.id.hackButton)).setText(R.string.hacking_in_progress);
             mIsHacking = true;
             mGame.intHackPortal(mPortal, hackResultHandler);
         });
-        findViewById(R.id.hackButton).setOnLongClickListener(v -> {
+        mRootView.findViewById(R.id.hackButton).setOnLongClickListener(v -> {
             // TODO: upgrade to glyph hacking stuff
-            findViewById(R.id.hackButton).setEnabled(false);
-            ((Button) findViewById(R.id.hackButton)).setText(R.string.hacking_in_progress);
+            mRootView.findViewById(R.id.hackButton).setEnabled(false);
+            ((Button) mRootView.findViewById(R.id.hackButton)).setText(R.string.hacking_in_progress);
             mGame.intHackPortal(mPortal, hackResultHandler);
             mIsHacking = true;
             return false;
         });
 
-        findViewById(R.id.deployButton).setEnabled(true);
-        findViewById(R.id.deployButton).setOnClickListener(v -> {
-            Intent myIntent = new Intent(getApplicationContext(), ActivityDeploy.class);
+        mRootView.findViewById(R.id.deployButton).setEnabled(true);
+        mRootView.findViewById(R.id.deployButton).setOnClickListener(v -> {
+            Intent myIntent = new Intent(requireActivity().getApplicationContext(), ActivityDeploy.class);
             myIntent.putExtra("guid", mPortal.getEntityGuid());
             startActivity(myIntent);
         });
 
-        findViewById(R.id.modButton).setEnabled(true);
-        findViewById(R.id.modButton).setOnClickListener(v -> {
-            Intent myIntent = new Intent(getApplicationContext(), ActivityMod.class);
+        mRootView.findViewById(R.id.modButton).setEnabled(true);
+        mRootView.findViewById(R.id.modButton).setOnClickListener(v -> {
+            Intent myIntent = new Intent(requireActivity().getApplicationContext(), ActivityMod.class);
             myIntent.putExtra("guid", mPortal.getEntityGuid());
             startActivity(myIntent);
         });
 
-        findViewById(R.id.navigateButton).setOnClickListener(v -> {
+        mRootView.findViewById(R.id.navigateButton).setOnClickListener(v -> {
             String uri = "geo:?q=" + mPortal.getPortalLocation();
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(uri)));
         });
 
-        findViewById(R.id.activityPortalLinkButton).setOnClickListener(v -> {
+        mRootView.findViewById(R.id.activityPortalLinkButton).setOnClickListener(v -> {
             // TODO re-request any that return TIMEOUT
             mGame.intQueryLinkablilityForPortal(mPortal, mGame.getInventory().getItemsOfType(ItemPortalKey.class), new Handler(msg -> {
                 String error = Utils.getErrorStringFromAPI(msg.getData());
                 if (error != null && !error.isEmpty()) {
-                    DialogInfo dialog = new DialogInfo(ActivityPortal.this);
+                    DialogInfo dialog = new DialogInfo(requireActivity());
                     dialog.setMessage(error).setDismissDelay(1500).show();
                     SlimgressApplication.postPlainCommsMessage("Link check failed: " + error);
                     return false;
@@ -336,7 +349,7 @@ public class ActivityPortal extends AppCompatActivity {
                 assert keys != null;
 
                 if (keys.isEmpty()) {
-                    DialogInfo dialog = new DialogInfo(ActivityPortal.this);
+                    DialogInfo dialog = new DialogInfo(requireActivity());
                     dialog.setMessage("No linkable portals!").setDismissDelay(1500).show();
                     return false;
                 }
@@ -356,7 +369,8 @@ public class ActivityPortal extends AppCompatActivity {
                     return Double.compare(d1, d2);
                 });
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
+                ;
                 builder.setTitle("Select Target Portal (I will fix this in 2029)");
 //        builder.setIcon(R.drawable.ic_format_list_bulleted_black_24dp);
 
@@ -374,7 +388,7 @@ public class ActivityPortal extends AppCompatActivity {
                     mGame.intLinkPortal(mPortal, selectedKey, new Handler(m2 -> {
                         String e2 = Utils.getErrorStringFromAPI(m2.getData());
                         if (e2 != null && !e2.isEmpty()) {
-                            DialogInfo dialog = new DialogInfo(ActivityPortal.this);
+                            DialogInfo dialog = new DialogInfo(requireActivity());
                             dialog.setMessage(e2).setDismissDelay(1500).show();
                             SlimgressApplication.postPlainCommsMessage("Link failed: " + e2);
                             mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getLinkCreationCost());
@@ -383,11 +397,11 @@ public class ActivityPortal extends AppCompatActivity {
                         int fields = m2.getData().getInt("numFields");
                         int mu = m2.getData().getInt("mu");
                         if (fields == 1) {
-                            Toast.makeText(this, String.format("Field created: +%d MU", mu), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(requireActivity(), String.format("Field created: +%d MU", mu), Toast.LENGTH_SHORT).show();
                         } else if (fields == 2) {
-                            Toast.makeText(this, String.format("Fields created: +%d MU", mu), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(requireActivity(), String.format("Fields created: +%d MU", mu), Toast.LENGTH_SHORT).show();
                         } else {
-                            Toast.makeText(this, "Link established!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(requireActivity(), "Link established!", Toast.LENGTH_SHORT).show();
                             SlimgressApplication.postPlainCommsMessage("Link established!");
                         }
                         return false;
@@ -400,34 +414,39 @@ public class ActivityPortal extends AppCompatActivity {
             }));
         });
 
-        findViewById(R.id.portalImage).setOnClickListener(v -> {
-            Intent myIntent = new Intent(getApplicationContext(), ActivityPhotoRate.class);
+        mRootView.findViewById(R.id.portalImage).setOnClickListener(v -> {
+            Intent myIntent = new Intent(requireActivity().getApplicationContext(), ActivityPhotoRate.class);
             myIntent.putExtra("guid", mPortal.getEntityGuid());
             startActivity(myIntent);
         });
 
-        findViewById(R.id.activityPortalShareButton).setOnClickListener(v -> sharePortal());
+        mRootView.findViewById(R.id.activityPortalShareButton).setOnClickListener(v -> sharePortal());
 
-        findViewById(R.id.activityPortalOkButton).setOnClickListener(v -> finish());
+        mRootView.findViewById(R.id.activityPortalOkButton).setOnClickListener(v -> finish());
 
 
         setButtonsEnabled(mGame.getLocation().getLatLng().distanceTo(mPortal.getPortalLocation().getLatLng()) <= mActionRadiusM);
-        mApp.getLocationViewModel().getLocationData().observe(this, this::onReceiveLocation);
+        mApp.getLocationViewModel().getLocationData().observe(requireActivity(), this::onReceiveLocation);
+        return mRootView;
+    }
+
+    private void finish() {
+        requireActivity().getOnBackPressedDispatcher().onBackPressed();
     }
 
     @SuppressLint("DefaultLocale")
     private void sharePortal() {
         // FIXME get a better screen - remote portal view or stats-filled mod view
         // FIXME again - maybe add an intel link or something
-        View mainView = getWindow().getDecorView();
+        View mainView = requireActivity().getWindow().getDecorView();
         mainView.setDrawingCacheEnabled(true);
         Bitmap combinedBitmap = Bitmap.createBitmap(mainView.getDrawingCache());
         mainView.setDrawingCacheEnabled(false);
 
-        File screenshotFile = saveScreenshot(getExternalCacheDir(), combinedBitmap);
+        File screenshotFile = saveScreenshot(requireActivity().getExternalCacheDir(), combinedBitmap);
 
         // Share the screenshot
-        Uri screenshotUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", screenshotFile);
+        Uri screenshotUri = FileProvider.getUriForFile(requireActivity(), requireActivity().getPackageName() + ".fileprovider", screenshotFile);
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("image/png");
         shareIntent.putExtra(Intent.EXTRA_STREAM, screenshotUri);
@@ -444,13 +463,13 @@ public class ActivityPortal extends AppCompatActivity {
     }
 
     private void setButtonsEnabled(boolean shouldEnableButton) {
-        findViewById(R.id.hackButton).setEnabled(!mIsHacking && shouldEnableButton);
+        mRootView.findViewById(R.id.hackButton).setEnabled(!mIsHacking && shouldEnableButton);
 //        boolean isTesting = mGame.getAgent().getNickname().startsWith("MT") || mGame.getAgent().getNickname().startsWith("I_") || mGame.getAgent().getNickname().startsWith("ca");
         boolean canLink = mPortal.getPortalTeam().equals(mGame.getAgent().getTeam())
                 && (mPortal.getPortalResonatorCount() >= 8)
                 && mPortal.getLinkCapacity() > mPortal.getOriginEdges().size()
                 && mGame.getAgent().getEnergy() >= mGame.getKnobs().getXMCostKnobs().getLinkCreationCost();
-        findViewById(R.id.activityPortalLinkButton).setEnabled(shouldEnableButton && canLink);
+        mRootView.findViewById(R.id.activityPortalLinkButton).setEnabled(shouldEnableButton && canLink);
     }
 
     @SuppressWarnings("unchecked")
@@ -520,7 +539,7 @@ public class ActivityPortal extends AppCompatActivity {
             super(msg -> {
                 String error = Utils.getErrorStringFromAPI(msg.getData());
                 if (error != null && !error.isEmpty()) {
-                    DialogInfo dialog = new DialogInfo(ActivityPortal.this);
+                    DialogInfo dialog = new DialogInfo(requireActivity());
                     dialog.setMessage(error).setDismissDelay(1500).show();
                     SlimgressApplication.postPlainCommsMessage("Recycle failed: " + error);
                     return false;
