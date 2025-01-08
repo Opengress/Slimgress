@@ -317,12 +317,19 @@ public class FragmentPortal extends Fragment {
             mIsHacking = true;
             return false;
         });
+        /*
+                    FragmentTransaction transaction = getMainActivity().getSupportFragmentManager().beginTransaction();
+            transaction.add(R.id.fragment_container, FragmentPhotoRate.newInstance(mPortal.getEntityGuid()), "PHOTORATE");
+            transaction.addToBackStack("PHOTORATE");
+            transaction.commit();
+         */
 
         mRootView.findViewById(R.id.deployButton).setEnabled(true);
         mRootView.findViewById(R.id.deployButton).setOnClickListener(v -> {
-            Intent myIntent = new Intent(requireActivity().getApplicationContext(), ActivityDeploy.class);
-            myIntent.putExtra("guid", mPortal.getEntityGuid());
-            startActivity(myIntent);
+            FragmentTransaction transaction = getMainActivity().getSupportFragmentManager().beginTransaction();
+            transaction.add(R.id.fragment_container, FragmentDeploy.newInstance(mPortal.getEntityGuid()), "DEPLOY");
+            transaction.addToBackStack("DEPLOY");
+            transaction.commit();
         });
 
         mRootView.findViewById(R.id.modButton).setEnabled(true);
