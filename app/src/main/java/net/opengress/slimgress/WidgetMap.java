@@ -134,16 +134,16 @@ abstract public class WidgetMap extends Fragment {
     // GameEntities Pt II
     // ===========================================================
     private GeoJsonSource mPortalGeoJsonSource;
-    private final Map<String, Feature> mLinkFeatures = new HashMap<>();
+    protected final Map<String, Feature> mLinkFeatures = new HashMap<>();
     private GeoJsonSource mLinksGeoJsonSource;
     // Holds the current Features for each resonator line, keyed by the resonator GUID
-    private final Map<String, Feature> mResonatorLineFeatures = new HashMap<>();
+    protected final Map<String, Feature> mResonatorLineFeatures = new HashMap<>();
     private GeoJsonSource mResonatorLinesGeoJsonSource;
-    private final Map<String, Feature> mFieldFeatures = new HashMap<>();
+    protected final Map<String, Feature> mFieldFeatures = new HashMap<>();
     private GeoJsonSource mFieldsGeoJsonSource;
-    private final Map<String, Feature> mXmParticleFeatures = new HashMap<String, Feature>();
+    protected final Map<String, Feature> mXmParticleFeatures = new HashMap<>();
     private GeoJsonSource mXmParticlesGeoJsonSource;
-    Map<String, Feature> mTouchTargetFeatures = new HashMap<>();
+    protected final Map<String, Feature> mTouchTargetFeatures = new HashMap<>();
 
 
     // Function to calculate LatLngQuad for the given radius in meters
