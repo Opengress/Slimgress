@@ -1,11 +1,13 @@
 package net.opengress.slimgress.activity;
 
+import static androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
 import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_NONE;
 import static net.opengress.slimgress.ViewHelpers.formatNumberToKLocalised;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColour;
+import static net.opengress.slimgress.ViewHelpers.getMainActivity;
 import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
 import static net.opengress.slimgress.ViewHelpers.getPrettyItemName;
 import static net.opengress.slimgress.ViewHelpers.putItemInMap;
@@ -36,6 +38,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.bumptech.glide.Glide;
 
@@ -296,7 +299,7 @@ public class FragmentPortal extends Fragment {
         Handler hackResultHandler = new Handler(msg -> {
             Bundle hackresultBundle = generateHackResultBundle(msg.getData());
             mGame.addHackResult(hackresultBundle);
-            finish();
+            requireActivity().getSupportFragmentManager().popBackStack(null, POP_BACK_STACK_INCLUSIVE);
             return false;
         });
 
@@ -415,9 +418,10 @@ public class FragmentPortal extends Fragment {
         });
 
         mRootView.findViewById(R.id.portalImage).setOnClickListener(v -> {
-            Intent myIntent = new Intent(requireActivity().getApplicationContext(), ActivityPhotoRate.class);
-            myIntent.putExtra("guid", mPortal.getEntityGuid());
-            startActivity(myIntent);
+            FragmentTransaction transaction = getMainActivity().getSupportFragmentManager().beginTransaction();
+            transaction.add(R.id.fragment_container, FragmentPhotoRate.newInstance(mPortal.getEntityGuid()), "PHOTORATE");
+            transaction.addToBackStack("PHOTORATE");
+            transaction.commit();
         });
 
         mRootView.findViewById(R.id.activityPortalShareButton).setOnClickListener(v -> sharePortal());
