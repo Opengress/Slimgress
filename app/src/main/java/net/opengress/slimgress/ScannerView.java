@@ -410,6 +410,19 @@ public class ScannerView extends WidgetMap {
             Bundle hackResult = mGame.pollHackResult();
             showHackResultDialog(hackResult);
         }
+
+
+        mFieldFeatures.clear();
+        mLinkFeatures.clear();
+        // crashes because i don't currently clean out the rest of the portal details
+//        mResonatorLineFeatures.clear();
+        mTouchTargetFeatures.clear();
+        drawEntities(mGame.getWorld().getGameEntitiesList());
+
+        mXmParticleFeatures.clear();
+        drawXMParticles(mGame.getWorld().getXMParticles().values());
+        // try it anyway
+        onReceiveDeletedEntityGuids(mApp.getDeletedEntityGuidsViewModel().getGuids().getValue());
     }
 
     private void showHackResultDialog(Bundle hackResultBundle) {
