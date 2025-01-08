@@ -75,9 +75,6 @@
 
         <!-- mod deployment activity with additional information -->
         <activity android:name="net.opengress.slimgress.activity.ActivityMod" />
-
-        <!-- which libraries are used, who created what etc-->
-        <activity android:name="net.opengress.slimgress.activity.ActivityCredits" />
     </application>
 
 </manifest>
