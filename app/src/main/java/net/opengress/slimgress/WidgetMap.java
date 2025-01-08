@@ -21,8 +21,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -340,8 +338,7 @@ abstract public class WidgetMap extends Fragment {
         initFieldsSource(style);
         initXmParticlesSource(style);
 
-        drawEntities(new Handler(Looper.getMainLooper()),
-                mGame.getWorld().getGameEntitiesList());
+        drawEntities(mGame.getWorld().getGameEntitiesList());
         drawXMParticles(mGame.getWorld().getXMParticles().values());
 
         String flashLayerId = "flash-overlay-layer";
@@ -829,7 +826,7 @@ abstract public class WidgetMap extends Fragment {
         return desc;
     }
 
-    public void drawEntities(Handler uiHandler, Collection<GameEntityBase> entities) {
+    public void drawEntities(Collection<GameEntityBase> entities) {
         if (mMapLibreMap == null || mMapLibreMap.getStyle() == null) {
             return;
         }
@@ -841,51 +838,48 @@ abstract public class WidgetMap extends Fragment {
             }
 
             activity.runOnUiThread(() -> {
-                uiHandler.post(() -> {
-                    boolean touchTargetsTouched = false;
-                    boolean resonatorsTouched = false;
-                    boolean linksTouched = false;
-                    boolean fieldsTouched = false;
-                    for (var entity : entities) {
-                        assert entity != null;
+                boolean touchTargetsTouched = false;
+                boolean resonatorsTouched = false;
+                boolean linksTouched = false;
+                boolean fieldsTouched = false;
+                for (var entity : entities) {
+                    assert entity != null;
 
-                        if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
-                            GameEntityPortal portal = (GameEntityPortal) entity;
-                            drawPortal(portal);
-                            Feature feature = Feature.fromGeometry(portal.getPortalLocation().getPoint());
-                            feature.addStringProperty("guid", portal.getEntityGuid());
-                            mTouchTargetFeatures.put(portal.getEntityGuid(), feature);
-                            touchTargetsTouched = true;
-                            resonatorsTouched = true;
-                        } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
-                            drawLink((GameEntityLink) entity);
-                            linksTouched = true;
-                        } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
-                            drawField((GameEntityControlField) entity);
-                            fieldsTouched = true;
-                        } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {
-                            GameEntityItem item = (GameEntityItem) entity;
-                            drawItem(item);
-                            Feature feature = Feature.fromGeometry(item.getItem().getItemLocation().getPoint());
-                            feature.addStringProperty("guid", item.getEntityGuid());
-                            mTouchTargetFeatures.put(item.getEntityGuid(), feature);
-                            touchTargetsTouched = true;
-                        }
+                    if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
+                        GameEntityPortal portal = (GameEntityPortal) entity;
+                        drawPortal(portal);
+                        Feature feature = Feature.fromGeometry(portal.getPortalLocation().getPoint());
+                        feature.addStringProperty("guid", portal.getEntityGuid());
+                        mTouchTargetFeatures.put(portal.getEntityGuid(), feature);
+                        touchTargetsTouched = true;
+                        resonatorsTouched = true;
+                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
+                        drawLink((GameEntityLink) entity);
+                        linksTouched = true;
+                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
+                        drawField((GameEntityControlField) entity);
+                        fieldsTouched = true;
+                    } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {
+                        GameEntityItem item = (GameEntityItem) entity;
+                        drawItem(item);
+                        Feature feature = Feature.fromGeometry(item.getItem().getItemLocation().getPoint());
+                        feature.addStringProperty("guid", item.getEntityGuid());
+                        mTouchTargetFeatures.put(item.getEntityGuid(), feature);
+                        touchTargetsTouched = true;
                     }
-                    if (touchTargetsTouched) {
-                        updateTouchTargets();
-                    }
-                    if (linksTouched) {
-                        updateLinksSource();
-                    }
-                    if (fieldsTouched) {
-                        updateFieldsSource();
-                    }
-                    if (resonatorsTouched) {
-                        updateResonatorLinesSource();
-                    }
-                });
-
+                }
+                if (touchTargetsTouched) {
+                    updateTouchTargets();
+                }
+                if (linksTouched) {
+                    updateLinksSource();
+                }
+                if (fieldsTouched) {
+                    updateFieldsSource();
+                }
+                if (resonatorsTouched) {
+                    updateResonatorLinesSource();
+                }
             });
         });
 

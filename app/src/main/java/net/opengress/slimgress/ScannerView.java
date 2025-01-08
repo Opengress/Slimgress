@@ -301,7 +301,7 @@ public class ScannerView extends WidgetMap {
                 this::onRegainedConnection
         );
 
-        mApp.getUpdatedEntitiesViewModel().getEntities().observe(this, ents -> drawEntities(new Handler(Looper.getMainLooper()), ents));
+        mApp.getUpdatedEntitiesViewModel().getEntities().observe(this, this::drawEntities);
         mApp.getUpdatedEntitiesViewModel().getParticles().observe(this, this::drawXMParticles);
         mApp.getDeletedEntityGuidsViewModel().getGuids().observe(this, this::onReceiveDeletedEntityGuids);
 
