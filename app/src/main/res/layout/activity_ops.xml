@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".activity.ActivityOps">
+    tools:context=".activity.FragmentOps"
+    style="@style/GradientWindow">
 
     <LinearLayout
         android:layout_width="match_parent"

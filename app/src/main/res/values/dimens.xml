@@ -21,4 +21,6 @@
     <dimen name="text_size_button">18dp</dimen>
     <dimen name="text_size_header">24sp</dimen>
     <dimen name="text_size_description_hint">28sp</dimen>
+
+    <dimen name="back_button_width">40dp</dimen>
 </resources>

@@ -1,30 +1,11 @@
-/*
-
- Slimgress: Opengress API for Android
- Copyright (C) 2013 Norman Link <norman.link@gmx.net>
- Copyright (C) 2024 Opengress Team <info@opengress.net>
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
- */
-
 package net.opengress.slimgress.activity;
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
@@ -39,25 +20,25 @@ import net.opengress.slimgress.FragmentScore;
 import net.opengress.slimgress.FragmentUser;
 import net.opengress.slimgress.R;
 
-public class ActivityOps extends AppCompatActivity implements TabLayout.OnTabSelectedListener {
-    SectionsPagerAdapter mSectionsPagerAdapter;
-    ViewPager2 mViewPager;
+public class FragmentOps extends Fragment implements TabLayout.OnTabSelectedListener {
+    private ViewPager2 mViewPager;
+    // private final SparseArray<Fragment> mFragmentCache = new SparseArray<>();
 
     @Override
-    public void onCreate(Bundle savedInstanceState)
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_ops);
+        View rootView = inflater.inflate(R.layout.activity_ops, container, false);
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the app.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(this);
+        OpsPagerAdapter opsPagerAdapter = new OpsPagerAdapter(requireActivity());
 
         // Set up the ViewPager with the sections adapter.
-        mViewPager = findViewById(R.id.pager);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager = rootView.findViewById(R.id.pager);
+        mViewPager.setAdapter(opsPagerAdapter);
         // Set up the TabLayout with the ViewPager.
-        TabLayout tabLayout = findViewById(R.id.tabs);
+        TabLayout tabLayout = rootView.findViewById(R.id.tabs);
         /*
         - inventory     ./
         - store         x
@@ -76,17 +57,19 @@ public class ActivityOps extends AppCompatActivity implements TabLayout.OnTabSel
                     switch (position) {
                         case 0 -> tab.setText(R.string.ops_inventory);
                         case 1 -> tab.setText(R.string.ops_user);
-                        case 2 -> tab.setText("Score");
+                        case 2 -> tab.setText(R.string.ops_tab_name_score);
                         case 3 -> tab.setText(R.string.ops_device);
                     }
                 }).attach();
         tabLayout.addOnTabSelectedListener(this);
 
-        findViewById(R.id.activity_ops_back_button).setOnClickListener(v -> finish());
+        rootView.findViewById(R.id.activity_ops_back_button).setOnClickListener(v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
+
+        return rootView;
     }
 
     @Override
-    public void onTabSelected(TabLayout.Tab tab) {
+    public void onTabSelected(@NonNull TabLayout.Tab tab) {
         mViewPager.setCurrentItem(tab.getPosition());
     }
 
@@ -100,8 +83,8 @@ public class ActivityOps extends AppCompatActivity implements TabLayout.OnTabSel
         // Auto-generated method stub
     }
 
-    public static class SectionsPagerAdapter extends FragmentStateAdapter {
-        public SectionsPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
+    public static class OpsPagerAdapter extends FragmentStateAdapter {
+        public OpsPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
             super(fragmentActivity);
         }
 
@@ -113,23 +96,18 @@ public class ActivityOps extends AppCompatActivity implements TabLayout.OnTabSel
             // Return a DummySectionFragment (defined as a static inner class
             // below) with the page number as its lone argument.
 
-            Fragment fragment = null;
-            if (position == 0)
-                fragment = new FragmentInventory();
-            else if (position == 1)
-                fragment = new FragmentUser();
-            else if (position == 2) {
-                fragment = new FragmentScore();
-            } else if (position == 3)
-                fragment = new FragmentDevice();
+            return switch (position) {
+                case 0 -> new FragmentInventory();
+                case 1 -> new FragmentUser();
+                case 2 -> new FragmentScore();
+                case 3 -> new FragmentDevice();
+                default -> throw new IllegalArgumentException("Invalid position: " + position);
+            };
 
             // can be used to give arguments to the fragment
             /*Bundle args = new Bundle();
             args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
             fragment.setArguments(args);*/
-
-            assert fragment != null;
-            return fragment;
         }
 
         @Override

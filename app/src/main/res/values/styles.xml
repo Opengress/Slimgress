@@ -27,6 +27,11 @@
         <item name="android:windowBackground">@drawable/gradient</item>
     </style>
 
+    <!-- Funny name, maybe! I'm bashing my head against the style system -->
+    <style name="GradientWindow" parent="AppTheme">
+        <item name="android:background">@drawable/gradient</item>
+    </style>
+
     <style name="FadeAnimation">
         <item name="android:windowEnterAnimation">@anim/fade_in</item>
         <item name="android:windowExitAnimation">@anim/fade_out</item>
@@ -160,11 +165,10 @@
     <!-- end borrowed from XGlyph2 -->
 
     <style name="BackButtonStyle" parent="ButtonStyle">
-        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_width">@dimen/back_button_width</item>
         <item name="android:layout_height">32dp</item>
         <item name="android:layout_marginLeft">0dp</item>
         <item name="android:layout_marginRight">@dimen/activity_margin</item>
-        <item name="android:width">@dimen/button_height</item>
         <item name="android:layout_gravity">bottom</item>
     </style>
 
