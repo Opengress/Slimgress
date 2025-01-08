@@ -85,7 +85,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 abstract public class WidgetMap extends Fragment {
     // ===========================================================
@@ -144,7 +143,7 @@ abstract public class WidgetMap extends Fragment {
     private GeoJsonSource mResonatorLinesGeoJsonSource;
     private final Map<String, Feature> mFieldFeatures = new HashMap<>();
     private GeoJsonSource mFieldsGeoJsonSource;
-    private final Map<Long, Feature> mXmParticleFeatures = new HashMap<>();
+    private final Map<String, Feature> mXmParticleFeatures = new HashMap<String, Feature>();
     private GeoJsonSource mXmParticlesGeoJsonSource;
     Map<String, Feature> mTouchTargetFeatures = new HashMap<>();
 
@@ -524,14 +523,17 @@ abstract public class WidgetMap extends Fragment {
                     Feature particleFeature = Feature.fromGeometry(polygon);
 
                     // Store in our "XM-particle Features" map so we can remove/update later
-                    mXmParticleFeatures.put(particle.getCellId(), particleFeature);
+                    mXmParticleFeatures.put(particle.getGuid(), particleFeature);
                 }
 
-                // Push all features into the XM GeoJsonSource
-                FeatureCollection fc = FeatureCollection.fromFeatures(mXmParticleFeatures.values().toArray(new Feature[0]));
-                mXmParticlesGeoJsonSource.setGeoJson(fc);
+                updateXMParticles();
             });
         });
+    }
+
+    private void updateXMParticles() {
+        FeatureCollection fc = FeatureCollection.fromFeatures(mXmParticleFeatures.values().toArray(new Feature[0]));
+        mXmParticlesGeoJsonSource.setGeoJson(fc);
     }
 
     protected void drawPortal(@NonNull final GameEntityPortal portal) {
@@ -613,7 +615,6 @@ abstract public class WidgetMap extends Fragment {
             Objects.requireNonNull(style.getLayer("reso-layer-" + reso.id)).setProperties(PropertyFactory.rasterContrast(saturation));
             Feature existingFeature = mResonatorLineFeatures.get(reso.id);
             Objects.requireNonNull(existingFeature).addStringProperty("resoColour", getRgbaStringFromColour(rgb));
-            updateResonatorLinesSource();
             return;
         }
 
@@ -630,7 +631,6 @@ abstract public class WidgetMap extends Fragment {
 //        resoLineFeature.addStringProperty("guid", reso.id);
         resoLineFeature.addStringProperty("resoColour", colourStr);
         mResonatorLineFeatures.put(reso.id, resoLineFeature);
-        updateResonatorLinesSource();
 
         // Calculate positions
         ImageSource rasterSource = (ImageSource) style.getSource("reso-source-" + reso.id);
@@ -682,9 +682,6 @@ abstract public class WidgetMap extends Fragment {
 
         // Add to our in-memory map
         mLinkFeatures.put(link.getEntityGuid(), linkFeature);
-
-        // Push updated features to the source
-        updateLinksSource();
     }
 
     /**
@@ -740,8 +737,6 @@ abstract public class WidgetMap extends Fragment {
 //        fieldFeature.addStringProperty("guid", field.getEntityGuid());
         fieldFeature.addStringProperty("colour", getRgbaStringFromColour(colour));
         mFieldFeatures.put(field.getEntityGuid(), fieldFeature);
-
-        updateFieldsSource();
     }
 
     public int hashGuidToMod360(@NonNull String guid) {
@@ -846,31 +841,50 @@ abstract public class WidgetMap extends Fragment {
             }
 
             activity.runOnUiThread(() -> {
-                for (var entity : entities) {
-                    assert entity != null;
+                uiHandler.post(() -> {
+                    boolean touchTargetsTouched = false;
+                    boolean resonatorsTouched = false;
+                    boolean linksTouched = false;
+                    boolean fieldsTouched = false;
+                    for (var entity : entities) {
+                        assert entity != null;
 
-                    uiHandler.post(() -> {
                         if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Portal) {
                             GameEntityPortal portal = (GameEntityPortal) entity;
                             drawPortal(portal);
                             Feature feature = Feature.fromGeometry(portal.getPortalLocation().getPoint());
                             feature.addStringProperty("guid", portal.getEntityGuid());
                             mTouchTargetFeatures.put(portal.getEntityGuid(), feature);
+                            touchTargetsTouched = true;
+                            resonatorsTouched = true;
                         } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Link) {
                             drawLink((GameEntityLink) entity);
+                            linksTouched = true;
                         } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.ControlField) {
                             drawField((GameEntityControlField) entity);
+                            fieldsTouched = true;
                         } else if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {
                             GameEntityItem item = (GameEntityItem) entity;
                             drawItem(item);
                             Feature feature = Feature.fromGeometry(item.getItem().getItemLocation().getPoint());
                             feature.addStringProperty("guid", item.getEntityGuid());
                             mTouchTargetFeatures.put(item.getEntityGuid(), feature);
+                            touchTargetsTouched = true;
                         }
+                    }
+                    if (touchTargetsTouched) {
                         updateTouchTargets();
-                    });
-
-                }
+                    }
+                    if (linksTouched) {
+                        updateLinksSource();
+                    }
+                    if (fieldsTouched) {
+                        updateFieldsSource();
+                    }
+                    if (resonatorsTouched) {
+                        updateResonatorLinesSource();
+                    }
+                });
 
             });
         });
@@ -913,66 +927,77 @@ abstract public class WidgetMap extends Fragment {
         if (mMapLibreMap == null || mMapLibreMap.getStyle() == null) {
             return;
         }
+        boolean particlesTouched = false;
+        boolean touchTargetsTouched = false;
+        boolean resonatorsTouched = false;
+        boolean linksTouched = false;
+        boolean fieldsTouched = false;
         // suddenly i understand why each guid in other games has a suffix indicating the type
         for (String guid : deletedEntityGuids) {
-            AtomicBoolean shouldContinue = new AtomicBoolean(true);
 
             // for XM particles
             if (guid.endsWith(".6")) {
-                long particle = Long.parseLong(guid.substring(0, 16), 16);
-                mMapLibreMap.getStyle(style -> {
-                    style.removeLayer("particle-layer-" + particle);
-                    style.removeSource("particle-source-" + particle);
-                });
+                mXmParticleFeatures.remove(guid);
+                particlesTouched = true;
                 continue;
             }
 
-            // for portals
-            mMapLibreMap.getStyle(style -> {
-                style.removeLayer("portal-" + guid + "-layer");
-                shouldContinue.set(style.removeSource("portal-" + guid));
+            if (mTouchTargetFeatures.containsKey(guid)) {
+                mMapLibreMap.getStyle(style -> {
+                    // for portals
+                    style.removeLayer("portal-" + guid + "-layer");
+                    style.removeSource("portal-" + guid);
+                    // for dropped items
+                    style.removeLayer("item-layer-" + guid);
+                    style.removeSource("item-source-" + guid);
+                });
                 mTouchTargetFeatures.remove(guid);
-            });
-            if (shouldContinue.get()) {
+                touchTargetsTouched = true;
                 continue;
             }
 
             // for resonators
             if (mResonatorToPortalLookup.containsKey(guid)) {
                 mResonatorLineFeatures.remove(guid);
-                updateResonatorLinesSource();
                 mResonatorToPortalLookup.remove(guid);
                 mMapLibreMap.getStyle(style -> {
                     style.removeLayer("reso-layer-" + guid);
                     style.removeSource("reso-source-" + guid);
                 });
+                resonatorsTouched = true;
                 continue;
             }
 
             // for links
             if (mLinkFeatures.containsKey(guid)) {
                 mLinkFeatures.remove(guid);
-                updateLinksSource();
-                // So the feature is no longer in the source's FeatureCollection
+                linksTouched = true;
                 continue;
             }
 
             // for fields
             if (mFieldFeatures.containsKey(guid)) {
                 mFieldFeatures.remove(guid);
-                updateFieldsSource();
-                continue;
+                fieldsTouched = true;
             }
 
-            // for dropped items
-            mMapLibreMap.getStyle(style -> {
-                style.removeLayer("item-layer-" + guid);
-                style.removeSource("item-source-" + guid);
-                mTouchTargetFeatures.remove(guid);
-            });
-
         }
-        updateTouchTargets();
+
+        if (touchTargetsTouched) {
+            updateTouchTargets();
+        }
+        if (particlesTouched) {
+            updateXMParticles();
+        }
+        if (linksTouched) {
+            updateLinksSource();
+        }
+        if (fieldsTouched) {
+            updateFieldsSource();
+        }
+        if (resonatorsTouched) {
+            updateResonatorLinesSource();
+        }
     }
 
     @Override
