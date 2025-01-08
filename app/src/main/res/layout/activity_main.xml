@@ -5,34 +5,40 @@
     android:layout_height="match_parent"
     tools:ignore="RtlHardcoded,ContentDescription,RelativeOverlap">
 
-    <Button
-        style="@style/ButtonStyleYellow"
-        android:id="@+id/btn_flipcard_confirm"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/flipcard_confirm"
-        android:visibility="gone"
-        android:enabled="false"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="40dp"
-        android:layout_marginRight="40dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="40dp" />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/flipcardButtonLayout">
 
-    <Button
-        style="@style/ButtonStyle"
-        android:id="@+id/btn_flipcard_cancel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/flipcard_cancel"
-        android:visibility="gone"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_marginLeft="40dp"
-        android:layout_marginRight="40dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="40dp" />
+        <Button
+            android:id="@+id/btn_flipcard_confirm"
+            style="@style/ButtonStyleYellow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginLeft="40dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="40dp"
+            android:layout_marginBottom="40dp"
+            android:enabled="false"
+            android:text="@string/flipcard_confirm"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btn_flipcard_cancel"
+            style="@style/ButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginLeft="40dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="40dp"
+            android:layout_marginBottom="40dp"
+            android:text="@string/flipcard_cancel"
+            android:visibility="gone" />
+    </RelativeLayout>
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragment_container"
@@ -40,9 +46,9 @@
         android:layout_height="match_parent" />
 
     <RelativeLayout
+        android:id="@+id/activity_main_widgets"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/activity_main_widgets">
+        android:layout_height="match_parent">
 
         <ProgressBar
             android:id="@+id/agentap"
@@ -138,46 +144,16 @@
                 android:text="@string/main_ops" />
         </LinearLayout>
 
-        <Button
-            android:id="@+id/buttonComm"
-            style="@style/ButtonStyleBlack"
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/button_height"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentBottom="true"
-            android:enabled="false"
-            android:text="@string/main_comm" />
-
         <TextView
             android:id="@+id/select_target_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/flipcard_select_target"
-            android:visibility="gone"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="200dp"
+            android:text="@string/flipcard_select_target"
+            android:textColor="#FF0000"
             android:textSize="18sp"
-            android:textColor="#FF0000" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentBottom="true"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/quickMessage"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="" />
-
-            <net.opengress.slimgress.WidgetCommsLine
-                android:id="@+id/commsOneLiner"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="" />
-        </LinearLayout>
+            android:visibility="gone" />
 
         <LinearLayout
             android:id="@+id/fire_carousel_layout"
@@ -191,9 +167,9 @@
                 android:id="@+id/fire_carousel_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="75dp"
+                android:background="@color/half_transparent"
                 android:clipChildren="true"
-                android:clipToPadding="true"
-                android:background="@color/half_transparent" />
+                android:clipToPadding="true" />
 
             <LinearLayout
                 style="?android:attr/buttonBarStyle"
@@ -201,32 +177,71 @@
                 android:layout_height="wrap_content">
 
                 <Button
+                    android:id="@+id/fire_carousel_button_fire"
                     style="@style/ButtonStyleYellow"
-                    android:layout_weight="1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="40dp"
-                    android:layout_marginRight="40dp"
                     android:layout_marginTop="20dp"
+                    android:layout_marginRight="40dp"
                     android:layout_marginBottom="40dp"
-                    android:id="@+id/fire_carousel_button_fire"
+                    android:layout_weight="1"
                     android:enabled="false"
                     android:text="@string/fire_button_text" />
 
                 <Button
+                    android:id="@+id/fire_carousel_button_done"
                     style="@style/ButtonStyle"
-                    android:layout_weight="1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:id="@+id/fire_carousel_button_done"
                     android:layout_marginLeft="40dp"
-                    android:layout_marginRight="40dp"
                     android:layout_marginTop="20dp"
+                    android:layout_marginRight="40dp"
                     android:layout_marginBottom="40dp"
+                    android:layout_weight="1"
                     android:text="@string/done_button_text" />
             </LinearLayout>
         </LinearLayout>
 
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/commsLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <Button
+            android:id="@+id/buttonComm"
+            style="@style/ButtonStyleBlack"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/text_size_description_hint"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:enabled="false"
+            android:text="@string/main_comm" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/quickMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:shadowColor="#FF000000"
+                android:shadowRadius="3"
+                android:text="" />
+
+            <net.opengress.slimgress.WidgetCommsLine
+                android:id="@+id/commsOneLiner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/half_transparent"
+                android:text="" />
+        </LinearLayout>
     </RelativeLayout>
 
     <View

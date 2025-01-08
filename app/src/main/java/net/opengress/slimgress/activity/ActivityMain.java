@@ -160,15 +160,21 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
             if (currentFragment instanceof ScannerView) {
                 findViewById(R.id.activity_main_widgets).setVisibility(View.VISIBLE);
+                findViewById(R.id.commsLayout).setVisibility(View.VISIBLE);
+            } else if (currentFragment instanceof FragmentPortal) {
+                findViewById(R.id.activity_main_widgets).setVisibility(View.GONE);
+                findViewById(R.id.commsLayout).setVisibility(View.VISIBLE);
+                resetSelection();
             } else {
                 findViewById(R.id.activity_main_widgets).setVisibility(View.GONE);
+                findViewById(R.id.commsLayout).setVisibility(View.GONE);
                 resetSelection();
             }
         });
 
         // create comm button callback
-        final Button buttonComm = findViewById(R.id.buttonComm);
-        buttonComm.setOnClickListener(v -> showComms());
+        findViewById(R.id.buttonComm).setOnClickListener(v -> showComms());
+        findViewById(R.id.commsOneLiner).setOnClickListener(v -> showComms());
 
         mApp.getAllCommsViewModel().getMessages().observe(this, this::getCommsMessages);
         mApp.getLevelUpViewModel().getLevelUpMsgId().observe(this, this::levelUp);

@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    style="@style/GradientWindow"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:layout_marginVertical="@dimen/activity_margin"
-    android:layout_marginHorizontal="@dimen/activity_margin">
+    android:paddingHorizontal="@dimen/activity_margin"
+    android:paddingVertical="@dimen/activity_margin"
+    android:orientation="vertical">
 
     <LinearLayout
         android:id="@+id/activityPhotoRateTitleBar"
@@ -21,10 +22,10 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:layout_weight="1"
+            android:ellipsize="middle"
             android:singleLine="true"
             android:text=""
-            android:textSize="20sp"
-            android:ellipsize="middle" />
+            android:textSize="20sp" />
 
     </LinearLayout>
 
@@ -94,10 +95,31 @@
     <!--        android:text="ADD DESCRIPTION"-->
     <!--        android:enabled="false"-->
     <!--        android:layout_gravity="right"/>-->
-    <Button
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/btn_edit"
-        android:enabled="false" />
+        android:orientation="horizontal">
+    <Button
+        style="@style/ButtonStyle"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:enabled="false"
+        android:layout_margin="@dimen/activity_margin"
+        android:maxWidth="120dp"
+        android:padding="12dp"
+        android:text="@string/btn_edit" />
+
+        <Button
+            style="@style/ButtonStyle"
+            android:id="@+id/activityPhotoRateOkButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/activity_margin"
+            android:maxWidth="120dp"
+            android:padding="12dp"
+            android:text="OK" />
+    </LinearLayout>
 
 </LinearLayout>
