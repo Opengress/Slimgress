@@ -52,8 +52,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
-import net.opengress.slimgress.activity.ActivityCredits;
+import net.opengress.slimgress.activity.FragmentCredits;
 import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.dialog.DialogInfo;
@@ -78,8 +79,10 @@ public class FragmentDevice extends Fragment {
 
         mRootView.findViewById(R.id.device_button_credits).setEnabled(true);
         mRootView.findViewById(R.id.device_button_credits).setOnClickListener(v -> {
-            Intent myIntent = new Intent(getContext(), ActivityCredits.class);
-            startActivity(myIntent);
+            FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
+            transaction.add(R.id.fragment_container, new FragmentCredits(), "CREDITS");
+            transaction.addToBackStack("CREDITS");
+            transaction.commit();
         });
 
         mRootView.findViewById(R.id.device_button_force_sync).setEnabled(true);

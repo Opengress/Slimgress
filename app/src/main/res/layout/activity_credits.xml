@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    style="@style/GradientWindow"
+    android:paddingHorizontal="@dimen/activity_margin"
+    android:paddingBottom="@dimen/activity_margin">
 
 <!--    style="@style/SectionStyle"-->
     <LinearLayout
@@ -14,5 +17,16 @@
             android:id="@+id/creditsText"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+
+        <Button
+            android:id="@+id/activityCreditsOkButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/activity_margin"
+            android:maxWidth="120dp"
+            android:padding="12dp"
+            android:layout_gravity="bottom|left"
+            style="@style/ButtonStyle"
+            android:text="@string/btn_ok" />
     </LinearLayout>
 </ScrollView>

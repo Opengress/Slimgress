@@ -49,7 +49,7 @@
         <ul>
         <li>"Opengress Team" - server code, and client code after 2020</li>
         <li>"Opengress Team" - Logos and player icon</li>
-        <li><a href="https://github.com/Norman0406">Norman0406</a> - Portal and XM icons, app structure, ancient API stubs</li>
+        <li><a href="https://github.com/Norman0406">Norman0406</a> - Portal icons, app structure, ancient API stubs</li>
         <li>The map in the main activity is sourced from Carto.
         The map data is © <a href="https://www.openstreetmap.org/copyright/">OpenStreetMap</a> contributors and is available under the Open Database License.
         The tiles (images from which represent the map data on-screen) are © <a href="https://carto.com/attribution/">CartoDB</a>.
@@ -143,4 +143,5 @@
     <string name="back_button_back">く</string>
     <string name="check_for_updates">Check for updates</string>
     <string name="ops_tab_name_score">Score</string>
+    <string name="btn_ok">OK</string>
 </resources>
