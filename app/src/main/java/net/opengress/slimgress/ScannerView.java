@@ -37,6 +37,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.PointF;
@@ -47,6 +48,7 @@ import android.util.DisplayMetrics;
 import android.view.Choreographer;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -141,6 +143,26 @@ public class ScannerView extends WidgetMap {
     // ===========================================================
     private final Set<String> mSlurpableParticles = new HashSet<>();
     private final NetworkMonitor mNetworkMonitor = new NetworkMonitor();
+    private final OnSharedPreferenceChangeListener mPreferenceChangeListener =
+            (sharedPreferences, key) -> {
+                if (Objects.equals(key, PREFS_DEVICE_TILE_SOURCE)) {
+                    String newTileSource = sharedPreferences.getString(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT);
+                    if (!Objects.equals(newTileSource, mCurrentTileSource)) {
+                        mCurrentTileSource = newTileSource;
+                        setUpTileSource();
+                        mFieldFeatures.clear();
+                        mLinkFeatures.clear();
+                        // crashes because i don't currently clean out the rest of the portal details
+//        mResonatorLineFeatures.clear();
+                        mTouchTargetFeatures.clear();
+                        drawEntities(mGame.getWorld().getGameEntitiesList());
+
+                        mXmParticleFeatures.clear();
+                        drawXMParticles(mGame.getWorld().getXMParticles().values());
+                    }
+                }
+            };
+
 
     private void updateBearing(int bearing) {
         if (mMapLibreMap == null) {
@@ -254,6 +276,13 @@ public class ScannerView extends WidgetMap {
         }
         setLocationInaccurate(false);
 
+    }
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v = super.onCreateView(inflater, container, savedInstanceState);
+        mPrefs.registerOnSharedPreferenceChangeListener(mPreferenceChangeListener);
+        return v;
     }
 
     @Override
@@ -379,6 +408,7 @@ public class ScannerView extends WidgetMap {
         super.onDestroyView();
         mBearingProvider.stopBearingUpdates();
         mLocationProvider.stopLocationUpdates();
+        mPrefs.unregisterOnSharedPreferenceChangeListener(mPreferenceChangeListener);
     }
 
     @Override
