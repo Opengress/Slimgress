@@ -125,14 +125,8 @@ public class FragmentDevice extends Fragment {
         // Default to 0 if no previous selection - NB sane default in prefs.getString
         imageResolutionSpinner.setSelection(Math.max(selectedResolution, 0));
         imageResolutionSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            boolean isFirstSelection = true;
-
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                if (isFirstSelection) {
-                    isFirstSelection = false;
-                    return;
-                }
                 String selectedResolution = imageResolutions[i];
 
                 // this one is actually saved on the server! A first for Opengress!
