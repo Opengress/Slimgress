@@ -153,17 +153,9 @@ public class FragmentDevice extends Fragment {
         mapSourceSpinner.setSelection(Math.max(selectedIndex, 0));
 
         mapSourceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            boolean isFirstSelection = true;
-
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                if (isFirstSelection) {
-                    isFirstSelection = false;
-                    return;
-                }
                 String selectedSource = mapSources.get(i);
-
-                // Save the selected source to SharedPreferences
                 SharedPreferences.Editor editor = mPrefs.edit();
                 editor.putString(PREFS_DEVICE_TILE_SOURCE, selectedSource);
                 editor.apply();
