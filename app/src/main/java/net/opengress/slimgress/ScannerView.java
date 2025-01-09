@@ -782,11 +782,11 @@ public class ScannerView extends WidgetMap {
         LatLng location;
         int percentage;
         if (actualReso != null) {
-            location = actualReso.getResoLatLng();
+            location = actualReso.destinationPoint(actualReso.getResoLatLng(), 7, 0);
             // note that it is allowed to be more than 100%
             percentage = (int) ((float) damageAmount / (float) actualReso.getMaxEnergy() * 100);
         } else {
-            location = actualPortal.getPortalLocation().getLatLng();
+            location = actualPortal.getPortalLocation().destinationPoint(10, 10).getLatLng();
             percentage = 100;
         }
 
@@ -794,6 +794,8 @@ public class ScannerView extends WidgetMap {
                 .withLatLng(location)
                 .withTextField(String.format("%d%%", percentage) + (criticalHit ? "!" : ""))
                 .withTextColor(getRgbaStringFromColour(0xCCF8C03E))
+                .withTextHaloColor(getRgbaStringFromColour(0XFF000000))
+                .withTextHaloWidth(1.0f)
 //                    .withTextSize(14.0f)
                 ;
 

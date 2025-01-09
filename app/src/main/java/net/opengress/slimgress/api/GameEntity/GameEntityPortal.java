@@ -55,6 +55,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+// FIXME - these destinationPoint functions should not be in LinkedResonator class...
 public class GameEntityPortal extends GameEntityBase implements Serializable {
     public static class LinkedEdge
     {
