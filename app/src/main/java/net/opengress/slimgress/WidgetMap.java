@@ -527,7 +527,7 @@ abstract public class WidgetMap extends Fragment {
         });
     }
 
-    private void updateXMParticles() {
+    void updateXMParticles() {
         FeatureCollection fc = FeatureCollection.fromFeatures(mXmParticleFeatures.values().toArray(new Feature[0]));
         mXmParticlesGeoJsonSource.setGeoJson(fc);
     }
@@ -536,7 +536,7 @@ abstract public class WidgetMap extends Fragment {
         final Team team = portal.getPortalTeam();
         if (mMapView != null) {
             String guid = portal.getEntityGuid();
-            String layerName = "portal-" + guid + "-layer";
+            String layerName = "portal-layer-" + guid;
             String sourceName = "portal-" + guid;
 
             final Location location = portal.getPortalLocation();
@@ -938,7 +938,7 @@ abstract public class WidgetMap extends Fragment {
             if (mTouchTargetFeatures.containsKey(guid)) {
                 mMapLibreMap.getStyle(style -> {
                     // for portals
-                    style.removeLayer("portal-" + guid + "-layer");
+                    style.removeLayer("portal-layer-" + guid);
                     style.removeSource("portal-" + guid);
                     // for dropped items
                     style.removeLayer("item-layer-" + guid);
