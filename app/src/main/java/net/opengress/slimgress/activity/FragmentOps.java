@@ -37,6 +37,7 @@ public class FragmentOps extends Fragment implements TabLayout.OnTabSelectedList
         // Set up the ViewPager with the sections adapter.
         mViewPager = rootView.findViewById(R.id.pager);
         mViewPager.setAdapter(opsPagerAdapter);
+
         // Set up the TabLayout with the ViewPager.
         TabLayout tabLayout = rootView.findViewById(R.id.tabs);
         /*

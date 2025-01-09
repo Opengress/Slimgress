@@ -112,6 +112,16 @@ public class FragmentInventory extends Fragment {
 
     @Override
     public void onResume() {
+
+        // one day i'd like to centralise all this. same defaults repeated on device screen.
+        updateItemVisibilityForPreference(mSearchBox, PREFS_INVENTORY_SEARCH_BOX_VISIBLE, false);
+        updateItemVisibilityForPreference(mSortSpinner, PREFS_INVENTORY_KEY_SORT_VISIBLE, true);
+        updateItemVisibilityForPreference(mLevelSpinner, PREFS_INVENTORY_LEVEL_FILTER_VISIBLE, false);
+        updateItemVisibilityForPreference(mRaritySpinner, PREFS_INVENTORY_RARITY_FILTER_VISIBLE, false);
+        if (!mPrefs.getBoolean(PREFS_INVENTORY_SEARCH_BOX_VISIBLE, true)) {
+            mSearchBox.setQuery(null, false);
+        }
+
         // FIXME monkeypatch
         int inventoryCount = mApp.getGame().getInventory().getItems().size();
         if (inventoryCount == mInventoryCount && mInventoryCount != 0) {
@@ -139,22 +149,12 @@ public class FragmentInventory extends Fragment {
 
         mApp.getInventoryViewModel().getInventory().observe(getViewLifecycleOwner(), mObserver);
 
-
-        // one day i'd like to centralise all this. same defaults repeated on device screen.
-        updateItemVisibilityForPreference(mSearchBox, PREFS_INVENTORY_SEARCH_BOX_VISIBLE, false);
-        updateItemVisibilityForPreference(mSortSpinner, PREFS_INVENTORY_KEY_SORT_VISIBLE, true);
-        updateItemVisibilityForPreference(mLevelSpinner, PREFS_INVENTORY_LEVEL_FILTER_VISIBLE, false);
-        updateItemVisibilityForPreference(mRaritySpinner, PREFS_INVENTORY_RARITY_FILTER_VISIBLE, false);
-        if (!mPrefs.getBoolean(PREFS_INVENTORY_SEARCH_BOX_VISIBLE, true)) {
-            mSearchBox.setQuery(null, false);
-        }
-
         mFirstRun = false;
         super.onResume();
     }
 
     @Override
-    public View onCreateView(final LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull final LayoutInflater inflater, final ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_inventory,
                 container, false);
 
@@ -237,7 +237,7 @@ public class FragmentInventory extends Fragment {
         return rootView;
     }
 
-    private void updateItemVisibilityForPreference(View item, String preference, boolean defaultValue) {
+    private void updateItemVisibilityForPreference(@NonNull View item, String preference, boolean defaultValue) {
         item.setVisibility(mPrefs.getBoolean(preference, defaultValue) ? View.VISIBLE : View.GONE);
     }
 
@@ -286,8 +286,6 @@ public class FragmentInventory extends Fragment {
                     }
                     return portal1.getPortalLevel() - portal2.getPortalLevel();
                 });
-                default ->
-                        mGroupPortalKeys.sort((item1, item2) -> Collator.getInstance().compare(item1.getDescription(), item2.getDescription()));
                 case "Team" -> mGroupPortalKeys.sort((item1, item2) -> {
                     ItemPortalKey key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
                     assert key1 != null;
@@ -303,6 +301,8 @@ public class FragmentInventory extends Fragment {
                     }
                     return portal1.getPortalTeam().getColour() - portal2.getPortalTeam().getColour();
                 });
+                default ->
+                        mGroupPortalKeys.sort((item1, item2) -> Collator.getInstance().compare(item1.getDescription(), item2.getDescription()));
             }
 
         } else {
@@ -364,12 +364,6 @@ public class FragmentInventory extends Fragment {
                             mGroupPortalKeys.set(j + 1, item1);
                         }
                     }
-                    default -> {
-                        if (Collator.getInstance().compare(item1.getDescription(), item2.getDescription()) > 0) {
-                            mGroupPortalKeys.set(j, item2);
-                            mGroupPortalKeys.set(j + 1, item1);
-                        }
-                    }
                     case "Team" -> {
                         key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
                         assert key1 != null;
@@ -384,6 +378,12 @@ public class FragmentInventory extends Fragment {
                             break;
                         }
                         if ((portal1.getPortalTeam().getColour() - portal2.getPortalTeam().getColour()) > 0) {
+                            mGroupPortalKeys.set(j, item2);
+                            mGroupPortalKeys.set(j + 1, item1);
+                        }
+                    }
+                    default -> {
+                        if (Collator.getInstance().compare(item1.getDescription(), item2.getDescription()) > 0) {
                             mGroupPortalKeys.set(j, item2);
                             mGroupPortalKeys.set(j + 1, item1);
                         }
