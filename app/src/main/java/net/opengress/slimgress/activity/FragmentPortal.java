@@ -99,7 +99,7 @@ public class FragmentPortal extends Fragment {
 
     @SuppressLint({"DefaultLocale", "ObsoleteSdkInt", "SetTextI18n"})
     private void setUpView() {
-        if (isDetached()) {
+        if (isDetached() || getContext() == null) {
             return;
         }
         int TEAM_COLOR = 0xFF000000 + mPortal.getPortalTeam().getColour();
@@ -285,9 +285,7 @@ public class FragmentPortal extends Fragment {
         String portalGuid = getArguments().getString("guid");
         if (portalGuid != null) {
             mPortal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(portalGuid);
-            if (mPortal != null) {
-                setUpView();
-            } else {
+            if (mPortal == null) {
                 Log.e("FragmentPortal", "Portal not found for GUID: " + portalGuid);
                 finish();
             }
