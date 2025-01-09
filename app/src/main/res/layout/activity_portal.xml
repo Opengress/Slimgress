@@ -77,8 +77,8 @@
                     android:layout_margin="@dimen/activity_margin_half"
                     android:src="@drawable/no_image"
                     android:visibility="visible"
-                    android:adjustViewBounds="true"
-                    android:scaleType="centerInside"
+                    android:adjustViewBounds="false"
+                    android:scaleType="fitCenter"
                     style="@style/ButtonStyle"
                     tools:ignore="ContentDescription" />
 
