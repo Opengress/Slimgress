@@ -673,13 +673,11 @@ public class ScannerView extends WidgetMap {
 
                 mSlurpableParticles.add(particle.getGuid());
                 newXM += particle.getAmount();
-                mMapLibreMap.getStyle(style -> {
-                    style.removeLayer("particle-layer-" + particle.getCellId());
-                    style.removeSource("particle-source-" + particle.getCellId());
-                });
+                mXmParticleFeatures.remove(particle.getGuid());
                 iterator.remove();
             }
         }
+        updateXMParticles();
 
         if (newXM > 0) {
             mGame.addSlurpableXMParticles(mSlurpableParticles);
