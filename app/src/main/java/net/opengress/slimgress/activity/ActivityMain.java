@@ -53,8 +53,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.app.ActivityCompat;
@@ -112,6 +110,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private static boolean isInForeground = false;
+    private static boolean hasScannerOnTop = false;
     private boolean isLevellingUp = false;
     private RecyclerView mRecyclerView;
     private InventoryListItem mCurrentFireItem;
@@ -120,7 +119,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     private TextView mSelectTargetText;
     private Button mConfirmButton;
     private Button mCancelButton;
-    private ActivityResultLauncher<Intent> mOpsActivityResultLauncher;
     private ScannerView mScannerView;
     private boolean isFireCarouselVisible = false;
     private boolean isPortalPickerVisible = false;
@@ -158,9 +156,11 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
         getSupportFragmentManager().addOnBackStackChangedListener(() -> {
             Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+            hasScannerOnTop = false;
             if (currentFragment instanceof ScannerView) {
                 findViewById(R.id.activity_main_widgets).setVisibility(View.VISIBLE);
                 findViewById(R.id.commsLayout).setVisibility(View.VISIBLE);
+                hasScannerOnTop = true;
             } else if (currentFragment instanceof FragmentPortal) {
                 findViewById(R.id.activity_main_widgets).setVisibility(View.GONE);
                 findViewById(R.id.commsLayout).setVisibility(View.VISIBLE);
@@ -247,18 +247,12 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         });
     }
 
-    private void onOpsResult(ActivityResult activityResult) {
-        // this is nice to have, but probably unneeded so i could turn it off to speed the game up
-        ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.fragment_container);
-        Objects.requireNonNull(scanner).updateWorld();
-    }
-
     private synchronized void levelUp(int level) {
         if (isLevellingUp || !notBouncing("levelUp", 10000)) {
             Log.d("Main", "Not levelling up, because we are ALREADY DOING THAT");
             return;
         }
-        if (!isActivityInForeground()) {
+        if (!isActivityInForeground() || !hasScannerOnTop) {
             Log.d("Main", "Not levelling up, because we are not in the foreground");
             return;
         }
@@ -919,16 +913,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         mSelectTargetText.setText(dist < 41 ? R.string.flipcard_confirm_selection : R.string.flipcard_select_target);
         mSelectedPortalGuid = entityGuid;
         mConfirmButton.setEnabled(dist < 41);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (resultCode == RESULT_OK && data.hasExtra("selected_weapon")) {
-            InventoryListItem selectedItem = (InventoryListItem) data.getSerializableExtra("selected_weapon");
-            showFireCarousel(selectedItem);
-        }
     }
 
     public void setScanner(ScannerView scanner) {
