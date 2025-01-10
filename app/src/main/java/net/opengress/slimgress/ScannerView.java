@@ -438,12 +438,6 @@ public class ScannerView extends WidgetMap {
 
         mLocationProvider.checkPermissionsAndRequestUpdates(requireActivity(), this::requestLocationUpdates);
 
-        if (mGame.hasHackResults()) {
-            Bundle hackResult = mGame.pollHackResult();
-            showHackResultDialog(hackResult);
-        }
-
-
         mFieldFeatures.clear();
         mLinkFeatures.clear();
         // crashes because i don't currently clean out the rest of the portal details
@@ -571,10 +565,6 @@ public class ScannerView extends WidgetMap {
 
     @SuppressLint("DefaultLocale")
     public synchronized void updateWorld() {
-        if (mGame.hasHackResults()) {
-            Bundle hackResult = mGame.pollHackResult();
-            showHackResultDialog(hackResult);
-        }
         if (!notBouncing("updateWorld", mMinUpdateIntervalMS)) {
             return;
         }
@@ -635,6 +625,11 @@ public class ScannerView extends WidgetMap {
     }
 
     private synchronized void slurp() {
+
+        if (mGame.hasHackResults()) {
+            Bundle hackResult = mGame.pollHackResult();
+            showHackResultDialog(hackResult);
+        }
 
         final Location playerLoc = mGame.getLocation();
         if (mGame.getAgent() == null || playerLoc == null) {
