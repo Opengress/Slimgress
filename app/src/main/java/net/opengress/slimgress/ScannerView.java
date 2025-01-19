@@ -25,7 +25,6 @@ import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE;
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE_DEFAULT;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColour;
-import static net.opengress.slimgress.ViewHelpers.getMainActivity;
 import static net.opengress.slimgress.ViewHelpers.getRgbaStringFromColour;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
@@ -793,7 +792,7 @@ public class ScannerView extends WidgetMap {
                 ;
 
         Symbol damage = mSymbolManager.create(symbolOptions);
-        mApp.schedule_(() -> mApp.getMainActivity().runOnUiThread(() -> mSymbolManager.delete(damage)), 2000, TimeUnit.MILLISECONDS);
+        mApp.schedule_(() -> requireActivity().runOnUiThread(() -> mSymbolManager.delete(damage)), 2000, TimeUnit.MILLISECONDS);
 
     }
 
@@ -817,7 +816,7 @@ public class ScannerView extends WidgetMap {
 
         Line line = mPlayerDamageLineManager.create(lineOptions);
 //        // let it delete itself
-        mApp.schedule_(() -> mApp.getMainActivity().runOnUiThread(
+        mApp.schedule_(() -> requireActivity().runOnUiThread(
                 () -> mPlayerDamageLineManager.delete(line)
         ), 2000, TimeUnit.MILLISECONDS);
 
@@ -915,7 +914,7 @@ public class ScannerView extends WidgetMap {
                 showInfoCard((GameEntityPortal) entity);
                 return;
             }
-            FragmentTransaction transaction = getMainActivity().getSupportFragmentManager().beginTransaction();
+            FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
             transaction.add(R.id.fragment_container, FragmentPortal.newInstance(entity.getEntityGuid()), "PORTAL");
             transaction.addToBackStack("PORTAL");
             transaction.commit();
@@ -947,12 +946,12 @@ public class ScannerView extends WidgetMap {
         mGame.clear();
         // FIXME this might not be strictly necessary
         Activity activity = getActivity();
-        if (activity != null) {
-            Intent intent = new Intent(activity, activity.getClass());
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            activity.startActivity(intent);
-            activity.finish();
-        }
+//        if (activity != null) {
+//            Intent intent = new Intent(activity, activity.getClass());
+//            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+//            activity.startActivity(intent);
+//            activity.finish();
+//        }
     }
 
     private void onLostConnection() {

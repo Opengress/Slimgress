@@ -7,7 +7,6 @@ import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_
 import static net.opengress.slimgress.ViewHelpers.formatNumberToKLocalised;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColour;
-import static net.opengress.slimgress.ViewHelpers.getMainActivity;
 import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
 import static net.opengress.slimgress.ViewHelpers.getPrettyItemName;
 import static net.opengress.slimgress.ViewHelpers.putItemInMap;
@@ -318,7 +317,7 @@ public class FragmentPortal extends Fragment {
 
         mRootView.findViewById(R.id.deployButton).setEnabled(true);
         mRootView.findViewById(R.id.deployButton).setOnClickListener(v -> {
-            FragmentTransaction transaction = getMainActivity().getSupportFragmentManager().beginTransaction();
+            FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
             transaction.add(R.id.fragment_container, FragmentDeploy.newInstance(mPortal.getEntityGuid()), "DEPLOY");
             transaction.addToBackStack("DEPLOY");
             transaction.commit();
@@ -326,7 +325,7 @@ public class FragmentPortal extends Fragment {
 
         mRootView.findViewById(R.id.modButton).setEnabled(true);
         mRootView.findViewById(R.id.modButton).setOnClickListener(v -> {
-            FragmentTransaction transaction = getMainActivity().getSupportFragmentManager().beginTransaction();
+            FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
             transaction.add(R.id.fragment_container, FragmentMod.newInstance(mPortal.getEntityGuid()), "MOD");
             transaction.addToBackStack("MOD");
             transaction.commit();
@@ -418,7 +417,7 @@ public class FragmentPortal extends Fragment {
         });
 
         mRootView.findViewById(R.id.portalImage).setOnClickListener(v -> {
-            FragmentTransaction transaction = getMainActivity().getSupportFragmentManager().beginTransaction();
+            FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
             transaction.add(R.id.fragment_container, FragmentPhotoRate.newInstance(mPortal.getEntityGuid()), "PHOTORATE");
             transaction.addToBackStack("PHOTORATE");
             transaction.commit();
