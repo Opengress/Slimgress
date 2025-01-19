@@ -296,7 +296,7 @@ abstract public class WidgetMap extends Fragment {
             FillLayer xmParticlesLayer = new FillLayer("xm-particles-layer", "xm-particles-source")
                     .withProperties(
                             PropertyFactory.fillColor("rgba(255, 255, 255, 0.5)"),
-                            PropertyFactory.fillOutlineColor("rgba(0, 0, 0, 0.5)")
+                            PropertyFactory.fillOutlineColor("rgba(0, 0, 0, 1.0)")
                     );
             style.addLayer(xmParticlesLayer);
         } else {
