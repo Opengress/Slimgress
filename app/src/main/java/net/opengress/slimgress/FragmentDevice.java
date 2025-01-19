@@ -21,6 +21,7 @@
 
 package net.opengress.slimgress;
 
+import static androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE;
@@ -54,6 +55,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import net.opengress.slimgress.activity.ActivityMain;
 import net.opengress.slimgress.activity.FragmentCredits;
 import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Game.GameState;
@@ -86,8 +88,8 @@ public class FragmentDevice extends Fragment {
 
         mRootView.findViewById(R.id.device_button_force_sync).setEnabled(true);
         mRootView.findViewById(R.id.device_button_force_sync).setOnClickListener(v -> {
-            SlimgressApplication.getInstance().getMainActivity().forceSync();
-            requireActivity().finish();
+            ((ActivityMain) requireActivity()).forceSync();
+            requireActivity().getSupportFragmentManager().popBackStack(null, POP_BACK_STACK_INCLUSIVE);
         });
 
         mRootView.findViewById(R.id.device_button_update).setEnabled(true);

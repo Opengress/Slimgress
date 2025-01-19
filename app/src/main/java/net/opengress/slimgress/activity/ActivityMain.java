@@ -135,7 +135,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mApp.setMainActivity(this);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
@@ -290,6 +289,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     protected void onResume() {
         super.onResume();
         isInForeground = true;
+        mApp.setMainActivity(this);
         if (mGame.getKnobs() == null) {
             Intent intent = new Intent(this, ActivitySplash.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
