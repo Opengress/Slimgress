@@ -224,7 +224,7 @@ public class FragmentPortal extends Fragment {
         ((TextView) mRootView.findViewById(R.id.activityPortalKeyCount)).setText("x" + keys.size());
         mRootView.findViewById(R.id.activityPortalKeyButton).setOnClickListener(v -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-            ;
+
             builder.setTitle("Portal Key");
             builder.setMessage(String.format("You are holding %d keys. This dialog will not prompt for confirmation or ask for quantities.", keys.size()));
             builder.setCancelable(false);
@@ -244,7 +244,6 @@ public class FragmentPortal extends Fragment {
                 checkKeys();
                 return false;
             })));
-            String name = keys.get(0).getUsefulName();
             builder.setNegativeButton("Recycle", (dialog, which) -> mGame.intRecycleItem(keys.get(0), new Handler(msg -> {
                 var data = msg.getData();
                 String error = getErrorStringFromAPI(data);
@@ -253,9 +252,9 @@ public class FragmentPortal extends Fragment {
                     eDialog.setMessage(error).setDismissDelay(1500).show();
                     SlimgressApplication.postPlainCommsMessage("Recycle failed: " + error);
                 } else {
-//                    var res = data.getString("result");
-//                    String message = String.format("Gained %s XM from recycling a %s", res, name);
-//                    SlimgressApplication.postPlainCommsMessage(message);
+                    var res = data.getString("result");
+                    String message = String.format("Gained %s XM from recycling a %s", res, keys.get(0).getUsefulName());
+                    SlimgressApplication.postPlainCommsMessage(message);
 //                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
                     keys.remove(0);
                 }
@@ -321,6 +320,15 @@ public class FragmentPortal extends Fragment {
             FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
             transaction.add(R.id.fragment_container, FragmentDeploy.newInstance(mPortal.getEntityGuid()), "DEPLOY");
             transaction.addToBackStack("DEPLOY");
+            transaction.commit();
+        });
+
+        // FIXME do not tease the user with this button if they are out of range and have no key
+        mRootView.findViewById(R.id.rechargeButton).setEnabled(true);
+        mRootView.findViewById(R.id.rechargeButton).setOnClickListener(v -> {
+            FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
+            transaction.add(R.id.fragment_container, FragmentRecharge.newInstance(mPortal.getEntityGuid()), "RECHARGE");
+            transaction.addToBackStack("RECHARGE");
             transaction.commit();
         });
 

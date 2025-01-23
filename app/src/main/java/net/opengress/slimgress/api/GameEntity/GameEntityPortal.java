@@ -178,6 +178,7 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
     private MarkupPlayer mDiscoverer;
     private final List<LinkedEdge> mPortalEdges;
     private final List<LinkedMod> mPortalMods;
+    // consider making this a map
     private final List<LinkedResonator> mPortalResonators;
     private final PortalKnobs mPortalKnobs = SlimgressApplication.getInstance().getGame().getKnobs().getPortalKnobs();
 
@@ -550,6 +551,29 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
     public List<LinkedResonator> getPortalResonators()
     {
         return mPortalResonators;
+    }
+
+    /*
+     * Get resonator slots which are occupied
+     *
+     * This is a pain and should be avoided unless we change data structure.
+     * Not sure that it's not performant though - loops are small.
+     */
+    public int[] getPortalResonatorSlots() {
+        ArrayList<Integer> slots = new ArrayList<>();
+        for (LinkedResonator reso : mPortalResonators) {
+            if (reso != null) {
+                slots.add(reso.slot);
+            }
+        } // virescit vulnere virtus
+        if (slots.isEmpty()) {
+            return new int[]{};
+        }
+        int[] result = new int[slots.size()];
+        for (int i = 0; i < slots.size(); i++) {
+            result[i] = slots.get(i);
+        }
+        return result;
     }
 
     public int getPortalResonatorCount() {

@@ -193,7 +193,6 @@ public class Interface
                         if (playerLocation != null) {
                             String loc = playerLocation.toString();
                             params.getJSONObject("params").put("playerLocation", loc);
-                            params.getJSONObject("params").put("location", loc);
                         }
                         params.getJSONObject("params").put("knobSyncTimestamp", getCurrentTimestamp());
 
