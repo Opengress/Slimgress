@@ -1272,12 +1272,14 @@ public class GameState {
         }
     }
 
-    public void intRechargePortal(@NonNull GameEntityPortal portal, @NonNull int[] slots, final Handler handler) {
+    public void intRechargePortal(@NonNull GameEntityPortal portal, @NonNull int[] slots, boolean isBoostRecharge, final Handler handler) {
         try {
             checkInterface();
 
             JSONObject params = new JSONObject();
             params.put("portalGuid", portal.getEntityGuid());
+            params.put("portalKeyGuid", null);
+            params.put("isBoostRecharge", isBoostRecharge);
 
             JSONArray resonatorSlots = new JSONArray();
             for (int slot : slots) {
@@ -1296,13 +1298,14 @@ public class GameState {
         }
     }
 
-    public void intRemoteRechargePortal(@NonNull GameEntityPortal portal, @NonNull ItemPortalKey key, final Handler handler) {
+    public void intRemoteRechargePortal(@NonNull ItemPortalKey key, boolean isBoostRecharge, final Handler handler) {
         try {
             checkInterface();
 
             JSONObject params = new JSONObject();
-            params.put("portalGuid", portal.getEntityGuid());
+            params.put("portalGuid", null);
             params.put("portalKeyGuid", key.getEntityGuid());
+            params.put("isBoostRecharge", isBoostRecharge);
 
             JSONArray resonatorSlots = new JSONArray();
             for (int i = 0; i < 8; i++) {
@@ -1322,7 +1325,7 @@ public class GameState {
     }
 
     public void intQueryLinkablilityForPortal(GameEntityPortal portal, ItemPortalKey key, final Handler handler) {
-        // I do not know why you would just check ONE key, but every unofficial client did ¯\_(ツ)_/¯
+        // I do not know why you would just check ONE key, but EVERY unofficial client did ¯\_(ツ)_/¯
         intQueryLinkablilityForPortal(portal, new AbstractList<>() {
             @Override
             public ItemPortalKey get(int index) {

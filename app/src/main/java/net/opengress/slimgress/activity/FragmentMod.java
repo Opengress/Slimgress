@@ -55,6 +55,7 @@ public class FragmentMod extends Fragment {
     private GameEntityPortal mPortal;
     private View mRootView;
 
+    private Location mOldLocation;
 
     private final Handler deployResultHandler = new Handler(msg -> {
         var data = msg.getData();
@@ -94,11 +95,11 @@ public class FragmentMod extends Fragment {
             if (mPortal != null) {
                 setUpView();
             } else {
-                Log.e("FragmentPortal", "Portal not found for GUID: " + portalGuid);
+                Log.e("FragMod", "Portal not found for GUID: " + portalGuid);
                 requireActivity().getOnBackPressedDispatcher().onBackPressed();
             }
         } else {
-            Log.e("FragmentPortal", "No portal GUID provided");
+            Log.e("FragMod", "No portal GUID provided");
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
         }
         setUpView();
@@ -256,6 +257,9 @@ public class FragmentMod extends Fragment {
 
     private void onReceiveLocation(Location location) {
         if (location != null) {
+            if (location.approximatelyEqualTo(mOldLocation)) {
+                return;
+            }
             int dist = (int) location.distanceTo(mPortal.getPortalLocation());
             setButtonsEnabled(dist <= mActionRadiusM);
             updateInfoText(dist, mPortal, mRootView.findViewById(R.id.modScreenPortalInfo));
@@ -263,6 +267,7 @@ public class FragmentMod extends Fragment {
             setButtonsEnabled(false);
             updateInfoText(999999000, mPortal, mRootView.findViewById(R.id.modScreenPortalInfo));
         }
+        mOldLocation = location;
     }
 
     private void setButtonsEnabled(boolean shouldEnableButton) {

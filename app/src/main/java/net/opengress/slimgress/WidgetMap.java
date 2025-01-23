@@ -527,11 +527,6 @@ abstract public class WidgetMap extends Fragment {
         });
     }
 
-    void updateXMParticles() {
-        FeatureCollection fc = FeatureCollection.fromFeatures(mXmParticleFeatures.values().toArray(new Feature[0]));
-        mXmParticlesGeoJsonSource.setGeoJson(fc);
-    }
-
     protected void drawPortal(@NonNull final GameEntityPortal portal) {
         final Team team = portal.getPortalTeam();
         if (mMapView != null) {
@@ -706,6 +701,11 @@ abstract public class WidgetMap extends Fragment {
         }
         FeatureCollection fc = FeatureCollection.fromFeatures(new ArrayList<>(mFieldFeatures.values()));
         mFieldsGeoJsonSource.setGeoJson(fc);
+    }
+
+    void updateXMParticles() {
+        FeatureCollection fc = FeatureCollection.fromFeatures(mXmParticleFeatures.values().toArray(new Feature[0]));
+        mXmParticlesGeoJsonSource.setGeoJson(fc);
     }
 
     protected void drawField(final GameEntityControlField field) {

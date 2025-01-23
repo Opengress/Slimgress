@@ -71,6 +71,7 @@ public class FragmentPortal extends Fragment {
     private boolean mIsHacking = false;
     private GameEntityPortal mPortal;
     private View mRootView;
+    private Location mOldLocation;
     /*
     3, 2, 1, 0
     4, 5, 6, 7
@@ -461,8 +462,12 @@ public class FragmentPortal extends Fragment {
         if (location == null) {
             setButtonsEnabled(false);
         } else {
+            if (location.approximatelyEqualTo(mOldLocation)) {
+                return;
+            }
             setButtonsEnabled(location.getLatLng().distanceTo(mPortal.getPortalLocation().getLatLng()) <= mActionRadiusM);
         }
+        mOldLocation = location;
     }
 
     private void setButtonsEnabled(boolean shouldEnableButton) {
@@ -535,21 +540,5 @@ public class FragmentPortal extends Fragment {
         }
 
         return bundle;
-    }
-
-    private class LinkHandler extends Handler {
-        public LinkHandler() {
-            super(msg -> {
-                String error = Utils.getErrorStringFromAPI(msg.getData());
-                if (error != null && !error.isEmpty()) {
-                    DialogInfo dialog = new DialogInfo(requireActivity());
-                    dialog.setMessage(error).setDismissDelay(1500).show();
-                    SlimgressApplication.postPlainCommsMessage("Recycle failed: " + error);
-                    return false;
-                }
-                List<ItemPortalKey> keys = (List<ItemPortalKey>) msg.getData().getSerializable("result");
-                return false;
-            });
-        }
     }
 }

@@ -39,7 +39,7 @@ public class Location implements Serializable
     private final long latE6;
     private final long lngE6;
 
-    public Location(android.location.Location pos) {
+    public Location(@NonNull android.location.Location pos) {
         latE6 = Math.round(pos.getLatitude() * 1e6);
         lngE6 = Math.round(pos.getLongitude() * 1e6);
     }
@@ -53,7 +53,7 @@ public class Location implements Serializable
         return bigInt.doubleValue();
     }
 
-    public Location(JSONObject json) throws JSONException
+    public Location(@NonNull JSONObject json) throws JSONException
     {
         latE6 = json.getInt("latE6");
         lngE6 = json.getInt("lngE6");
@@ -80,7 +80,7 @@ public class Location implements Serializable
         this.lngE6 = lngE6;
     }
 
-    public Location(String hexLatLng)
+    public Location(@NonNull String hexLatLng)
     {
         String[] parts = hexLatLng.split(",");
         latE6 = (long) hexToDecimal(parts[0]);
@@ -140,7 +140,7 @@ public class Location implements Serializable
     }
 
     // Method to calculate distance between this point and another point
-    public double distanceTo(Location other) {
+    public double distanceTo(@NonNull Location other) {
 
         // Convert latitude and longitude from degrees to radians
         double lat1 = Math.toRadians(getLatitude());
@@ -163,7 +163,7 @@ public class Location implements Serializable
     }
 
     // Method to calculate distance between this point and another point
-    public double distanceTo(android.location.Location other) {
+    public double distanceTo(@NonNull android.location.Location other) {
 
         // Convert latitude and longitude from degrees to radians
         double lat1 = Math.toRadians(getLatitude());
@@ -183,5 +183,9 @@ public class Location implements Serializable
 
         // Distance in meters
         return S2LatLng.EARTH_RADIUS_METERS * c;
+    }
+
+    public boolean approximatelyEqualTo(Location other) {
+        return other != null && distanceTo(other) < 0.1;
     }
 }

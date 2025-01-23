@@ -58,6 +58,8 @@ public class FragmentDeploy extends Fragment {
     private GameEntityPortal mPortal;
     private View mRootView;
 
+    private Location mOldLocation;
+
     private final Handler deployResultHandler = new Handler(msg -> {
         var data = msg.getData();
         String error = getErrorStringFromAPI(data);
@@ -101,11 +103,11 @@ public class FragmentDeploy extends Fragment {
             if (mPortal != null) {
                 setUpView();
             } else {
-                Log.e("FragmentPortal", "Portal not found for GUID: " + portalGuid);
+                Log.e("FragDeploy", "Portal not found for GUID: " + portalGuid);
                 requireActivity().getOnBackPressedDispatcher().onBackPressed();
             }
         } else {
-            Log.e("FragmentPortal", "No portal GUID provided");
+            Log.e("FragDeploy", "No portal GUID provided");
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
         }
         mApp.getLocationViewModel().getLocationData().observe(requireActivity(), this::onReceiveLocation);
@@ -114,6 +116,9 @@ public class FragmentDeploy extends Fragment {
 
     @SuppressLint({"DefaultLocale", "ObsoleteSdkInt"})
     public void setUpView() {
+        if (getContext() == null) {
+            return;
+        }
         boolean teamOK = mPortal.getPortalTeam().toString().equalsIgnoreCase("neutral") || mPortal.getPortalTeam().toString().equals(mGame.getAgent().getTeam().toString());
 
 
@@ -294,6 +299,9 @@ public class FragmentDeploy extends Fragment {
 
     private void onReceiveLocation(Location location) {
         if (location != null) {
+            if (location.approximatelyEqualTo(mOldLocation)) {
+                return;
+            }
             int dist = (int) location.distanceTo(mPortal.getPortalLocation());
             setButtonsEnabled(dist <= mActionRadiusM);
             updateInfoText(dist, mPortal, mRootView.findViewById(R.id.deployScreenPortalInfo));
@@ -301,6 +309,7 @@ public class FragmentDeploy extends Fragment {
             setButtonsEnabled(false);
             updateInfoText(999999000, mPortal, mRootView.findViewById(R.id.deployScreenPortalInfo));
         }
+        mOldLocation = location;
     }
 
     private void setButtonsEnabled(boolean shouldEnableButton) {
