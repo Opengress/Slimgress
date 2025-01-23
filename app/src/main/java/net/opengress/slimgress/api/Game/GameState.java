@@ -1291,6 +1291,29 @@ public class GameState {
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
+                    getData().putInt("recharged", slots.length);
+                }
+
+                @Override
+                public void handleError(String error) {
+                    // TOO_BUSY_RECHARGE
+                    // MISSING_PORTAL_KEY
+                    switch (error) {
+                        case "PORTAL_OUT_OF_RANGE" -> super.handleError("Out of range.");
+                        case "PORTAL_BELONGS_TO_ENEMY" -> super.handleError("Enemy Portal.");
+                        case "RESONATORS_FULLY_CHARGED" -> super.handleError("Fully charged.");
+                        case "NO_RESONATORS_TO_RECHARGE" -> super.handleError("Not rechargeable.");
+                        case "PLAYER_DEPLETED", "NEED_MORE_ENERGY" ->
+                                super.handleError(getString(R.string.you_don_t_have_enough_xm));
+                        case "SPEED_LOCKED" -> // new!
+                                super.handleError("You are moving too fast");
+                        case "SPEED_LOCKED_" -> {
+                            // TODO: maybe format this as "x hours, x minutes, x seconds"
+                            String t = error.substring(error.lastIndexOf("_") + 1);
+                            super.handleError("You are moving too fast! You will be ready to play in " + t + "seconds"); // new!
+                        }
+                        default -> super.handleError("Unknown error: " + error);
+                    }
                 }
             });
         } catch (JSONException e) {
@@ -1298,7 +1321,7 @@ public class GameState {
         }
     }
 
-    public void intRemoteRechargePortal(@NonNull ItemPortalKey key, boolean isBoostRecharge, final Handler handler) {
+    public void intRemoteRechargePortal(@NonNull ItemPortalKey key, int[] slots, boolean isBoostRecharge, final Handler handler) {
         try {
             checkInterface();
 
@@ -1307,9 +1330,13 @@ public class GameState {
             params.put("portalKeyGuid", key.getEntityGuid());
             params.put("isBoostRecharge", isBoostRecharge);
 
+//            JSONArray resonatorSlots = new JSONArray();
+//            for (int i = 0; i < 8; i++) {
+//                resonatorSlots.put(i);
+//            }
             JSONArray resonatorSlots = new JSONArray();
-            for (int i = 0; i < 8; i++) {
-                resonatorSlots.put(i);
+            for (int slot : slots) {
+                resonatorSlots.put(slot);
             }
             params.put("resonatorSlots", resonatorSlots);
 
@@ -1317,6 +1344,29 @@ public class GameState {
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
+                    getData().putInt("recharged", slots.length);
+                }
+
+                @Override
+                public void handleError(String error) {
+                    // TOO_BUSY_RECHARGE
+                    switch (error) {
+                        case "MISSING_PORTAL_KEY" -> super.handleError("Missing Portal Key.");
+                        case "PORTAL_OUT_OF_RANGE" -> super.handleError("Out of range.");
+                        case "PORTAL_BELONGS_TO_ENEMY" -> super.handleError("Enemy Portal.");
+                        case "RESONATORS_FULLY_CHARGED" -> super.handleError("Fully charged.");
+                        case "NO_RESONATORS_TO_RECHARGE" -> super.handleError("Not rechargeable.");
+                        case "PLAYER_DEPLETED", "NEED_MORE_ENERGY" ->
+                                super.handleError(getString(R.string.you_don_t_have_enough_xm));
+                        case "SPEED_LOCKED" -> // new!
+                                super.handleError("You are moving too fast");
+                        case "SPEED_LOCKED_" -> {
+                            // TODO: maybe format this as "x hours, x minutes, x seconds"
+                            String t = error.substring(error.lastIndexOf("_") + 1);
+                            super.handleError("You are moving too fast! You will be ready to play in " + t + "seconds"); // new!
+                        }
+                        default -> super.handleError("Unknown error: " + error);
+                    }
                 }
             });
         } catch (JSONException e) {

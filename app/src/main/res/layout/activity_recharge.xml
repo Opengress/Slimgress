@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="@dimen/activity_margin"
+    style="@style/GradientWindow"
+    tools:ignore="RtlHardcoded, HardcodedText">
+
+    <net.opengress.slimgress.WidgetLongPressButton
+        android:id="@+id/btnRechargeAll"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        style="@style/ButtonStyle"
+        android:text="CHARGE\nALL"
+        app:layout_constraintBottom_toTopOf="@id/rechargeScreenResonatorS"
+        app:layout_constraintLeft_toRightOf="@id/rechargeScreenResonatorW"
+        app:layout_constraintRight_toLeftOf="@id/rechargeScreenResonatorE"
+        app:layout_constraintTop_toBottomOf="@id/rechargeScreenResonatorN" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/rechargeScreenResonatorN"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toBottomOf="@id/rechargeScreenResonatorNE"
+        app:layout_constraintRight_toLeftOf="@id/rechargeScreenResonatorNE" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/rechargeScreenResonatorNE"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@id/rechargeScreenResonatorE"
+        app:layout_constraintRight_toRightOf="@id/rechargeScreenResonatorE" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/rechargeScreenResonatorE"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@id/rechargeScreenResonatorSE"
+        app:layout_constraintRight_toRightOf="@id/rechargeScreenResonatorSE" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/rechargeScreenResonatorSE"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/rechargeScreenResonatorS"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toBottomOf="@id/rechargeScreenResonatorSE"
+        app:layout_constraintRight_toLeftOf="@id/rechargeScreenResonatorSE" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/rechargeScreenResonatorSW"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toBottomOf="@id/rechargeScreenResonatorS"
+        app:layout_constraintRight_toLeftOf="@id/rechargeScreenResonatorS" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/rechargeScreenResonatorW"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@id/rechargeScreenResonatorSW"
+        app:layout_constraintRight_toRightOf="@id/rechargeScreenResonatorSW" />
+
+    <net.opengress.slimgress.WidgetResonator
+        android:id="@+id/rechargeScreenResonatorNW"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toBottomOf="@id/rechargeScreenResonatorN"
+        app:layout_constraintRight_toLeftOf="@id/rechargeScreenResonatorN" />
+
+    <TextView
+        android:id="@+id/rechargeScreenPortalInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="LVL: L?\nRNG: ?km\nENR: ?????? / ??????\nMOD: ?\nMOD: ?\nMOD: ?\nMOD: ?\nLNK: ?? in, ?? out"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/rechargeScreen_back_button"
+        style="@style/BackButtonStyle"
+        android:text="@string/back_button_back"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

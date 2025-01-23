@@ -204,7 +204,7 @@ public class Inventory {
         return null;
     }
 
-    @Nullable
+    @NonNull
     public final List<ItemResonator> getResosForDeployment(int accessLevel) {
         List<ItemResonator> items = new LinkedList<>();
 
@@ -298,5 +298,22 @@ public class Inventory {
         }
 
         return items;
+    }
+
+    @Nullable
+    public final ItemPortalKey getKeyForPortal(@NonNull GameEntityPortal portal) {
+        return getKeyForPortal(portal.getEntityGuid());
+    }
+
+    @Nullable
+    public final ItemPortalKey getKeyForPortal(String portal) {
+        for (Map.Entry<String, ItemBase> pair : mItems.entrySet()) {
+            ItemBase item = pair.getValue();
+            if (item.getItemType() == ItemBase.ItemType.PortalKey &&
+                    Objects.equals(((ItemPortalKey) item).getPortalGuid(), portal)) {
+                return (ItemPortalKey) item;
+            }
+        }
+        return null;
     }
 }

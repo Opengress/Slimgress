@@ -466,7 +466,7 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <Button
+                <net.opengress.slimgress.WidgetLongPressButton
                     style="@style/ButtonStyle"
                     android:id="@+id/hackButton"
                     android:layout_width="match_parent"
