@@ -671,11 +671,11 @@ public class ScannerView extends WidgetMap {
                 iterator.remove();
             }
         }
-        updateXMParticles();
 
         if (newXM > 0) {
             mGame.addSlurpableXMParticles(mSlurpableParticles);
             mGame.getAgent().addEnergy(newXM);
+            updateXMParticles();
         }
     }
 
