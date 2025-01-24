@@ -27,6 +27,7 @@ import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Game.Inventory;
+import net.opengress.slimgress.api.GameEntity.GameEntityBase;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal.LinkedResonator;
 import net.opengress.slimgress.api.Item.ItemResonator;
@@ -102,6 +103,8 @@ public class FragmentDeploy extends Fragment {
             mPortal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(portalGuid);
             if (mPortal != null) {
                 setUpView();
+                mApp.getUpdatedEntitiesViewModel().getEntities().observe(getViewLifecycleOwner(), this::checkForUpdates);
+                mApp.getLocationViewModel().getLocationData().observe(requireActivity(), this::onReceiveLocation);
             } else {
                 Log.e("FragDeploy", "Portal not found for GUID: " + portalGuid);
                 requireActivity().getOnBackPressedDispatcher().onBackPressed();
@@ -110,8 +113,15 @@ public class FragmentDeploy extends Fragment {
             Log.e("FragDeploy", "No portal GUID provided");
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
         }
-        mApp.getLocationViewModel().getLocationData().observe(requireActivity(), this::onReceiveLocation);
         return mRootView;
+    }
+
+    private void checkForUpdates(List<GameEntityBase> gameEntityBases) {
+        for (GameEntityBase entity : gameEntityBases) {
+            if (entity.getEntityGuid().equals(mPortal.getEntityGuid())) {
+                setUpView();
+            }
+        }
     }
 
     @SuppressLint({"DefaultLocale", "ObsoleteSdkInt"})
