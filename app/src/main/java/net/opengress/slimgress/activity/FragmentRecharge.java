@@ -26,7 +26,6 @@ import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Game.GameState;
-import net.opengress.slimgress.api.Game.Inventory;
 import net.opengress.slimgress.api.GameEntity.GameEntityBase;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal.LinkedResonator;
@@ -43,7 +42,6 @@ public class FragmentRecharge extends Fragment {
     private final SlimgressApplication mApp = SlimgressApplication.getInstance();
     private final GameState mGame = mApp.getGame();
     private final int mActionRadiusM = mGame.getKnobs().getScannerKnobs().getActionRadiusM();
-    private final Inventory inventory = mGame.getInventory();
     private final int[] mResoViewIds = {
             R.id.rechargeScreenResonatorE,
             R.id.rechargeScreenResonatorNE,
@@ -99,7 +97,7 @@ public class FragmentRecharge extends Fragment {
                 mDistance = (int) mGame.getLocation().distanceTo(mPortal.getPortalLocation());
                 setUpView();
                 mApp.getUpdatedEntitiesViewModel().getEntities().observe(getViewLifecycleOwner(), this::checkForUpdates);
-                mApp.getLocationViewModel().getLocationData().observe(requireActivity(), this::onReceiveLocation);
+                mApp.getLocationViewModel().getLocationData().observe(getViewLifecycleOwner(), this::onReceiveLocation);
             } else {
                 Log.e("FragRecharge", "Portal not found for GUID: " + portalGuid);
                 requireActivity().getOnBackPressedDispatcher().onBackPressed();

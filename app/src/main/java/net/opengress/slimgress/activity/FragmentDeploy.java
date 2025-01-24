@@ -104,7 +104,7 @@ public class FragmentDeploy extends Fragment {
             if (mPortal != null) {
                 setUpView();
                 mApp.getUpdatedEntitiesViewModel().getEntities().observe(getViewLifecycleOwner(), this::checkForUpdates);
-                mApp.getLocationViewModel().getLocationData().observe(requireActivity(), this::onReceiveLocation);
+                mApp.getLocationViewModel().getLocationData().observe(getViewLifecycleOwner(), this::onReceiveLocation);
             } else {
                 Log.e("FragDeploy", "Portal not found for GUID: " + portalGuid);
                 requireActivity().getOnBackPressedDispatcher().onBackPressed();
