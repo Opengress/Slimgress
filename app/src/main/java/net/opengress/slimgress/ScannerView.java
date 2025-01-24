@@ -975,9 +975,26 @@ public class ScannerView extends WidgetMap {
             return;
         }
         boolean shouldShow = mGame.isLocationAccurate();
+        if (shouldShow) {
+            displayQuickMessage(getStringSafely(R.string.location_inaccurate));
+//            mMapView.getOverlayManager().remove(mActionRadius);
+        } else {
+            if (Objects.equals(getQuickMessage(), getStringSafely(R.string.location_inaccurate))) {
+                hideQuickMessage();
+            }
+        }
         // FIXME listen for this somehow ... later...
 //        shouldShow = shouldShow && mGame.getAgent().getEnergyState() == PlayerEntity.EnergyState.OK;
-        shouldShow = shouldShow && hasInternetConnectionCold(requireContext());
+        boolean shouldShow2 = !hasInternetConnectionCold(requireContext());
+        if (shouldShow2) {
+            displayQuickMessage("Scanner disabled - network connection lost");
+//            mMapView.getOverlayManager().remove(mActionRadius);
+        } else {
+            if (Objects.equals(getQuickMessage(), "Scanner disabled - network connection lost")) {
+                hideQuickMessage();
+            }
+        }
+        shouldShow = shouldShow || shouldShow2;
         int visibility = shouldShow ? View.GONE : View.VISIBLE;
         boolean finalShouldShow = shouldShow;
         requireActivity().runOnUiThread(() -> {
