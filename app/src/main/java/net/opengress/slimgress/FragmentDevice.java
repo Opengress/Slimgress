@@ -76,7 +76,7 @@ public class FragmentDevice extends Fragment {
 
         mRootView = inflater.inflate(R.layout.fragment_device, container, false);
 
-        mPrefs = SlimgressApplication.getInstance().getApplicationContext().getSharedPreferences(requireActivity().getApplicationInfo().packageName, Context.MODE_PRIVATE);
+        mPrefs = SlimgressApplication.getInstance().getApplicationContext().getSharedPreferences(requireContext().getApplicationInfo().packageName, Context.MODE_PRIVATE);
 
         mRootView.findViewById(R.id.device_button_credits).setEnabled(true);
         mRootView.findViewById(R.id.device_button_credits).setOnClickListener(v -> {

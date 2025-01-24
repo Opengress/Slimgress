@@ -440,7 +440,7 @@ public class FragmentPortal extends Fragment {
 
         setButtonsEnabled(mGame.getLocation().getLatLng().distanceTo(mPortal.getPortalLocation().getLatLng()) <= mActionRadiusM);
         mApp.getUpdatedEntitiesViewModel().getEntities().observe(getViewLifecycleOwner(), this::checkForUpdates);
-        mApp.getLocationViewModel().getLocationData().observe(requireActivity(), this::onReceiveLocation);
+        mApp.getLocationViewModel().getLocationData().observe(getViewLifecycleOwner(), this::onReceiveLocation);
         return mRootView;
     }
 
