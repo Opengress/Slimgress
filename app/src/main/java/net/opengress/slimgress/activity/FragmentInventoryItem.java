@@ -38,6 +38,7 @@ import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.Game.Inventory;
+import net.opengress.slimgress.api.GameEntity.GameEntityBase;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.Item.ItemBase;
 import net.opengress.slimgress.api.Item.ItemFlipCard;
@@ -117,7 +118,7 @@ public class FragmentInventoryItem extends Fragment {
                 // 12.4km
                 updateDistance();
                 mRootView.findViewById(R.id.activity_inventory_item_distance).setVisibility(View.VISIBLE);
-                SlimgressApplication.getInstance().getLocationViewModel().getLocationData().observe(requireActivity(), unused -> updateDistance());
+                SlimgressApplication.getInstance().getLocationViewModel().getLocationData().observe(getViewLifecycleOwner(), unused -> updateDistance());
 
                 // Domain Terrace, Karoro
                 ((TextView) mRootView.findViewById(R.id.activity_inventory_item_address)).setText(((ItemPortalKey) actual).getPortalAddress());
@@ -126,7 +127,15 @@ public class FragmentInventoryItem extends Fragment {
 //                itemDescription.setText("Use to create links and remote recharge this Portal");
 
                 mRootView.findViewById(R.id.activity_inventory_item_recharge).setVisibility(View.VISIBLE);
-                mRootView.findViewById(R.id.activity_inventory_item_recharge).setEnabled(false);
+                mRootView.findViewById(R.id.activity_inventory_item_recharge).setEnabled(canRecharge(portal));
+                SlimgressApplication.getInstance().getUpdatedEntitiesViewModel().getEntities().observe(getViewLifecycleOwner(), list -> checkForUpdates(list, portal));
+                SlimgressApplication.getInstance().getLocationViewModel().getLocationData().observe(getViewLifecycleOwner(), location -> onReceiveLocation(portal));
+                mRootView.findViewById(R.id.activity_inventory_item_recharge).setOnClickListener(c -> {
+                    FragmentTransaction transaction = getMainActivity().getSupportFragmentManager().beginTransaction();
+                    transaction.add(R.id.fragment_container, FragmentRecharge.newInstance(portal.getEntityGuid()), "RECHARGE");
+                    transaction.addToBackStack("RECHARGE");
+                    transaction.commit();
+                });
                 mRootView.findViewById(R.id.activity_inventory_item_image).setOnClickListener(c -> {
                     FragmentTransaction transaction = getMainActivity().getSupportFragmentManager().beginTransaction();
                     transaction.add(R.id.fragment_container, FragmentPortal.newInstance(portal.getEntityGuid()), "PORTAL");
@@ -268,6 +277,33 @@ public class FragmentInventoryItem extends Fragment {
         mRootView.findViewById(R.id.activity_inventory_item_back_button).setOnClickListener(v -> finish());
 
         return mRootView;
+    }
+
+    private void onReceiveLocation(GameEntityPortal portal) {
+        mRootView.findViewById(R.id.activity_inventory_item_recharge).setEnabled(canRecharge(portal));
+    }
+
+    private void checkForUpdates(List<GameEntityBase> gameEntityBases, GameEntityPortal portal) {
+        for (GameEntityBase entity : gameEntityBases) {
+            if (entity.getEntityGuid().equals(portal.getEntityGuid())) {
+                mRootView.findViewById(R.id.activity_inventory_item_recharge).setEnabled(canRecharge(portal));
+            }
+        }
+    }
+
+    private boolean canRecharge(GameEntityPortal portal) {
+        int dist = (int) mGame.getLocation().distanceTo(portal.getPortalLocation());
+        if (mGame.getAgent().getEnergy() < 250) {
+            return false;
+        }
+        if (!portal.getPortalTeam().toString().equals(mGame.getAgent().getTeam().toString())) {
+            return false;
+        }
+        return canRemoteRecharge(dist) || dist < mGame.getKnobs().getScannerKnobs().getActionRadiusM();
+    }
+
+    boolean canRemoteRecharge(int dist) {
+        return dist <= mGame.getAgent().getLevel() * 250_000;
     }
 
     @SuppressLint("SetTextI18n")
