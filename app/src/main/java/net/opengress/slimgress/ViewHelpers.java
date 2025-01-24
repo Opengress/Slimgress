@@ -408,8 +408,7 @@ public class ViewHelpers {
                 .append(modEffectsText)
 //                + "LNK: 0 in, 0 out (unimplemented)"
 
-                .append("\n\nDST: ").append(distanceText)
-        ;
+                .append("\n\nDST: ").append(distanceText);
         container.setText(portalInfoText);
     }
 

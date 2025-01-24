@@ -1,5 +1,7 @@
 package net.opengress.slimgress.activity;
 
+import static android.view.View.INVISIBLE;
+import static android.view.View.VISIBLE;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.updateInfoText;
@@ -56,6 +58,7 @@ public class FragmentRecharge extends Fragment {
 
     private Location mOldLocation;
     private ItemPortalKey mPortalKey = null;
+    private int mDistance = (int) mGame.getLocation().distanceTo(mPortal.getPortalLocation());
 
     private final Handler rechargeResultHandler = new Handler(msg -> {
         var data = msg.getData();
@@ -91,6 +94,7 @@ public class FragmentRecharge extends Fragment {
         if (portalGuid != null) {
             mPortal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(portalGuid);
             if (mPortal != null) {
+                mPortalKey = mGame.getInventory().getKeyForPortal(portalGuid);
                 setUpView();
             } else {
                 Log.e("FragRecharge", "Portal not found for GUID: " + portalGuid);
@@ -100,7 +104,6 @@ public class FragmentRecharge extends Fragment {
             Log.e("FragRecharge", "No portal GUID provided");
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
         }
-        mPortalKey = mGame.getInventory().getKeyForPortal(portalGuid);
         mApp.getLocationViewModel().getLocationData().observe(requireActivity(), this::onReceiveLocation);
         return mRootView;
     }
@@ -127,7 +130,7 @@ public class FragmentRecharge extends Fragment {
 
             if (reso == null) {
                 // Resonator is null, disable and hide its action button
-                widget.findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
+                widget.findViewById(R.id.widgetActionButton).setVisibility(INVISIBLE);
                 widget.findViewById(R.id.widgetActionButton).setEnabled(false);
 
                 // Optionally clear resonator-specific UI elements
@@ -146,12 +149,12 @@ public class FragmentRecharge extends Fragment {
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setText(mGame.getAgentName(reso.ownerGuid));
             ((TextView) widget.findViewById(R.id.widgetBtnOwner)).setTextColor(0xff000000 + mPortal.getPortalTeam().getColour());
 
-            if (teamOK && canRecharge(mPortal, reso)) {
+            if (teamOK && canRecharge(reso)) {
                 canRecharge = true;
-                widget.findViewById(R.id.widgetActionButton).setVisibility(View.VISIBLE);
+                widget.findViewById(R.id.widgetActionButton).setVisibility(VISIBLE);
                 widget.findViewById(R.id.widgetActionButton).setEnabled(true);
             } else {
-                widget.findViewById(R.id.widgetActionButton).setVisibility(View.INVISIBLE);
+                widget.findViewById(R.id.widgetActionButton).setVisibility(INVISIBLE);
                 widget.findViewById(R.id.widgetActionButton).setEnabled(false);
             }
 
@@ -167,26 +170,43 @@ public class FragmentRecharge extends Fragment {
 
 
         if (canRecharge) {
-            mRootView.findViewById(R.id.btnRechargeAll).setVisibility(View.VISIBLE);
+            mRootView.findViewById(R.id.btnRechargeAll).setVisibility(VISIBLE);
             mRootView.findViewById(R.id.btnRechargeAll).setEnabled(true);
         } else {
-            mRootView.findViewById(R.id.btnRechargeAll).setVisibility(View.INVISIBLE);
+            mRootView.findViewById(R.id.btnRechargeAll).setVisibility(INVISIBLE);
             mRootView.findViewById(R.id.btnRechargeAll).setEnabled(false);
         }
 
-        int dist = (int) mGame.getLocation().distanceTo(mPortal.getPortalLocation());
-        updateInfoText(dist, mPortal, mRootView.findViewById(R.id.rechargeScreenPortalInfo));
-        setButtonsEnabled(mPortalKey != null || dist <= mActionRadiusM);
+        updateInfoText(mDistance, mPortal, mRootView.findViewById(R.id.rechargeScreenPortalInfo));
+        if (mDistance > mActionRadiusM) {
+            int e = (int) Math.floor(100 * (1 - ((double) mDistance / (500_000 * mGame.getAgent().getLevel()))));
+            e = e >= 50 ? e : 0;
+            mRootView.<TextView>findViewById(R.id.rechargeEfficiencyInfo).setText(MessageFormat.format("Range efficiency: {0}%", e));
+            mRootView.findViewById(R.id.rechargeEfficiencyInfo).setVisibility(VISIBLE);
+        } else {
+            mRootView.findViewById(R.id.rechargeEfficiencyInfo).setVisibility(INVISIBLE);
+        }
+        setButtonsEnabled(canRemoteRecharge(mDistance) || mDistance <= mActionRadiusM);
         mRootView.findViewById(R.id.rechargeScreen_back_button).setOnClickListener(v ->
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());
     }
 
-    private boolean canRecharge(GameEntityPortal mPortal, LinkedResonator reso) {
+    boolean canRemoteRecharge(int dist) {
+        if (mPortalKey == null) {
+            return false;
+        }
+
+        return dist <= mGame.getAgent().getLevel() * 250_000;
+    }
+
+    private boolean canRecharge(LinkedResonator reso) {
+        if (mGame.getAgent().getEnergy() < 250) {
+            return false;
+        }
         if (reso != null && reso.energyTotal >= reso.getMaxEnergy()) {
             return false;
         }
-        int dist = (int) mGame.getLocation().distanceTo(mPortal.getPortalLocation());
-        return mPortalKey != null || dist < mActionRadiusM;
+        return canRemoteRecharge(mDistance) || mDistance < mActionRadiusM;
     }
 
     @SuppressLint("DefaultLocale")
@@ -194,9 +214,9 @@ public class FragmentRecharge extends Fragment {
     private void onRechargeButtonPressed(@NonNull View view) {
         // FIXME distinguish between local and remote recharge
         int[] slots = getSlots(view);
-        if (mGame.getLocation().distanceTo(mPortal.getPortalLocation()) <= mActionRadiusM) {
+        if (mDistance <= mActionRadiusM) {
             mGame.intRechargePortal(mPortal, slots, false, rechargeResultHandler);
-        } else if (mPortalKey != null) {
+        } else if (canRemoteRecharge(mDistance)) {
             mGame.intRemoteRechargePortal(mPortalKey, slots, false, rechargeResultHandler);
         }
     }
@@ -206,9 +226,9 @@ public class FragmentRecharge extends Fragment {
     private boolean onRechargeButtonLongPressed(@NonNull View view) {
         // FIXME distinguish between local and remote recharge
         int[] slots = getSlots(view);
-        if (mGame.getLocation().distanceTo(mPortal.getPortalLocation()) <= mActionRadiusM) {
+        if (mDistance <= mActionRadiusM) {
             mGame.intRechargePortal(mPortal, slots, true, rechargeResultHandler);
-        } else if (mPortalKey != null) {
+        } else if (canRemoteRecharge(mDistance)) {
             mGame.intRemoteRechargePortal(mPortalKey, slots, true, rechargeResultHandler);
         } else {
             return false;
@@ -233,9 +253,9 @@ public class FragmentRecharge extends Fragment {
             if (location.approximatelyEqualTo(mOldLocation)) {
                 return;
             }
-            int dist = (int) location.distanceTo(mPortal.getPortalLocation());
-            setButtonsEnabled(mPortalKey != null || dist <= mActionRadiusM);
-            updateInfoText(dist, mPortal, mRootView.findViewById(R.id.rechargeScreenPortalInfo));
+            mDistance = (int) location.distanceTo(mPortal.getPortalLocation());
+            setButtonsEnabled(canRemoteRecharge(mDistance) || mDistance <= mActionRadiusM);
+            updateInfoText(mDistance, mPortal, mRootView.findViewById(R.id.rechargeScreenPortalInfo));
         } else {
             // FIXME is this really a good idea if you have a key?
             setButtonsEnabled(false);
