@@ -48,6 +48,7 @@ import net.opengress.slimgress.api.Common.Location;
 import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Common.Utils;
 import net.opengress.slimgress.api.Game.GameState;
+import net.opengress.slimgress.api.GameEntity.GameEntityBase;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.Item.ItemBase;
 import net.opengress.slimgress.api.Item.ItemPortalKey;
@@ -438,8 +439,18 @@ public class FragmentPortal extends Fragment {
 
 
         setButtonsEnabled(mGame.getLocation().getLatLng().distanceTo(mPortal.getPortalLocation().getLatLng()) <= mActionRadiusM);
+        mApp.getUpdatedEntitiesViewModel().getEntities().observe(getViewLifecycleOwner(), this::checkForUpdates);
         mApp.getLocationViewModel().getLocationData().observe(requireActivity(), this::onReceiveLocation);
         return mRootView;
+    }
+
+    private void checkForUpdates(List<GameEntityBase> gameEntityBases) {
+        for (GameEntityBase entity : gameEntityBases) {
+            if (entity.getEntityGuid().equals(mPortal.getEntityGuid())) {
+                setUpView();
+                checkKeys();
+            }
+        }
     }
 
     private void finish() {
