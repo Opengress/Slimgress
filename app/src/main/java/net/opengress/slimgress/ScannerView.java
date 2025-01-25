@@ -273,8 +273,8 @@ public class ScannerView extends WidgetMap {
             drawPlayerCursor();
         }
 
-        ActivityMain activity = (ActivityMain) requireActivity();
-        if (activity.isSelectingTargetPortal()) {
+        ActivityMain activity = (ActivityMain) getActivity();
+        if (activity != null && activity.isSelectingTargetPortal()) {
             activity.updateTargetPortalFromSelection();
             return;
         }

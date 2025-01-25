@@ -8,6 +8,7 @@ import static net.opengress.slimgress.ViewHelpers.updateInfoText;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
@@ -63,7 +64,11 @@ public class FragmentRecharge extends Fragment {
         var data = msg.getData();
         String error = getErrorStringFromAPI(data);
         if (error != null && !error.isEmpty()) {
-            DialogInfo dialog = new DialogInfo(requireActivity());
+            Activity activity = getActivity();
+            if (activity == null) {
+                return false;
+            }
+            DialogInfo dialog = new DialogInfo(activity);
             dialog.setMessage(error).setDismissDelay(1500).show();
             SlimgressApplication.postPlainCommsMessage(MessageFormat.format("Recharge failed ({0})", error));
         } else {
