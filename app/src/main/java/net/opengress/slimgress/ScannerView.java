@@ -541,7 +541,7 @@ public class ScannerView extends WidgetMap {
 
 
     private void setLocationInaccurate(boolean isInaccurate) {
-        if (mGame.isLocationAccurate() != isInaccurate) {
+        if (mGame.isLocationAccurate() != isInaccurate && !isInaccurate) {
             return;
         }
 
