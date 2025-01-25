@@ -21,6 +21,8 @@
 
 package net.opengress.slimgress.api.Player;
 
+import static net.opengress.slimgress.ViewHelpers.TextType.APGain;
+import static net.opengress.slimgress.ViewHelpers.TextType.XMGain;
 import static net.opengress.slimgress.ViewHelpers.showFloatingText;
 
 import net.opengress.slimgress.SlimgressApplication;
@@ -83,15 +85,19 @@ public class Agent extends PlayerEntity
     }
 
     public void addAP(int AP) {
+        if (AP == 0) {
+            return;
+        }
+        showFloatingText(String.format(Locale.getDefault(), "+%dAP", AP), APGain);
         setAP(getAp() + AP);
         postUpdates();
     }
 
     public void addEnergy(int energyAmount) {
         if (energyAmount == 0) {
-            throw new RuntimeException("Why the fuck is it 0");
+            return;
         }
-        showFloatingText(String.format(Locale.getDefault(), "+%dXM", energyAmount));
+        showFloatingText(String.format(Locale.getDefault(), "+%dXM", energyAmount), XMGain);
         setEnergy(Math.min(getEnergy() + energyAmount, getEnergyMax()));
         postUpdates();
     }

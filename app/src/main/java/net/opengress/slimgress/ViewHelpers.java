@@ -53,6 +53,15 @@ import java.util.concurrent.Executors;
 public class ViewHelpers {
     private static final HashMap<Integer, String> mColourStrings = new HashMap<>();
 
+    public enum TextType {
+        APGain,
+        Orange,
+        ResoDamage,
+        XMCost,
+        XMGain,
+        ZapLoss,
+    }
+
     @Nullable
     static Bitmap getBitmapFromAsset(String name, @NonNull AssetManager assetManager) {
 
@@ -412,7 +421,9 @@ public class ViewHelpers {
         container.setText(portalInfoText);
     }
 
-    public static void showFloatingText(String text) {
+    public static void showFloatingText(String text, TextType type) {
+
+        // TODO: stagger/queue these, and let them maybe appear at given x/y somehow
 
         Activity activity = SlimgressApplication.getCurrentActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
@@ -428,9 +439,24 @@ public class ViewHelpers {
 
             TextView floatingText = new TextView(activity);
             floatingText.setText(text);
-            floatingText.setTextColor(text.charAt(0) == '+' ? 0xFFEEEEEE : 0xCCF8C03E);
+            switch (type) {
+                case APGain:
+                    floatingText.setTextColor(0xFF39E503);
+                    floatingText.setShadowLayer(4, 2, 2, 0x00000000);
+                    break;
+                case ZapLoss:
+                    floatingText.setTextColor(0xFFEEEEEE);
+                    floatingText.setShadowLayer(4, 2, 2, 0xFF9B1516);
+                    break;
+                case XMGain:
+                    floatingText.setTextColor(0xFFEEEEEE);
+                    floatingText.setShadowLayer(4, 2, 2, 0xFF000000);
+                    break;
+                default:
+                    floatingText.setTextColor(0xCCF8C03E);
+                    floatingText.setShadowLayer(4, 2, 2, 0x00000000);
+            }
             floatingText.setTypeface(floatingText.getTypeface(), Typeface.BOLD);
-            floatingText.setShadowLayer(4, 2, 2, text.charAt(0) == '+' ? 0xFF000000 : 0x00000000);
             floatingText.setPadding(20, 10, 20, 10);
             floatingText.setGravity(Gravity.CENTER);
             floatingText.setTextSize(14);
