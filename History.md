@@ -1,3 +1,15 @@
+0.6.1 / 2025-01-26
+==================
+
+* Bump version to 0.6.1 to push bugfixes
+* Make flipcard buttons work OK again
+* Make location inaccurate quickmessage a bit more insistent
+* Lines connecting resos to portals should be more visible
+* Display floating text when player gains XM
+* Make overcharged resonators still draw in inventory list screen
+* Improve behaviour of scanner disabled overlay
+* Update changelog
+
 0.6.0 / 2025-01-24
 ==================
 
