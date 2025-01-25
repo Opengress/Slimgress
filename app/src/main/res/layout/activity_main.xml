@@ -6,41 +6,6 @@
     android:fitsSystemWindows="true"
     tools:ignore="RtlHardcoded,ContentDescription,RelativeOverlap">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/flipcardButtonLayout">
-
-        <Button
-            android:id="@+id/btn_flipcard_confirm"
-            style="@style/ButtonStyleYellow"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentBottom="true"
-            android:layout_marginLeft="40dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginRight="40dp"
-            android:layout_marginBottom="40dp"
-            android:enabled="false"
-            android:text="@string/flipcard_confirm"
-            android:visibility="gone" />
-
-        <Button
-            android:id="@+id/btn_flipcard_cancel"
-            style="@style/ButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentBottom="true"
-            android:layout_marginLeft="40dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginRight="40dp"
-            android:layout_marginBottom="40dp"
-            android:text="@string/flipcard_cancel"
-            android:visibility="gone" />
-    </RelativeLayout>
-
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
@@ -204,6 +169,42 @@
             </LinearLayout>
         </LinearLayout>
 
+    </RelativeLayout>
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/flipcardButtonLayout">
+
+        <Button
+            android:id="@+id/btn_flipcard_confirm"
+            style="@style/ButtonStyleYellow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginLeft="40dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="40dp"
+            android:layout_marginBottom="40dp"
+            android:enabled="false"
+            android:text="@string/flipcard_confirm"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btn_flipcard_cancel"
+            style="@style/ButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginLeft="40dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="40dp"
+            android:layout_marginBottom="40dp"
+            android:text="@string/flipcard_cancel"
+            android:visibility="gone" />
     </RelativeLayout>
 
     <RelativeLayout

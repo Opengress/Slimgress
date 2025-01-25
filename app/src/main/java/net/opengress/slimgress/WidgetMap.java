@@ -458,6 +458,7 @@ abstract public class WidgetMap extends Fragment {
         mIcons.put("x7", getBitmapFromDrawable(getContext(), R.drawable.x7));
         mIcons.put("x8", getBitmapFromDrawable(getContext(), R.drawable.x8));
         mIcons.put("bursterRing", getBitmapFromAsset("rainbowburst.webp", assetManager));
+        mIcons.put("targetPortalMarker", getBitmapFromAsset("targetportalmarker.webp", assetManager));
         Bitmap bitmap = Bitmap.createBitmap((int) (float) 1024, (int) (float) 1024, Bitmap.Config.ARGB_8888);
         Paint paint = new Paint();
         paint.setStyle(Paint.Style.STROKE);

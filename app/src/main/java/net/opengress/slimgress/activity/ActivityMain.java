@@ -120,6 +120,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     private Button mConfirmButton;
     private Button mCancelButton;
     private ScannerView mScannerView;
+    private double mCurrentDistFromTargetPortal = 9999;
     private boolean isFireCarouselVisible = false;
     private boolean isPortalPickerVisible = false;
 
@@ -881,6 +882,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         mSelectedFlipCardGuid = null;
         mScannerView.removeInfoCard();
         isPortalPickerVisible = false;
+        mCurrentDistFromTargetPortal = 9999;
     }
 
     private void flipPortal(String portalGuid, String mSelectedFlipCardGuid) {
@@ -907,12 +909,28 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     public void setTargetPortal(String entityGuid) {
-        GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(entityGuid);
-        assert portal != null;
-        int dist = (int) mGame.getLocation().getLatLng().distanceTo(portal.getPortalLocation().getLatLng());
-        mSelectTargetText.setText(dist < 41 ? R.string.flipcard_confirm_selection : R.string.flipcard_select_target);
         mSelectedPortalGuid = entityGuid;
-        mConfirmButton.setEnabled(dist < 41);
+        updateTargetPortalFromSelection();
+    }
+
+    public void updateTargetPortalFromSelection() {
+        GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(mSelectedPortalGuid);
+        if (portal == null) {
+            return;
+        }
+        double dist = mGame.getLocation().getLatLng().distanceTo(portal.getPortalLocation().getLatLng());
+        if (mCurrentDistFromTargetPortal == dist) {
+            return;
+        }
+        mCurrentDistFromTargetPortal = dist;
+        mSelectTargetText.setText(dist <= 40 ? R.string.flipcard_confirm_selection : R.string.flipcard_select_target);
+        /*
+        I want to say mGame.getAgent().getTeam().isEnemyOf(portal.getPortalTeam())
+        but of course that won't work, depending on flipcard alignment...
+        So it's not practical right now.
+         */
+        mConfirmButton.setEnabled(dist <= 40);
+        mScannerView.showInfoCard(portal);
     }
 
     public void setScanner(ScannerView scanner) {
