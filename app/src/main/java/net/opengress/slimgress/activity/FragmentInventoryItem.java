@@ -355,8 +355,15 @@ public class FragmentInventoryItem extends Fragment {
 
     @SuppressLint("SetTextI18n")
     private void onDropItemClicked(View ignoredV) {
-
-        mGame.intDropItem(Objects.requireNonNull(mInventory.getItems().get(mItem.getFirstID())), new Handler(msg -> {
+        ItemBase item = mInventory.getItems().get(mItem.getFirstID());
+        if (item == null) {
+            String error = "Item is not in your inventory.";
+            DialogInfo dialog = new DialogInfo(requireActivity());
+            dialog.setMessage(error).setDismissDelay(1500).show();
+            SlimgressApplication.postPlainCommsMessage("Drop failed: " + error);
+            return;
+        }
+        mGame.intDropItem(item, new Handler(msg -> {
             var data = msg.getData();
             String error = getErrorStringFromAPI(data);
             if (error != null && !error.isEmpty()) {

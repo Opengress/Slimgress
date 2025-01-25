@@ -5,7 +5,8 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="@dimen/text_margin"
-    tools:ignore="HardcodedText">
+    tools:ignore="HardcodedText"
+    tools:context=".activity.ActivityMain">
 
     <TextView
         android:id="@+id/plext_time"
