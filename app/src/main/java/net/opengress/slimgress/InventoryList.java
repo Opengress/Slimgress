@@ -240,7 +240,7 @@ public class InventoryList extends BaseExpandableListAdapter {
                         int resId = resoImageIds[reso.slot];
                         ((ImageView) convertView.findViewById(resId)).setImageResource(getImageForResoLevel(reso.level));
                         int alpha = (int) (((float) reso.energyTotal / reso.getMaxEnergy()) * 255); // Convert percentage to alpha value (0-255)
-                        ((ImageView) convertView.findViewById(resId)).setImageAlpha(alpha);
+                        ((ImageView) convertView.findViewById(resId)).setImageAlpha(Math.min(alpha, 255));
                     }
                 }
             }
