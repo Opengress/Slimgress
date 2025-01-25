@@ -474,7 +474,8 @@ public class ScannerView extends WidgetMap {
         @SuppressWarnings("unchecked")
         HashMap<String, Integer> bonusItems = (HashMap<String, Integer>) hackResultBundle.getSerializable("bonusItems");
 
-        if (error != null) {
+        Context ctx = getContext();
+        if (error != null && ctx != null) {
             DialogHackResult newDialog = new DialogHackResult(getContext());
             newDialog.setMessage(error);
             newDialog.show();
@@ -484,7 +485,7 @@ public class ScannerView extends WidgetMap {
                     showHackResultDialog(hackResult);
                 });
             }
-        } else if (items != null) {
+        } else if (items != null && ctx != null) {
             DialogHackResult newDialog = new DialogHackResult(getContext());
             newDialog.setTitle("Acquired items");
             newDialog.setItems(items);
@@ -512,7 +513,7 @@ public class ScannerView extends WidgetMap {
                 });
             }
 
-        } else if (bonusItems != null) {
+        } else if (bonusItems != null && ctx != null) {
             DialogHackResult newDialog = new DialogHackResult(getContext());
             newDialog.setTitle("Bonus items");
             newDialog.setItems(bonusItems);
