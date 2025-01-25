@@ -6,6 +6,10 @@
     android:layout_height="match_parent"
     android:paddingHorizontal="@dimen/activity_margin"
     android:paddingVertical="@dimen/activity_margin"
+    tools:context=".activity.FragmentPhotoRate"
+    android:clickable="true"
+    android:focusable="true"
+    android:importantForAccessibility="no"
     android:orientation="vertical">
 
     <LinearLayout

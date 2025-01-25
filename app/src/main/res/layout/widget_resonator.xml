@@ -7,7 +7,8 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="@dimen/text_margin"
-    tools:ignore="HardcodedText" >
+    tools:ignore="HardcodedText"
+    tools:context=".activity.FragmentDeploy">
 
     <TextView
         android:id="@+id/widgetBtnOwner"

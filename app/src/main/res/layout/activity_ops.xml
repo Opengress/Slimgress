@@ -6,6 +6,9 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".activity.FragmentOps"
+    android:clickable="true"
+    android:focusable="true"
+    android:importantForAccessibility="no"
     style="@style/GradientWindow">
 
     <LinearLayout
