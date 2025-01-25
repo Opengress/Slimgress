@@ -227,7 +227,6 @@ public class ScannerView extends WidgetMap {
 
     }
 
-
     public void setupActionRadius(Location initialLocation) {
         if (mMapLibreMap.getStyle() == null) {
             return;
@@ -273,6 +272,13 @@ public class ScannerView extends WidgetMap {
             mLastLocation = currentLocation;
             drawPlayerCursor();
         }
+
+        ActivityMain activity = (ActivityMain) requireActivity();
+        if (activity.isSelectingTargetPortal()) {
+            activity.updateTargetPortalFromSelection();
+            return;
+        }
+
         setLocationInaccurate(false);
 
     }
@@ -685,10 +691,51 @@ public class ScannerView extends WidgetMap {
             mSymbolManager.delete(mMarkerInfoCard);
             mMarkerInfoCard = null;
         }
+        removeMarkerAroundTargetPortal();
     }
 
+    private void removeMarkerAroundTargetPortal() {
+        if (mMapLibreMap == null || mMapLibreMap.getStyle() == null) {
+            return;
+        }
+        mMapLibreMap.getStyle(style -> {
+            style.removeLayer("single-portal-circle-layer");
+            style.removeSource("single-portal-circle-source");
+        });
+    }
+
+
+    private void drawMarkerAroundTargetPortal(@NonNull GameEntityPortal portal) {
+        if (mMapLibreMap == null || mMapLibreMap.getStyle() == null) {
+            return;
+        }
+
+        mMapLibreMap.getStyle(style -> {
+            String sourceId = "single-portal-circle-source";
+            String layerId = "single-portal-circle-layer";
+
+            // Remove any existing circle before adding a new one
+            style.removeLayer(layerId);
+            style.removeSource(sourceId);
+
+            // Use your existing method to calculate the circle geometry
+            LatLngQuad circleQuad = getRadialLatLngQuad(portal.getPortalLocation(), 30);
+
+            // Create an ImageSource for the circle
+            ImageSource circleSource = new ImageSource(sourceId, circleQuad, Objects.requireNonNull(mIcons.get("targetPortalMarker")));
+            style.addSource(circleSource);
+
+            // Add a RasterLayer for rendering
+            RasterLayer circleLayer = new RasterLayer(layerId, sourceId).withProperties(
+                    PropertyFactory.rasterOpacity(0.5f)
+            );
+            style.addLayer(circleLayer);
+        });
+    }
+
+
     @SuppressLint("InflateParams")
-    private void showInfoCard(@NonNull GameEntityPortal portal) {
+    public void showInfoCard(@NonNull GameEntityPortal portal) {
         // TODO theoretically I can update this as the user moves, but for now I do not.
         removeInfoCard();
         View markerView = LayoutInflater.from(getContext()).inflate(R.layout.marker_info_card, null);
@@ -705,13 +752,14 @@ public class ScannerView extends WidgetMap {
         int dist = (int) mCurrentLocation.distanceTo(portal.getPortalLocation());
         textview4.setText(String.format(Locale.getDefault(), "Distance: %dm", dist));
 
-
         Bitmap bitmap = createDrawableFromView(requireContext(), markerView);
         Objects.requireNonNull(mMapLibreMap.getStyle()).addImage("info_card", bitmap);
         mMarkerInfoCard = mSymbolManager.create(new SymbolOptions()
                 .withLatLng(portal.getPortalLocation().getLatLng())
                 .withIconImage("info_card")
                 .withIconSize(1.0f));
+
+        drawMarkerAroundTargetPortal(portal);
     }
 
 
@@ -847,7 +895,7 @@ public class ScannerView extends WidgetMap {
         view.measure(displayMetrics.widthPixels, displayMetrics.heightPixels);
         view.layout(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
         view.buildDrawingCache();
-        Bitmap bitmap = Bitmap.createBitmap(view.getMeasuredWidth(), view.getMeasuredHeight() + 30, Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(view.getMeasuredWidth(), view.getMeasuredHeight() + 300, Bitmap.Config.ARGB_8888);
 
         Canvas canvas = new Canvas(bitmap);
         view.draw(canvas);
@@ -911,7 +959,6 @@ public class ScannerView extends WidgetMap {
             ActivityMain activity = (ActivityMain) requireActivity();
             if (activity.isSelectingTargetPortal()) {
                 activity.setTargetPortal(entity.getEntityGuid());
-                showInfoCard((GameEntityPortal) entity);
                 return;
             }
             FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();

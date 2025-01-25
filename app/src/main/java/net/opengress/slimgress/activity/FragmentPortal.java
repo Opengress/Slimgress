@@ -520,7 +520,7 @@ public class FragmentPortal extends Fragment {
 
         int portalLevel = mPortal.getPortalLevel();
         Team portalTeam = mPortal.getPortalTeam();
-        if (portalTeam.toString().equalsIgnoreCase(mGame.getAgent().getTeam().toString())) {
+        if (portalTeam.equals(mGame.getAgent().getTeam())) {
             mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackFriendlyCostByLevel().get(portalLevel - 1));
         } else if (portalTeam.toString().equalsIgnoreCase("neutral")) {
             mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackNeutralCostByLevel().get(portalLevel - 1));

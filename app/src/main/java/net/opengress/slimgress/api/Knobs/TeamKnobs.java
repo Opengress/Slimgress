@@ -51,10 +51,11 @@ public class TeamKnobs extends Knobs{
                 return false;
             }
             TeamType teamType = (TeamType) obj;
-            return mColour == teamType.mColour &&
-                    mPlayable == teamType.mPlayable &&
-                    mID.equals(teamType.mID) &&
-                    mName.equals(teamType.mName);
+//            return mColour == teamType.mColour &&
+//                    mPlayable == teamType.mPlayable &&
+//                    mID.equals(teamType.mID) &&
+//                    mName.equals(teamType.mName);
+            return mID.equals(teamType.mID);
         }
 
         @Override

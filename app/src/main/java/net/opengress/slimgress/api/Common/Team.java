@@ -57,7 +57,11 @@ public class Team
             return false;
         }
         Team team = (Team) obj;
-        return mTeam.equals(team.mTeam);
+        return mTeam.getId().equals(team.mTeam.getId());
+    }
+
+    public boolean isEnemyOf(Team other) {
+        return !mTeam.equals(other.mTeam) && !other.toString().equalsIgnoreCase("neutral");
     }
 
     @Override
