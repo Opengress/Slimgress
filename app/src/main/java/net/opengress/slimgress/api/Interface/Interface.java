@@ -156,6 +156,7 @@ public class Interface
 
                         Log.d("Interface", "handshake finished");
                     } catch (Exception e) {
+                        e.printStackTrace();
                         JSONObject errorObj = new JSONObject();
                         errorObj.put("error", e.getClass().getName() + ": " + e.getLocalizedMessage());
                         callback.handle(new Handshake(errorObj));
