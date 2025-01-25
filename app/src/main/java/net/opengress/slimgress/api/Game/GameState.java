@@ -783,7 +783,6 @@ public class GameState {
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
-                    // TODO: consider, maybe updating the bundle using inventory info from this basket
                     processGameBasket(gameBasket);
                     initBundle();
                     HashMap<String, ItemBase> items = new HashMap<>();
