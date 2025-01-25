@@ -255,7 +255,7 @@ abstract public class WidgetMap extends Fragment {
             LineLayer resonatorLinesLayer = new LineLayer("resonator-lines-layer", "resonator-lines-source")
                     .withProperties(
                             PropertyFactory.lineColor(Expression.get("resoColour")),
-                            PropertyFactory.lineWidth(0.8f)
+                            PropertyFactory.lineWidth(2.9f)
                     );
             style.addLayer(resonatorLinesLayer);
         } else {
