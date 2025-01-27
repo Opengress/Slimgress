@@ -548,9 +548,7 @@ public class ScannerView extends WidgetMap {
 
 
     private void setLocationInaccurate(boolean isInaccurate) {
-        if (mGame.isLocationAccurate() != isInaccurate && !isInaccurate) {
-            return;
-        }
+//        Log.d("SCANNER", "IS MY LOCATION ACCURATE OR NOT? "+(isInaccurate ? "no" : "yes"));
 
         if (getActivity() == null || requireActivity().findViewById(R.id.quickMessage) == null) {
             return;
@@ -1022,7 +1020,7 @@ public class ScannerView extends WidgetMap {
         if (getActivity() == null || requireActivity().findViewById(R.id.scannerDisabledOverlay) == null) {
             return;
         }
-        boolean shouldShow = mGame.isLocationAccurate();
+        boolean shouldShow = !mGame.isLocationAccurate();
         if (shouldShow) {
             displayQuickMessage(getStringSafely(R.string.location_inaccurate));
 //            mMapView.getOverlayManager().remove(mActionRadius);
@@ -1043,16 +1041,18 @@ public class ScannerView extends WidgetMap {
             }
         }
         shouldShow = shouldShow || shouldShow2;
-        int visibility = shouldShow ? View.GONE : View.VISIBLE;
-        boolean finalShouldShow = shouldShow;
+        int visibility = shouldShow ? View.VISIBLE : View.GONE;
+        final boolean mapShouldBeEnabled = !shouldShow;
         requireActivity().runOnUiThread(() -> {
+
+//            Log.d("SCANNER", "Am I going to show or hide the overlay? "+(finalShouldShow ? "show" : "hide"));
             if (getActivity() == null || requireActivity().findViewById(R.id.scannerDisabledOverlay) == null) {
                 return;
             }
             requireActivity().findViewById(R.id.scannerDisabledOverlay).setVisibility(visibility);
-            requireActivity().findViewById(R.id.buttonComm).setEnabled(finalShouldShow);
-            requireActivity().findViewById(R.id.buttonOps).setEnabled(finalShouldShow);
+            requireActivity().findViewById(R.id.buttonComm).setEnabled(mapShouldBeEnabled);
+            requireActivity().findViewById(R.id.buttonOps).setEnabled(mapShouldBeEnabled);
         });
-        setMapEnabled(shouldShow);
+        setMapEnabled(mapShouldBeEnabled);
     }
 }
