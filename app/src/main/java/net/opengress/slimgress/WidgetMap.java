@@ -921,6 +921,9 @@ abstract public class WidgetMap extends Fragment {
         if (mMapLibreMap == null || mMapLibreMap.getStyle() == null) {
             return;
         }
+        if (deletedEntityGuids == null) {
+            return;
+        }
         boolean particlesTouched = false;
         boolean touchTargetsTouched = false;
         boolean resonatorsTouched = false;
