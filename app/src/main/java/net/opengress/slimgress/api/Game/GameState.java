@@ -135,11 +135,13 @@ public class GameState {
         } else {
 //            Log.d("Game", "processing game basket");
             // really we should get info back about what changed
+            mInventory.processGameBasket(gameBasket);
+            mWorld.processGameBasket(gameBasket);
+
             if (!gameBasket.getInventory().isEmpty() || !gameBasket.getDeletedEntityGuids().isEmpty()) {
                 app.getInventoryViewModel().postInventory(mInventory);
             }
-            mInventory.processGameBasket(gameBasket);
-            mWorld.processGameBasket(gameBasket);
+
             if (!gameBasket.getAPGains().isEmpty()) {
                 for (var gain : gameBasket.getAPGains()) {
                     app.getAllCommsViewModel().addMessage(PlextBase.createByAPGain(gain));
@@ -496,7 +498,6 @@ public class GameState {
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
-                    super.handleGameBasket(gameBasket);
                 }
 
                 @Override
