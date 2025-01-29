@@ -1,3 +1,17 @@
+0.6.2 / 2025-01-30
+==================
+
+* Prevent crash when error dialog or similar appears after fragment has gone away
+* Post inventory update to View AFTER processing inventory
+* Show all 5 OPS tabs, allow AP-less passcodes
+* Allow users to redeem passcodes (proviso: inventoryRewards MUST also be sent as inventory)
+* Fix crash on resume for the case where nothing's been deleted
+* Improve scanner's location (un)availability handling
+* Fix several lifecycle NPEs
+* Mitigate crash in showing hack results
+* Fix click-through bug in fragments
+* Update changelog
+
 0.6.1 / 2025-01-26
 ==================
 
