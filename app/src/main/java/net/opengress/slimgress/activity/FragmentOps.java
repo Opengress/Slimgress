@@ -17,6 +17,7 @@ import com.google.android.material.tabs.TabLayoutMediator;
 
 import net.opengress.slimgress.FragmentDevice;
 import net.opengress.slimgress.FragmentInventory;
+import net.opengress.slimgress.FragmentPasscode;
 import net.opengress.slimgress.FragmentScore;
 import net.opengress.slimgress.FragmentUser;
 import net.opengress.slimgress.R;
@@ -59,7 +60,8 @@ public class FragmentOps extends Fragment implements TabLayout.OnTabSelectedList
                         case 0 -> tab.setText(R.string.ops_inventory);
                         case 1 -> tab.setText(R.string.ops_user);
                         case 2 -> tab.setText(R.string.ops_tab_name_score);
-                        case 3 -> tab.setText(R.string.ops_device);
+                        case 3 -> tab.setText("Passcode");
+                        case 4 -> tab.setText(R.string.ops_device);
                     }
                 }).attach();
         tabLayout.addOnTabSelectedListener(this);
@@ -113,7 +115,8 @@ public class FragmentOps extends Fragment implements TabLayout.OnTabSelectedList
                 case 0 -> new FragmentInventory();
                 case 1 -> new FragmentUser();
                 case 2 -> new FragmentScore();
-                case 3 -> new FragmentDevice();
+                case 3 -> new FragmentPasscode();
+                case 4 -> new FragmentDevice();
                 default -> throw new IllegalArgumentException("Invalid position: " + position);
             };
         }

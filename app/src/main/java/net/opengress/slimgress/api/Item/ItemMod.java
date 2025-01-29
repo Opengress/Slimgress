@@ -53,7 +53,7 @@ public abstract class ItemMod extends ItemBase
 
     @Override
     public String getUsefulName() {
-        return getItemRarity() + " " + getDisplayName();
+        return getItemRarity().toString() + " " + getDisplayName();
     }
 
 }

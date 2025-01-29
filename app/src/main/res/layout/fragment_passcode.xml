@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".FragmentPasscode"
+    android:padding="@dimen/activity_margin_half">
+
+    <Button
+        android:id="@+id/redeemButton"
+        style="@style/ButtonStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="100dp"
+        android:layout_gravity="center"
+        android:text="@string/redeem_passcode" />
+
+    <LinearLayout
+        android:id="@+id/passcodeMainScreen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/redemptionStatusText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/validating_passcode"
+            android:visibility="invisible" />
+
+        <ProgressBar
+            android:id="@+id/passcodeThrobber"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="10"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:orientation="horizontal"
+            android:id="@+id/passcodeResultSection"
+            android:visibility="invisible"
+            android:layout_gravity="top"
+            android:layout_weight="20">
+
+            <TextView
+                android:id="@+id/redemptionLootText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <!-- I can probably do away with this button if I leave the little arrow up -->
+            <!--            <Button-->
+            <!--                android:id="@+id/passcodeDismissButtom"-->
+            <!--                android:layout_width="40sp"-->
+            <!--                style="@style/ButtonStyle"-->
+            <!--                android:layout_height="40sp"-->
+            <!--                android:layout_weight="0.5"-->
+            <!--                android:layout_gravity=""-->
+            <!--                android:text="Done" />-->
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="bottom">
+
+            <EditText
+                android:id="@+id/passcodeTextField"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:inputType="text"
+                android:layout_weight="1"
+                android:hint="@string/enter_passcode" />
+
+            <Button
+                android:id="@+id/passcodeSubmitButton"
+                style="@style/ButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:enabled="false"
+                android:text="@string/submit" />
+        </LinearLayout>
+    </LinearLayout>
+
+</FrameLayout>
