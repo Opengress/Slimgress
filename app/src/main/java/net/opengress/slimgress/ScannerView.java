@@ -465,7 +465,11 @@ public class ScannerView extends WidgetMap {
                 mLastScan = System.currentTimeMillis() + mMinUpdateIntervalMS;
                 updateWorld();
             });
+        }
 
+        if (hackResultBundle == null) {
+            // just to be extra safe?
+            return;
         }
 
         String error = hackResultBundle.getString("error");
@@ -479,12 +483,7 @@ public class ScannerView extends WidgetMap {
             DialogHackResult newDialog = new DialogHackResult(getContext());
             newDialog.setMessage(error);
             newDialog.show();
-            if (mGame.hasHackResults()) {
-                newDialog.setOnDismissListener(d -> {
-                    Bundle hackResult = mGame.pollHackResult();
-                    showHackResultDialog(hackResult);
-                });
-            }
+            checkAndShowHackResults(newDialog);
         } else if (items != null && ctx != null) {
             DialogHackResult newDialog = new DialogHackResult(getContext());
             newDialog.setTitle("Acquired items");
@@ -492,24 +491,14 @@ public class ScannerView extends WidgetMap {
             newDialog.show();
 
             if (bonusItems == null) {
-                if (mGame.hasHackResults()) {
-                    newDialog.setOnDismissListener(d -> {
-                        Bundle hackResult = mGame.pollHackResult();
-                        showHackResultDialog(hackResult);
-                    });
-                }
+                checkAndShowHackResults(newDialog);
             } else {
                 newDialog.setOnDismissListener(dialog -> {
                     DialogHackResult newDialog1 = new DialogHackResult(getContext());
                     newDialog1.setTitle("Bonus items");
                     newDialog1.setItems(bonusItems);
                     newDialog1.show();
-                    if (mGame.hasHackResults()) {
-                        newDialog1.setOnDismissListener(d -> {
-                            Bundle hackResult = mGame.pollHackResult();
-                            showHackResultDialog(hackResult);
-                        });
-                    }
+                    checkAndShowHackResults(newDialog1);
                 });
             }
 
@@ -518,12 +507,18 @@ public class ScannerView extends WidgetMap {
             newDialog.setTitle("Bonus items");
             newDialog.setItems(bonusItems);
             newDialog.show();
-            if (mGame.hasHackResults()) {
-                newDialog.setOnDismissListener(d -> {
-                    Bundle hackResult = mGame.pollHackResult();
+            checkAndShowHackResults(newDialog);
+        }
+    }
+
+    private void checkAndShowHackResults(DialogHackResult newDialog) {
+        if (mGame.hasHackResults()) {
+            newDialog.setOnDismissListener(d -> {
+                Bundle hackResult = mGame.pollHackResult();
+                if (hackResult != null) {
                     showHackResultDialog(hackResult);
-                });
-            }
+                }
+            });
         }
     }
 
