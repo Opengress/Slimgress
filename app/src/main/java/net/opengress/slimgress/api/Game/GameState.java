@@ -526,8 +526,8 @@ public class GameState {
                         }
                         getData().putSerializable("additionalAwards", extras);
 
-                        getData().putLong("apAward", res.getLong("apAward"));
-                        getData().putLong("xmAward", res.getLong("xmAward"));
+                        getData().putLong("apAward", res.optLong("apAward"));
+                        getData().putLong("xmAward", res.optLong("xmAward"));
 
                     } catch (JSONException e) {
                         throw new RuntimeException(e);

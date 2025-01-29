@@ -107,7 +107,7 @@ public class FragmentOps extends Fragment implements TabLayout.OnTabSelectedList
         @Override
         public int getItemCount()
         {
-            return 4;
+            return 5;
         }
 
         private Fragment createNewFragment(int position) {
