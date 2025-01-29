@@ -53,6 +53,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 
 import net.opengress.slimgress.activity.ActivityMain;
@@ -97,8 +98,11 @@ public class FragmentDevice extends Fragment {
             var data = msg.getData();
             String error = getErrorStringFromAPI(data);
             if (error != null && !error.isEmpty()) {
-                DialogInfo dialog = new DialogInfo(requireActivity());
-                dialog.setMessage(error).setDismissDelay(1500).show();
+                FragmentActivity act = getActivity();
+                if (act != null) {
+                    DialogInfo dialog = new DialogInfo(act);
+                    dialog.setMessage(error).setDismissDelay(1500).show();
+                }
             }
             int latest = Integer.parseInt(msg.getData().getString("version"));
             if (latest > BuildConfig.VERSION_CODE) {

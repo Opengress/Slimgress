@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 
 import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
@@ -62,8 +63,11 @@ public class FragmentMod extends Fragment {
         var data = msg.getData();
         String error = getErrorStringFromAPI(data);
         if (error != null && !error.isEmpty()) {
-            DialogInfo dialog = new DialogInfo(requireActivity());
-            dialog.setMessage(error).setDismissDelay(1500).show();
+            FragmentActivity act = getActivity();
+            if (act != null) {
+                DialogInfo dialog = new DialogInfo(act);
+                dialog.setMessage(error).setDismissDelay(1500).show();
+            }
         } else {
             ItemMod mod = (ItemMod) msg.getData().getSerializable("mod");
             // FIXME this does not work correctly in the case where we are removing a mod and shields have funny add cost

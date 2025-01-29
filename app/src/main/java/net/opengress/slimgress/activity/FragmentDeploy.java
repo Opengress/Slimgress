@@ -21,6 +21,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 
 import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
@@ -62,22 +63,28 @@ public class FragmentDeploy extends Fragment {
     private Location mOldLocation;
 
     private final Handler deployResultHandler = new Handler(msg -> {
+        FragmentActivity act = getActivity();
         var data = msg.getData();
         String error = getErrorStringFromAPI(data);
         if (error != null && !error.isEmpty()) {
-            DialogInfo dialog = new DialogInfo(requireActivity());
-            dialog.setMessage(error).setDismissDelay(1500).show();
+            if (act != null) {
+                DialogInfo dialog = new DialogInfo(act);
+                dialog.setMessage(error).setDismissDelay(1500).show();
+            }
         }
         setUpView();
         return false;
     });
 
     private final Handler upgradeResultHandler = new Handler(msg -> {
+        FragmentActivity act = getActivity();
         var data = msg.getData();
         String error = getErrorStringFromAPI(data);
         if (error != null && !error.isEmpty()) {
-            DialogInfo dialog = new DialogInfo(requireActivity());
-            dialog.setMessage(error).setDismissDelay(1500).show();
+            if (act != null) {
+                DialogInfo dialog = new DialogInfo(act);
+                dialog.setMessage(error).setDismissDelay(1500).show();
+            }
         }
         setUpView();
         return false;
