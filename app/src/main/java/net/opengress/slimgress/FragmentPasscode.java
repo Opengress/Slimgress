@@ -36,7 +36,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -120,34 +119,31 @@ public class FragmentPasscode extends Fragment {
             mV.<TextView>findViewById(R.id.redemptionStatusText).setTextColor(0xFF00FFFF);
             mV.<TextView>findViewById(R.id.redemptionStatusText).setText(R.string.validating);
             startAnimation(handler, task);
-            SlimgressApplication.getInstance().getGame().intRedeemReward(str, new Handler(new Handler.Callback() {
-                @Override
-                public boolean handleMessage(@NonNull Message msg) {
-                    stopAnimation(handler, task);
-                    var data = msg.getData();
-                    String error = getErrorStringFromAPI(data);
-                    if (error != null && !error.isEmpty()) {
-                        // FIXME use colour from pallette
-                        mV.<TextView>findViewById(R.id.redemptionStatusText).setTextColor(0xFFDD0000);
-                        mV.<TextView>findViewById(R.id.redemptionStatusText).setText(error);
-                    } else {
-                        Context ctx = getContext();
-                        if (ctx != null) {
-                            ((InputMethodManager) getContext().getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(mV.<EditText>findViewById(R.id.passcodeTextField).getWindowToken(), 0);
-                        }
-                        mV.<TextView>findViewById(R.id.redemptionStatusText).setTextColor(0xFF00FFFF);
-                        mV.<TextView>findViewById(R.id.redemptionStatusText).setText(R.string.passcode_confirmed);
-                        mV.findViewById(R.id.passcodeResultSection).setVisibility(VISIBLE);
-                        // FIXME use theme colours
-                        mV.<TextView>findViewById(R.id.redemptionLootText).setTextColor(0xFF999900);
-
-                        long AP = data.getLong("apAward", 0);
-                        long XM = data.getLong("xmAward", 0);
-                        @SuppressLint("DefaultLocale") String text = "Gained: \n" + (AP > 0 ? String.format("%d AP\n", AP) : "");
-                        mV.<TextView>findViewById(R.id.redemptionLootText).setText(getItemLootString(text, XM, (ArrayList<ItemBase>) data.getSerializable("inventoryAward"), (ArrayList<String>) data.getSerializable("additionalAwards")));
+            SlimgressApplication.getInstance().getGame().intRedeemReward(str, new Handler(msg -> {
+                stopAnimation(handler, task);
+                var data = msg.getData();
+                String error = getErrorStringFromAPI(data);
+                if (error != null && !error.isEmpty()) {
+                    // FIXME use colour from pallette
+                    mV.<TextView>findViewById(R.id.redemptionStatusText).setTextColor(0xFFDD0000);
+                    mV.<TextView>findViewById(R.id.redemptionStatusText).setText(error);
+                } else {
+                    Context ctx = getContext();
+                    if (ctx != null) {
+                        ((InputMethodManager) getContext().getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(mV.<EditText>findViewById(R.id.passcodeTextField).getWindowToken(), 0);
                     }
-                    return true;
+                    mV.<TextView>findViewById(R.id.redemptionStatusText).setTextColor(0xFF00FFFF);
+                    mV.<TextView>findViewById(R.id.redemptionStatusText).setText(R.string.passcode_confirmed);
+                    mV.findViewById(R.id.passcodeResultSection).setVisibility(VISIBLE);
+                    // FIXME use theme colours
+                    mV.<TextView>findViewById(R.id.redemptionLootText).setTextColor(0xFF999900);
+
+                    long AP = data.getLong("apAward", 0);
+                    long XM = data.getLong("xmAward", 0);
+                    @SuppressLint("DefaultLocale") String text = "Gained: \n" + (AP > 0 ? String.format("%d AP\n", AP) : "");
+                    mV.<TextView>findViewById(R.id.redemptionLootText).setText(getItemLootString(text, XM, (ArrayList<ItemBase>) data.getSerializable("inventoryAward"), (ArrayList<String>) data.getSerializable("additionalAwards")));
                 }
+                return true;
             }));
         });
 
