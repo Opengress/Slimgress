@@ -37,6 +37,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.bumptech.glide.Glide;
@@ -230,11 +231,14 @@ public class FragmentPortal extends Fragment {
             builder.setMessage(String.format("You are holding %d keys. This dialog will not prompt for confirmation or ask for quantities.", keys.size()));
             builder.setCancelable(false);
             builder.setPositiveButton("Drop", (dialog, which) -> mGame.intDropItem(keys.get(0), new Handler(msg -> {
+                FragmentActivity act = getActivity();
                 var data = msg.getData();
                 String error = getErrorStringFromAPI(data);
                 if (error != null && !error.isEmpty()) {
-                    DialogInfo eDialog = new DialogInfo(requireActivity());
-                    eDialog.setMessage(error).setDismissDelay(1500).show();
+                    if (act != null) {
+                        DialogInfo eDialog = new DialogInfo(act);
+                        eDialog.setMessage(error).setDismissDelay(1500).show();
+                    }
                     SlimgressApplication.postPlainCommsMessage("Drop failed: " + error);
                 } else {
                     // could say what we dropped
@@ -246,11 +250,14 @@ public class FragmentPortal extends Fragment {
                 return false;
             })));
             builder.setNegativeButton("Recycle", (dialog, which) -> mGame.intRecycleItem(keys.get(0), new Handler(msg -> {
+                FragmentActivity act = getActivity();
                 var data = msg.getData();
                 String error = getErrorStringFromAPI(data);
                 if (error != null && !error.isEmpty()) {
-                    DialogInfo eDialog = new DialogInfo(requireActivity());
-                    eDialog.setMessage(error).setDismissDelay(1500).show();
+                    if (act != null) {
+                        DialogInfo eDialog = new DialogInfo(act);
+                        eDialog.setMessage(error).setDismissDelay(1500).show();
+                    }
                     SlimgressApplication.postPlainCommsMessage("Recycle failed: " + error);
                 } else {
                     var res = data.getString("result");
@@ -350,9 +357,12 @@ public class FragmentPortal extends Fragment {
             // TODO re-request any that return TIMEOUT
             mGame.intQueryLinkablilityForPortal(mPortal, mGame.getInventory().getItemsOfType(ItemPortalKey.class), new Handler(msg -> {
                 String error = Utils.getErrorStringFromAPI(msg.getData());
+                FragmentActivity act = getActivity();
                 if (error != null && !error.isEmpty()) {
-                    DialogInfo dialog = new DialogInfo(requireActivity());
-                    dialog.setMessage(error).setDismissDelay(1500).show();
+                    if (act != null) {
+                        DialogInfo dialog = new DialogInfo(act);
+                        dialog.setMessage(error).setDismissDelay(1500).show();
+                    }
                     SlimgressApplication.postPlainCommsMessage("Link check failed: " + error);
                     return false;
                 }
@@ -361,8 +371,10 @@ public class FragmentPortal extends Fragment {
                 assert keys != null;
 
                 if (keys.isEmpty()) {
-                    DialogInfo dialog = new DialogInfo(requireActivity());
-                    dialog.setMessage("No linkable portals!").setDismissDelay(1500).show();
+                    if (act != null) {
+                        DialogInfo dialog = new DialogInfo(act);
+                        dialog.setMessage("No linkable portals!").setDismissDelay(1500).show();
+                    }
                     return false;
                 }
 
@@ -400,8 +412,11 @@ public class FragmentPortal extends Fragment {
                     mGame.intLinkPortal(mPortal, selectedKey, new Handler(m2 -> {
                         String e2 = Utils.getErrorStringFromAPI(m2.getData());
                         if (e2 != null && !e2.isEmpty()) {
-                            DialogInfo dialog = new DialogInfo(requireActivity());
-                            dialog.setMessage(e2).setDismissDelay(1500).show();
+                            FragmentActivity act2 = getActivity();
+                            if (act2 != null) {
+                                DialogInfo dialog = new DialogInfo(act2);
+                                dialog.setMessage(e2).setDismissDelay(1500).show();
+                            }
                             SlimgressApplication.postPlainCommsMessage("Link failed: " + e2);
                             mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getLinkCreationCost());
                             return false;

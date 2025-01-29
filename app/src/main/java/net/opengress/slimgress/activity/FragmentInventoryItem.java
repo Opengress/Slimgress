@@ -27,6 +27,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.bumptech.glide.Glide;
@@ -358,8 +359,11 @@ public class FragmentInventoryItem extends Fragment {
         ItemBase item = mInventory.getItems().get(mItem.getFirstID());
         if (item == null) {
             String error = "Item is not in your inventory.";
-            DialogInfo dialog = new DialogInfo(requireActivity());
-            dialog.setMessage(error).setDismissDelay(1500).show();
+            FragmentActivity act = getActivity();
+            if (act != null) {
+                DialogInfo dialog = new DialogInfo(act);
+                dialog.setMessage(error).setDismissDelay(1500).show();
+            }
             SlimgressApplication.postPlainCommsMessage("Drop failed: " + error);
             return;
         }
@@ -367,8 +371,11 @@ public class FragmentInventoryItem extends Fragment {
             var data = msg.getData();
             String error = getErrorStringFromAPI(data);
             if (error != null && !error.isEmpty()) {
-                DialogInfo dialog = new DialogInfo(requireActivity());
-                dialog.setMessage(error).setDismissDelay(1500).show();
+                FragmentActivity act = getActivity();
+                if (act != null) {
+                    DialogInfo dialog = new DialogInfo(act);
+                    dialog.setMessage(error).setDismissDelay(1500).show();
+                }
                 SlimgressApplication.postPlainCommsMessage("Drop failed: " + error);
             } else {
                 // could say what we dropped
@@ -400,8 +407,11 @@ public class FragmentInventoryItem extends Fragment {
                 var data = msg.getData();
                 String error = getErrorStringFromAPI(data);
                 if (error != null && !error.isEmpty()) {
-                    DialogInfo dialog = new DialogInfo(requireActivity());
-                    dialog.setMessage(error).setDismissDelay(1500).show();
+                    FragmentActivity act = getActivity();
+                    if (act != null) {
+                        DialogInfo dialog = new DialogInfo(act);
+                        dialog.setMessage(error).setDismissDelay(1500).show();
+                    }
                     SlimgressApplication.postPlainCommsMessage("Unable to use power cube: " + error);
                 } else {
                     var res = data.getString("result");
@@ -611,11 +621,14 @@ public class FragmentInventoryItem extends Fragment {
 
         int finalQuantity = quantity;
         mGame.intRecycleItems(itemsToRecycle, new Handler(msg -> {
+            FragmentActivity act = getActivity();
             var data = msg.getData();
             String error = getErrorStringFromAPI(data);
             if (error != null && !error.isEmpty()) {
-                DialogInfo dialog = new DialogInfo(requireActivity());
-                dialog.setMessage(error).setDismissDelay(1500).show();
+                if (act != null) {
+                    DialogInfo dialog = new DialogInfo(act);
+                    dialog.setMessage(error).setDismissDelay(1500).show();
+                }
                 SlimgressApplication.postPlainCommsMessage("Recycle failed: " + error);
             } else {
                 SlimgressApplication.postPlainCommsMessage("Recycle successful");
@@ -631,13 +644,15 @@ public class FragmentInventoryItem extends Fragment {
                 SlimgressApplication.postPlainCommsMessage(message);
 //                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
 
-                for (var id : Objects.requireNonNull(data.getStringArray("recycled"))) {
-                    mItem.remove(id);
-                    mInventory.removeItem(id);
-                    ((TextView) requireActivity().findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
+                if (act != null) {
+                    for (var id : Objects.requireNonNull(data.getStringArray("recycled"))) {
+                        mItem.remove(id);
+                        mInventory.removeItem(id);
+                        act.<TextView>findViewById(R.id.activity_inventory_item_qty).setText("x" + mItem.getQuantity());
+                    }
                 }
                 if (mItem.getQuantity() == 0) {
-                    SlimgressApplication.schedule(this::finish, 100, TimeUnit.MILLISECONDS);
+                    SlimgressApplication.schedule(this::finish, 0, TimeUnit.MILLISECONDS);
                 }
             }
             return false;
@@ -645,6 +660,9 @@ public class FragmentInventoryItem extends Fragment {
     }
 
     private void finish() {
-        requireActivity().getOnBackPressedDispatcher().onBackPressed();
+        FragmentActivity act = getActivity();
+        if (act != null) {
+            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+        }
     }
 }
