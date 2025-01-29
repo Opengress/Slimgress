@@ -544,8 +544,8 @@ public class FragmentPortal extends Fragment {
                 ItemBase item = Objects.requireNonNull(rawItems.get(guid));
                 String name = getPrettyItemName(item, getResources());
                 putItemInMap(items, name);
-                bundle.putSerializable("items", items);
             }
+            bundle.putSerializable("items", items);
         }
         // this should always be false until I implement glyph hacking
         if (bonusGuids != null && !bonusGuids.isEmpty()) {
@@ -554,8 +554,8 @@ public class FragmentPortal extends Fragment {
                 ItemBase item = Objects.requireNonNull(rawItems.get(guid));
                 String name = getPrettyItemName(item, getResources());
                 putItemInMap(bonusItems, name);
-                bundle.putSerializable("bonusItems", items);
             }
+            bundle.putSerializable("bonusItems", items);
         }
 
         return bundle;

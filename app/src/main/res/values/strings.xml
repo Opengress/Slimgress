@@ -144,4 +144,10 @@
     <string name="check_for_updates">Check for updates</string>
     <string name="ops_tab_name_score">Score</string>
     <string name="btn_ok">OK</string>
+    <string name="enter_passcode">Enter passcode</string>
+    <string name="submit">Submit</string>
+    <string name="validating_passcode">Validating passcode...</string>
+    <string name="redeem_passcode">Redeem Passcode</string>
+    <string name="passcode_confirmed">PASSCODE CONFIRMED</string>
+    <string name="validating">Validating...</string>
 </resources>

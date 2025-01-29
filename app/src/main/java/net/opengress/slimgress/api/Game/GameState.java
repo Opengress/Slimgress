@@ -484,18 +484,54 @@ public class GameState {
                 public void handleError(String error) {
                     switch (error) {
                         case "INVALID_PASSCODE" -> super.handleError("Passcode invalid");
-                        case "ALREADY_REDEEMED" -> super.handleError("Passcode already redeemed");
+                        case "ALREADY_REDEEMED" -> super.handleError("Passcode fully redeemed");
                         case "ALREADY_REDEEMED_BY_PLAYER" ->
                                 super.handleError("Passcode already redeemed by you");
+                        case "INVENTORY_FULL" ->
+                                super.handleError("Too many items in Inventory. Your Inventory can have no more than 2000 items");
                         default -> super.handleError("Unknown error: " + error);
                     }
-
-                    super.handleError(error);
                 }
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
+                    super.handleGameBasket(gameBasket);
+                }
+
+                @Override
+                public void handleResult(JSONObject res) {
+
+                    try {
+                        super.handleResult(res);
+                        ArrayList<ItemBase> items = new ArrayList<>();
+                        ArrayList<String> extras = new ArrayList<>();
+
+                        JSONArray inventory = res.getJSONArray("inventoryAward");
+                        for (int i = 0; i < inventory.length(); i++) {
+                            JSONArray resource = inventory.getJSONArray(i);
+                            ItemBase newItem = ItemBase.createByJSON(resource);
+                            if (newItem != null) {
+                                items.add(newItem);
+                            }
+                        }
+                        getData().putSerializable("inventoryAward", items);
+
+                        JSONArray extraJson = res.getJSONArray("additionalAwards");
+                        for (int i = 0; i < extraJson.length(); i++) {
+                            String thing = extraJson.getString(i);
+                            if (thing != null) {
+                                extras.add(thing);
+                            }
+                        }
+                        getData().putSerializable("additionalAwards", extras);
+
+                        getData().putLong("apAward", res.getLong("apAward"));
+                        getData().putLong("xmAward", res.getLong("xmAward"));
+
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             });
 
