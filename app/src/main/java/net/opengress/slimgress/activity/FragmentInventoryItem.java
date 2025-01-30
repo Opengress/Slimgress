@@ -356,6 +356,9 @@ public class FragmentInventoryItem extends Fragment {
 
     @SuppressLint("SetTextI18n")
     private void onDropItemClicked(View ignoredV) {
+        if (mItem.getQuantity() < 1) {
+            finish();
+        }
         ItemBase item = mInventory.getItems().get(mItem.getFirstID());
         if (item == null) {
             String error = "Item is not in your inventory.";
@@ -386,7 +389,7 @@ public class FragmentInventoryItem extends Fragment {
                     ((TextView) mRootView.findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                 }
                 if (mItem.getQuantity() == 0) {
-                    SlimgressApplication.schedule(this::finish, 100, TimeUnit.MILLISECONDS);
+                    SlimgressApplication.schedule(this::finish, 50, TimeUnit.MILLISECONDS);
                 }
             }
             return false;
@@ -400,6 +403,9 @@ public class FragmentInventoryItem extends Fragment {
 
     @SuppressLint("SetTextI18n")
     private void onUseItemClicked(View ignoredV) {
+        if (mItem.getQuantity() < 1) {
+            finish();
+        }
         if (mItem.getType() == ItemBase.ItemType.PowerCube) {
             ItemPowerCube cube = (ItemPowerCube) Objects.requireNonNull(mInventory.getItems().get(mItem.getFirstID()));
             String name = cube.getUsefulName();
@@ -426,7 +432,7 @@ public class FragmentInventoryItem extends Fragment {
                         ((TextView) mRootView.findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                     }
                     if (mItem.getQuantity() == 0) {
-                        SlimgressApplication.schedule(this::finish, 100, TimeUnit.MILLISECONDS);
+                        SlimgressApplication.schedule(this::finish, 50, TimeUnit.MILLISECONDS);
                     }
                 }
                 return false;
@@ -436,6 +442,9 @@ public class FragmentInventoryItem extends Fragment {
 
     @SuppressLint("DefaultLocale")
     private void onRecycleItemClicked(View ignoredV) {
+        if (mItem.getQuantity() < 1) {
+            finish();
+        }
         if (mGame.getKnobs().getClientFeatureKnobs().isEnableRecycleConfirmationDialog()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
             LayoutInflater inflater = getLayoutInflater();
@@ -652,7 +661,7 @@ public class FragmentInventoryItem extends Fragment {
                     }
                 }
                 if (mItem.getQuantity() == 0) {
-                    SlimgressApplication.schedule(this::finish, 0, TimeUnit.MILLISECONDS);
+                    SlimgressApplication.schedule(this::finish, 50, TimeUnit.MILLISECONDS);
                 }
             }
             return false;
@@ -660,9 +669,8 @@ public class FragmentInventoryItem extends Fragment {
     }
 
     private void finish() {
-        FragmentActivity act = getActivity();
-        if (act != null) {
-            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+        if (isAdded() && getView() != null) {
+            getView().post(() -> getParentFragmentManager().popBackStackImmediate());
         }
     }
 }
