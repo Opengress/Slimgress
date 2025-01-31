@@ -1009,7 +1009,6 @@ public class ScannerView extends WidgetMap {
             return;
         }
         updateShowScannerDisabledOverlay();
-        hideQuickMessage();
     }
 
     void updateShowScannerDisabledOverlay() {
