@@ -21,6 +21,7 @@
 
 package net.opengress.slimgress;
 
+import static androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE;
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE;
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE_DEFAULT;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
@@ -986,7 +987,7 @@ public class ScannerView extends WidgetMap {
         onReceiveDeletedEntityGuids(guids);
         mGame.clear();
         // FIXME this might not be strictly necessary
-        Activity activity = getActivity();
+//        Activity activity = getActivity();
 //        if (activity != null) {
 //            Intent intent = new Intent(activity, activity.getClass());
 //            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -1036,6 +1037,9 @@ public class ScannerView extends WidgetMap {
             }
         }
         shouldShow = shouldShow || shouldShow2;
+        if (shouldShow) {
+            requireActivity().getSupportFragmentManager().popBackStack(null, POP_BACK_STACK_INCLUSIVE);
+        }
         int visibility = shouldShow ? View.VISIBLE : View.GONE;
         final boolean mapShouldBeEnabled = !shouldShow;
         requireActivity().runOnUiThread(() -> {
