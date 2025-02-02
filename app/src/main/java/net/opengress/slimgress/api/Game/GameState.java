@@ -1751,7 +1751,7 @@ public class GameState {
     public void addSlurpableXMParticles(Set<String> slurpableParticles) {
         mInterface.addSlurpableParticles(slurpableParticles);
         for (var particle : slurpableParticles) {
-            mWorld.getXMParticles().remove(Long.parseLong(particle.substring(0, 16), 16));
+            mWorld.getXMParticles().remove(Long.parseUnsignedLong(particle.substring(0, 16), 16));
         }
     }
 

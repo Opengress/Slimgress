@@ -39,7 +39,7 @@ public class XMParticle
         mGuid = guid;
         mEnergyTimestamp = timestamp;
 
-        mCellId = Long.parseLong(guid.substring(0, 16), 16);
+        mCellId = Long.parseUnsignedLong(guid.substring(0, 16), 16);
         mCellLocation = new Location(mCellId);
 
         // NOTE: API may differ from *rime because our globs can be HUGE
