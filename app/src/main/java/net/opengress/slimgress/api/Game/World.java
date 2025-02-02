@@ -52,7 +52,7 @@ public class World {
 
     public void deleteEntityByGuid(@NonNull String guid) {
         if (guid.endsWith(".6")) {
-            mXMParticles.remove(Long.parseLong(guid.substring(0, 16), 16));
+            mXMParticles.remove(Long.parseUnsignedLong(guid.substring(0, 16), 16));
         } else {
             mGameEntities.remove(guid);
         }
