@@ -92,7 +92,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -650,12 +649,10 @@ public class ScannerView extends WidgetMap {
         Map<Long, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
         mSlurpableParticles.clear();
 
+        List<Long> particlesToRemove = new ArrayList<>();
 
-        Iterator<Map.Entry<Long, XMParticle>> iterator = xmParticles.entrySet().iterator();
-
-        while (iterator.hasNext()) {
-            Map.Entry<Long, XMParticle> entry = iterator.next();
-            if (oldXM + newXM > maxXM) {
+        for (Map.Entry<Long, XMParticle> entry : xmParticles.entrySet()) {
+            if (oldXM + newXM >= maxXM) {
                 // continue is more computationally expensive and USUALLY not needed
                 break;
             }
@@ -665,11 +662,10 @@ public class ScannerView extends WidgetMap {
             // FIXME this is honestly the worst imaginable solution, but for now it's what i have...
             assert particle != null;
             if (particle.getCellLocation().distanceTo(playerLoc) < mActionRadiusM) {
-
                 mSlurpableParticles.add(particle.getGuid());
                 newXM += particle.getAmount();
                 mXmParticleFeatures.remove(particle.getGuid());
-                iterator.remove();
+                particlesToRemove.add(particle.getCellId());
             }
         }
 
@@ -677,6 +673,9 @@ public class ScannerView extends WidgetMap {
             mGame.addSlurpableXMParticles(mSlurpableParticles);
             mGame.getAgent().addEnergy(newXM);
             updateXMParticles();
+            for (Long id : particlesToRemove) {
+                xmParticles.remove(id);
+            }
         }
     }
 
