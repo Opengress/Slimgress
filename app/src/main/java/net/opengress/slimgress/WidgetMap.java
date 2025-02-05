@@ -44,6 +44,7 @@ import net.opengress.slimgress.api.GameEntity.GameEntityItem;
 import net.opengress.slimgress.api.GameEntity.GameEntityLink;
 import net.opengress.slimgress.api.GameEntity.GameEntityPortal;
 import net.opengress.slimgress.api.Item.ItemFlipCard;
+import net.opengress.slimgress.api.Knobs.MapCompositionRootKnobs.MapProvider.MapType;
 import net.opengress.slimgress.api.Knobs.TeamKnobs;
 import net.opengress.slimgress.positioning.LatLngPool;
 
@@ -240,6 +241,22 @@ abstract public class WidgetMap extends Fragment {
             return mGame.getKnobs().getMapCompositionRootKnobs().getMapProvider(name).getStyleJSON();
         } catch (JSONException | NullPointerException e) {
             return "{}";
+        }
+    }
+
+    protected String getMapTileProviderStyleUri(String name) {
+        try {
+            return mGame.getKnobs().getMapCompositionRootKnobs().getMapProvider(name).getUri();
+        } catch (NullPointerException e) {
+            return "about:blank";
+        }
+    }
+
+    protected MapType getMapTileProviderType(String name) {
+        try {
+            return mGame.getKnobs().getMapCompositionRootKnobs().getMapProvider(name).getType();
+        } catch (NullPointerException e) {
+            return MapType.RASTER;
         }
     }
 
@@ -1032,16 +1049,21 @@ abstract public class WidgetMap extends Fragment {
         loadAssets();
 
         mCurrentTileSource = mPrefs.getString(PREFS_DEVICE_TILE_SOURCE, PREFS_DEVICE_TILE_SOURCE_DEFAULT);
-        // COULD use setUpTileSource - but do not need updateScreen() so maybe not ??
-        String styleJSON = getMapTileProviderStyleJSON(mCurrentTileSource);
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(mapLibreMap -> {
             mMapLibreMap = mapLibreMap;
             mMapLibreMap.setMinZoomPreference(15);
             mMapLibreMap.setMaxZoomPreference(18);
 
-//            mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> setUpStyleForMap(mapLibreMap, style));
-            mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> setUpStyleForMap(mapLibreMap, style));
+            // COULD use setUpTileSource - but do not need updateScreen() so maybe not ??
+            if (getMapTileProviderType(mCurrentTileSource) == MapType.RASTER) {
+                String styleJSON = getMapTileProviderStyleJSON(mCurrentTileSource);
+                mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> setUpStyleForMap(mapLibreMap, style));
+            } else {
+                String uri = getMapTileProviderStyleUri(mCurrentTileSource);
+                mMapLibreMap.setStyle(uri, style -> setUpStyleForMap(mapLibreMap, style));
+//                mMapLibreMap.setStyle(new Style.Builder().fromJson(j), style -> setUpStyleForMap(mapLibreMap, style));
+            }
             // Retrieve saved camera properties
             float bearing = mPrefs.getFloat("camera_bearing", 0f);
             double latitude = mPrefs.getFloat("camera_latitude", 0f);

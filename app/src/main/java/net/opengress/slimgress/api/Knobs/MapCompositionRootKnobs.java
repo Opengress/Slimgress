@@ -62,17 +62,19 @@ public class MapCompositionRootKnobs extends Knobs {
                 mType = MapType.VECTOR;
             }
             mAttribution = json.getString("attribution");
-            var baseUrls = json.getJSONArray("baseUrls");
+            var baseUrls = json.optJSONArray("baseUrls");
             ArrayList<String> urls = new ArrayList<>();
-            for (int x = 0; x < baseUrls.length(); x++) {
-                urls.add(baseUrls.getString(x));
+            if (baseUrls != null) {
+                for (int x = 0; x < baseUrls.length(); x++) {
+                    urls.add(baseUrls.getString(x));
+                }
             }
             mBaseUrls = urls.toArray(new String[0]);
             mTileUrl = json.getString("tileUrl");
-            mFilenameEnding = json.getString("filenameEnding");
+            mFilenameEnding = json.optString("filenameEnding");
             mMinZoom = json.getInt("minZoom");
             mMaxZoom = json.getInt("maxZoom");
-            mTileSize = json.getInt("tileSize");
+            mTileSize = json.optInt("tileSize");
             if (json.getString("coordinateSystem").equals("XYZ")) {
                 mCoordinateSystem = CoordinateSystem.XYZ;
             } else {
@@ -151,27 +153,37 @@ public class MapCompositionRootKnobs extends Knobs {
         }
 
         /**
+         * @return The mapbox style uri for displaying this map alone.
+         */
+        public String getUri() {
+            return mTileUrl;
+        }
+
+        /**
          * @return The JSON style for displaying this map alone.
          */
         public String getStyleJSON() throws JSONException {
-            var provider = this;
             JSONObject source = new JSONObject();
-            source.put("type", provider.getType() == MapType.RASTER ? "raster" : "vector");
+            source.put("type", mType == MapType.RASTER ? "raster" : "vector");
 
             // Define tiles array based on base URLs and filename ending
             JSONArray tilesArray = new JSONArray();
-            for (String baseUrl : provider.getBaseUrls()) {
-                tilesArray.put(baseUrl + "{z}/{x}/{y}" + provider.getFilenameEnding());
+            for (String baseUrl : mBaseUrls) {
+                tilesArray.put(baseUrl + "{z}/{x}/{y}" + mFilenameEnding);
             }
 
             source.put("tiles", tilesArray);
-            source.put("minzoom", provider.getMinZoom());
-            source.put("maxzoom", provider.getMaxZoom());
-            source.put("tileSize", provider.getTileSize());
-            source.put("attribution", provider.getAttribution());
+            source.put("minzoom", mMinZoom);
+            source.put("maxzoom", mMaxZoom);
+            source.put("attribution", mAttribution);
+
+            if (mType == MapType.RASTER) {
+                source.put("tileSize", mTileSize);
+            }
+
 
             // Conditionally set the scheme to either "xyz" or "tms"
-            if (provider.getCoordinateSystem() == CoordinateSystem.TMS) {
+            if (mCoordinateSystem == CoordinateSystem.TMS) {
                 source.put("scheme", "tms");
             } else {
                 source.put("scheme", "xyz");  // Explicitly set for clarity
@@ -179,15 +191,21 @@ public class MapCompositionRootKnobs extends Knobs {
 
             // Create the sources object
             JSONObject sources = new JSONObject();
-            sources.put(provider.getName().toLowerCase().replace(" ", "-"), source);
+            sources.put(mName.toLowerCase().replace(" ", "-"), source);
 
             // Create the layer JSON
             JSONObject layer = new JSONObject();
-            layer.put("id", provider.getName().toLowerCase().replace(" ", "-") + "-layer");
-            layer.put("type", "raster");
-            layer.put("source", provider.getName().toLowerCase().replace(" ", "-"));
-            layer.put("minzoom", provider.getMinZoom());
-            layer.put("maxzoom", provider.getMaxZoom());
+            layer.put("id", mName.toLowerCase().replace(" ", "-") + "-layer");
+            layer.put("source", mName.toLowerCase().replace(" ", "-"));
+            layer.put("minzoom", mMinZoom);
+            layer.put("maxzoom", mMaxZoom);
+
+            if (mType == MapType.RASTER) {
+                layer.put("type", "raster");
+            } else {
+                layer.put("type", "fill");
+//                layer.put("source-layer", "your-source-layer-name");
+            }
 
             // Create the layers array
             JSONArray layersArray = new JSONArray();
@@ -196,7 +214,7 @@ public class MapCompositionRootKnobs extends Knobs {
             // Create the final style JSON
             JSONObject styleJson = new JSONObject();
             styleJson.put("version", 8);
-            styleJson.put("name", provider.getName());
+            styleJson.put("name", mName);
             styleJson.put("sources", sources);
             // FIXME awful and wrong thing to hardcode?
             styleJson.put("glyphs", "https://opengress.net/pbf/{range}.pbf");

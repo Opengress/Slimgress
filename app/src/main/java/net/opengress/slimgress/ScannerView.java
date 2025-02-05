@@ -30,6 +30,7 @@ import static net.opengress.slimgress.ViewHelpers.getRgbaStringFromColour;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
 import static net.opengress.slimgress.api.Item.ItemBase.ItemType.PortalKey;
+import static net.opengress.slimgress.api.Knobs.MapCompositionRootKnobs.MapProvider.MapType.RASTER;
 import static net.opengress.slimgress.net.NetworkMonitor.hasInternetConnectionCold;
 
 import android.annotation.SuppressLint;
@@ -370,35 +371,38 @@ public class ScannerView extends WidgetMap {
         final Choreographer.FrameCallback frameCallback = new Choreographer.FrameCallback() {
             private void cleanUp() {
                 mMapLibreMap.getStyle(style -> {
-                    mMapLibreMap.getStyle().removeLayer(layerId);
-                    mMapLibreMap.getStyle().removeSource(sourceId);
+                    style.removeLayer(layerId);
+                    style.removeSource(sourceId);
                 });
                 choreographer.removeFrameCallback(this);
             }
 
             @Override
             public void doFrame(long frameTimeNanos) {
-                long elapsed = System.currentTimeMillis() - startTime;
-                float progress = Math.min((float) elapsed / durationMs, 1f);
-                float radius1 = radius * progress;
+                mMapLibreMap.getStyle(style -> {
+                    long elapsed = System.currentTimeMillis() - startTime;
+                    float progress = Math.min((float) elapsed / durationMs, 1f);
+                    float radius1 = radius * progress;
 
-                try {
-                    imageSource.setCoordinates(getRadialLatLngQuad(centerPoint, radius1));
-                    RasterLayer circleLayer = (RasterLayer) mMapLibreMap.getStyle().getLayer(layerId);
-                    if (circleLayer != null) {
-                        circleLayer.setProperties(PropertyFactory.rasterOpacity(1f - (progress)));
+                    try {
+                        imageSource.setCoordinates(getRadialLatLngQuad(centerPoint, radius1));
+                        RasterLayer circleLayer = (RasterLayer) style.getLayer(layerId);
+                        if (circleLayer != null) {
+                            circleLayer.setProperties(PropertyFactory.rasterOpacity(1f - (progress)));
+                        }
+                    } catch (IllegalStateException e) {
+                        cleanUp();
+                        return;
                     }
-                } catch (IllegalStateException e) {
-                    cleanUp();
-                    return;
-                }
 
-                // Continue animating or clean up
-                if (progress < 1f) {
-                    choreographer.postFrameCallback(this);
-                } else {
-                    cleanUp();
-                }
+                    // Continue animating or clean up
+                    if (progress < 1f) {
+                        choreographer.postFrameCallback(this);
+                    } else {
+                        cleanUp();
+                    }
+
+                });
             }
         };
 
@@ -533,12 +537,21 @@ public class ScannerView extends WidgetMap {
     }
 
     protected void setUpTileSource() {
-        String styleJSON = getMapTileProviderStyleJSON(mCurrentTileSource);
-        assert styleJSON != null;
-        mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> {
-            setUpStyleForMap(mMapLibreMap, style);
-            setupPlayerCursor(mCurrentLocation, mBearing);
-        });
+        if (getMapTileProviderType(mCurrentTileSource) == RASTER) {
+            String styleJSON = getMapTileProviderStyleJSON(mCurrentTileSource);
+            assert styleJSON != null;
+            mMapLibreMap.setStyle(new Style.Builder().fromJson(styleJSON), style -> {
+                setUpStyleForMap(mMapLibreMap, style);
+                setupPlayerCursor(mCurrentLocation, mBearing);
+            });
+        } else {
+            String uri = getMapTileProviderStyleUri(mCurrentTileSource);
+            assert uri != null;
+            mMapLibreMap.setStyle(uri, style -> {
+                setUpStyleForMap(mMapLibreMap, style);
+                setupPlayerCursor(mCurrentLocation, mBearing);
+            });
+        }
     }
 
 
