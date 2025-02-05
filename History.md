@@ -1,3 +1,16 @@
+0.6.3 / 2025-02-05
+==================
+
+* Bump version to 0.6.3 to push crash fixes
+* WIP vector map support
+* Guard against crash in inventory sorts
+* Prevent crash during particle slurp
+* Make Dunedin not crash the game (64 bit unsigned overflow)
+* show scanner disabled quickmessage more reliably
+* close all windows if scanner disabled (good idea?)
+* Make FragmentInventoryItem finish at appropriate time and not crash so much
+* Protect against null hack result bundle crash (race condition)
+
 0.6.2 / 2025-01-30
 ==================
 
