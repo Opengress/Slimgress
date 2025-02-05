@@ -256,50 +256,80 @@ public class FragmentInventory extends Fragment {
             switch (by) {
                 case "Deployment" -> mGroupPortalKeys.sort((item1, item2) -> {
                     ItemPortalKey key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
-                    assert key1 != null;
-                    GameEntityPortal portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
-                    if (portal1 == null) {
-                        return 0;
-                    }
                     ItemPortalKey key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
-                    assert key2 != null;
-                    GameEntityPortal portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
-                    if (portal2 == null) {
+                    if (key1 == null && key2 == null) {
                         return 0;
                     }
-                    return portal1.getPortalResonatorCount() - portal2.getPortalResonatorCount();
+                    if (key1 == null) {
+                        return 1;
+                    }
+                    if (key2 == null) {
+                        return -1;
+                    }
+                    GameEntityPortal portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
+                    GameEntityPortal portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
+                    if (portal1 == null && portal2 == null) {
+                        return 0;
+                    }
+                    if (portal1 == null) {
+                        return 1;
+                    }
+                    if (portal2 == null) {
+                        return -1;
+                    }
+                    return Integer.compare(portal1.getPortalResonatorCount(), portal2.getPortalResonatorCount());
                 });
                 case "Distance" ->
                         mGroupPortalKeys.sort(Comparator.comparingInt(inventoryListItem -> (int) inventoryListItem.getDistance(mGame.getLocation())));
                 case "Level" -> mGroupPortalKeys.sort((item1, item2) -> {
                     ItemPortalKey key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
-                    assert key1 != null;
-                    GameEntityPortal portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
-                    if (portal1 == null) {
-                        return 0;
-                    }
                     ItemPortalKey key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
-                    assert key2 != null;
-                    GameEntityPortal portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
-                    if (portal2 == null) {
+                    if (key1 == null && key2 == null) {
                         return 0;
                     }
-                    return portal1.getPortalLevel() - portal2.getPortalLevel();
+                    if (key1 == null) {
+                        return 1;
+                    }
+                    if (key2 == null) {
+                        return -1;
+                    }
+                    GameEntityPortal portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
+                    GameEntityPortal portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
+                    if (portal1 == null && portal2 == null) {
+                        return 0;
+                    }
+                    if (portal1 == null) {
+                        return 1;
+                    }
+                    if (portal2 == null) {
+                        return -1;
+                    }
+                    return Integer.compare(portal1.getPortalLevel(), portal2.getPortalLevel());
                 });
                 case "Team" -> mGroupPortalKeys.sort((item1, item2) -> {
                     ItemPortalKey key1 = (ItemPortalKey) mGame.getInventory().getItems().get(item1.getFirstID());
-                    assert key1 != null;
-                    GameEntityPortal portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
-                    if (portal1 == null) {
-                        return 0;
-                    }
                     ItemPortalKey key2 = (ItemPortalKey) mGame.getInventory().getItems().get(item2.getFirstID());
-                    assert key2 != null;
-                    GameEntityPortal portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
-                    if (portal2 == null) {
+                    if (key1 == null && key2 == null) {
                         return 0;
                     }
-                    return portal1.getPortalTeam().getColour() - portal2.getPortalTeam().getColour();
+                    if (key1 == null) {
+                        return 1;
+                    }
+                    if (key2 == null) {
+                        return -1;
+                    }
+                    GameEntityPortal portal1 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key1.getPortalGuid());
+                    GameEntityPortal portal2 = (GameEntityPortal) mGame.getWorld().getGameEntities().get(key2.getPortalGuid());
+                    if (portal1 == null && portal2 == null) {
+                        return 0;
+                    }
+                    if (portal1 == null) {
+                        return 1;
+                    }
+                    if (portal2 == null) {
+                        return -1;
+                    }
+                    return Integer.compare(portal1.getPortalTeam().getColour(), portal2.getPortalTeam().getColour());
                 });
                 default ->
                         mGroupPortalKeys.sort((item1, item2) -> Collator.getInstance().compare(item1.getDescription(), item2.getDescription()));
