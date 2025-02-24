@@ -1,3 +1,9 @@
+0.6.5 / 2025-02-25
+==================
+
+* bump version for release
+* Improve client/server ap/xm sync and apgain display
+* Bump to 0.6.4 for release
 0.6.4 / 2025-02-24
 ==================
 
