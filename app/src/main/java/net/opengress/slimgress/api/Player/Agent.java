@@ -21,7 +21,6 @@
 
 package net.opengress.slimgress.api.Player;
 
-import static net.opengress.slimgress.ViewHelpers.TextType.APGain;
 import static net.opengress.slimgress.ViewHelpers.TextType.XMGain;
 import static net.opengress.slimgress.ViewHelpers.showFloatingText;
 
@@ -88,7 +87,6 @@ public class Agent extends PlayerEntity
         if (AP == 0) {
             return;
         }
-        showFloatingText(String.format(Locale.getDefault(), "+%dAP", AP), APGain);
         setAP(getAp() + AP);
         postUpdates();
     }
