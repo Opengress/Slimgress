@@ -1,3 +1,11 @@
+0.6.4 / 2025-02-24
+==================
+
+* Bump to 0.6.4 for release
+* update to match mid 2016 more closely (for now)
+* Fix crash that can occur on slightly older androids where switching tasks makes location go wonky
+* Fix a crash that can occur on very recent androids where we try to switch fragments too late in
+  lifecycle
 0.6.3 / 2025-02-05
 ==================
 
