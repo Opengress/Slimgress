@@ -26,27 +26,12 @@ import org.json.JSONObject;
 
 public class InventoryKnobs extends Knobs
 {
-    private final boolean mUseMax;
-    private final boolean mUseLimit;
     private final int mMaxInventoryItems;
 
     public InventoryKnobs(JSONObject json) throws JSONException
     {
         super(json);
-
-        mUseMax = json.getBoolean("useMax");
-        mUseLimit = json.getBoolean("useLimit");
         mMaxInventoryItems = json.getInt("maxInventoryItems");
-    }
-
-    public boolean isUseMax()
-    {
-        return mUseMax;
-    }
-
-    public boolean isUseLimit()
-    {
-        return mUseLimit;
     }
 
     public int getMaxInventoryItems()

@@ -44,7 +44,6 @@ public class PortalKnobs extends Knobs
     }
 
     private final List<Band> mBands;
-    private final JSONArray mResonatorEnergyLevels;
     private final boolean mCanPlayerRemoveMod;
     private final int mMaxModsPerPlayer;
 
@@ -63,9 +62,7 @@ public class PortalKnobs extends Knobs
             mBands.add(newBand);
         }
 
-        mResonatorEnergyLevels = json.getJSONArray("resonatorEnergyLevels");
-
-        mCanPlayerRemoveMod = json.getBoolean("canPlayerRemoveMod");
+        mCanPlayerRemoveMod = json.optBoolean("canPlayerRemoveMod", false);
         mMaxModsPerPlayer = json.getInt("maxModsPerPlayer");
     }
 
@@ -83,14 +80,6 @@ public class PortalKnobs extends Knobs
     public List<Band> getBands()
     {
         return mBands;
-    }
-
-    public int getResonatorEnergyForLevel(int level) {
-        return mResonatorEnergyLevels.optInt(level, 0);
-    }
-
-    public JSONArray getResonatorEnergyLevels() {
-        return mResonatorEnergyLevels;
     }
 
     public boolean getCanPlayerRemoveMod()

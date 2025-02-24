@@ -33,7 +33,7 @@ public class ItemWeaponUltraStrike extends ItemWeapon
         super(ItemType.WeaponUltraStrike, json);
 
         JSONObject item = json.getJSONObject(2);
-        JSONObject useInfo = item.getJSONObject("ultraStrike");
+        JSONObject useInfo = item.getJSONObject("empWeapon");
         mLevel = useInfo.getInt("level");
         mAmmo = useInfo.getInt("ammo");
     }

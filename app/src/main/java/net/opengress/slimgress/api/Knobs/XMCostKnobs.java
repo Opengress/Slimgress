@@ -75,7 +75,7 @@ public class XMCostKnobs extends Knobs
 //        mShieldDeployCostByLevel = getIntArray(json, "shieldDeployCostByLevel");
 //        mTurretDeployCostByLevel = getIntArray(json, "turretDeployCostByLevel");
         mXmpFiringCostByLevel = getIntArray(json, "xmpFiringCostByLevel");
-        mCreateLinkCost = json.getInt("createLinkCost");
+        mCreateLinkCost = json.optInt("createLinkCost", 250);
 
         mPortalModByLevel = new HashMap<>();
         JSONObject portalModByLevel = json.getJSONObject("portalModByLevel");
@@ -86,29 +86,14 @@ public class XMCostKnobs extends Knobs
         }
     }
 
-    public List<Integer> getHeatsinkDeployCostByLevel()
-    {
-        return mPortalModByLevel.get("HEATSINK");
-    }
-
     public List<Integer> getFlipCardCostByLevel()
     {
         return mFlipCardCostByLevel;
     }
 
-    public List<Integer> getTurretDeployCostByLevel()
-    {
-        return mPortalModByLevel.get("TURRET");
-    }
-
     public List<Integer> getPortalHackNeutralCostByLevel()
     {
         return mPortalHackNeutralCostByLevel;
-    }
-
-    public List<Integer> getShieldDeployCostByLevel()
-    {
-        return mPortalModByLevel.get("RES_SHIELD");
     }
 
     public List<Integer> getXmpFiringCostByLevel()
@@ -126,11 +111,6 @@ public class XMCostKnobs extends Knobs
         return mPortalHackFriendlyCostByLevel;
     }
 
-    public List<Integer> getMultihackDeployCostByLevel()
-    {
-        return mPortalModByLevel.get("MULTIHACK");
-    }
-
     public List<Integer> getPortalHackEnemyCostByLevel()
     {
         return mPortalHackEnemyCostByLevel;
@@ -139,16 +119,6 @@ public class XMCostKnobs extends Knobs
     public List<Integer> getResonatorDeployCostByLevel()
     {
         return mResonatorDeployCostByLevel;
-    }
-
-    public List<Integer> getForceAmplifierDeployCostByLevel()
-    {
-        return mPortalModByLevel.get("FORCE_AMP");
-    }
-
-    public List<Integer> getLinkAmplifierDeployCostByLevel()
-    {
-        return mPortalModByLevel.get("LINK_AMPLIFIER");
     }
 
     public List<Integer> getPortalModByLevel(String key)
