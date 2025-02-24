@@ -263,7 +263,7 @@ public class FragmentInventoryItem extends Fragment {
         }
 
         boolean isRecyclable = mGame.getKnobs().getRecycleKnobs().getRecycleValues(mInventory.getItems(mItem.getType()).get(0).getName()) != null;
-        if (mGame.getKnobs().getClientFeatureKnobs().isEnableRecycle() && isRecyclable) {
+        if (isRecyclable) {
             mRootView.findViewById(R.id.activity_inventory_item_recycle).setEnabled(true);
             mRootView.findViewById(R.id.activity_inventory_item_recycle).setOnClickListener(this::onRecycleItemClicked);
             mRootView.findViewById(R.id.activity_inventory_item_drop).setEnabled(true);
@@ -420,7 +420,7 @@ public class FragmentInventoryItem extends Fragment {
                     }
                     SlimgressApplication.postPlainCommsMessage("Unable to use power cube: " + error);
                 } else {
-                    var res = data.getString("result");
+                    var res = data.getInt("xmGained");
                     String message = "Gained %s XM from using a %s";
                     message = String.format(message, res, name);
                     SlimgressApplication.postPlainCommsMessage(message);

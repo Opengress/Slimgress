@@ -40,7 +40,7 @@ public class ScannerKnobs extends Knobs
         mUpdateDistanceM = json.getInt("updateDistanceM");
         mUpdateIntervalMS = json.getInt("updateIntervalMs");
         mMinUpdateIntervalMS = json.getInt("minUpdateIntervalMs");
-        mActionRadiusM = json.getInt("actionRadiusM");
+        mActionRadiusM = json.optInt("actionRadiusM", 40);
     }
 
     public int getRangeM()

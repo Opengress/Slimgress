@@ -440,16 +440,36 @@ public class GameState {
                 public void handleGameBasket(GameBasket gameBasket) {
                     // TODO handle all this
                     processGameBasket(gameBasket);
-                    // maybe something like this:
-                    initBundle();
-                    HashMap<String, ItemBase> items = new HashMap<>();
-                    for (ItemBase item : gameBasket.getInventory()) {
-                        items.put(item.getEntityGuid(), item);
+                }
+
+                @Override
+                public void handleResult(JSONObject res) {
+
+                    try {
+                        super.handleResult(res);
+                        HashMap<String, ItemBase> items = new HashMap<>();
+
+                        JSONArray reward = res.getJSONArray("reward");
+                        // should check against this, but why bother? extra effort with org.json
+//                        JSONArray guids = res.getJSONObject("items").getJSONArray("addedGuids");
+
+                        JSONArray inventory = reward.getJSONObject(0).getJSONArray("inventoryAward");
+                        for (int i = 0; i < inventory.length(); i++) {
+                            JSONArray resource = inventory.getJSONArray(i);
+                            ItemBase newItem = ItemBase.createByJSON(resource);
+                            if (newItem != null) {
+                                items.put(newItem.getEntityGuid(), newItem);
+                            }
+                        }
+                        getData().putSerializable("items", items);
+                        int level = res.getInt("verifiedLevel");
+                        getData().putInt("verifiedLevel", level);
+
+                        Log.d("GAME", "Got level: " + level);
+
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
                     }
-                    getData().putSerializable("items", items);
-                    // and then...?
-                    var player = gameBasket.getPlayerEntity();
-                    Log.d("GAME", "Got level: " + player.getVerifiedLevel());
                 }
 
                 @Override
@@ -1297,9 +1317,14 @@ public class GameState {
                 }
 
                 @Override
-                public void handleResult(String result) {
-                    mAgent.addEnergy(Integer.parseInt(result));
-                    getData().putString("result", result);
+                public void handleResult(JSONObject result) {
+                    try {
+                        int xm = result.getInt("xmGained");
+//                    mAgent.addEnergy(xm);
+                        getData().putInt("xmGained", xm);
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
                     super.handleResult(result);
                 }
             });

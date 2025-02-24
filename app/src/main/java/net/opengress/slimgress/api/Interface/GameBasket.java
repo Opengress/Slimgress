@@ -112,7 +112,7 @@ public class GameBasket
     private void processLevelUp(JSONObject levelUp) {
         if (levelUp != null) {
             try {
-                SlimgressApplication.getInstance().getLevelUpViewModel().postLevelUpMsgId(levelUp.getInt("newLevelUpMsgId"));
+                SlimgressApplication.getInstance().getLevelUpViewModel().postLevelUpMsgId(levelUp.getInt("nextLevelToken"));
             } catch (JSONException e) {
                 throw new RuntimeException(e);
             }

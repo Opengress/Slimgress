@@ -275,7 +275,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                     dialog.setMessage(error).setDismissDelay(1500).show();
                     isLevellingUp = false;
                 } else {
-                    SlimgressApplication.postPlainCommsMessage("Level up! You are now level " + level);
+                    SlimgressApplication.postPlainCommsMessage("Level up! You are now level " + data.getInt("verifiedLevel"));
                     showLevelUpDialog(generateFieldKitMap(data));
                 }
                 return false;
@@ -842,7 +842,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                     DialogInfo dialog = new DialogInfo(this);
                     dialog.setMessage(error).setDismissDelay(1500).show();
                 } else {
-                    var res = data.getString("result");
+                    var res = data.getInt("xmGained");
                     String message = "Gained %s XM from using a %s";
                     message = String.format(message, res, item.getUsefulName());
                     SlimgressApplication.postPlainCommsMessage(message);

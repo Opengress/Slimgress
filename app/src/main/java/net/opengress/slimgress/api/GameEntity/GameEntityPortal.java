@@ -39,7 +39,6 @@ import net.opengress.slimgress.api.Item.ItemModLinkAmp;
 import net.opengress.slimgress.api.Item.ItemModMultihack;
 import net.opengress.slimgress.api.Item.ItemModShield;
 import net.opengress.slimgress.api.Item.ItemModTurret;
-import net.opengress.slimgress.api.Knobs.PortalKnobs;
 import net.opengress.slimgress.api.Plext.MarkupPlayer;
 
 import org.json.JSONArray;
@@ -85,7 +84,7 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
         public String ownerGuid;
         public int level;
         public int getMaxEnergy() {
-            return mPortalKnobs.getResonatorEnergyForLevel(level);
+            return mResonatorEnergyLevels[level - 1];
         }
 
         public Location getResoLocation() {
@@ -180,7 +179,16 @@ public class GameEntityPortal extends GameEntityBase implements Serializable {
     private final List<LinkedMod> mPortalMods;
     // consider making this a map
     private final List<LinkedResonator> mPortalResonators;
-    private final PortalKnobs mPortalKnobs = SlimgressApplication.getInstance().getGame().getKnobs().getPortalKnobs();
+    private final int[] mResonatorEnergyLevels = new int[]{
+            1000,
+            1500,
+            2000,
+            2500,
+            3000,
+            4000,
+            5000,
+            6000
+    };
 
     GameEntityPortal(JSONArray json) throws JSONException
     {
