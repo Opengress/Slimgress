@@ -21,7 +21,9 @@
 
 package net.opengress.slimgress.api.Game;
 
+import static net.opengress.slimgress.ViewHelpers.TextType.APGain;
 import static net.opengress.slimgress.ViewHelpers.getString;
+import static net.opengress.slimgress.ViewHelpers.showFloatingText;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.ClientMustUpgrade;
 import static net.opengress.slimgress.api.Interface.Handshake.PregameStatus.ClientUpgradeRecommended;
@@ -72,6 +74,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
@@ -143,16 +146,21 @@ public class GameState {
             }
 
             if (!gameBasket.getAPGains().isEmpty()) {
+                int total = 0;
                 for (var gain : gameBasket.getAPGains()) {
                     app.getAllCommsViewModel().addMessage(PlextBase.createByAPGain(gain));
-                    mAgent.addAP(gain.getAmount());
+                    int amt = gain.getAmount();
+                    mAgent.addAP(amt);
+                    total += amt;
                 }
+                // we summed them because otherwise we'd have to stagger them
+                showFloatingText(String.format(Locale.getDefault(), "+%dAP", total), APGain);
             }
             if (!gameBasket.getPlayerDamages().isEmpty()) {
                 for (var dam : gameBasket.getPlayerDamages()) {
                     app.getAllCommsViewModel().addMessage(PlextBase.createByPlayerDamage(dam));
                     app.getMainActivity().damagePlayer(dam.getAmount(), dam.getAttackerGuid());
-                    mAgent.subtractEnergy(dam.getAmount());
+//                    mAgent.subtractEnergy(dam.getAmount());
                 }
             }
 
@@ -438,7 +446,6 @@ public class GameState {
             mInterface.request(mHandshake, "gameplay/levelUp", mLocation, params, new RequestResult(handler) {
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
-                    // TODO handle all this
                     processGameBasket(gameBasket);
                 }
 
@@ -1218,7 +1225,7 @@ public class GameState {
 
                 @Override
                 public void handleResult(String result) {
-                    mAgent.addEnergy(Integer.parseInt(result));
+//                    mAgent.addEnergy(Integer.parseInt(result));
                     getData().putString("result", result);
                     super.handleResult(result);
                 }
@@ -1266,7 +1273,7 @@ public class GameState {
 
                 @Override
                 public void handleResult(String result) {
-                    mAgent.addEnergy(Integer.parseInt(result));
+//                    mAgent.addEnergy(Integer.parseInt(result));
                     getData().putString("result", result);
                     super.handleResult(result);
                 }
