@@ -1275,7 +1275,7 @@ public class GameState {
                 @Override
                 public void handleResult(String result) {
 //                    mAgent.addEnergy(Integer.parseInt(result));
-                    getData().putString("result", result);
+                    getData().putInt("result", Integer.parseInt(result));
                     super.handleResult(result);
                 }
             });

@@ -4,6 +4,7 @@ import static androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
 import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_NONE;
+import static net.opengress.slimgress.ViewHelpers.TextType.XMGain;
 import static net.opengress.slimgress.ViewHelpers.formatNumberToKLocalised;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColour;
@@ -11,6 +12,7 @@ import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
 import static net.opengress.slimgress.ViewHelpers.getPrettyItemName;
 import static net.opengress.slimgress.ViewHelpers.putItemInMap;
 import static net.opengress.slimgress.ViewHelpers.saveScreenshot;
+import static net.opengress.slimgress.ViewHelpers.showFloatingText;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 
 import android.annotation.SuppressLint;
@@ -61,6 +63,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 
@@ -260,8 +263,9 @@ public class FragmentPortal extends Fragment {
                     }
                     SlimgressApplication.postPlainCommsMessage("Recycle failed: " + error);
                 } else {
-                    var res = data.getString("result");
-                    String message = String.format("Gained %s XM from recycling a %s", res, keys.get(0).getUsefulName());
+                    var res = data.getInt("result");
+                    showFloatingText(String.format(Locale.getDefault(), "+%dXM", res), XMGain);
+                    String message = String.format("Gained %d XM from recycling a %s", res, keys.get(0).getUsefulName());
                     SlimgressApplication.postPlainCommsMessage(message);
 //                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
                     keys.remove(0);
