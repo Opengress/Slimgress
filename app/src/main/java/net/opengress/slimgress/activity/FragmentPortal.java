@@ -4,6 +4,7 @@ import static androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
 import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_NONE;
+import static net.opengress.slimgress.ViewHelpers.TextType.Drop;
 import static net.opengress.slimgress.ViewHelpers.TextType.XMGain;
 import static net.opengress.slimgress.ViewHelpers.formatNumberToKLocalised;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
@@ -246,6 +247,7 @@ public class FragmentPortal extends Fragment {
                 } else {
                     // could say what we dropped
                     SlimgressApplication.postPlainCommsMessage("Drop successful");
+                    showFloatingText("Drop successful", Drop);
                     Toast.makeText(requireActivity(), "Drop successful", Toast.LENGTH_SHORT).show();
                     keys.remove(0);
                 }
