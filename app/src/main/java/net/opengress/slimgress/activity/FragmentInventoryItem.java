@@ -5,12 +5,14 @@ import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLU
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
 import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_NONE;
 import static net.opengress.slimgress.SlimgressApplication.runInThread;
+import static net.opengress.slimgress.ViewHelpers.TextType.XMGain;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.getMainActivity;
 import static net.opengress.slimgress.ViewHelpers.getPrettyDistanceString;
 import static net.opengress.slimgress.ViewHelpers.getRarityColour;
 import static net.opengress.slimgress.ViewHelpers.getRarityText;
+import static net.opengress.slimgress.ViewHelpers.showFloatingText;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 
 import android.annotation.SuppressLint;
@@ -424,6 +426,7 @@ public class FragmentInventoryItem extends Fragment {
                     String message = "Gained %s XM from using a %s";
                     message = String.format(message, res, name);
                     SlimgressApplication.postPlainCommsMessage(message);
+                    showFloatingText(String.format(Locale.getDefault(), "+%dXM", res), XMGain);
 //                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
 
                     for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
@@ -641,18 +644,18 @@ public class FragmentInventoryItem extends Fragment {
                 SlimgressApplication.postPlainCommsMessage("Recycle failed: " + error);
             } else {
                 SlimgressApplication.postPlainCommsMessage("Recycle successful");
-                var res = data.getString("result");
+                var res = data.getInt("result");
                 String message;
                 if (finalQuantity > 1) {
-                    message = "Gained %s XM from recycling %d %ss";
+                    message = "Gained ds XM from recycling %d %ss";
                     message = String.format(message, res, finalQuantity, name);
                 } else {
-                    message = "Gained %s XM from recycling a %s";
+                    message = "Gained %d XM from recycling a %s";
                     message = String.format(message, res, name);
                 }
                 SlimgressApplication.postPlainCommsMessage(message);
 //                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-
+                showFloatingText(String.format(Locale.getDefault(), "+%dXM", res), XMGain);
                 if (act != null) {
                     for (var id : Objects.requireNonNull(data.getStringArray("recycled"))) {
                         mItem.remove(id);

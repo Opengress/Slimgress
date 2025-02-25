@@ -21,6 +21,7 @@
 
 package net.opengress.slimgress.activity;
 
+import static net.opengress.slimgress.ViewHelpers.TextType.XMGain;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getImageForUltrastrikeLevel;
 import static net.opengress.slimgress.ViewHelpers.getImageForXMPLevel;
@@ -28,6 +29,7 @@ import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.getPrettyItemName;
 import static net.opengress.slimgress.ViewHelpers.putItemInMap;
 import static net.opengress.slimgress.ViewHelpers.saveScreenshot;
+import static net.opengress.slimgress.ViewHelpers.showFloatingText;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
 
@@ -845,8 +847,9 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                     var res = data.getInt("xmGained");
                     String message = "Gained %s XM from using a %s";
                     message = String.format(message, res, item.getUsefulName());
+                    showFloatingText(String.format(Locale.getDefault(), "+%dXM", res), XMGain);
                     SlimgressApplication.postPlainCommsMessage(message);
-                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
                     for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
                         mGame.getInventory().removeItem(id);
                     }
