@@ -108,7 +108,6 @@ public class FragmentInventory extends Fragment {
     final String[] mLevelNames = {"ALL", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5", "Level 6", "Level 7", "Level 8"};
     int mInventoryKeySort;
     int mInventoryCount = 0;
-    boolean mFirstRun = true;
 
     @Override
     public void onResume() {
@@ -122,20 +121,12 @@ public class FragmentInventory extends Fragment {
             mSearchBox.setQuery(null, false);
         }
 
-        // FIXME monkeypatch
-        int inventoryCount = mApp.getGame().getInventory().getItems().size();
-        if (inventoryCount == mInventoryCount && mInventoryCount != 0) {
-            super.onResume();
-            return;
-        }
-        mInventoryCount = inventoryCount;
-
         final ExpandableListView list = requireView().findViewById(R.id.listView);
         final ProgressBar progress = requireView().findViewById(R.id.progressBar1);
 
         final Runnable runnable = getRunnable(getLayoutInflater(), list, progress);
 
-        if (mFirstRun && !mGame.getInventory().getItems().isEmpty()) {
+        if (!mGame.getInventory().getItems().isEmpty()) {
             FragmentInventory.this.fillInventory(runnable);
         }
         mObserver = inventory -> {
@@ -149,7 +140,6 @@ public class FragmentInventory extends Fragment {
 
         mApp.getInventoryViewModel().getInventory().observe(getViewLifecycleOwner(), mObserver);
 
-        mFirstRun = false;
         super.onResume();
     }
 
@@ -782,7 +772,9 @@ public class FragmentInventory extends Fragment {
         }
         mGroupNames.add("PortalKeys (" + items.size() + ")");
         mGroups.add(mGroupPortalKeys);
-        mGame.intGetModifiedEntitiesByGuid(portalGUIDs.toArray(new String[0]), new Handler(msg -> true));
+        if (mInventoryList != null && notBouncing("inventoryGetModifiedEntities", 5000)) {
+            mGame.intGetModifiedEntitiesByGuid(portalGUIDs.toArray(new String[0]), new Handler(msg -> true));
+        }
     }
 
     void fillCapsules() {

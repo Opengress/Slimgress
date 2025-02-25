@@ -1616,11 +1616,6 @@ public class GameState {
         Log.w("Game", "intSetNotificationSettings not yet implemented");
     }
 
-    public void intGetModifiedEntity(String guid, final Handler handler) {
-        String[] guids = {guid};
-        intGetModifiedEntitiesByGuid(guids, handler);
-    }
-
     public void intGetModifiedEntitiesByGuid(@NonNull String[] guids, final Handler handler) {
         try {
             checkInterface();
