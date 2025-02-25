@@ -75,16 +75,16 @@
 
                 <ImageButton
                     android:id="@+id/portalImage"
+                    style="@style/ButtonStyle"
                     android:layout_width="195dp"
                     android:layout_height="180dp"
-                    android:padding="@dimen/activity_margin_half"
                     android:layout_margin="@dimen/activity_margin_half"
+                    android:adjustViewBounds="false"
+                    android:padding="@dimen/activity_margin_half"
+                    android:scaleType="fitCenter"
                     android:src="@drawable/no_image"
                     android:visibility="visible"
-                    android:adjustViewBounds="false"
-                    android:scaleType="fitCenter"
-                    style="@style/ButtonStyle"
-                    tools:ignore="ContentDescription" />
+                    tools:ignore="ContentDescription,SpeakableTextPresentCheck" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
