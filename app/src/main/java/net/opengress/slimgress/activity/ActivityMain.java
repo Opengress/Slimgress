@@ -21,6 +21,15 @@
 
 package net.opengress.slimgress.activity;
 
+import static android.content.Intent.ACTION_SEND;
+import static android.content.Intent.ACTION_VIEW;
+import static android.content.Intent.EXTRA_STREAM;
+import static android.content.Intent.EXTRA_TEXT;
+import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.createChooser;
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 import static net.opengress.slimgress.SlimgressApplication.postPlainCommsMessage;
 import static net.opengress.slimgress.ViewHelpers.TextType.XMGain;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
@@ -42,7 +51,8 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PorterDuff;
 import android.net.Uri;
-import android.os.Build;
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
@@ -126,6 +136,8 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     private double mCurrentDistFromTargetPortal = 9999;
     private boolean isFireCarouselVisible = false;
     private boolean isPortalPickerVisible = false;
+    private TextView mBigMessageText;
+//    private EnergyState mOldEnergyState = Undefined;
 
     @Override
     protected void onDestroy() {
@@ -161,18 +173,19 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
             hasScannerOnTop = false;
             if (currentFragment instanceof ScannerView) {
-                findViewById(R.id.activity_main_widgets).setVisibility(View.VISIBLE);
-                findViewById(R.id.commsLayout).setVisibility(View.VISIBLE);
+                findViewById(R.id.activity_main_widgets).setVisibility(VISIBLE);
+                findViewById(R.id.commsLayout).setVisibility(VISIBLE);
                 hasScannerOnTop = true;
             } else if (currentFragment instanceof FragmentPortal) {
-                findViewById(R.id.activity_main_widgets).setVisibility(View.GONE);
-                findViewById(R.id.commsLayout).setVisibility(View.VISIBLE);
+                findViewById(R.id.activity_main_widgets).setVisibility(GONE);
+                findViewById(R.id.commsLayout).setVisibility(VISIBLE);
                 resetSelection();
             } else {
-                findViewById(R.id.activity_main_widgets).setVisibility(View.GONE);
-                findViewById(R.id.commsLayout).setVisibility(View.GONE);
+                findViewById(R.id.activity_main_widgets).setVisibility(GONE);
+                findViewById(R.id.commsLayout).setVisibility(GONE);
                 resetSelection();
             }
+//            updateEnergyState();
         });
 
         // create comm button callback
@@ -205,6 +218,26 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         hasScannerOnTop = true;
     }
 
+//    private void updateEnergyState() {
+//        Log.d("MAIN", "checking energy state");
+//        if (Objects.requireNonNull(mGame.getAgent().getEnergyState()) == Depleted) {
+//            Log.d("MAIN", "BAD energy state");
+//            if (mOldEnergyState != Depleted) {
+//                Log.d("MAIN", "deploying overlay");
+//                setBigMessageText(getString(R.string.scanner_disabled_collect_more_xm));
+//                findViewById(R.id.scannerDisabledOverlay).setVisibility(VISIBLE);
+//            }
+//        } else {
+//            Log.d("MAIN", "GOOD energy state");
+//            if (mOldEnergyState == Depleted) {
+//                Log.d("MAIN", "removing overlay");
+//                setBigMessageText(null);
+//                findViewById(R.id.scannerDisabledOverlay).setVisibility(GONE);
+//            }
+//        }
+//        mOldEnergyState = mGame.getAgent().getEnergyState();
+//    }
+
 
     @SuppressLint("RestrictedApi")
     private void setUpFireCarousel() {
@@ -219,6 +252,8 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         mSelectTargetText = findViewById(R.id.select_target_text);
         mConfirmButton = findViewById(R.id.btn_flipcard_confirm);
         mCancelButton = findViewById(R.id.btn_flipcard_cancel);
+
+        mBigMessageText = findViewById(R.id.big_message_text);
 
         mConfirmButton.setOnClickListener(v -> {
             if (mSelectedPortalGuid != null && mSelectedFlipCardGuid != null) {
@@ -298,7 +333,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         mApp.setMainActivity(this);
         if (mGame.getKnobs() == null) {
             Intent intent = new Intent(this, ActivitySplash.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            intent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
 
             startActivity(intent);
             finish();
@@ -399,12 +434,12 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 return;
             }
             int nextLevelAP = mGame.getKnobs().getPlayerLevelKnobs().getLevelUpRequirement(nextLevel).getApRequired();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (VERSION.SDK_INT >= VERSION_CODES.O) {
                 ((ProgressBar) findViewById(R.id.agentap)).setMin(thisLevelAP);
             }
             ((ProgressBar) findViewById(R.id.agentap)).setMax(nextLevelAP);
             ((ProgressBar) findViewById(R.id.agentap)).setProgress(agent.getAp());
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP) {
                 ((ProgressBar) findViewById(R.id.agentap)).getProgressDrawable().setTint(levelColor);
             } else {
                 ((ProgressBar) findViewById(R.id.agentap)).getProgressDrawable().setColorFilter(levelColor, PorterDuff.Mode.SRC_IN);
@@ -413,7 +448,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             ((ProgressBar) findViewById(R.id.agentxm)).setMax(agent.getEnergyMax());
             ((ProgressBar) findViewById(R.id.agentxm)).setProgress(agent.getEnergy());
 //        Log.d("Main/updateAgent", "New XM: " + agent.getEnergy());
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP) {
                 ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setTint(textColor);
             } else {
                 ((ProgressBar) findViewById(R.id.agentxm)).getProgressDrawable().setColorFilter(textColor, PorterDuff.Mode.SRC_IN);
@@ -422,6 +457,8 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 //            String agentinfo = "AP: " + agent.getAp() + " / XM: " + (agent.getEnergy() * 100 / agent.getEnergyMax()) + " %";
 //            ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);
 //            ((TextView)findViewById(R.id.agentinfo)).setTextColor(0x99999999);
+
+//            updateEnergyState();
         });
     }
 
@@ -481,11 +518,11 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 File screenshotFile = saveScreenshot(getExternalCacheDir(), combinedBitmap);
                 // Share the screenshot
                 Uri screenshotUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", screenshotFile);
-                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                Intent shareIntent = new Intent(ACTION_SEND);
                 shareIntent.setType("image/png");
-                shareIntent.putExtra(Intent.EXTRA_STREAM, screenshotUri);
-                shareIntent.putExtra(Intent.EXTRA_TEXT, String.format("I've reached level %d in #Opengress!", mGame.getAgent().getVerifiedLevel()));
-                startActivity(Intent.createChooser(shareIntent, "Share via"));
+                shareIntent.putExtra(EXTRA_STREAM, screenshotUri);
+                shareIntent.putExtra(EXTRA_TEXT, String.format("I've reached level %d in #Opengress!", mGame.getAgent().getVerifiedLevel()));
+                startActivity(createChooser(shareIntent, "Share via"));
             });
         });
     }
@@ -593,17 +630,17 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 return showFireCarousel(null);
             } else if (itemId == R.id.action_new_portal) {
                 String url = "https://opengress.net/new/?remote";
-                Intent i = new Intent(Intent.ACTION_VIEW);
+                Intent i = new Intent(ACTION_VIEW);
                 i.setData(Uri.parse(url));
                 startActivity(i);
                 return true;
             } else if (itemId == R.id.action_navigate) {
                 String uri = "geo:?q=" + p.getLatitude() + "," + p.getLongitude();
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(uri)));
+                startActivity(new Intent(ACTION_VIEW, Uri.parse(uri)));
                 return true;
             } else if (itemId == R.id.action_opr) {
                 String url = "https://opengress.net/opr/go";
-                Intent i = new Intent(Intent.ACTION_VIEW);
+                Intent i = new Intent(ACTION_VIEW);
                 i.setData(Uri.parse(url));
                 startActivity(i);
                 return true;
@@ -704,7 +741,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         });
 
         // Show the carousel layout
-        findViewById(R.id.fire_carousel_layout).setVisibility(View.VISIBLE);
+        findViewById(R.id.fire_carousel_layout).setVisibility(VISIBLE);
         isFireCarouselVisible = true;
 
         // Fire button click logic
@@ -827,7 +864,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 }
 
                 // when i put the drawing code (currently below) in here, it doesn't draw.
-                mGame.getAgent().subtractEnergy(cost);
+//                mGame.getAgent().subtractEnergy(cost); // probably don't need now after Big Sync update
                 return true;
             }));
 
@@ -861,9 +898,9 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             }));
         } else if (itemType == ItemBase.ItemType.FlipCard) {
             mSelectedFlipCardGuid = item.getEntityGuid();
-            mSelectTargetText.setVisibility(View.VISIBLE);
-            mConfirmButton.setVisibility(View.VISIBLE);
-            mCancelButton.setVisibility(View.VISIBLE);
+            mSelectTargetText.setVisibility(VISIBLE);
+            mConfirmButton.setVisibility(VISIBLE);
+            mCancelButton.setVisibility(VISIBLE);
             hideFireCarousel();
             isPortalPickerVisible = true;
             return false;
@@ -879,11 +916,11 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
     private void resetSelection() {
         // FIXME this is silly - one day the flipcard buttons and fire carousel will be together
-        mSelectTargetText.setVisibility(View.GONE);
+        mSelectTargetText.setVisibility(GONE);
         mSelectTargetText.setText(R.string.flipcard_select_target);
-        mConfirmButton.setVisibility(View.GONE);
+        mConfirmButton.setVisibility(GONE);
         mConfirmButton.setEnabled(false);
-        mCancelButton.setVisibility(View.GONE);
+        mCancelButton.setVisibility(GONE);
         mSelectedPortalGuid = null;
         mSelectedFlipCardGuid = null;
         mScannerView.removeInfoCard();
@@ -911,7 +948,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     public boolean isSelectingTargetPortal() {
-        return mSelectTargetText.getVisibility() == View.VISIBLE;
+        return mSelectTargetText.getVisibility() == VISIBLE;
     }
 
     public void setTargetPortal(String entityGuid) {
@@ -948,8 +985,26 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     }
 
     private void hideFireCarousel() {
-        findViewById(R.id.fire_carousel_layout).setVisibility(View.GONE);
+        findViewById(R.id.fire_carousel_layout).setVisibility(GONE);
         findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
         isFireCarouselVisible = false;
     }
+
+    // TODO maybe make this into a more general scanner disabled overlay toggler
+    public void setBigMessageText(String text) {
+        runOnUiThread(() -> {
+            if (text == null || text.isEmpty()) {
+                mBigMessageText.setText(null);
+                mBigMessageText.setVisibility(GONE);
+                return;
+            }
+            mBigMessageText.setText(text);
+            mBigMessageText.setVisibility(VISIBLE);
+        });
+    }
+
+    public String getBigMessageText() {
+        return mBigMessageText.getText().toString();
+    }
+
 }
