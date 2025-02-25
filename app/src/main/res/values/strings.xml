@@ -150,4 +150,5 @@
     <string name="redeem_passcode">Redeem Passcode</string>
     <string name="passcode_confirmed">PASSCODE CONFIRMED</string>
     <string name="validating">Validating...</string>
+    <string name="passcode">Passcode</string>
 </resources>

@@ -850,4 +850,11 @@ public class FragmentInventory extends Fragment {
 //        mGame.intGetModifiedEntitiesByGuid(portalGUIDs.toArray(new String[0]), new Handler(msg -> true));
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (mObserver != null) {
+            mApp.getInventoryViewModel().getInventory().removeObserver(mObserver);
+        }
+    }
 }

@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -33,7 +32,7 @@ public class FragmentOps extends Fragment implements TabLayout.OnTabSelectedList
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the app.
-        OpsPagerAdapter opsPagerAdapter = new OpsPagerAdapter(requireActivity());
+        OpsPagerAdapter opsPagerAdapter = new OpsPagerAdapter(this);
 
         // Set up the ViewPager with the sections adapter.
         mViewPager = rootView.findViewById(R.id.pager);
@@ -60,7 +59,7 @@ public class FragmentOps extends Fragment implements TabLayout.OnTabSelectedList
                         case 0 -> tab.setText(R.string.ops_inventory);
                         case 1 -> tab.setText(R.string.ops_user);
                         case 2 -> tab.setText(R.string.ops_tab_name_score);
-                        case 3 -> tab.setText("Passcode");
+                        case 3 -> tab.setText(R.string.passcode);
                         case 4 -> tab.setText(R.string.ops_device);
                     }
                 }).attach();
@@ -88,7 +87,8 @@ public class FragmentOps extends Fragment implements TabLayout.OnTabSelectedList
 
     public static class OpsPagerAdapter extends FragmentStateAdapter {
         private final SparseArray<Fragment> mFragmentCache = new SparseArray<>();
-        public OpsPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
+
+        public OpsPagerAdapter(@NonNull FragmentOps fragmentActivity) {
             super(fragmentActivity);
         }
 
