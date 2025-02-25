@@ -66,7 +66,7 @@ public class DialogHackResult extends Dialog
         lp.dimAmount = 0.0f;
         lp.width = WindowManager.LayoutParams.MATCH_PARENT;
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        lp.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+//        lp.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         getWindow().setAttributes(lp);
 
         findViewById(R.id.message).setVisibility(View.INVISIBLE);
@@ -114,11 +114,19 @@ public class DialogHackResult extends Dialog
                     }
                 }
             }, delay));
+            var w = getWindow();
+            if (w != null) {
+                w.getDecorView().setOnTouchListener((v, event) -> {
+                    v.performClick();
+                    dismiss();
+                    return true;
+                });
+            }
         } else {
             mShouldDismiss = false;
         }
-        setCancelable(!mShouldDismiss);
-        setCanceledOnTouchOutside(!mShouldDismiss);
+        setCancelable(true);
+        setCanceledOnTouchOutside(true);
     }
 
     // to be used when hack acquired items!
