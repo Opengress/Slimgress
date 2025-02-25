@@ -455,13 +455,12 @@ public class GameState {
 
                     try {
                         super.handleResult(res);
+
                         HashMap<String, ItemBase> items = new HashMap<>();
 
-                        JSONArray reward = res.getJSONArray("reward");
-                        // should check against this, but why bother? extra effort with org.json
-//                        JSONArray guids = res.getJSONObject("items").getJSONArray("addedGuids");
+                        JSONObject reward = res.getJSONObject("reward");
 
-                        JSONArray inventory = reward.getJSONObject(0).getJSONArray("inventoryAward");
+                        JSONArray inventory = reward.getJSONArray("inventoryAward");
                         for (int i = 0; i < inventory.length(); i++) {
                             JSONArray resource = inventory.getJSONArray(i);
                             ItemBase newItem = ItemBase.createByJSON(resource);
@@ -469,10 +468,11 @@ public class GameState {
                                 items.put(newItem.getEntityGuid(), newItem);
                             }
                         }
+
                         getData().putSerializable("items", items);
+
                         int level = res.getInt("verifiedLevel");
                         getData().putInt("verifiedLevel", level);
-
                         Log.d("GAME", "Got level: " + level);
 
                     } catch (JSONException e) {

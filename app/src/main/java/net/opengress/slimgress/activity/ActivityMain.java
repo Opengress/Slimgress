@@ -21,6 +21,7 @@
 
 package net.opengress.slimgress.activity;
 
+import static net.opengress.slimgress.SlimgressApplication.postPlainCommsMessage;
 import static net.opengress.slimgress.ViewHelpers.TextType.XMGain;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getImageForUltrastrikeLevel;
@@ -201,6 +202,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         // update agent data last because maybe race condition?
         updateAgent(mGame.getAgent());
         mApp.getPlayerDataViewModel().getAgent().observe(this, this::updateAgent);
+        hasScannerOnTop = true;
     }
 
 
@@ -275,9 +277,10 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 if (error != null && !error.isEmpty()) {
                     DialogInfo dialog = new DialogInfo(this);
                     dialog.setMessage(error).setDismissDelay(1500).show();
+                    Log.e("MAIN/LEVEL", error);
                     isLevellingUp = false;
                 } else {
-                    SlimgressApplication.postPlainCommsMessage("Level up! You are now level " + data.getInt("verifiedLevel"));
+                    postPlainCommsMessage("Level up! You are now level " + data.getInt("verifiedLevel"));
                     showLevelUpDialog(generateFieldKitMap(data));
                 }
                 return false;
@@ -799,13 +802,13 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 if (error != null && !error.isEmpty()) {
                     DialogInfo dialog = new DialogInfo(this);
                     dialog.setMessage(error).setDismissDelay(1500).show();
-                    SlimgressApplication.postPlainCommsMessage("XMP failed: " + error);
+                    postPlainCommsMessage("XMP failed: " + error);
                     return true;
                 }
 
                 ArrayList<Damage> damages = data.getParcelableArrayList("damages");
                 if (damages == null || damages.isEmpty()) {
-                    SlimgressApplication.postPlainCommsMessage(getString(R.string.missed_all_resonators));
+                    postPlainCommsMessage(getString(R.string.missed_all_resonators));
                     return true;
                 }
 
@@ -818,9 +821,9 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 }
 
                 if (destroyedResos == 1) {
-                    SlimgressApplication.postPlainCommsMessage("Destroyed 1 resonator");
+                    postPlainCommsMessage("Destroyed 1 resonator");
                 } else if (destroyedResos > 1) {
-                    SlimgressApplication.postPlainCommsMessage(String.format(Locale.getDefault(), "Destroyed %d resonators", destroyedResos));
+                    postPlainCommsMessage(String.format(Locale.getDefault(), "Destroyed %d resonators", destroyedResos));
                 }
 
                 // when i put the drawing code (currently below) in here, it doesn't draw.
@@ -848,7 +851,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                     String message = "Gained %s XM from using a %s";
                     message = String.format(message, res, item.getUsefulName());
                     showFloatingText(String.format(Locale.getDefault(), "+%dXM", res), XMGain);
-                    SlimgressApplication.postPlainCommsMessage(message);
+                    postPlainCommsMessage(message);
 //                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
                     for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
                         mGame.getInventory().removeItem(id);
