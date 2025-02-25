@@ -32,7 +32,6 @@ import org.maplibre.android.geometry.LatLng;
 import org.maplibre.geojson.Point;
 
 import java.io.Serializable;
-import java.math.BigInteger;
 
 public class Location implements Serializable
 {
@@ -42,15 +41,6 @@ public class Location implements Serializable
     public Location(@NonNull android.location.Location pos) {
         latE6 = Math.round(pos.getLatitude() * 1e6);
         lngE6 = Math.round(pos.getLongitude() * 1e6);
-    }
-
-    private double hexToDecimal(String hex) {
-        BigInteger bigInt = new BigInteger(hex, 16);
-        // Handle negative values for latitude
-        if (bigInt.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
-            bigInt = bigInt.subtract(BigInteger.ONE.shiftLeft(64)); // Adjust for signed 64-bit integer
-        }
-        return bigInt.doubleValue();
     }
 
     public Location(@NonNull JSONObject json) throws JSONException
@@ -83,8 +73,9 @@ public class Location implements Serializable
     public Location(@NonNull String hexLatLng)
     {
         String[] parts = hexLatLng.split(",");
-        latE6 = (long) hexToDecimal(parts[0]);
-        lngE6 = (long) hexToDecimal(parts[1]);
+        // a previous implementation could handle 64 bit values, which were overkill
+        latE6 = (int) Long.parseLong(parts[0], 16);
+        lngE6 = (int) Long.parseLong(parts[1], 16);
     }
 
     public long getLatitudeE6()

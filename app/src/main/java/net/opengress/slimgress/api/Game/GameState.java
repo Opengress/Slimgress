@@ -370,7 +370,8 @@ public class GameState {
                                 }
                                 if (finalMaxTimeStampMs == -1 || finalMaxTimeStampMs < time) {
                                     if (!getOlderMessages) {
-                                        mMinCommTimestamps.put(categoryName, time + 1);
+                                        // it's actually ok to load the same message every time
+                                        mMinCommTimestamps.put(categoryName, time);
                                     }
                                 }
                             }
