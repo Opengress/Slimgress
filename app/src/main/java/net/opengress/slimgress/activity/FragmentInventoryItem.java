@@ -4,7 +4,10 @@ import static androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION;
 import static net.opengress.slimgress.Constants.BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT;
 import static net.opengress.slimgress.Constants.UNTRANSLATABLE_IMAGE_RESOLUTION_NONE;
+import static net.opengress.slimgress.SlimgressApplication.postPlainCommsMessage;
 import static net.opengress.slimgress.SlimgressApplication.runInThread;
+import static net.opengress.slimgress.SlimgressApplication.schedule;
+import static net.opengress.slimgress.ViewHelpers.TextType.Drop;
 import static net.opengress.slimgress.ViewHelpers.TextType.XMGain;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColour;
@@ -14,6 +17,8 @@ import static net.opengress.slimgress.ViewHelpers.getRarityColour;
 import static net.opengress.slimgress.ViewHelpers.getRarityText;
 import static net.opengress.slimgress.ViewHelpers.showFloatingText;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
+import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -54,7 +59,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 public class FragmentInventoryItem extends Fragment {
 
@@ -369,7 +373,7 @@ public class FragmentInventoryItem extends Fragment {
                 DialogInfo dialog = new DialogInfo(act);
                 dialog.setMessage(error).setDismissDelay(1500).show();
             }
-            SlimgressApplication.postPlainCommsMessage("Drop failed: " + error);
+            postPlainCommsMessage("Drop failed: " + error);
             return;
         }
         mGame.intDropItem(item, new Handler(msg -> {
@@ -381,17 +385,18 @@ public class FragmentInventoryItem extends Fragment {
                     DialogInfo dialog = new DialogInfo(act);
                     dialog.setMessage(error).setDismissDelay(1500).show();
                 }
-                SlimgressApplication.postPlainCommsMessage("Drop failed: " + error);
+                postPlainCommsMessage("Drop failed: " + error);
             } else {
                 // could say what we dropped
-                SlimgressApplication.postPlainCommsMessage("Drop successful");
-                for (var id : Objects.requireNonNull(data.getStringArray("dropped"))) {
+                postPlainCommsMessage("Drop successful");
+                showFloatingText("Drop successful", Drop);
+                for (var id : requireNonNull(data.getStringArray("dropped"))) {
                     mItem.remove(id);
                     mInventory.removeItem(id);
                     ((TextView) mRootView.findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                 }
                 if (mItem.getQuantity() == 0) {
-                    SlimgressApplication.schedule(this::finish, 50, TimeUnit.MILLISECONDS);
+                    schedule(this::finish, 50, MILLISECONDS);
                 }
             }
             return false;
@@ -409,7 +414,7 @@ public class FragmentInventoryItem extends Fragment {
             finish();
         }
         if (mItem.getType() == ItemBase.ItemType.PowerCube) {
-            ItemPowerCube cube = (ItemPowerCube) Objects.requireNonNull(mInventory.getItems().get(mItem.getFirstID()));
+            ItemPowerCube cube = (ItemPowerCube) requireNonNull(mInventory.getItems().get(mItem.getFirstID()));
             String name = cube.getUsefulName();
             mGame.intUsePowerCube(cube, new Handler(msg -> {
                 var data = msg.getData();
@@ -420,22 +425,22 @@ public class FragmentInventoryItem extends Fragment {
                         DialogInfo dialog = new DialogInfo(act);
                         dialog.setMessage(error).setDismissDelay(1500).show();
                     }
-                    SlimgressApplication.postPlainCommsMessage("Unable to use power cube: " + error);
+                    postPlainCommsMessage("Unable to use power cube: " + error);
                 } else {
                     var res = data.getInt("xmGained");
                     String message = "Gained %s XM from using a %s";
                     message = String.format(message, res, name);
-                    SlimgressApplication.postPlainCommsMessage(message);
+                    postPlainCommsMessage(message);
                     showFloatingText(String.format(Locale.getDefault(), "+%dXM", res), XMGain);
 //                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
 
-                    for (var id : Objects.requireNonNull(data.getStringArray("consumed"))) {
+                    for (var id : requireNonNull(data.getStringArray("consumed"))) {
                         mItem.remove(id);
                         mInventory.removeItem(id);
                         ((TextView) mRootView.findViewById(R.id.activity_inventory_item_qty)).setText("x" + mItem.getQuantity());
                     }
                     if (mItem.getQuantity() == 0) {
-                        SlimgressApplication.schedule(this::finish, 50, TimeUnit.MILLISECONDS);
+                        schedule(this::finish, 50, MILLISECONDS);
                     }
                 }
                 return false;
@@ -641,30 +646,30 @@ public class FragmentInventoryItem extends Fragment {
                     DialogInfo dialog = new DialogInfo(act);
                     dialog.setMessage(error).setDismissDelay(1500).show();
                 }
-                SlimgressApplication.postPlainCommsMessage("Recycle failed: " + error);
+                postPlainCommsMessage("Recycle failed: " + error);
             } else {
-                SlimgressApplication.postPlainCommsMessage("Recycle successful");
+                postPlainCommsMessage("Recycle successful");
                 var res = data.getInt("result");
                 String message;
                 if (finalQuantity > 1) {
-                    message = "Gained ds XM from recycling %d %ss";
+                    message = "Gained %s XM from recycling %d %ss";
                     message = String.format(message, res, finalQuantity, name);
                 } else {
                     message = "Gained %d XM from recycling a %s";
                     message = String.format(message, res, name);
                 }
-                SlimgressApplication.postPlainCommsMessage(message);
+                postPlainCommsMessage(message);
 //                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
                 showFloatingText(String.format(Locale.getDefault(), "+%dXM", res), XMGain);
                 if (act != null) {
-                    for (var id : Objects.requireNonNull(data.getStringArray("recycled"))) {
+                    for (var id : requireNonNull(data.getStringArray("recycled"))) {
                         mItem.remove(id);
                         mInventory.removeItem(id);
                         act.<TextView>findViewById(R.id.activity_inventory_item_qty).setText("x" + mItem.getQuantity());
                     }
                 }
                 if (mItem.getQuantity() == 0) {
-                    SlimgressApplication.schedule(this::finish, 50, TimeUnit.MILLISECONDS);
+                    schedule(this::finish, 50, MILLISECONDS);
                 }
             }
             return false;

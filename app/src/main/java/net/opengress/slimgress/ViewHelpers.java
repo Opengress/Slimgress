@@ -1,6 +1,12 @@
 package net.opengress.slimgress;
 
+import static android.graphics.Typeface.BOLD;
+import static android.view.Gravity.CENTER;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static android.widget.RelativeLayout.CENTER_IN_PARENT;
+import static net.opengress.slimgress.SlimgressApplication.getCurrentActivity;
 import static org.maplibre.android.utils.ColorUtils.colorToRgbaString;
+import static java.lang.System.currentTimeMillis;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -13,16 +19,16 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.view.Choreographer;
-import android.view.Gravity;
+import android.view.Choreographer.FrameCallback;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
+import android.widget.RelativeLayout.LayoutParams;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -60,6 +66,7 @@ public class ViewHelpers {
         XMCost,
         XMGain,
         ZapLoss,
+        Drop, // maybe there should be one for general message text
     }
 
     @Nullable
@@ -425,7 +432,7 @@ public class ViewHelpers {
 
         // TODO: stagger/queue these, and let them maybe appear at given x/y somehow
 
-        Activity activity = SlimgressApplication.getCurrentActivity();
+        Activity activity = getCurrentActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
@@ -452,46 +459,37 @@ public class ViewHelpers {
                     floatingText.setTextColor(0xFFEEEEEE);
                     floatingText.setShadowLayer(4, 2, 2, 0xFF000000);
                     break;
+                case Drop:
                 default:
                     floatingText.setTextColor(0xCCF8C03E);
                     floatingText.setShadowLayer(4, 2, 2, 0x00000000);
             }
-            floatingText.setTypeface(floatingText.getTypeface(), Typeface.BOLD);
+            floatingText.setTypeface(floatingText.getTypeface(), BOLD);
             floatingText.setPadding(20, 10, 20, 10);
-            floatingText.setGravity(Gravity.CENTER);
+            floatingText.setGravity(CENTER);
             floatingText.setTextSize(14);
 
             ViewGroup.LayoutParams params;
             if (rootLayout instanceof FrameLayout) {
-                params = new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        Gravity.CENTER
-                );
+                params = new FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, CENTER);
             } else if (rootLayout instanceof RelativeLayout) {
-                RelativeLayout.LayoutParams relativeParams = new RelativeLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                );
-                relativeParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+                LayoutParams relativeParams = new LayoutParams(WRAP_CONTENT, WRAP_CONTENT);
+                relativeParams.addRule(CENTER_IN_PARENT);
                 params = relativeParams;
             } else {
-                params = new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                );
+                params = new ViewGroup.LayoutParams(WRAP_CONTENT, WRAP_CONTENT);
             }
 
             floatingText.setLayoutParams(params);
             rootLayout.addView(floatingText);
 
-            final long startTime = System.currentTimeMillis();
+            final long startTime = currentTimeMillis();
             final Choreographer choreographer = Choreographer.getInstance();
             final long duration = 1000; // 1 second
             final int initialY = floatingText.getTop();
             final int endY = initialY - 200;
 
-            final Choreographer.FrameCallback frameCallback = new Choreographer.FrameCallback() {
+            final FrameCallback frameCallback = new FrameCallback() {
                 private void cleanUp() {
                     try {
                         rootLayout.removeView(floatingText);
@@ -502,7 +500,7 @@ public class ViewHelpers {
 
                 @Override
                 public void doFrame(long frameTimeNanos) {
-                    long elapsed = System.currentTimeMillis() - startTime;
+                    long elapsed = currentTimeMillis() - startTime;
                     float progress = Math.min((float) elapsed / duration, 1f);
 
                     try {
