@@ -1,3 +1,8 @@
+0.6.6 / 2025-02-25
+==================
+
+* Bump version for protocol change
+* Align portalCoupler latlng expectations with 32bit signed world
 0.6.5 / 2025-02-25
 ==================
 
