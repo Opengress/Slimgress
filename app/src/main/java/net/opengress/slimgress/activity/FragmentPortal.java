@@ -49,7 +49,6 @@ import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Common.Location;
-import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Common.Utils;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.GameEntity.GameEntityBase;
@@ -290,6 +289,7 @@ public class FragmentPortal extends Fragment {
         return fragment;
     }
 
+    @SuppressLint("DefaultLocale")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -424,7 +424,8 @@ public class FragmentPortal extends Fragment {
                                 dialog.setMessage(e2).setDismissDelay(1500).show();
                             }
                             SlimgressApplication.postPlainCommsMessage("Link failed: " + e2);
-                            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getLinkCreationCost());
+                            // probably don't need now after Big Sync update
+//                            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getLinkCreationCost());
                             return false;
                         }
                         int fields = m2.getData().getInt("numFields");
@@ -539,15 +540,16 @@ public class FragmentPortal extends Fragment {
             return bundle;
         }
 
-        int portalLevel = mPortal.getPortalLevel();
-        Team portalTeam = mPortal.getPortalTeam();
-        if (portalTeam.equals(mGame.getAgent().getTeam())) {
-            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackFriendlyCostByLevel().get(portalLevel - 1));
-        } else if (portalTeam.toString().equalsIgnoreCase("neutral")) {
-            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackNeutralCostByLevel().get(portalLevel - 1));
-        } else {
-            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackEnemyCostByLevel().get(portalLevel - 1));
-        }
+//        int portalLevel = mPortal.getPortalLevel();
+//        Team portalTeam = mPortal.getPortalTeam();
+        // probably don't need now after Big Sync update
+//        if (portalTeam.equals(mGame.getAgent().getTeam())) {
+//            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackFriendlyCostByLevel().get(portalLevel - 1));
+//        } else if (portalTeam.toString().equalsIgnoreCase("neutral")) {
+//            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackNeutralCostByLevel().get(portalLevel - 1));
+//        } else {
+//            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalHackEnemyCostByLevel().get(portalLevel - 1));
+//        }
 
         if ((guids == null || guids.isEmpty()) && (bonusGuids == null || bonusGuids.isEmpty())) {
             bundle.putString("error", "Hack acquired no items");

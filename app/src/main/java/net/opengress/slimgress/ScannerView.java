@@ -21,6 +21,7 @@
 
 package net.opengress.slimgress;
 
+import static android.view.WindowManager.LayoutParams.WRAP_CONTENT;
 import static androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE;
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE;
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE_DEFAULT;
@@ -566,10 +567,12 @@ public class ScannerView extends WidgetMap {
         updateShowScannerDisabledOverlay();
 
         if (isInaccurate) {
+            ((ActivityMain) requireActivity()).setBigMessageText(getStringSafely(R.string.location_inaccurate));
             displayQuickMessage(getStringSafely(R.string.location_inaccurate));
 //            mMapView.getOverlayManager().remove(mActionRadius);
         } else {
             if (Objects.equals(getQuickMessage(), getStringSafely(R.string.location_inaccurate))) {
+                ((ActivityMain) requireActivity()).setBigMessageText(null);
                 hideQuickMessage();
             }
         }
@@ -898,7 +901,7 @@ public class ScannerView extends WidgetMap {
     private Bitmap createDrawableFromView(@NonNull Context context, @NonNull View view) {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getMetrics(displayMetrics);
-        view.setLayoutParams(new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT));
+        view.setLayoutParams(new WindowManager.LayoutParams(WRAP_CONTENT, WRAP_CONTENT));
         view.measure(displayMetrics.widthPixels, displayMetrics.heightPixels);
         view.layout(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
         view.buildDrawingCache();
@@ -1012,7 +1015,8 @@ public class ScannerView extends WidgetMap {
         if (getActivity() == null || requireActivity().findViewById(R.id.quickMessage) == null) {
             return;
         }
-        displayQuickMessage("Scanner disabled - network connection lost");
+        displayQuickMessage(getString(R.string.scanner_disabled_network_connection_lost));
+        ((ActivityMain) requireActivity()).setBigMessageText(getStringSafely(R.string.scanner_disabled_network_connection_lost));
         updateShowScannerDisabledOverlay();
     }
 
@@ -1030,9 +1034,11 @@ public class ScannerView extends WidgetMap {
         boolean shouldShow = !mGame.isLocationAccurate();
         if (shouldShow) {
             displayQuickMessage(getStringSafely(R.string.location_inaccurate));
+            ((ActivityMain) requireActivity()).setBigMessageText(getStringSafely(R.string.location_inaccurate));
 //            mMapView.getOverlayManager().remove(mActionRadius);
         } else {
             if (Objects.equals(getQuickMessage(), getStringSafely(R.string.location_inaccurate))) {
+                ((ActivityMain) requireActivity()).setBigMessageText(null);
                 hideQuickMessage();
             }
         }
@@ -1040,10 +1046,12 @@ public class ScannerView extends WidgetMap {
 //        shouldShow = shouldShow && mGame.getAgent().getEnergyState() == PlayerEntity.EnergyState.OK;
         boolean shouldShow2 = !hasInternetConnectionCold(requireContext());
         if (shouldShow2) {
-            displayQuickMessage("Scanner disabled - network connection lost");
+            displayQuickMessage(getStringSafely(R.string.scanner_disabled_network_connection_lost));
+            ((ActivityMain) requireActivity()).setBigMessageText(getStringSafely(R.string.scanner_disabled_network_connection_lost));
 //            mMapView.getOverlayManager().remove(mActionRadius);
         } else {
-            if (Objects.equals(getQuickMessage(), "Scanner disabled - network connection lost")) {
+            if (Objects.equals(getQuickMessage(), getStringSafely(R.string.scanner_disabled_network_connection_lost))) {
+                ((ActivityMain) requireActivity()).setBigMessageText(null);
                 hideQuickMessage();
             }
         }

@@ -69,10 +69,11 @@ public class FragmentMod extends Fragment {
                 dialog.setMessage(error).setDismissDelay(1500).show();
             }
         } else {
-            ItemMod mod = (ItemMod) msg.getData().getSerializable("mod");
+//            ItemMod mod = (ItemMod) msg.getData().getSerializable("mod");
             // FIXME this does not work correctly in the case where we are removing a mod and shields have funny add cost
-            String name = (mod == null) ? "RES_SHIELD" : mod.getName();
-            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalModByLevel(name).get(mPortal.getPortalLevel() - 1));
+//            String name = (mod == null) ? "RES_SHIELD" : mod.getName();
+            // probably don't need now after Big Sync update
+//            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalModByLevel(name).get(mPortal.getPortalLevel() - 1));
         }
 
         setUpView();

@@ -150,7 +150,7 @@ public class GameState {
                 for (var gain : gameBasket.getAPGains()) {
                     app.getAllCommsViewModel().addMessage(PlextBase.createByAPGain(gain));
                     int amt = gain.getAmount();
-                    mAgent.addAP(amt);
+//                    mAgent.addAP(amt); // probably don't need now after Big Sync update
                     total += amt;
                 }
                 // we summed them because otherwise we'd have to stagger them
@@ -942,7 +942,8 @@ public class GameState {
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
                     super.handleGameBasket(gameBasket);
-                    getAgent().subtractEnergy(getKnobs().getXMCostKnobs().getResonatorDeployCostByLevel().get(level - 1));
+                    // probably don't need now after Big Sync update
+//                    getAgent().subtractEnergy(getKnobs().getXMCostKnobs().getResonatorDeployCostByLevel().get(level - 1));
                 }
 
             });
@@ -1000,7 +1001,8 @@ public class GameState {
                 public void handleGameBasket(GameBasket gameBasket) {
                     processGameBasket(gameBasket);
                     super.handleGameBasket(gameBasket);
-                    getAgent().subtractEnergy(getKnobs().getXMCostKnobs().getResonatorUpgradeCostByLevel().get(level - 1));
+                    // probably don't need now after Big Sync update
+//                    getAgent().subtractEnergy(getKnobs().getXMCostKnobs().getResonatorUpgradeCostByLevel().get(level - 1));
                 }
 
             });

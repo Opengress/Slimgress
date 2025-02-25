@@ -106,6 +106,7 @@ public class Agent extends PlayerEntity
     }
 
     public void postUpdates() {
+        // why not post this?
         SlimgressApplication.getInstance().getPlayerDataViewModel().postAgent(SlimgressApplication.getInstance().getGame().getAgent());
     }
 

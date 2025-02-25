@@ -151,4 +151,6 @@
     <string name="passcode_confirmed">PASSCODE CONFIRMED</string>
     <string name="validating">Validating...</string>
     <string name="passcode">Passcode</string>
+    <string name="scanner_disabled_network_connection_lost">Scanner disabled - network connection lost</string>
+    <string name="scanner_disabled_collect_more_xm">Scanner Disabled; Collect more XM</string>
 </resources>
