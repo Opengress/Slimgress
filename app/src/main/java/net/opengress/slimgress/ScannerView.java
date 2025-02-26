@@ -32,7 +32,10 @@ import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
 import static net.opengress.slimgress.api.Item.ItemBase.ItemType.PortalKey;
 import static net.opengress.slimgress.api.Knobs.MapCompositionRootKnobs.MapProvider.MapType.RASTER;
+import static net.opengress.slimgress.api.Player.PlayerEntity.EnergyState.Depleted;
 import static net.opengress.slimgress.net.NetworkMonitor.hasInternetConnectionCold;
+import static java.lang.System.currentTimeMillis;
+import static java.util.Objects.requireNonNull;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -217,7 +220,7 @@ public class ScannerView extends WidgetMap {
         mPlayerCursorSource = new GeoJsonSource("player-cursor-source", Feature.fromGeometry(Point.fromLngLat(initialLocation.getLongitude(), initialLocation.getLatitude())));
 
         LatLngQuad rotatedQuad = getRotatedLatLngQuad(initialLocation, 25, 25, bearing);
-        mPlayerCursorImageSource = new ImageSource("bearing-image-source", rotatedQuad, Objects.requireNonNull(mIcons.get("playercursor")));
+        mPlayerCursorImageSource = new ImageSource("bearing-image-source", rotatedQuad, requireNonNull(mIcons.get("playercursor")));
 
         mMapLibreMap.getStyle(style -> {
             style.addSource(mPlayerCursorSource);
@@ -234,7 +237,7 @@ public class ScannerView extends WidgetMap {
             return;
         }
         LatLngQuad actionRadiusQuad = getRadialLatLngQuad(initialLocation, mActionRadiusM);
-        ImageSource actionRadiusSource = new ImageSource("action-radius-source", actionRadiusQuad, Objects.requireNonNull(mIcons.get("actionradius")));
+        ImageSource actionRadiusSource = new ImageSource("action-radius-source", actionRadiusQuad, requireNonNull(mIcons.get("actionradius")));
         mMapLibreMap.getStyle().addSource(actionRadiusSource);
         RasterLayer actionRadiusLayer = new RasterLayer("action-radius-layer", "action-radius-source").withProperties(
                 PropertyFactory.rasterOpacity(0.5f)
@@ -255,7 +258,7 @@ public class ScannerView extends WidgetMap {
 
     private void displayMyCurrentLocationOverlay(Location currentLocation) {
 
-        long now = System.currentTimeMillis();
+        long now = currentTimeMillis();
 
         if (mLastScan == 0 || mLastLocation == null || (now - mLastScan >= mUpdateIntervalMS) || (now - mLastScan >= mMinUpdateIntervalMS && mLastLocation.distanceTo(currentLocation) >= mUpdateDistanceM)) {
             if (mGame.getLocation() != null) {
@@ -366,7 +369,7 @@ public class ScannerView extends WidgetMap {
         RasterLayer circleLayer = new RasterLayer(layerId, sourceId);
         mMapLibreMap.getStyle().addLayer(circleLayer);
 
-        final long startTime = System.currentTimeMillis();
+        final long startTime = currentTimeMillis();
         final Choreographer choreographer = Choreographer.getInstance();
 
         final Choreographer.FrameCallback frameCallback = new Choreographer.FrameCallback() {
@@ -381,7 +384,7 @@ public class ScannerView extends WidgetMap {
             @Override
             public void doFrame(long frameTimeNanos) {
                 mMapLibreMap.getStyle(style -> {
-                    long elapsed = System.currentTimeMillis() - startTime;
+                    long elapsed = currentTimeMillis() - startTime;
                     float progress = Math.min((float) elapsed / durationMs, 1f);
                     float radius1 = radius * progress;
 
@@ -439,9 +442,9 @@ public class ScannerView extends WidgetMap {
             setUpTileSource();
         }
 
-        if (mLastLocationAcquired == null || mLastLocationAcquired.before(new Date(System.currentTimeMillis() - mUpdateIntervalMS))) {
+        if (mLastLocationAcquired == null || mLastLocationAcquired.before(new Date(currentTimeMillis() - mUpdateIntervalMS))) {
             setLocationInaccurate(true);
-        } else if (mLastLocationAcquired.before(new Date(System.currentTimeMillis() - mMinUpdateIntervalMS))) {
+        } else if (mLastLocationAcquired.before(new Date(currentTimeMillis() - mMinUpdateIntervalMS))) {
             // might be pointing the wrong way til next location update but that's ok
             displayMyCurrentLocationOverlay(mCurrentLocation);
         }
@@ -467,7 +470,7 @@ public class ScannerView extends WidgetMap {
             final Handler uiHandler = new Handler();
             uiHandler.post(() -> {
                 // guard against scanning too fast if request fails
-                mLastScan = System.currentTimeMillis() + mMinUpdateIntervalMS;
+                mLastScan = currentTimeMillis() + mMinUpdateIntervalMS;
                 updateWorld();
             });
         }
@@ -626,7 +629,7 @@ public class ScannerView extends WidgetMap {
             displayQuickMessage(getStringSafely(R.string.scan_complete));
             setQuickMessageTimeout();
 
-            mLastScan = System.currentTimeMillis() + mMinUpdateIntervalMS;
+            mLastScan = currentTimeMillis() + mMinUpdateIntervalMS;
 
             return true;
         });
@@ -732,7 +735,7 @@ public class ScannerView extends WidgetMap {
             LatLngQuad circleQuad = getRadialLatLngQuad(portal.getPortalLocation(), 30);
 
             // Create an ImageSource for the circle
-            ImageSource circleSource = new ImageSource(sourceId, circleQuad, Objects.requireNonNull(mIcons.get("targetPortalMarker")));
+            ImageSource circleSource = new ImageSource(sourceId, circleQuad, requireNonNull(mIcons.get("targetPortalMarker")));
             style.addSource(circleSource);
 
             // Add a RasterLayer for rendering
@@ -757,13 +760,13 @@ public class ScannerView extends WidgetMap {
         textView1.setText(String.format(Locale.getDefault(), "L%d ", portal.getPortalLevel()));
         textView1.setTextColor(0xFF000000 + getColourFromResources(getResources(), getLevelColour(portal.getPortalLevel())));
         textView2.setText(R.string.portal);
-        textView2.setTextColor(0xFF000000 + Objects.requireNonNull(mGame.getKnobs().getTeamKnobs().getTeams().get(portal.getPortalTeam().toString())).getColour());
+        textView2.setTextColor(0xFF000000 + requireNonNull(mGame.getKnobs().getTeamKnobs().getTeams().get(portal.getPortalTeam().toString())).getColour());
         textView3.setText(portal.getPortalTitle());
         int dist = (int) mCurrentLocation.distanceTo(portal.getPortalLocation());
         textview4.setText(String.format(Locale.getDefault(), "Distance: %dm", dist));
 
         Bitmap bitmap = createDrawableFromView(requireContext(), markerView);
-        Objects.requireNonNull(mMapLibreMap.getStyle()).addImage("info_card", bitmap);
+        requireNonNull(mMapLibreMap.getStyle()).addImage("info_card", bitmap);
         mMarkerInfoCard = mSymbolManager.create(new SymbolOptions()
                 .withLatLng(portal.getPortalLocation().getLatLng())
                 .withIconImage("info_card")
@@ -1031,6 +1034,7 @@ public class ScannerView extends WidgetMap {
         if (getActivity() == null || requireActivity().findViewById(R.id.scannerDisabledOverlay) == null) {
             return;
         }
+
         boolean shouldShow = !mGame.isLocationAccurate();
         if (shouldShow) {
             displayQuickMessage(getStringSafely(R.string.location_inaccurate));
@@ -1055,7 +1059,19 @@ public class ScannerView extends WidgetMap {
                 hideQuickMessage();
             }
         }
-        shouldShow = shouldShow || shouldShow2;
+
+        boolean shouldShow3 = Objects.equals(mGame.getAgent().getEnergyState(), Depleted);
+        if (shouldShow3) {
+            ((ActivityMain) requireActivity()).setBigMessageText(getStringSafely(R.string.scanner_disabled_collect_more_xm));
+            displayQuickMessage(getStringSafely(R.string.scanner_disabled_collect_more_xm));
+        } else {
+            if (Objects.equals(getQuickMessage(), getStringSafely(R.string.scanner_disabled_collect_more_xm))) {
+                ((ActivityMain) requireActivity()).setBigMessageText(null);
+                hideQuickMessage();
+            }
+        }
+
+        shouldShow = shouldShow || shouldShow2 || shouldShow3;
         if (shouldShow && !requireActivity().getSupportFragmentManager().isStateSaved()) {
             requireActivity().getSupportFragmentManager().popBackStack(null, POP_BACK_STACK_INCLUSIVE);
         }

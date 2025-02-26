@@ -26,7 +26,9 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="false"
         android:theme="@style/GradientTheme"
-        tools:targetApi="n">
+        android:enableOnBackInvokedCallback="true"
+        tools:targetApi="n"
+        tools:ignore="UnusedAttribute">
 
         <!-- to be allowed to "install software" - self-updates -->
         <!-- ... also share screenshots ... -->

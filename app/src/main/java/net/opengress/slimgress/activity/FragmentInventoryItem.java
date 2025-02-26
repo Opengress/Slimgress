@@ -106,7 +106,9 @@ public class FragmentInventoryItem extends Fragment {
         switch (type) {
             case PortalKey -> {
                 GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(((ItemPortalKey) actual).getPortalGuid());
-                assert portal != null;
+                if (portal == null) {
+                    throw new RuntimeException("Portal key can't refer to a null portal! ID was " + ((ItemPortalKey) actual).getPortalGuid());
+                }
 
                 mItemRarity.setVisibility(View.GONE);
 

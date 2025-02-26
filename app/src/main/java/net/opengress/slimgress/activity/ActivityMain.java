@@ -137,7 +137,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     private boolean isFireCarouselVisible = false;
     private boolean isPortalPickerVisible = false;
     private TextView mBigMessageText;
-//    private EnergyState mOldEnergyState = Undefined;
 
     @Override
     protected void onDestroy() {
@@ -185,7 +184,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 findViewById(R.id.commsLayout).setVisibility(GONE);
                 resetSelection();
             }
-//            updateEnergyState();
         });
 
         // create comm button callback
@@ -217,27 +215,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         mApp.getPlayerDataViewModel().getAgent().observe(this, this::updateAgent);
         hasScannerOnTop = true;
     }
-
-//    private void updateEnergyState() {
-//        Log.d("MAIN", "checking energy state");
-//        if (Objects.requireNonNull(mGame.getAgent().getEnergyState()) == Depleted) {
-//            Log.d("MAIN", "BAD energy state");
-//            if (mOldEnergyState != Depleted) {
-//                Log.d("MAIN", "deploying overlay");
-//                setBigMessageText(getString(R.string.scanner_disabled_collect_more_xm));
-//                findViewById(R.id.scannerDisabledOverlay).setVisibility(VISIBLE);
-//            }
-//        } else {
-//            Log.d("MAIN", "GOOD energy state");
-//            if (mOldEnergyState == Depleted) {
-//                Log.d("MAIN", "removing overlay");
-//                setBigMessageText(null);
-//                findViewById(R.id.scannerDisabledOverlay).setVisibility(GONE);
-//            }
-//        }
-//        mOldEnergyState = mGame.getAgent().getEnergyState();
-//    }
-
 
     @SuppressLint("RestrictedApi")
     private void setUpFireCarousel() {
@@ -458,7 +435,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 //            ((TextView)findViewById(R.id.agentinfo)).setText(agentinfo);
 //            ((TextView)findViewById(R.id.agentinfo)).setTextColor(0x99999999);
 
-//            updateEnergyState();
         });
     }
 
