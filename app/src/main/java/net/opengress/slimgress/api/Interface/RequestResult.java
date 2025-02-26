@@ -30,49 +30,41 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class RequestResult
-{
+public class RequestResult {
     private final Handler mResultHandler;
     private Bundle mBundle;
     private final Message mMessage;
 
-    public RequestResult(Handler handler)
-    {
+    public RequestResult(Handler handler) {
         mResultHandler = handler;
         mMessage = new Message();
     }
 
-    private void handleException(String exception)
-    {
+    private void handleException(String exception) {
         Log.e("RequestResult.Callback", exception);
         initBundle();
         mBundle.putString("Exception", exception);
     }
 
-    public void handleError(String error)
-    {
+    public void handleError(String error) {
         Log.e("RequestResult.Callback", error);
         initBundle();
         mBundle.putString("Error", error);
     }
 
-    public void handleGameBasket(GameBasket gameBasket)
-    {
+    public void handleGameBasket(GameBasket gameBasket) {
         // not implemented
     }
 
-    public void handleResult(JSONObject result)
-    {
+    public void handleResult(JSONObject result) {
         // not implemented
     }
 
-    public void handleResult(JSONArray result)
-    {
+    public void handleResult(JSONArray result) {
         // not implemented
     }
 
-    public void handleResult(String result)
-    {
+    public void handleResult(String result) {
         // not implemented
     }
 
@@ -82,42 +74,43 @@ public class RequestResult
         }
     }
 
-    public Bundle getData()
-    {
+    public Bundle getData() {
         initBundle();
         return mBundle;
     }
 
-    public void finished()
-    {
+    public void finished() {
         mMessage.setData(mBundle);
         if (mResultHandler != null) {
             mResultHandler.sendMessage(mMessage);
         }
     }
 
-    public static void handleRequest(JSONObject json, RequestResult result)
-    {
-        if (result == null)
+    public static void handleRequest(JSONObject json, RequestResult result) {
+        if (result == null) {
             throw new RuntimeException("invalid result object");
+        }
 
         try {
             // handle exception string if available
             String excString = json.optString("exception");
-            if (!excString.isEmpty())
+            if (!excString.isEmpty()) {
                 result.handleException(excString);
+            }
 
             // handle error code if available
             String error = json.optString("error");
-            if (!error.isEmpty())
+            if (!error.isEmpty()) {
                 result.handleError(error);
-            else if (json.has("error"))
+            } else if (json.has("error")) {
                 Log.w("RequestResult", "request contains an unknown error type");
+            }
 
             // handle game basket if available
             JSONObject gameBasket = json.optJSONObject("gameBasket");
-            if (gameBasket != null)
+            if (gameBasket != null) {
                 result.handleGameBasket(new GameBasket(gameBasket));
+            }
 
             // handle result if available
             JSONObject resultObj = json.optJSONObject("result");
@@ -132,8 +125,7 @@ public class RequestResult
             }
 
             result.finished();
-        }
-        catch (JSONException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
