@@ -78,6 +78,11 @@ public class Location implements Serializable
         lngE6 = (int) Long.parseLong(parts[1], 16);
     }
 
+    public Location(LatLng target) {
+        latE6 = (long) (target.getLatitude() * 1e6);
+        lngE6 = (long) (target.getLongitude() * 1e6);
+    }
+
     public long getLatitudeE6()
     {
         return latE6;

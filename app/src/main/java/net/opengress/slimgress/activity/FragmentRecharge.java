@@ -214,7 +214,7 @@ public class FragmentRecharge extends Fragment {
     }
 
     private boolean canRecharge(LinkedResonator reso) {
-        if (mGame.getAgent().getEnergy() < 250) {
+        if (mGame.getAgent().getEnergy() < 250) { // knob
             return false;
         }
         if (reso != null && reso.energyTotal >= reso.getMaxEnergy()) {

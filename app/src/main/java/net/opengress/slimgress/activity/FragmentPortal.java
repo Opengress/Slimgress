@@ -49,6 +49,7 @@ import net.opengress.slimgress.R;
 import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.BulkPlayerStorage;
 import net.opengress.slimgress.api.Common.Location;
+import net.opengress.slimgress.api.Common.Team;
 import net.opengress.slimgress.api.Common.Utils;
 import net.opengress.slimgress.api.Game.GameState;
 import net.opengress.slimgress.api.GameEntity.GameEntityBase;
@@ -171,6 +172,7 @@ public class FragmentPortal extends Fragment {
         if (unknownGuids.isEmpty()) {
             if (mPortal.getOwnerGuid() != null) {
                 ((TextView) mRootView.findViewById(R.id.portalOwner)).setText(mGame.getAgentName(mPortal.getOwnerGuid()));
+                ((TextView) mRootView.findViewById(R.id.activityPortalCurrentAttributionText)).setTextColor(discovererTeamColour);
             }
         } else {
             Handler ownerResultHandler = new Handler(msg -> {
@@ -225,7 +227,7 @@ public class FragmentPortal extends Fragment {
     @SuppressLint({"DefaultLocale", "SetTextI18n"})
     public void checkKeys() {
         List<ItemPortalKey> keys = mGame.getInventory().getKeysForPortal(mPortal);
-        mRootView.findViewById(R.id.activityPortalKeyButton).setEnabled(!keys.isEmpty());
+        mRootView.findViewById(R.id.activityPortalKeyButton).setEnabled(!keys.isEmpty() && mGame.scannerIsEnabled());
         ((TextView) mRootView.findViewById(R.id.activityPortalKeyCount)).setText("x" + keys.size());
         mRootView.findViewById(R.id.activityPortalKeyButton).setOnClickListener(v -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
@@ -337,8 +339,6 @@ public class FragmentPortal extends Fragment {
             transaction.commit();
         });
 
-        // FIXME do not tease the user with this button if they are out of range and have no key
-        mRootView.findViewById(R.id.rechargeButton).setEnabled(true);
         mRootView.findViewById(R.id.rechargeButton).setOnClickListener(v -> {
             FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
             transaction.add(R.id.fragment_container, FragmentRecharge.newInstance(mPortal.getEntityGuid()), "RECHARGE");
@@ -512,13 +512,36 @@ public class FragmentPortal extends Fragment {
     }
 
     private void setButtonsEnabled(boolean shouldEnableButton) {
-        mRootView.findViewById(R.id.hackButton).setEnabled(!mIsHacking && shouldEnableButton);
+        var portalTeam = mPortal.getPortalTeam();
+        var agentTeam = mGame.getAgent().getTeam();
+        int portalLevel = mPortal.getPortalLevel();
+        boolean teamOK = portalTeam.equals(mGame.getAgent().getTeam());
+        int hackEnergyMinimum = getHackEnergyMinimum(portalTeam, agentTeam, portalLevel);
+        boolean hackEnergyOK = mGame.getAgent().getEnergy() >= hackEnergyMinimum;
+        boolean haveKeys = !mGame.getInventory().getKeysForPortal(mPortal).isEmpty();
+
+        mRootView.findViewById(R.id.activityPortalKeyButton).setEnabled(haveKeys && mGame.scannerIsEnabled());
+        mRootView.findViewById(R.id.hackButton).setEnabled(!mIsHacking && shouldEnableButton && hackEnergyOK && mGame.scannerIsEnabled());
+        mRootView.findViewById(R.id.rechargeButton).setEnabled(shouldEnableButton && teamOK && mGame.canRecharge(mPortal));
 //        boolean isTesting = mGame.getAgent().getNickname().startsWith("MT") || mGame.getAgent().getNickname().startsWith("I_") || mGame.getAgent().getNickname().startsWith("ca");
-        boolean canLink = mPortal.getPortalTeam().equals(mGame.getAgent().getTeam())
+        boolean canLink = teamOK
+                && mGame.scannerIsEnabled()
                 && (mPortal.getPortalResonatorCount() >= 8)
                 && mPortal.getLinkCapacity() > mPortal.getOriginEdges().size()
                 && mGame.getAgent().getEnergy() >= mGame.getKnobs().getXMCostKnobs().getLinkCreationCost();
         mRootView.findViewById(R.id.activityPortalLinkButton).setEnabled(shouldEnableButton && canLink);
+    }
+
+    private int getHackEnergyMinimum(Team portalTeam, Team agentTeam, int portalLevel) {
+        int hackEnergyMinimum;
+        if (portalTeam.isEnemyOf(agentTeam)) {
+            hackEnergyMinimum = mGame.getKnobs().getXMCostKnobs().getPortalHackEnemyCostByLevel().get(portalLevel - 1);
+        } else if (portalTeam.equals(mGame.getAgent().getTeam())) {
+            hackEnergyMinimum = mGame.getKnobs().getXMCostKnobs().getPortalHackFriendlyCostByLevel().get(portalLevel - 1);
+        } else {
+            hackEnergyMinimum = mGame.getKnobs().getXMCostKnobs().getPortalHackNeutralCostByLevel().get(portalLevel - 1);
+        }
+        return hackEnergyMinimum;
     }
 
     @SuppressWarnings("unchecked")

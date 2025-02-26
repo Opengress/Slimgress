@@ -115,7 +115,7 @@ abstract public class WidgetMap extends Fragment {
     protected SharedPreferences mPrefs;
     protected Location mCurrentLocation = null;
     // FIXME this should be used to set "location inaccurate" if updates mysteriously stop
-    protected Date mLastLocationAcquired = null;
+    protected Date mLastLocationAcquired = new Date();
 
     // ===========================================================
     // UX/UI Stuff - Events
@@ -127,7 +127,7 @@ abstract public class WidgetMap extends Fragment {
     private double mPrevAngle = 0;
     private final float ZOOM_SENSITIVITY = 0.1f;
     private float mStartY = 0;
-    protected boolean mIsMapEnabled = false;
+    protected boolean mIsMapEnabled = true;
     protected boolean mIsZooming = false;
     protected int CURRENT_MAP_ORIENTATION_SCHEME = MAP_ROTATION_ARBITRARY;
 

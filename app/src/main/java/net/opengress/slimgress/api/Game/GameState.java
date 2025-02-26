@@ -95,10 +95,10 @@ public class GameState {
     private final Map<String, Long> mMinCommTimestamps = new HashMap<>();
     private final Map<String, Long> mMaxCommTimestamps = new HashMap<>();
     private Location mLocation;
-    private GameEntityPortal mPortal;
     private final HashMap<String, String> mAgentNames = new HashMap<>();
     private boolean mLocationIsAccurate = false;
     private final Queue<Bundle> mHackResultsQueue = new LinkedList<>();
+    private boolean mScannerEnabled = true;
 
     private class RequestResultGS extends RequestResult {
         public RequestResultGS(Handler handler) {
@@ -1790,5 +1790,71 @@ public class GameState {
 
     public synchronized Bundle pollHackResult() {
         return mHackResultsQueue.poll();
+    }
+
+    public boolean scannerIsEnabled() {
+        return mScannerEnabled;
+    }
+
+    public void setScannerEnabled(boolean bool) {
+        mScannerEnabled = bool;
+    }
+
+    public boolean canFlip(@NonNull GameEntityPortal portal, @NonNull ItemFlipCard flipCard) {
+        if (mAgent.getEnergy() < mKnobs.getXMCostKnobs().getFlipCardCostByLevel().get(portal.getPortalLevel() - 1)) {
+            return false;
+        }
+        Team portalTeam = portal.getPortalTeam();
+        // FIXME mostly hardcoded
+        if (portalTeam.toString().equals("neutral")) {
+            // can never flip neutral - flip to what?
+            return false;
+        }
+        if (flipCard.getFlipCardType() == ItemFlipCard.FlipCardType.Jarvis && !(portalTeam.toString().equals("human"))) {
+            // jarvis can only flip human-aligned
+            return false;
+        }
+        if (flipCard.getFlipCardType() == ItemFlipCard.FlipCardType.Ada && !(portalTeam.toString().equals("alien"))) {
+            // ada can only flip shaper-aligned
+            return false;
+        }
+        return mLocationIsAccurate && mScannerEnabled;
+    }
+
+    public boolean canFire(@NonNull ItemWeapon weapon) {
+        if (mAgent.getLevel() < weapon.getItemAccessLevel()) {
+            return false;
+        }
+        if (mAgent.getEnergy() < mKnobs.getXMCostKnobs().getXmpFiringCostByLevel().get(weapon.getLevel() - 1)) {
+            return false;
+        }
+        return mLocationIsAccurate && mScannerEnabled;
+    }
+
+    public boolean canUseCube(ItemPowerCube cube) {
+        if (mAgent.getEnergy() >= mAgent.getEnergyMax()) {
+            return false;
+        }
+        return cube.getItemAccessLevel() <= mAgent.getLevel();
+    }
+
+    public boolean canRecharge(@NonNull GameEntityPortal portal) {
+        int dist = (int) getLocation().distanceTo(portal.getPortalLocation());
+        if (mLocationIsAccurate && mScannerEnabled) {
+            if (getAgent().getEnergy() < 250) { // put it in a knob one day
+                return false;
+            }
+            if (!portal.getPortalTeam().toString().equals(getAgent().getTeam().toString())) {
+                return false;
+            }
+            if (dist < getKnobs().getScannerKnobs().getActionRadiusM()) {
+                return true;
+            }
+        }
+        return canRemoteRecharge(dist);
+    }
+
+    boolean canRemoteRecharge(int dist) {
+        return dist <= getAgent().getLevel() * 250_000;
     }
 }

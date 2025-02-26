@@ -244,8 +244,20 @@ public class FragmentDeploy extends Fragment {
     }
 
     private boolean canPutThisResonatorOn(@NonNull HashMap<Integer, Integer> resoCountForLevel, int level) {
-        boolean can = mGame.getKnobs().getPortalKnobs().getBandForLevel(level).getRemaining() > resoCountForLevel.get(level);
-        return can && level <= mGame.getAgent().getLevel();
+        if (!mGame.isLocationAccurate()) {
+            return false;
+        }
+        if (mGame.getLocation().distanceTo(mPortal.getPortalLocation()) > 40) {
+            return false;
+        }
+        if (level > mGame.getAgent().getLevel()) {
+            return false;
+        }
+        // FIXME what about upgrades
+        if (mGame.getAgent().getEnergy() < mGame.getKnobs().getXMCostKnobs().getResonatorDeployCostByLevel().get(level - 1)) {
+            return false;
+        }
+        return mGame.getKnobs().getPortalKnobs().getBandForLevel(level).getRemaining() > resoCountForLevel.get(level);
     }
 
     @SuppressLint("DefaultLocale")
@@ -330,6 +342,12 @@ public class FragmentDeploy extends Fragment {
     }
 
     private void setButtonsEnabled(boolean shouldEnableButton) {
+        if (!mGame.scannerIsEnabled()) {
+            shouldEnableButton = false;
+        }
+        if (mGame.getAgent().getEnergy() < mGame.getKnobs().getXMCostKnobs().getResonatorDeployCostByLevel().get(mPortal.getPortalLevel() - 1)) {
+            shouldEnableButton = false;
+        }
         for (int id : mResoViewIds) {
             mRootView.findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(shouldEnableButton);
         }

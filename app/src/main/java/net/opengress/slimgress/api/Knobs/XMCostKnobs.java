@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+// TODO: make getXByLevel accept the level (maybe)
 public class XMCostKnobs extends Knobs
 {
     // these are annoying: passing in the level you're interested in gives an off-by-one error.

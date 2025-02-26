@@ -136,7 +136,7 @@ public class FragmentInventoryItem extends Fragment {
 //                itemDescription.setText("Use to create links and remote recharge this Portal");
 
                 mRootView.findViewById(R.id.activity_inventory_item_recharge).setVisibility(View.VISIBLE);
-                mRootView.findViewById(R.id.activity_inventory_item_recharge).setEnabled(canRecharge(portal));
+                mRootView.findViewById(R.id.activity_inventory_item_recharge).setEnabled(mGame.canRecharge(portal));
                 SlimgressApplication.getInstance().getUpdatedEntitiesViewModel().getEntities().observe(getViewLifecycleOwner(), list -> checkForUpdates(list, portal));
                 SlimgressApplication.getInstance().getLocationViewModel().getLocationData().observe(getViewLifecycleOwner(), location -> onReceiveLocation(portal));
                 mRootView.findViewById(R.id.activity_inventory_item_recharge).setOnClickListener(c -> {
@@ -274,13 +274,11 @@ public class FragmentInventoryItem extends Fragment {
         if (isRecyclable) {
             mRootView.findViewById(R.id.activity_inventory_item_recycle).setEnabled(true);
             mRootView.findViewById(R.id.activity_inventory_item_recycle).setOnClickListener(this::onRecycleItemClicked);
-            mRootView.findViewById(R.id.activity_inventory_item_drop).setEnabled(true);
+            mRootView.findViewById(R.id.activity_inventory_item_drop).setEnabled(mGame.scannerIsEnabled());
             mRootView.findViewById(R.id.activity_inventory_item_drop).setOnClickListener(this::onDropItemClicked);
-        } else if (!isRecyclable) {
+        } else {
             mRootView.findViewById(R.id.activity_inventory_item_recycle).setEnabled(false);
             mRootView.findViewById(R.id.activity_inventory_item_drop).setEnabled(false);
-        } else {
-            mRootView.findViewById(R.id.activity_inventory_item_recycle).setVisibility(View.INVISIBLE);
         }
 
         mRootView.findViewById(R.id.activity_inventory_item_back_button).setOnClickListener(v -> finish());
@@ -289,30 +287,17 @@ public class FragmentInventoryItem extends Fragment {
     }
 
     private void onReceiveLocation(GameEntityPortal portal) {
-        mRootView.findViewById(R.id.activity_inventory_item_recharge).setEnabled(canRecharge(portal));
+        boolean isRecyclable = mGame.getKnobs().getRecycleKnobs().getRecycleValues(mInventory.getItems(mItem.getType()).get(0).getName()) != null;
+        mRootView.findViewById(R.id.activity_inventory_item_drop).setEnabled(isRecyclable && mGame.scannerIsEnabled());
+        mRootView.findViewById(R.id.activity_inventory_item_recharge).setEnabled(mGame.canRecharge(portal));
     }
 
     private void checkForUpdates(List<GameEntityBase> gameEntityBases, GameEntityPortal portal) {
         for (GameEntityBase entity : gameEntityBases) {
             if (entity.getEntityGuid().equals(portal.getEntityGuid())) {
-                mRootView.findViewById(R.id.activity_inventory_item_recharge).setEnabled(canRecharge(portal));
+                mRootView.findViewById(R.id.activity_inventory_item_recharge).setEnabled(mGame.canRecharge(portal));
             }
         }
-    }
-
-    private boolean canRecharge(GameEntityPortal portal) {
-        int dist = (int) mGame.getLocation().distanceTo(portal.getPortalLocation());
-        if (mGame.getAgent().getEnergy() < 250) {
-            return false;
-        }
-        if (!portal.getPortalTeam().toString().equals(mGame.getAgent().getTeam().toString())) {
-            return false;
-        }
-        return canRemoteRecharge(dist) || dist < mGame.getKnobs().getScannerKnobs().getActionRadiusM();
-    }
-
-    boolean canRemoteRecharge(int dist) {
-        return dist <= mGame.getAgent().getLevel() * 250_000;
     }
 
     @SuppressLint("SetTextI18n")
