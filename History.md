@@ -1,3 +1,18 @@
+0.6.7 / 2025-02-27
+==================
+
+* Bump version to improve scanner disabled behaviour somewhat
+* Make SOME game functions work with disabled scanner, improve sync
+* Make all requests check/consume gameBasket
+* Disable scanner if XM runs out
+* Make Scanner Disabled scenarios show BIG text
+* Make levelling up compatible with 1.101
+* Give clearer feedback when dropping items
+* Make resolution selector not send initial resolution back to server uselessly
+* Fix inventory not displaying if you look at several ops tabs
+* Fix new inventory memory leaks
+* Make hack results more dismissable than they were before their dismissability was reduced
+* Make floaty text appear for recycling and for using cubes
 0.6.6 / 2025-02-25
 ==================
 
