@@ -100,6 +100,19 @@ public class GameState {
     private boolean mLocationIsAccurate = false;
     private final Queue<Bundle> mHackResultsQueue = new LinkedList<>();
 
+    private class RequestResultGS extends RequestResult {
+        public RequestResultGS(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        public void handleGameBasket(GameBasket gameBasket) {
+            if (gameBasket != null) {
+                processGameBasket(gameBasket);
+            }
+        }
+    }
+
     public GameState() {
         mInterface = new Interface();
         mInventory = new Inventory();
@@ -242,12 +255,7 @@ public class GameState {
             params.put("lastQueryTimestamp", mInventoryTimestamp);
 
             // request basket
-            mInterface.request(mHandshake, "playerUndecorated/getInventory", mLocation, params, new RequestResult(handler) {
-                @Override
-                public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
-                }
-
+            mInterface.request(mHandshake, "playerUndecorated/getInventory", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleResult(String result) {
                     mInventoryTimestamp = result;
@@ -292,12 +300,7 @@ public class GameState {
             params.put("dates", dates);
 
             // request basket
-            mInterface.request(mHandshake, "gameplay/getObjectsInCells", mLocation, params, new RequestResult(handler) {
-                @Override
-                public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
-                }
-
+            mInterface.request(mHandshake, "gameplay/getObjectsInCells", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleResult(String result) {
                     for (String cellId : cellIds) {
@@ -348,7 +351,7 @@ public class GameState {
 
             long finalMinTimeStampMs = minTimeStampMs;
             long finalMaxTimeStampMs = maxTimeStampMs;
-            mInterface.request(mHandshake, "playerUndecorated/getPaginatedPlexts", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "playerUndecorated/getPaginatedPlexts", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleResult(JSONArray result) {
                     try {
@@ -400,7 +403,7 @@ public class GameState {
             params.put("message", message);
             params.put("factionOnly", factionOnly);
 
-            mInterface.request(mHandshake, "player/say", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "player/say", mLocation, params, new RequestResultGS(handler) {
 
                 @Override
                 public void handleError(String error) {
@@ -422,7 +425,7 @@ public class GameState {
     public void intGetGameScore(final Handler handler) {
         checkInterface();
 
-        mInterface.request(mHandshake, "playerUndecorated/getGameScore", null, null, new RequestResult(handler) {
+        mInterface.request(mHandshake, "playerUndecorated/getGameScore", null, null, new RequestResultGS(handler) {
             @Override
             public void handleResult(JSONObject result) {
                 try {
@@ -444,12 +447,7 @@ public class GameState {
             params.put("newLevelUpMsgId", level);
 
             // request basket
-            mInterface.request(mHandshake, "gameplay/levelUp", mLocation, params, new RequestResult(handler) {
-                @Override
-                public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
-                }
-
+            mInterface.request(mHandshake, "gameplay/levelUp", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleResult(JSONObject res) {
 
@@ -509,7 +507,7 @@ public class GameState {
             passcodes.put(passcode);
             params.put("params", passcodes);
 
-            mInterface.request(mHandshake, "playerUndecorated/redeemReward", null, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "playerUndecorated/redeemReward", null, params, new RequestResultGS(handler) {
                 @Override
                 public void handleError(String error) {
                     switch (error) {
@@ -521,11 +519,6 @@ public class GameState {
                                 super.handleError("Too many items in Inventory. Your Inventory can have no more than 2000 items");
                         default -> super.handleError("Unknown error: " + error);
                     }
-                }
-
-                @Override
-                public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
                 }
 
                 @Override
@@ -572,7 +565,7 @@ public class GameState {
     public void intGetNumberOfInvites(final Handler handler) {
         checkInterface();
 
-        mInterface.request(mHandshake, "playerUndecorated/getInviteInfo", null, null, new RequestResult(handler) {
+        mInterface.request(mHandshake, "playerUndecorated/getInviteInfo", null, null, new RequestResultGS(handler) {
             @Override
             public void handleResult(JSONObject result) {
                 try {
@@ -593,7 +586,7 @@ public class GameState {
             params.put("customMessage", Objects.requireNonNullElse(customMessage, ""));
             params.put("inviteeEmailAddress", email);
 
-            mInterface.request(mHandshake, "playerUndecorated/inviteViaEmail", null, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "playerUndecorated/inviteViaEmail", null, params, new RequestResultGS(handler) {
                 @Override
                 public void handleResult(JSONObject result) {
                     try {
@@ -617,7 +610,7 @@ public class GameState {
             nicknames.put(nickname);
             params.put("params", nicknames);
 
-            mInterface.request(mHandshake, "playerUndecorated/validateNickname", null, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "playerUndecorated/validateNickname", null, params, new RequestResultGS(handler) {
                 @Override
                 public void handleError(String error) {
                     switch (error) {
@@ -646,7 +639,7 @@ public class GameState {
             nicknames.put(nickname);
             params.put("params", nicknames);
 
-            mInterface.request(mHandshake, "playerUndecorated/persistNickname", null, params, new RequestResult(handler));
+            mInterface.request(mHandshake, "playerUndecorated/persistNickname", null, params, new RequestResultGS(handler));
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -655,7 +648,7 @@ public class GameState {
     // new
     public void intGetLatestSlimgressVersion(final Handler handler) {
         checkInterface();
-        mInterface.request(mHandshake, "playerUndecorated/getLatestSlimgressVersion", null, null, new RequestResult(handler) {
+        mInterface.request(mHandshake, "playerUndecorated/getLatestSlimgressVersion", null, null, new RequestResultGS(handler) {
             @Override
             public void handleResult(String result) {
                 getData().putString("version", result);
@@ -672,7 +665,7 @@ public class GameState {
             factions.put(team.getID());
             params.put("params", factions);
 
-            mInterface.request(mHandshake, "playerUndecorated/chooseFaction", null, params, new RequestResult(handler));
+            mInterface.request(mHandshake, "playerUndecorated/chooseFaction", null, params, new RequestResultGS(handler));
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -699,7 +692,7 @@ public class GameState {
             playerIds.put(playerGuids);
             params.put("params", playerIds);
 
-            mInterface.request(mHandshake, "playerUndecorated/getNickNamesFromPlayerIds", null, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "playerUndecorated/getNickNamesFromPlayerIds", null, params, new RequestResultGS(handler) {
                 @Override
                 public void handleResult(JSONArray result) {
                     try {
@@ -734,7 +727,7 @@ public class GameState {
             params.put("itemGuid", weapon.getEntityGuid());
             params.put("encodedBoost", encodedBoost);
 
-            mInterface.request(mHandshake, "gameplay/fireUntargetedRadialWeaponV2", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/fireUntargetedRadialWeaponV2", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleError(String error) {
                     // looks like norman was copying these from ios client - nemesis had way more
@@ -754,11 +747,6 @@ public class GameState {
                         case "SERVER_ERROR" -> super.handleError(getString(R.string.server_error));
                         default -> super.handleError("Unknown error: " + error);
                     }
-                }
-
-                @Override
-                public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
                 }
 
                 @Override
@@ -799,7 +787,7 @@ public class GameState {
             JSONObject params = new JSONObject();
             params.put("itemGuid", portal.getEntityGuid());
 
-            mInterface.request(mHandshake, "gameplay/collectItemsFromPortal", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/collectItemsFromPortal", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleError(String error) {
 
@@ -848,7 +836,7 @@ public class GameState {
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
+                    super.handleGameBasket(gameBasket);
                     initBundle();
                     HashMap<String, ItemBase> items = new HashMap<>();
                     for (ItemBase item : gameBasket.getInventory()) {
@@ -904,7 +892,7 @@ public class GameState {
             }
             params.put("itemGuids", resonators);
 
-            mInterface.request(mHandshake, "gameplay/deployResonatorV2", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/deployResonatorV2", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleError(String error) {
                     // PORTAL_OUT_OF_RANGE, TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER,
@@ -938,14 +926,6 @@ public class GameState {
                     super.handleError(pretty_error);
                 }
 
-                @Override
-                public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
-                    super.handleGameBasket(gameBasket);
-                    // probably don't need now after Big Sync update
-//                    getAgent().subtractEnergy(getKnobs().getXMCostKnobs().getResonatorDeployCostByLevel().get(level - 1));
-                }
-
             });
         } catch (JSONException e) {
             e.printStackTrace();
@@ -963,7 +943,7 @@ public class GameState {
             params.put("portalGuid", portal.getEntityGuid());
             params.put("resonatorSlotToUpgrade", slot);
 
-            mInterface.request(mHandshake, "gameplay/upgradeResonatorV2", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/upgradeResonatorV2", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleError(String error) {
                     // PORTAL_OUT_OF_RANGE, CAN_ONLY_UPGRADE_TO_HIGHER_LEVEL, TOO_MANY_RESONATORS_FOR_LEVEL_BY_USER
@@ -997,14 +977,6 @@ public class GameState {
                     super.handleError(pretty_error);
                 }
 
-                @Override
-                public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
-                    super.handleGameBasket(gameBasket);
-                    // probably don't need now after Big Sync update
-//                    getAgent().subtractEnergy(getKnobs().getXMCostKnobs().getResonatorUpgradeCostByLevel().get(level - 1));
-                }
-
             });
         } catch (JSONException e) {
             e.printStackTrace();
@@ -1020,7 +992,7 @@ public class GameState {
             params.put("modableGuid", portal.getEntityGuid());
             params.put("index", slot);
 
-            mInterface.request(mHandshake, "gameplay/addMod", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/addMod", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleError(String error) {
                     // PORTAL_OUT_OF_RANGE, OUT_OF_RANGE, PLAYER_LIMIT_REACHED, ITEM_DOES_NOT_EXIST (there must be others)
@@ -1053,7 +1025,6 @@ public class GameState {
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
                     super.handleGameBasket(gameBasket);
                     getData().putSerializable("mod", mod);
                 }
@@ -1071,7 +1042,7 @@ public class GameState {
             params.put("modableGuid", portal.getEntityGuid());
             params.put("index", slot);
 
-            mInterface.request(mHandshake, "gameplay/removeMod", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/removeMod", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleError(String error) {
                     // PORTAL_OUT_OF_RANGE, MODABLE_DOES_NOT_EXIST, MOD_DOES_NOT_EXIST,
@@ -1102,7 +1073,6 @@ public class GameState {
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
                     super.handleGameBasket(gameBasket);
                 }
 
@@ -1119,10 +1089,10 @@ public class GameState {
             JSONObject params = new JSONObject();
             params.put("itemGuid", item.getEntityGuid());
 
-            mInterface.request(mHandshake, "gameplay/dropItem", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/dropItem", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
+                    super.handleGameBasket(gameBasket);
                     getData().putStringArray("dropped", gameBasket.getDeletedEntityGuids().toArray(new String[0]));
                 }
 
@@ -1156,7 +1126,7 @@ public class GameState {
             JSONObject params = new JSONObject();
             params.put("itemGuid", guid);
 
-            mInterface.request(mHandshake, "gameplay/pickUp", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/pickUp", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleError(String error) {
                     // RESOURCE_NOT_AVAILABLE, OUT_OF_RANGE, INVENTORY_FULL
@@ -1182,7 +1152,7 @@ public class GameState {
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
+                    super.handleGameBasket(gameBasket);
                     ItemBase item = gameBasket.getInventory().get(0);
                     getData().putString("description", item.getUsefulName());
                 }
@@ -1201,7 +1171,7 @@ public class GameState {
             JSONObject params = new JSONObject();
             params.put("itemGuid", item.getEntityGuid());
 
-            mInterface.request(mHandshake, "gameplay/recycleItem", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/recycleItem", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleError(String error) {
                     // DOES_NOT_EXIST
@@ -1222,7 +1192,7 @@ public class GameState {
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
+                    super.handleGameBasket(gameBasket);
                     getData().putStringArray("recycled", gameBasket.getDeletedEntityGuids().toArray(new String[0]));
                 }
 
@@ -1249,7 +1219,7 @@ public class GameState {
             }
             params.put("itemGuids", itemGuids);
 
-            mInterface.request(mHandshake, "gameplay/recycleItem", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/recycleItem", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleError(String error) {
                     // DOES_NOT_EXIST
@@ -1270,7 +1240,7 @@ public class GameState {
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
+                    super.handleGameBasket(gameBasket);
                     getData().putStringArray("recycled", gameBasket.getDeletedEntityGuids().toArray(new String[0]));
                 }
 
@@ -1293,7 +1263,7 @@ public class GameState {
             JSONObject params = new JSONObject();
             params.put("itemGuid", powerCube.getEntityGuid());
 
-            mInterface.request(mHandshake, "gameplay/dischargePowerCube", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/dischargePowerCube", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleError(String error) {
                     // DOES_NOT_EXIST
@@ -1322,7 +1292,7 @@ public class GameState {
 
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
+                    super.handleGameBasket(gameBasket);
                     getData().putStringArray("consumed", gameBasket.getDeletedEntityGuids().toArray(new String[0]));
                 }
 
@@ -1358,10 +1328,10 @@ public class GameState {
             }
             params.put("resonatorSlots", resonatorSlots);
 
-            mInterface.request(mHandshake, "gameplay/rechargeResonatorsV2", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/rechargeResonatorsV2", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
+                    super.handleGameBasket(gameBasket);
                     getData().putInt("recharged", slots.length);
                 }
 
@@ -1411,10 +1381,10 @@ public class GameState {
             }
             params.put("resonatorSlots", resonatorSlots);
 
-            mInterface.request(mHandshake, "gameplay/remoteRechargeResonatorsV2", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/remoteRechargeResonatorsV2", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
+                    super.handleGameBasket(gameBasket);
                     getData().putInt("recharged", slots.length);
                 }
 
@@ -1473,7 +1443,7 @@ public class GameState {
             }
             params.put("portalLinkKeyGuidSet", keyGuids);
 
-            mInterface.request(mHandshake, "gameplay/getLinkabilityImpediment", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/getLinkabilityImpediment", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleResult(JSONObject result) {
                     Set<ItemPortalKey> toRemove = new HashSet<>();
@@ -1545,7 +1515,7 @@ public class GameState {
             params.put("destinationPortalGuid", toKey.getPortalGuid());
             params.put("linkKeyGuid", toKey.getEntityGuid());
 
-            mInterface.request(mHandshake, "gameplay/createLink", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/createLink", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleGameBasket(GameBasket gameBasket) {
                     List<GameEntityBase> entities = gameBasket.getGameEntities();
@@ -1563,7 +1533,7 @@ public class GameState {
                     }
                     getData().putInt("numFields", numFields);
                     getData().putInt("mu", totalMu);
-                    processGameBasket(gameBasket);
+                    super.handleGameBasket(gameBasket);
                 }
 
                 @Override
@@ -1631,11 +1601,7 @@ public class GameState {
             params.put("params", entityGuids);
 
             // request basket
-            mInterface.request(mHandshake, "gameplay/getModifiedEntitiesByGuid", mLocation, params, new RequestResult(handler) {
-                @Override
-                public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
-                }
+            mInterface.request(mHandshake, "gameplay/getModifiedEntitiesByGuid", mLocation, params, new RequestResultGS(handler) {
             });
         } catch (JSONException e) {
             e.printStackTrace();
@@ -1656,7 +1622,7 @@ public class GameState {
             params.put("portalGuid", portal.getEntityGuid());
             params.put("resourceGuid", flipCard.getEntityGuid());
 
-            mInterface.request(mHandshake, "gameplay/flipPortal", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/flipPortal", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleError(String error) {
                     switch (error) {
@@ -1677,11 +1643,6 @@ public class GameState {
                         default -> super.handleError("Unknown error: " + error);
                     }
                 }
-
-                @Override
-                public void handleGameBasket(GameBasket gameBasket) {
-                    processGameBasket(gameBasket);
-                }
             });
         } catch (JSONException e) {
             e.printStackTrace();
@@ -1695,7 +1656,7 @@ public class GameState {
     public void intGetUploadUrl(final Handler handler) {
         checkInterface();
 
-        mInterface.request(mHandshake, "playerUndecorated/getUploadUrl", null, null, new RequestResult(handler) {
+        mInterface.request(mHandshake, "playerUndecorated/getUploadUrl", null, null, new RequestResultGS(handler) {
             @Override
             public void handleResult(String result) {
                 getData().putString("Url", result);
@@ -1718,7 +1679,7 @@ public class GameState {
             JSONObject params = new JSONObject();
             params.put("maxPortals", maxPortals);
 
-            mInterface.request(mHandshake, "gameplay/findNearbyPortals", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "gameplay/findNearbyPortals", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleResult(JSONArray result) {
                     // TODO: UNDONE
@@ -1738,7 +1699,7 @@ public class GameState {
             actualParams.put(getBulkPlayerStorage().toJSONObject());
             params.put("params", actualParams);
 
-            mInterface.request(mHandshake, "playerUndecorated/putBulkPlayerStorage", mLocation, params, new RequestResult(handler) {
+            mInterface.request(mHandshake, "playerUndecorated/putBulkPlayerStorage", mLocation, params, new RequestResultGS(handler) {
                 @Override
                 public void handleResult(JSONArray result) {
                     // TODO: UNDONE

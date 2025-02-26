@@ -242,6 +242,8 @@ public class Interface
 //                        isAuthenticated = false;
                             result.handleError("You are not logged in. Restart the application.");
                             result.finished();
+                        } else if (response.code() == 500) {
+                            Log.e("INTERFACE", "HTTP 500 while doing " + requestString);
                         } else {
                             content = Objects.requireNonNull(response.body()).string();
                         }
