@@ -3,6 +3,7 @@ package net.opengress.slimgress;
 import android.graphics.drawable.Drawable;
 
 import net.opengress.slimgress.api.Common.Location;
+import net.opengress.slimgress.api.Item.ItemBase;
 import net.opengress.slimgress.api.Item.ItemBase.ItemType;
 import net.opengress.slimgress.api.Item.ItemBase.Rarity;
 import net.opengress.slimgress.api.Item.ItemFlipCard.FlipCardType;
@@ -62,6 +63,15 @@ public class InventoryListItem implements Serializable {
         var item = mIDs.get(0);
         mIDs.remove(0);
         return item;
+    }
+
+    public <T extends ItemBase> T peek(Class<T> type) {
+        var item = SlimgressApplication.getInstance().getGame().getInventory().findItem(mIDs.get(0));
+        return type.cast(item);
+    }
+
+    public ItemBase peek() {
+        return SlimgressApplication.getInstance().getGame().getInventory().findItem(mIDs.get(0));
     }
 
     public ArrayList<String> getAllIDs() {

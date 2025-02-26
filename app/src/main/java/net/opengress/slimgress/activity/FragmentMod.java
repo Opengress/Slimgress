@@ -68,12 +68,6 @@ public class FragmentMod extends Fragment {
                 DialogInfo dialog = new DialogInfo(act);
                 dialog.setMessage(error).setDismissDelay(1500).show();
             }
-        } else {
-//            ItemMod mod = (ItemMod) msg.getData().getSerializable("mod");
-            // FIXME this does not work correctly in the case where we are removing a mod and shields have funny add cost
-//            String name = (mod == null) ? "RES_SHIELD" : mod.getName();
-            // probably don't need now after Big Sync update
-//            mGame.getAgent().subtractEnergy(mGame.getKnobs().getXMCostKnobs().getPortalModByLevel(name).get(mPortal.getPortalLevel() - 1));
         }
 
         setUpView();
@@ -285,6 +279,13 @@ public class FragmentMod extends Fragment {
     }
 
     private void setButtonsEnabled(boolean shouldEnableButton) {
+        if (!mGame.scannerIsEnabled()) {
+            shouldEnableButton = false;
+        }
+        // There's no guarantee that shield is the correct cost
+        if (mGame.getAgent().getEnergy() < mGame.getKnobs().getXMCostKnobs().getPortalModByLevel("RES_SHIELD").get(mPortal.getPortalLevel() - 1)) {
+            shouldEnableButton = false;
+        }
         for (int id : mModViewIds) {
             mRootView.findViewById(id).findViewById(R.id.widgetActionButton).setEnabled(shouldEnableButton);
         }

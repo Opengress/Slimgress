@@ -107,7 +107,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="@dimen/button_height"
                 android:layout_marginTop="@dimen/activity_margin"
-                android:enabled="false"
                 android:text="@string/main_ops" />
         </LinearLayout>
 
@@ -220,7 +219,6 @@
             android:layout_height="32dp"
             android:layout_alignParentRight="true"
             android:layout_alignParentBottom="true"
-            android:enabled="false"
             android:text="@string/main_comm" />
 
         <LinearLayout
@@ -246,24 +244,6 @@
                 android:background="@color/half_transparent"
                 android:text="" />
         </LinearLayout>
-    </RelativeLayout>
-
-    <RelativeLayout
-        android:id="@+id/scannerDisabledOverlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#66600000">
-
-        <TextView
-            android:id="@+id/big_message_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="200dp"
-            android:textColor="#FFF"
-            android:background="@drawable/rectangle_orange"
-            android:textSize="20sp"
-            android:visibility="gone" />
     </RelativeLayout>
 
 

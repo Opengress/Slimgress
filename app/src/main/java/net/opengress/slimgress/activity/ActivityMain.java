@@ -42,6 +42,8 @@ import static net.opengress.slimgress.ViewHelpers.saveScreenshot;
 import static net.opengress.slimgress.ViewHelpers.showFloatingText;
 import static net.opengress.slimgress.api.Common.Utils.getErrorStringFromAPI;
 import static net.opengress.slimgress.api.Common.Utils.notBouncing;
+import static net.opengress.slimgress.api.Item.ItemBase.ItemType.WeaponUltraStrike;
+import static net.opengress.slimgress.api.Item.ItemBase.ItemType.WeaponXMP;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
@@ -136,7 +138,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
     private double mCurrentDistFromTargetPortal = 9999;
     private boolean isFireCarouselVisible = false;
     private boolean isPortalPickerVisible = false;
-    private TextView mBigMessageText;
 
     @Override
     protected void onDestroy() {
@@ -160,8 +161,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         setUpFireCarousel();
 
         // create ops button callback
-        final Button buttonOps = findViewById(R.id.buttonOps);
-        buttonOps.setOnClickListener(v -> {
+        findViewById(R.id.buttonOps).setOnClickListener(v -> {
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             transaction.add(R.id.fragment_container, new FragmentOps(), "OPS");
             transaction.addToBackStack("OPS");
@@ -229,8 +229,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         mSelectTargetText = findViewById(R.id.select_target_text);
         mConfirmButton = findViewById(R.id.btn_flipcard_confirm);
         mCancelButton = findViewById(R.id.btn_flipcard_cancel);
-
-        mBigMessageText = findViewById(R.id.big_message_text);
 
         mConfirmButton.setOnClickListener(v -> {
             if (mSelectedPortalGuid != null && mSelectedFlipCardGuid != null) {
@@ -535,7 +533,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
         // get xmp weapon items
         for (int level = 1; level <= mGame.getAgent().getLevel(); level++) {
-            List<ItemBase> items = inv.getItems(ItemBase.ItemType.WeaponXMP, level);
+            List<ItemBase> items = inv.getItems(WeaponXMP, level);
 
             String descr = "L" + level + " XMP";
             if (!items.isEmpty()) {
@@ -544,14 +542,14 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                     weapons.add(item.getEntityGuid());
                 }
                 int drawable = getImageForXMPLevel(level);
-                InventoryListItem weapon = new InventoryListItem(descr, ItemBase.ItemType.WeaponXMP, AppCompatResources.getDrawable(this, drawable), drawable, weapons, items.get(0).getItemRarity(), level);
+                InventoryListItem weapon = new InventoryListItem(descr, WeaponXMP, AppCompatResources.getDrawable(this, drawable), drawable, weapons, items.get(0).getItemRarity(), level);
                 weaponList.add(weapon);
             }
         }
 
         // get ultrastrike weapon items
         for (int level = 1; level <= mGame.getAgent().getLevel(); level++) {
-            List<ItemBase> items = inv.getItems(ItemBase.ItemType.WeaponUltraStrike, level);
+            List<ItemBase> items = inv.getItems(WeaponUltraStrike, level);
 
             String descr = "L" + level + " UltraStrike";
             if (!items.isEmpty()) {
@@ -560,7 +558,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                     weapons.add(item.getEntityGuid());
                 }
                 int drawable = getImageForUltrastrikeLevel(level);
-                InventoryListItem weapon = new InventoryListItem(descr, ItemBase.ItemType.WeaponUltraStrike, AppCompatResources.getDrawable(this, drawable), drawable, weapons, items.get(0).getItemRarity(), level);
+                InventoryListItem weapon = new InventoryListItem(descr, WeaponUltraStrike, AppCompatResources.getDrawable(this, drawable), drawable, weapons, items.get(0).getItemRarity(), level);
                 weaponList.add(weapon);
             }
         }
@@ -656,14 +654,14 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
                 InventoryListItem item = arrayList.get(i);
 
                 // Track highest level XMP
-                if (item.getType() == ItemBase.ItemType.WeaponXMP) {
+                if (item.getType() == WeaponXMP) {
                     if (selectedXMPIndex == -1 || item.getLevel() > arrayList.get(selectedXMPIndex).getLevel()) {
                         selectedXMPIndex = i;
                     }
                 }
 
                 // Track highest level UltraStrike
-                else if (item.getType() == ItemBase.ItemType.WeaponUltraStrike) {
+                else if (item.getType() == WeaponUltraStrike) {
                     if (selectedUltraStrikeIndex == -1 || item.getLevel() > arrayList.get(selectedUltraStrikeIndex).getLevel()) {
                         selectedUltraStrikeIndex = i;
                     }
@@ -697,23 +695,13 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
             mCurrentFireItem = arrayList.get(selectedIndex);
             adapter.setSelectedPosition(selectedIndex);
             mRecyclerView.scrollToPosition(selectedIndex);
-            findViewById(R.id.fire_carousel_button_fire).setEnabled(true);
-            if (mCurrentFireItem.getType() == ItemBase.ItemType.WeaponXMP || mCurrentFireItem.getType() == ItemBase.ItemType.WeaponUltraStrike) {
-                ((Button) findViewById(R.id.fire_carousel_button_fire)).setText(R.string.fire_button_text);
-            } else {
-                ((Button) findViewById(R.id.fire_carousel_button_fire)).setText(R.string.fire_button_text_use);
-            }
+            setFireButtonState();
         }
 
         // Adapter item click listener
         adapter.setOnItemClickListener((imageView, item) -> {
             mCurrentFireItem = item;
-            findViewById(R.id.fire_carousel_button_fire).setEnabled(true);
-            if (item.getType() == ItemBase.ItemType.WeaponXMP || item.getType() == ItemBase.ItemType.WeaponUltraStrike) {
-                ((Button) findViewById(R.id.fire_carousel_button_fire)).setText(R.string.fire_button_text);
-            } else {
-                ((Button) findViewById(R.id.fire_carousel_button_fire)).setText(R.string.fire_button_text_use);
-            }
+            setFireButtonState();
         });
 
         // Show the carousel layout
@@ -758,6 +746,28 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         return true;
     }
 
+    public void setFireButtonState() {
+        if (mCurrentFireItem == null) {
+            //lol
+            return;
+        }
+        if (mCurrentFireItem.getType() == WeaponXMP || mCurrentFireItem.getType() == WeaponUltraStrike) {
+            findViewById(R.id.fire_carousel_button_fire).setEnabled(mGame.canFire(mCurrentFireItem.peek(ItemWeapon.class)));
+            ((Button) findViewById(R.id.fire_carousel_button_fire)).setText(R.string.fire_button_text);
+        } else {
+            switch (mCurrentFireItem.getType()) {
+                case PowerCube:
+                    findViewById(R.id.fire_carousel_button_fire).setEnabled(mGame.canUseCube(mCurrentFireItem.peek(ItemPowerCube.class)));
+                    break;
+                case FlipCard:
+                    // tricky
+                    findViewById(R.id.fire_carousel_button_fire).setEnabled(mGame.scannerIsEnabled());
+                    break;
+            }
+            ((Button) findViewById(R.id.fire_carousel_button_fire)).setText(R.string.fire_button_text_use);
+        }
+    }
+
     private int findItemByDescription(@NonNull List<InventoryListItem> arrayList, String description) {
         for (int i = 0; i < arrayList.size(); i++) {
             if (Objects.equals(arrayList.get(i).getPrettyDescription(), description)) {
@@ -800,7 +810,7 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         ScannerView scanner = (ScannerView) getSupportFragmentManager().findFragmentById(R.id.fragment_container);
         assert scanner != null;
         // todo: rate limiting etc per knobs
-        if (itemType == ItemBase.ItemType.WeaponXMP || itemType == ItemBase.ItemType.WeaponUltraStrike) {
+        if (itemType == WeaponXMP || itemType == WeaponUltraStrike) {
 
             int cost = mGame.getKnobs().getXMCostKnobs().getXmpFiringCostByLevel().get(item.getItemLevel() - 1);
             if (cost > mGame.getAgent().getEnergy()) {
@@ -934,21 +944,23 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
 
     public void updateTargetPortalFromSelection() {
         GameEntityPortal portal = (GameEntityPortal) mGame.getWorld().getGameEntities().get(mSelectedPortalGuid);
+        // throw?
         if (portal == null) {
             return;
         }
+
+        // distance didn't change, don't redraw card
         double dist = mGame.getLocation().getLatLng().distanceTo(portal.getPortalLocation().getLatLng());
         if (mCurrentDistFromTargetPortal == dist) {
             return;
         }
         mCurrentDistFromTargetPortal = dist;
         mSelectTargetText.setText(dist <= 40 ? R.string.flipcard_confirm_selection : R.string.flipcard_select_target);
-        /*
-        I want to say mGame.getAgent().getTeam().isEnemyOf(portal.getPortalTeam())
-        but of course that won't work, depending on flipcard alignment...
-        So it's not practical right now.
-         */
-        mConfirmButton.setEnabled(dist <= 40);
+
+        // good time to check that we can still press the go button
+        ItemFlipCard card = (ItemFlipCard) mGame.getInventory().getItems().get(mSelectedFlipCardGuid);
+        boolean enable = card != null && mGame.canFlip(portal, card);
+        mConfirmButton.setEnabled(enable && dist <= 40);
         mScannerView.showInfoCard(portal);
     }
 
@@ -964,23 +976,6 @@ public class ActivityMain extends FragmentActivity implements ActivityCompat.OnR
         findViewById(R.id.fire_carousel_layout).setVisibility(GONE);
         findViewById(R.id.fire_carousel_button_fire).setEnabled(false);
         isFireCarouselVisible = false;
-    }
-
-    // TODO maybe make this into a more general scanner disabled overlay toggler
-    public void setBigMessageText(String text) {
-        runOnUiThread(() -> {
-            if (text == null || text.isEmpty()) {
-                mBigMessageText.setText(null);
-                mBigMessageText.setVisibility(GONE);
-                return;
-            }
-            mBigMessageText.setText(text);
-            mBigMessageText.setVisibility(VISIBLE);
-        });
-    }
-
-    public String getBigMessageText() {
-        return mBigMessageText.getText().toString();
     }
 
 }

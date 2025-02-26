@@ -21,6 +21,9 @@
 
 package net.opengress.slimgress.api.Item;
 
+import androidx.annotation.NonNull;
+
+import org.jetbrains.annotations.Contract;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -50,6 +53,8 @@ public class ItemFlipCard extends ItemBase
             System.out.println("unknown virus type");
     }
 
+    @NonNull
+    @Contract(pure = true)
     public static String getNameStatic()
     {
         return "FLIP_CARD";

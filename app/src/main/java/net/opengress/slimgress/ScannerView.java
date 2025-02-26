@@ -21,10 +21,12 @@
 
 package net.opengress.slimgress;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 import static android.view.WindowManager.LayoutParams.WRAP_CONTENT;
-import static androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE;
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE;
 import static net.opengress.slimgress.Constants.PREFS_DEVICE_TILE_SOURCE_DEFAULT;
+import static net.opengress.slimgress.SlimgressApplication.postPlainCommsMessage;
 import static net.opengress.slimgress.ViewHelpers.getColourFromResources;
 import static net.opengress.slimgress.ViewHelpers.getLevelColour;
 import static net.opengress.slimgress.ViewHelpers.getRgbaStringFromColour;
@@ -111,7 +113,7 @@ public class ScannerView extends WidgetMap {
     // ===========================================================
     ScannerKnobs mScannerKnobs;
     private int mActionRadiusM = 40;
-    private int mUpdateIntervalMS;
+    private int mUpdateIntervalMS = 30000;
     private int mMinUpdateIntervalMS;
     private int mUpdateDistanceM;
 
@@ -141,12 +143,28 @@ public class ScannerView extends WidgetMap {
     // ===========================================================
     private Symbol mMarkerInfoCard;
     private long mCircleId = 1;
+    private TextView mBigMessageText;
 
     // ===========================================================
     // Misc
     // ===========================================================
     private final Set<String> mSlurpableParticles = new HashSet<>();
     private final NetworkMonitor mNetworkMonitor = new NetworkMonitor();
+    private final Handler mUpdateHandler = new Handler(Looper.getMainLooper());
+    // This ensures that we have some idea of what is happening on the map even when we can't do anything
+    private final Runnable mGetObjectsTask = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                if (!mGame.isLocationAccurate()) {
+                    updateWorld();
+                }
+            } catch (Exception e) {
+                // not critical in here (yet)
+            }
+            mUpdateHandler.postDelayed(this, mUpdateIntervalMS);
+        }
+    };
     private final OnSharedPreferenceChangeListener mPreferenceChangeListener =
             (sharedPreferences, key) -> {
                 if (Objects.equals(key, PREFS_DEVICE_TILE_SOURCE)) {
@@ -178,6 +196,12 @@ public class ScannerView extends WidgetMap {
 //            updateBearingInData(mBearing);
             drawPlayerCursor();
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mUpdateHandler.removeCallbacks(mGetObjectsTask);
     }
 
     private void drawPlayerCursor() {
@@ -243,6 +267,13 @@ public class ScannerView extends WidgetMap {
                 PropertyFactory.rasterOpacity(0.5f)
         );
         mMapLibreMap.getStyle().addLayer(actionRadiusLayer);
+
+
+        if (mGame.getLocation() == null) {
+            mGame.updateLocation(initialLocation);
+        }
+
+        updateWorld();
     }
 
     // Method to update the action radius position (just update the GeoJsonSource)
@@ -264,14 +295,19 @@ public class ScannerView extends WidgetMap {
             if (mGame.getLocation() != null) {
                 final Handler uiHandler = new Handler();
                 uiHandler.post(() -> {
+                    // FIXME you can probably use the debouncer now
                     // guard against scanning too fast if request fails
                     mLastScan = now + mMinUpdateIntervalMS;
                     updateWorld();
                 });
-
             }
         }
-        mLastLocationAcquired = new Date();
+        mLastLocationAcquired.setTime(currentTimeMillis());
+
+        // guard against saving borked locations
+        if (currentLocation == null) {
+            return;
+        }
 
         if (mLastLocation == null || !mLastLocation.equals(currentLocation)) {
             mLastLocation = currentLocation;
@@ -292,6 +328,7 @@ public class ScannerView extends WidgetMap {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
         mPrefs.registerOnSharedPreferenceChangeListener(mPreferenceChangeListener);
+        mBigMessageText = v.findViewById(R.id.big_message_text);
         return v;
     }
 
@@ -315,7 +352,7 @@ public class ScannerView extends WidgetMap {
                 mCurrentLocation = new Location(location.getLatitude(), location.getLongitude());
                 mApp.getLocationViewModel().setLocationData(mCurrentLocation);
                 mGame.updateLocation(mCurrentLocation);
-                mLastLocationAcquired = new Date();
+                mLastLocationAcquired.setTime(currentTimeMillis());
 
                 if (!mHaveRotationSensor && location.hasBearing()) {
                     mBearing = (int) location.getBearing();
@@ -326,7 +363,7 @@ public class ScannerView extends WidgetMap {
 
             @Override
             public void onUpdatesStarted() {
-                // FIXME this or OnLocationUpdated should setLocationInaccurate(false) by hitting displayMyLocation
+                // should this, or OnLocationUpdated, should setLocationInaccurate(false) by hitting displayMyLocation?
             }
 
             @Override
@@ -442,7 +479,7 @@ public class ScannerView extends WidgetMap {
             setUpTileSource();
         }
 
-        if (mLastLocationAcquired == null || mLastLocationAcquired.before(new Date(currentTimeMillis() - mUpdateIntervalMS))) {
+        if (mLastLocationAcquired.before(new Date(currentTimeMillis() - mUpdateIntervalMS))) {
             setLocationInaccurate(true);
         } else if (mLastLocationAcquired.before(new Date(currentTimeMillis() - mMinUpdateIntervalMS))) {
             // might be pointing the wrong way til next location update but that's ok
@@ -462,6 +499,7 @@ public class ScannerView extends WidgetMap {
         drawXMParticles(mGame.getWorld().getXMParticles().values());
         // try it anyway
         onReceiveDeletedEntityGuids(mApp.getDeletedEntityGuidsViewModel().getGuids().getValue());
+        mUpdateHandler.post(mGetObjectsTask);
     }
 
     private void showHackResultDialog(Bundle hackResultBundle) {
@@ -570,12 +608,12 @@ public class ScannerView extends WidgetMap {
         updateShowScannerDisabledOverlay();
 
         if (isInaccurate) {
-            ((ActivityMain) requireActivity()).setBigMessageText(getStringSafely(R.string.location_inaccurate));
+            setBigMessageText(getStringSafely(R.string.location_inaccurate));
             displayQuickMessage(getStringSafely(R.string.location_inaccurate));
 //            mMapView.getOverlayManager().remove(mActionRadius);
         } else {
             if (Objects.equals(getQuickMessage(), getStringSafely(R.string.location_inaccurate))) {
-                ((ActivityMain) requireActivity()).setBigMessageText(null);
+                setBigMessageText(null);
                 hideQuickMessage();
             }
         }
@@ -586,7 +624,10 @@ public class ScannerView extends WidgetMap {
         if (!notBouncing("updateWorld", mMinUpdateIntervalMS)) {
             return;
         }
-        addExpandingCircle(mCurrentLocation, 1000 * 1000 / 60, 1000, mIcons.get("sonarRing"));
+
+        if (mGame.isLocationAccurate() && mGame.scannerIsEnabled()) {
+            addExpandingCircle(mCurrentLocation, 1000 * 1000 / 60, 1000, mIcons.get("sonarRing"));
+        }
         displayQuickMessage(getStringSafely(R.string.scanning_local_area));
 
         // handle interface result (on timer thread)
@@ -634,7 +675,9 @@ public class ScannerView extends WidgetMap {
             return true;
         });
 
-        slurp();
+        if (mGame.isLocationAccurate() && mGame.scannerIsEnabled()) {
+            slurp();
+        }
 
         // get objects (on new thread)
         mApp.getExecutorService().submit(() -> mGame.intGetObjectsInCells(mGame.getLocation(), resultHandler));
@@ -643,6 +686,10 @@ public class ScannerView extends WidgetMap {
     }
 
     private synchronized void slurp() {
+        // just to be safe
+        if (!mGame.scannerIsEnabled() || !mGame.isLocationAccurate()) {
+            return;
+        }
 
         if (mGame.hasHackResults()) {
             Bundle hackResult = mGame.pollHackResult();
@@ -762,7 +809,12 @@ public class ScannerView extends WidgetMap {
         textView2.setText(R.string.portal);
         textView2.setTextColor(0xFF000000 + requireNonNull(mGame.getKnobs().getTeamKnobs().getTeams().get(portal.getPortalTeam().toString())).getColour());
         textView3.setText(portal.getPortalTitle());
-        int dist = (int) mCurrentLocation.distanceTo(portal.getPortalLocation());
+        int dist;
+        if (mCurrentLocation == null) {
+            dist = (int) mGame.getLocation().distanceTo(portal.getPortalLocation());
+        } else {
+            dist = (int) mCurrentLocation.distanceTo(portal.getPortalLocation());
+        }
         textview4.setText(String.format(Locale.getDefault(), "Distance: %dm", dist));
 
         Bitmap bitmap = createDrawableFromView(requireContext(), markerView);
@@ -981,13 +1033,17 @@ public class ScannerView extends WidgetMap {
             return;
         }
         if (entity.getGameEntityType() == GameEntityBase.GameEntityType.Item) {
+            if (!mGame.scannerIsEnabled()) {
+                postPlainCommsMessage("Pickup failed: scanner disabled");
+                return;
+            }
             mGame.intPickupItem(entity.getEntityGuid(), new Handler(msg -> {
                 var data = msg.getData();
                 String error = getErrorStringFromAPI(data);
                 if (error != null && !error.isEmpty()) {
-                    SlimgressApplication.postPlainCommsMessage(error);
+                    postPlainCommsMessage(error);
                 } else {
-                    SlimgressApplication.postPlainCommsMessage("Picked up a " + msg.getData().getString("description"));
+                    postPlainCommsMessage("Picked up a " + msg.getData().getString("description"));
                 }
                 return true;
             }));
@@ -1019,7 +1075,7 @@ public class ScannerView extends WidgetMap {
             return;
         }
         displayQuickMessage(getString(R.string.scanner_disabled_network_connection_lost));
-        ((ActivityMain) requireActivity()).setBigMessageText(getStringSafely(R.string.scanner_disabled_network_connection_lost));
+        setBigMessageText(getStringSafely(R.string.scanner_disabled_network_connection_lost));
         updateShowScannerDisabledOverlay();
     }
 
@@ -1038,11 +1094,11 @@ public class ScannerView extends WidgetMap {
         boolean shouldShow = !mGame.isLocationAccurate();
         if (shouldShow) {
             displayQuickMessage(getStringSafely(R.string.location_inaccurate));
-            ((ActivityMain) requireActivity()).setBigMessageText(getStringSafely(R.string.location_inaccurate));
+            setBigMessageText(getStringSafely(R.string.location_inaccurate));
 //            mMapView.getOverlayManager().remove(mActionRadius);
         } else {
             if (Objects.equals(getQuickMessage(), getStringSafely(R.string.location_inaccurate))) {
-                ((ActivityMain) requireActivity()).setBigMessageText(null);
+                setBigMessageText(null);
                 hideQuickMessage();
             }
         }
@@ -1051,42 +1107,62 @@ public class ScannerView extends WidgetMap {
         boolean shouldShow2 = !hasInternetConnectionCold(requireContext());
         if (shouldShow2) {
             displayQuickMessage(getStringSafely(R.string.scanner_disabled_network_connection_lost));
-            ((ActivityMain) requireActivity()).setBigMessageText(getStringSafely(R.string.scanner_disabled_network_connection_lost));
+            setBigMessageText(getStringSafely(R.string.scanner_disabled_network_connection_lost));
 //            mMapView.getOverlayManager().remove(mActionRadius);
         } else {
             if (Objects.equals(getQuickMessage(), getStringSafely(R.string.scanner_disabled_network_connection_lost))) {
-                ((ActivityMain) requireActivity()).setBigMessageText(null);
+                setBigMessageText(null);
                 hideQuickMessage();
             }
         }
 
         boolean shouldShow3 = Objects.equals(mGame.getAgent().getEnergyState(), Depleted);
         if (shouldShow3) {
-            ((ActivityMain) requireActivity()).setBigMessageText(getStringSafely(R.string.scanner_disabled_collect_more_xm));
+            setBigMessageText(getStringSafely(R.string.scanner_disabled_collect_more_xm));
             displayQuickMessage(getStringSafely(R.string.scanner_disabled_collect_more_xm));
         } else {
             if (Objects.equals(getQuickMessage(), getStringSafely(R.string.scanner_disabled_collect_more_xm))) {
-                ((ActivityMain) requireActivity()).setBigMessageText(null);
+                setBigMessageText(null);
                 hideQuickMessage();
             }
         }
 
         shouldShow = shouldShow || shouldShow2 || shouldShow3;
-        if (shouldShow && !requireActivity().getSupportFragmentManager().isStateSaved()) {
-            requireActivity().getSupportFragmentManager().popBackStack(null, POP_BACK_STACK_INCLUSIVE);
-        }
+        // disruptive in new way of thinking
+//        if (shouldShow && !requireActivity().getSupportFragmentManager().isStateSaved()) {
+//            requireActivity().getSupportFragmentManager().popBackStack(null, POP_BACK_STACK_INCLUSIVE);
+//        }
         int visibility = shouldShow ? View.VISIBLE : View.GONE;
-        final boolean mapShouldBeEnabled = !shouldShow;
+        mGame.setScannerEnabled(!shouldShow);
         requireActivity().runOnUiThread(() -> {
-
 //            Log.d("SCANNER", "Am I going to show or hide the overlay? "+(finalShouldShow ? "show" : "hide"));
             if (getActivity() == null || requireActivity().findViewById(R.id.scannerDisabledOverlay) == null) {
                 return;
             }
             requireActivity().findViewById(R.id.scannerDisabledOverlay).setVisibility(visibility);
-            requireActivity().findViewById(R.id.buttonComm).setEnabled(mapShouldBeEnabled);
-            requireActivity().findViewById(R.id.buttonOps).setEnabled(mapShouldBeEnabled);
+            ((ActivityMain) requireActivity()).setFireButtonState();
         });
-        setMapEnabled(mapShouldBeEnabled);
+    }
+
+
+    // TODO maybe make this into a more general scanner disabled overlay toggler
+    public void setBigMessageText(String text) {
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+        if (mBigMessageText == null) {
+            // uh oh
+            return;
+        }
+        activity.runOnUiThread(() -> {
+            if (text == null || text.isEmpty()) {
+                mBigMessageText.setText(null);
+                mBigMessageText.setVisibility(GONE);
+                return;
+            }
+            mBigMessageText.setText(text);
+            mBigMessageText.setVisibility(VISIBLE);
+        });
     }
 }
