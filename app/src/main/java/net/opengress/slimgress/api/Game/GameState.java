@@ -272,7 +272,8 @@ public class GameState {
             checkInterface();
 
             // get cell ids for surrounding area - i think the radius and such may end up as parameter(s)
-            String[] cellIds = Utils.getCellIdsFromLocationRadiusKm(location, 1.5, 16, 16);
+            String[] cellIds = Utils.getCellIdsFromLocationRadiusKm(location, 0.33, 16, 16);
+            // the above HAS to be a fixed size for when we implement caching/culling
 
             // create cells
             JSONArray cellsAsHex = new JSONArray();
@@ -320,7 +321,16 @@ public class GameState {
         try {
             checkInterface();
 
-            String[] cellIds = Utils.getCellIdsFromLocationRadiusKm(mLocation, radiusKM, 8, 12);
+            /*
+             what we're used to and might try to produce is:
+             for radius x.....
+             - get an s2region coverer for a cap or circle with radius x
+             - any size cell, 1 to 30 (tested 1-30 and 1-16 at 5km, both good results)
+             - maximum 8 cells
+             - OUTSIDE coverage (default, currently using), NOT "interior"
+             the above means that the radius is a MINIMUM maximum radius
+             */
+            String[] cellIds = Utils.getCellIdsFromLocationRadiusKm(mLocation, radiusKM, 1, 12);
 
             // create cells
             JSONArray cellsAsHex = new JSONArray();

@@ -82,6 +82,33 @@ public class Utils
     }
 
     /**
+     * Returns an array of cell IDs that cover the specified geographic location and surrounding area
+     * using S2 geometry. The method calculates a spherical cap based on the provided location and area,
+     * then derives all cell IDs within the specified range of S2 levels.
+     *
+     * <p>The function starts by converting the latitude and longitude from the given {@link Location},
+     * expressed in E6 format, into an {@link S2LatLng}. It then creates an {@link S2Cap} representing
+     * the area around that point by using the provided {@code areaM2}. The cap is subsequently passed
+     * to {@link #getCellIdsFromRegion(S2Region, int, int)} for retrieving the cell IDs that define
+     * the coverage area.</p>
+     *
+     * @param location the location containing latitude and longitude in E6 format
+     * @param areaM2   the approximate area, in square meters, defining the region to cover
+     * @param maxCells the maximum nu,ber of S2 cells to use when covering the area
+     * @return an array of {@code String} cell IDs covering the specified region at the given S2 level range
+     */
+    @NonNull
+    public static String[] getCellIdsFromLocationArea(@NonNull Location location, double areaM2, int maxCells) {
+        final double radius_m2 = 6371 * 1000;
+        final double sr = areaM2 / (radius_m2 * radius_m2);
+
+        S2LatLng pointLatLng = S2LatLng.fromE6(location.getLatitudeE6(), location.getLongitudeE6());
+        S2Cap cap = S2Cap.fromAxisArea(pointLatLng.toPoint(), sr);
+
+        return getCellIdsFromRegion(cap, maxCells);
+    }
+
+    /**
      * Returns an array of cell IDs that cover the specified geographic location
      * within a given radius in kilometers, using S2 geometry. This method
      * calculates the corresponding area in square meters and delegates to
@@ -99,6 +126,25 @@ public class Utils
         double radiusMeters = radiusKm * 1000;
         double areaM2 = Math.PI * radiusMeters * radiusMeters;
         return getCellIdsFromLocationArea(location, areaM2, minLevel, maxLevel);
+    }
+
+    /**
+     * Returns an array of cell IDs that cover the specified geographic location
+     * within a given radius in kilometers, using S2 geometry. This method
+     * calculates the corresponding area in square meters and delegates to
+     * {@link #getCellIdsFromLocationArea(Location, double, int, int)}.
+     *
+     * @param location the location containing latitude and longitude in E6 format
+     * @param radiusKm the radius around the location in kilometers
+     * @param maxCells the maximum number of cells to use for coverage
+     * @return an array of {@code String} cell IDs covering the specified region
+     * at the given S2 level range
+     */
+    @NonNull
+    public static String[] getCellIdsFromLocationRadiusKm(Location location, double radiusKm, int maxCells) {
+        double radiusMeters = radiusKm * 1000;
+        double areaM2 = Math.PI * radiusMeters * radiusMeters;
+        return getCellIdsFromLocationArea(location, areaM2, maxCells);
     }
 
     /**
@@ -148,13 +194,45 @@ public class Utils
 
         ArrayList<Long> cellIds = new ArrayList<>();
         for (int i = 0; i < cells.size(); i++) {
-
             S2CellId cellId = cells.get(i);
-
             // can happen for some reason
             if (cellId.level() < minLevel || cellId.level() > maxLevel)
                 continue;
+            cellIds.add(cellId.id());
+        }
 
+        // convert to hex values
+        String[] cellIdsHex = new String[cellIds.size()];
+        for (int i = 0; i < cellIdsHex.length; i++) {
+            cellIdsHex[i] = Long.toHexString(cellIds.get(i));
+        }
+
+        return cellIdsHex;
+    }
+
+    /**
+     * Returns an array of hex-encoded S2 cell IDs covering the specified {@link S2Region}
+     * within the given S2 cell level limits. It uses {@link S2RegionCoverer} to generate
+     * a coverage set of {@link S2CellId}s, filters them to ensure the cell levels fall
+     * within the {@code minLevel} and {@code maxLevel} range, and converts them to their
+     * hex-string representations.
+     *
+     * @param region   the S2 region (e.g., rectangle, cap, polygon) to cover
+     * @param maxCells the maximum number of S2 cells used in the coverage
+     * @return a non-null array of hex-encoded S2 cell IDs covering the specified region
+     */
+    @NonNull
+    public static String[] getCellIdsFromRegion(S2Region region, int maxCells) {
+        S2RegionCoverer rCov = new S2RegionCoverer();
+        rCov.setMaxCells(maxCells);
+
+        // get cells
+        ArrayList<S2CellId> cells = new ArrayList<>();
+        rCov.getCovering(region, cells);
+
+        ArrayList<Long> cellIds = new ArrayList<>();
+        for (int i = 0; i < cells.size(); i++) {
+            S2CellId cellId = cells.get(i);
             cellIds.add(cellId.id());
         }
 
