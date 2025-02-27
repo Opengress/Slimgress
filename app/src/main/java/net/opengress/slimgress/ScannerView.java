@@ -620,7 +620,7 @@ public class ScannerView extends WidgetMap {
     }
 
     @SuppressLint("DefaultLocale")
-    public synchronized void updateWorld() {
+    public void updateWorld() {
         if (!notBouncing("updateWorld", mMinUpdateIntervalMS)) {
             return;
         }
@@ -685,7 +685,7 @@ public class ScannerView extends WidgetMap {
         mApp.getExecutorService().submit(() -> mGame.intLoadCommunication(false, 50, false, commsHandler));
     }
 
-    private synchronized void slurp() {
+    private void slurp() {
         // just to be safe
         if (!mGame.scannerIsEnabled() || !mGame.isLocationAccurate()) {
             return;
@@ -709,13 +709,11 @@ public class ScannerView extends WidgetMap {
             return;
         }
 
-        // FIXME maybe don't try to slurp particles that aren't needed to fill the tank
-        //  -- note that we may need to sort the particles and pick out the optimal configuration
-        //  -- also note that if we're really cheeky we may want/be able to do that serverside
+        /*
+         * Do we need to compute an "optimal slurp"?
+         */
         Map<Long, XMParticle> xmParticles = mGame.getWorld().getXMParticles();
         mSlurpableParticles.clear();
-
-        List<Long> particlesToRemove = new ArrayList<>();
 
         for (Map.Entry<Long, XMParticle> entry : xmParticles.entrySet()) {
             if (oldXM + newXM >= maxXM) {
@@ -724,14 +722,15 @@ public class ScannerView extends WidgetMap {
             }
 
             XMParticle particle = entry.getValue();
-
+            if (particle == null) {
+                continue;
+            }
             // FIXME this is honestly the worst imaginable solution, but for now it's what i have...
-            assert particle != null;
             if (particle.getCellLocation().distanceTo(playerLoc) < mActionRadiusM) {
                 mSlurpableParticles.add(particle.getGuid());
                 newXM += particle.getAmount();
                 mXmParticleFeatures.remove(particle.getGuid());
-                particlesToRemove.add(particle.getCellId());
+                xmParticles.remove(entry.getKey());
             }
         }
 
@@ -739,9 +738,6 @@ public class ScannerView extends WidgetMap {
             mGame.addSlurpableXMParticles(mSlurpableParticles);
             mGame.getAgent().addEnergy(newXM);
             updateXMParticles();
-            for (Long id : particlesToRemove) {
-                xmParticles.remove(id);
-            }
         }
     }
 

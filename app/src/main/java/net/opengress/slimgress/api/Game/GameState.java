@@ -185,7 +185,7 @@ public class GameState {
         }
     }
 
-    public synchronized void checkInterface() {
+    public void checkInterface() {
         // check
         if (mHandshake == null || !mHandshake.isValid()) {
             throw new RuntimeException("invalid handshake data");
@@ -316,7 +316,7 @@ public class GameState {
         }
     }
 
-    public synchronized void intLoadCommunication(boolean getOlderMessages, final double radiusKM, final boolean factionOnly, final Handler handler) {
+    public void intLoadCommunication(boolean getOlderMessages, final double radiusKM, final boolean factionOnly, final Handler handler) {
         try {
             checkInterface();
 
@@ -1726,15 +1726,15 @@ public class GameState {
         return mKnobs;
     }
 
-    public synchronized World getWorld() {
+    public World getWorld() {
         return mWorld;
     }
 
-    public synchronized Inventory getInventory() {
+    public Inventory getInventory() {
         return mInventory;
     }
 
-    public synchronized Agent getAgent() {
+    public Agent getAgent() {
         checkInterface();
         return mAgent;
     }

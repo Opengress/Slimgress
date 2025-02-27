@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class World {
     private final Map<String, GameEntityBase> mGameEntities;
@@ -42,7 +43,7 @@ public class World {
 
     public World() {
         mGameEntities = new HashMap<>();
-        mXMParticles = new HashMap<>();
+        mXMParticles = new ConcurrentHashMap<>();
     }
 
     public void clear() {
