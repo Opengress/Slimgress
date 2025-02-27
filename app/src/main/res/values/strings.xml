@@ -36,25 +36,26 @@
 
     <string name="credits">
         <![CDATA[
-        <h1>Assets, libraries and services used in this application</h1>
-        <ul>
-        <li>AppCompat and Material Design components for most widgets (Apache 2)</li>
-        <li><a href="https://github.com/google/guava">Guava</a> for various android utilities (<a href="https://github.com/google/guava/blob/master/LICENSE">Apache 2</a>)</li>
-        <li><a href="https://github.com/square/okhttp">OkHttp</a> for HTTP(s) requests, generally (<a href="https://github.com/square/okhttp/blob/master/LICENSE.txt">Apache 2</a>)</li>
-        <li><a href="https://github.com/maplibre/maplibre-native">MapLibre Native</a> is the map taking centre stage in the scanner (<a href="https://github.com/maplibre/maplibre-native/blob/main/LICENSE.md">BSD 2-Clause</a> et <a href="https://github.com/maplibre/maplibre-native/blob/main/LICENSES.core.md">al</a>)</li>
-        <li><a href="https://github.com/ACRA/acra">ACRA</a> for crash reporting (<a href="https://github.com/ACRA/acra/blob/master/LICENSE">Apache 2</a>)</li>
-        <li><a href="https://github.com/bumptech/glide">Glide</a> for making image loading much simpler (<a href="https://github.com/google/guava/blob/master/LICENSE">Apache 2</a>)</li>
-        </ul>
-        <h1>Authors</h1>
-        <ul>
-        <li>"Opengress Team" - server code, and client code after 2020</li>
-        <li>"Opengress Team" - Logos and player icon</li>
-        <li><a href="https://github.com/Norman0406">Norman0406</a> - Portal icons, app structure, ancient API stubs</li>
-        <li>The map in the main activity is sourced from Carto.
-        The map data is © <a href="https://www.openstreetmap.org/copyright/">OpenStreetMap</a> contributors and is available under the Open Database License.
-        The tiles (images from which represent the map data on-screen) are © <a href="https://carto.com/attribution/">CartoDB</a>.
-        </li>
-        </ul>
+        <section>
+            <h1>Assets, libraries and services used in this application</h1>
+            <ul>
+                <li>AppCompat and Material Design components for most widgets (Apache 2)</li>
+                <li><a href="https://github.com/google/guava">Guava</a> for various android utilities (<a href="https://github.com/google/guava/blob/master/LICENSE">Apache 2</a>)</li>
+                <li><a href="https://github.com/square/okhttp">OkHttp</a> for HTTP(s) requests, generally (<a href="https://github.com/square/okhttp/blob/master/LICENSE.txt">Apache 2</a>)</li>
+                <li><a href="https://github.com/maplibre/maplibre-native">MapLibre Native</a> is the map taking centre stage in the scanner (<a href="https://github.com/maplibre/maplibre-native/blob/main/LICENSE.md">BSD 2-Clause</a> et <a href="https://github.com/maplibre/maplibre-native/blob/main/LICENSES.core.md">al</a>)</li>
+                <li><a href="https://github.com/ACRA/acra">ACRA</a> for crash reporting (<a href="https://github.com/ACRA/acra/blob/master/LICENSE">Apache 2</a>)</li>
+                <li><a href="https://github.com/bumptech/glide">Glide</a> for making image loading much simpler (<a href="https://github.com/google/guava/blob/master/LICENSE">Apache 2</a>)</li>
+            </ul>
+        </section>
+        <section>
+            <h1>Authors</h1>
+            <ul>
+                <li>"Opengress Team" - server code, and client code after 2020</li>
+                <li>"Opengress Team" - Logos and player icon</li>
+                <li><a href="https://github.com/Norman0406">Norman0406</a> - Portal icons, app structure, ancient API stubs</li>
+                <li>%s</li>
+            </ul>
+        </section>
         ]]>
     </string>
     <string name="slimgress_version_unknown">Slimgress (Opengress dev client)</string>
