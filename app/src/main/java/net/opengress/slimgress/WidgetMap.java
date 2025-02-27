@@ -1083,7 +1083,6 @@ abstract public class WidgetMap extends Fragment {
 
             // Set camera position on the map
             mMapLibreMap.setCameraPosition(position);
-
             setupPlayerCursor(initialLocation, (int) bearing);
 
 //                mMapLibreMap.getUiSettings().setCompassMargins(5, 150, 0, 0);
