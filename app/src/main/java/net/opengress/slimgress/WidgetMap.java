@@ -1052,7 +1052,7 @@ abstract public class WidgetMap extends Fragment {
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(mapLibreMap -> {
             mMapLibreMap = mapLibreMap;
-            mMapLibreMap.setMinZoomPreference(15);
+            mMapLibreMap.setMinZoomPreference(16);
             mMapLibreMap.setMaxZoomPreference(18);
 
             // COULD use setUpTileSource - but do not need updateScreen() so maybe not ??
