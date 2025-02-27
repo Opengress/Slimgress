@@ -522,7 +522,7 @@ public class FragmentPortal extends Fragment {
 
         mRootView.findViewById(R.id.activityPortalKeyButton).setEnabled(haveKeys && mGame.scannerIsEnabled());
         mRootView.findViewById(R.id.hackButton).setEnabled(!mIsHacking && shouldEnableButton && hackEnergyOK && mGame.scannerIsEnabled());
-        mRootView.findViewById(R.id.rechargeButton).setEnabled(shouldEnableButton && teamOK && mGame.canRecharge(mPortal));
+        mRootView.findViewById(R.id.rechargeButton).setEnabled(haveKeys && mGame.canRecharge(mPortal));
 //        boolean isTesting = mGame.getAgent().getNickname().startsWith("MT") || mGame.getAgent().getNickname().startsWith("I_") || mGame.getAgent().getNickname().startsWith("ca");
         boolean canLink = teamOK
                 && mGame.scannerIsEnabled()

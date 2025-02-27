@@ -1838,15 +1838,23 @@ public class GameState {
         return cube.getItemAccessLevel() <= mAgent.getLevel();
     }
 
+    // doesn't check for keys!!
     public boolean canRecharge(@NonNull GameEntityPortal portal) {
+        if (getAgent().getEnergy() < 250) { // put it in a knob one day
+            return false;
+        }
+
+        if (portal.getPortalEnergy() >= portal.getPortalMaxEnergy()) {
+            return false;
+        }
+
+        if (!portal.getPortalTeam().toString().equals(getAgent().getTeam().toString())) {
+            return false;
+        }
+
         int dist = (int) getLocation().distanceTo(portal.getPortalLocation());
+        // i wonder if this check is the right thing to do
         if (mLocationIsAccurate && mScannerEnabled) {
-            if (getAgent().getEnergy() < 250) { // put it in a knob one day
-                return false;
-            }
-            if (!portal.getPortalTeam().toString().equals(getAgent().getTeam().toString())) {
-                return false;
-            }
             if (dist < getKnobs().getScannerKnobs().getActionRadiusM()) {
                 return true;
             }
