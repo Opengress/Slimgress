@@ -156,7 +156,7 @@ public class ScannerView extends WidgetMap {
         @Override
         public void run() {
             try {
-                if (!mGame.isLocationAccurate()) {
+                if (!mGame.isLocationAccurate() && mGame.getLocation() != null) {
                     updateWorld();
                 }
             } catch (Exception e) {
@@ -288,7 +288,6 @@ public class ScannerView extends WidgetMap {
 
 
     private void displayMyCurrentLocationOverlay(Location currentLocation) {
-
         long now = currentTimeMillis();
 
         if (mLastScan == 0 || mLastLocation == null || (now - mLastScan >= mUpdateIntervalMS) || (now - mLastScan >= mMinUpdateIntervalMS && mLastLocation.distanceTo(currentLocation) >= mUpdateDistanceM)) {
@@ -302,12 +301,13 @@ public class ScannerView extends WidgetMap {
                 });
             }
         }
-        mLastLocationAcquired.setTime(currentTimeMillis());
 
         // guard against saving borked locations
         if (currentLocation == null) {
             return;
         }
+
+        mLastLocationAcquired.setTime(currentTimeMillis());
 
         if (mLastLocation == null || !mLastLocation.equals(currentLocation)) {
             mLastLocation = currentLocation;
