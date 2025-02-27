@@ -502,9 +502,11 @@ abstract public class WidgetMap extends Fragment {
                     return;
                 }
 
+                int drawnParticles = 0;
+
                 // For each XM Particle, build a small polygon around its location
                 for (XMParticle particle : xmParticles) {
-                    if (particle == null) {
+                    if (particle == null || drawnParticles++ == 1000) {
                         continue;
                     }
                     Location loc = particle.getCellLocation();
