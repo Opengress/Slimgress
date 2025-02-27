@@ -1,3 +1,13 @@
+0.6.8 / 2025-02-27
+==================
+
+* Bump to 0.6.8 to release fixes and improvements
+* Try to limit drawing of particles to 1000 particles
+* Reduce view range and optimise comm comms
+* Fix crash in slurp() and remove some locking
+* Make map attribution flow through to credits screen properly
+* Improve remote recharging UX
+* Make first scan happen sooner if you have location, and later if you don't
 0.6.7 / 2025-02-27
 ==================
 
