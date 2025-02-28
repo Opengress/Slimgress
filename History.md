@@ -1,3 +1,9 @@
+0.6.9 / 2025-02-28
+==================
+
+* Bump version for xm collection regression bugfix
+* Fix "Slurp doesn't work when XM is depleted" bug
+
 0.6.8 / 2025-02-27
 ==================
 
@@ -8,6 +14,7 @@
 * Make map attribution flow through to credits screen properly
 * Improve remote recharging UX
 * Make first scan happen sooner if you have location, and later if you don't
+
 0.6.7 / 2025-02-27
 ==================
 
@@ -23,17 +30,20 @@
 * Fix new inventory memory leaks
 * Make hack results more dismissable than they were before their dismissability was reduced
 * Make floaty text appear for recycling and for using cubes
+
 0.6.6 / 2025-02-25
 ==================
 
 * Bump version for protocol change
 * Align portalCoupler latlng expectations with 32bit signed world
+
 0.6.5 / 2025-02-25
 ==================
 
 * bump version for release
 * Improve client/server ap/xm sync and apgain display
 * Bump to 0.6.4 for release
+
 0.6.4 / 2025-02-24
 ==================
 
