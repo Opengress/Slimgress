@@ -193,11 +193,12 @@ public class Interface
                         // add persistent request parameters
                         if (playerLocation != null) {
                             String loc = playerLocation.toString();
+                            // todo check that this is appropriate for the metho
                             params.getJSONObject("params").put("playerLocation", loc);
                         }
                         params.getJSONObject("params").put("knobSyncTimestamp", getCurrentTimestamp());
 
-                        // TODO: check that this works
+                        // TODO: check that this works and is appropriate for the method
                         JSONArray collectedEnergy = new JSONArray(mSlurpableXMParticles);
                         params.getJSONObject("params").put("energyGlobGuids", collectedEnergy);
                         mSlurpableXMParticles.clear();

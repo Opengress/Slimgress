@@ -687,7 +687,7 @@ public class ScannerView extends WidgetMap {
 
     private void slurp() {
         // just to be safe
-        if (!mGame.scannerIsEnabled() || !mGame.isLocationAccurate()) {
+        if (!mGame.isLocationAccurate()) {
             return;
         }
 
