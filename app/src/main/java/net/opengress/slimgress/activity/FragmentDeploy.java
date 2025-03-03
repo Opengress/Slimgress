@@ -123,7 +123,7 @@ public class FragmentDeploy extends Fragment {
         return mRootView;
     }
 
-    private void checkForUpdates(List<GameEntityBase> gameEntityBases) {
+    private void checkForUpdates(@NonNull List<GameEntityBase> gameEntityBases) {
         for (GameEntityBase entity : gameEntityBases) {
             if (entity.getEntityGuid().equals(mPortal.getEntityGuid())) {
                 setUpView();
@@ -234,6 +234,12 @@ public class FragmentDeploy extends Fragment {
     }
 
     private boolean canUpgradeOrDeploy(HashMap<Integer, Integer> resoCountForLevel, int currentLevel) {
+        if (!mGame.isLocationAccurate()) {
+            return false;
+        }
+        if (mGame.getLocation().distanceTo(mPortal.getPortalLocation()) > 40) {
+            return false;
+        }
         while (currentLevel < mGame.getAgent().getLevel()) {
             if (canPutThisResonatorOn(resoCountForLevel, currentLevel + 1)) {
                 return true;
@@ -244,12 +250,6 @@ public class FragmentDeploy extends Fragment {
     }
 
     private boolean canPutThisResonatorOn(@NonNull HashMap<Integer, Integer> resoCountForLevel, int level) {
-        if (!mGame.isLocationAccurate()) {
-            return false;
-        }
-        if (mGame.getLocation().distanceTo(mPortal.getPortalLocation()) > 40) {
-            return false;
-        }
         if (level > mGame.getAgent().getLevel()) {
             return false;
         }
