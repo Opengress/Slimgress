@@ -16,7 +16,7 @@
 
 package com.google.common.geometry;
 
-import javax.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 /**
  * The area of an interior, i.e. the region on the left side of an odd
