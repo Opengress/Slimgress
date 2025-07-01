@@ -80,6 +80,8 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 
+import okhttp3.OkHttpClient;
+
 public class GameState {
     private final Interface mInterface;
     private Handshake mHandshake;
@@ -1874,5 +1876,9 @@ public class GameState {
 
     boolean canRemoteRecharge(int dist) {
         return dist <= getAgent().getLevel() * 250_000;
+    }
+
+    public OkHttpClient getHttpClient() {
+        return mInterface.getClient();
     }
 }
