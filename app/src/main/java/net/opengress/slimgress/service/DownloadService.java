@@ -16,6 +16,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import net.opengress.slimgress.BuildConfig;
 import net.opengress.slimgress.R;
+import net.opengress.slimgress.SlimgressApplication;
 import net.opengress.slimgress.api.Interface.Interface;
 
 import java.io.BufferedInputStream;
@@ -78,9 +79,7 @@ public class DownloadService extends Service {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private void downloadUpdate() {
-        OkHttpClient client = new OkHttpClient.Builder()
-                .followRedirects(false)
-                .build();
+        OkHttpClient client = SlimgressApplication.getInstance().getGame().getHttpClient();
         try {
             Request request = new Request.Builder().url("https://opengress.net/downloads/slimgress.apk")
                     .header("User-Agent", Interface.mUserAgent)
