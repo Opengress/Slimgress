@@ -1,3 +1,16 @@
+0.6.10 / 2025-07-01
+==================
+
+* Bump version for hypertext improvement
+* Reuse interface HTTP client in self-updater
+* Set Android's default HTTP mechanism's user agent
+* Load images (with Glide) using HTTP/2
+* update SDK API, deps and gradle
+* update IDE config
+* Do not block deployment if agents enters deploy range while in deploy screen
+* Bump version for xm collection regression bugfix
+* Fix "Slurp doesn't work when XM is depleted" bug
+
 0.6.9 / 2025-02-28
 ==================
 
