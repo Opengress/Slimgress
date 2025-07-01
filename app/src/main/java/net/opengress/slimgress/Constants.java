@@ -15,4 +15,5 @@ public final class Constants {
     public static final String UNTRANSLATABLE_MAP_TILE_SOURCE_BLANK = "BLANK";
     public static final String BULK_STORAGE_DEVICE_IMAGE_RESOLUTION = "imageResolution";
     public static final String BULK_STORAGE_DEVICE_IMAGE_RESOLUTION_DEFAULT = "640x480";
+    public static final String USER_AGENT = "Opengress/Slimgress (API dev)";
 }

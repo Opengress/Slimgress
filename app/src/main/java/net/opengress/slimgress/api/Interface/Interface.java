@@ -73,7 +73,7 @@ public class Interface
     private static final String mApiBaseURL = "https://" + mApiBase + "/";
     private static final String mApiHandshake = "handshake?json=";
     private static final String mApiRequest = "rpc/";
-    public static final String mUserAgent = "Opengress/Slimgress (API dev)";
+    public static final String mUserAgent = USER_AGENT;
 
     // kludge: interface can say the right things about collecting globs without asking GameState
     private final Set<String> mSlurpableXMParticles = new HashSet<>();
