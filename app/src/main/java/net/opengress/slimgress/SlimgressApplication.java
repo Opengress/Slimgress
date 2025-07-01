@@ -21,6 +21,8 @@
 
 package net.opengress.slimgress;
 
+import static net.opengress.slimgress.Constants.USER_AGENT;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
@@ -88,6 +90,7 @@ public class SlimgressApplication extends Application {
         mLocationViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(LocationViewModel.class);
         mPlayerDataViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(PlayerDataViewModel.class);
         mUpdatedEntitiesViewModel = new ViewModelProvider.AndroidViewModelFactory(this).create(UpdatedEntitiesViewModel.class);
+        System.setProperty("http.agent", USER_AGENT);
 
         mSingleton = this;
         mGame = new GameState();
