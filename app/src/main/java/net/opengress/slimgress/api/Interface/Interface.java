@@ -21,6 +21,7 @@
 
 package net.opengress.slimgress.api.Interface;
 
+import static net.opengress.slimgress.Constants.USER_AGENT;
 import static net.opengress.slimgress.SlimgressApplication.runInThread;
 
 import android.net.TrafficStats;
@@ -91,6 +92,10 @@ public class Interface
                 })
                 .followRedirects(false)
                 .build();
+    }
+
+    public OkHttpClient getClient() {
+        return mClient;
     }
 
     public AuthSuccess authenticate(String session_name, String session_id)
