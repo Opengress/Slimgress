@@ -14,3 +14,15 @@
 .cxx
 local.properties
 /deploy
+
+.idea/
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
+!.idea/dictionaries/
+!.idea/fileTemplates/
+!.idea/runConfigurations/
+
+.idea/deploymentTargetSelector.xml
+.idea/deploymentTargets.xml
+.idea/workspace.xml
+.idea/tasks.xml
